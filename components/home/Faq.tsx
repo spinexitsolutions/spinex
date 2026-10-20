@@ -29,7 +29,7 @@ export default function Faq() {
                 <h3>
                   <button onClick={() => setOpen(isOpen ? null : f.id)} aria-expanded={isOpen} className="flex w-full items-center justify-between gap-6 py-6 text-left">
                     <span className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{f.q}</span>
-                    <motion.span animate={{ rotate: isOpen ? 45 : 0, backgroundColor: isOpen ? "#120F1B" : "#F5F3FA", color: isOpen ? "#FFFFFF" : "#120F1B" }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full">
+                    <motion.span animate={{ rotate: isOpen ? 45 : 0 }} className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition-colors duration-300 ${isOpen ? "bg-ink text-white" : "bg-mist text-ink"}`}>
                       <Plus size={18} />
                     </motion.span>
                   </button>

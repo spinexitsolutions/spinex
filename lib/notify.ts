@@ -1,20 +1,16 @@
 import nodemailer from "nodemailer";
+import { getSecret } from "./secrets";
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 // Sends an alert email if SMTP is configured. Never throws, so a mail problem never blocks a form.
 export async function notifyAdmin(subject: string, rows: [string, string][], link?: string) {
   // Tidy values copied with spaces or quotes (Gmail shows app passwords as "abcd efgh ijkl mnop").
-  const tidy = (v?: string) => (v ?? "").trim().replace(/^["']|["']$/g, "");
-  const SMTP_HOST = tidy(process.env.SMTP_HOST);
-  const SMTP_PORT = tidy(process.env.SMTP_PORT) || "465";
-  const SMTP_USER = tidy(process.env.SMTP_USER);
-  const SMTP_PASS = tidy(process.env.SMTP_PASS).replace(/\s+/g, "");
-  const NOTIFY_EMAIL = tidy(process.env.NOTIFY_EMAIL);
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, NOTIFY_EMAIL } = await smtpSettings();
   const missing = Object.entries({ SMTP_HOST, SMTP_USER, SMTP_PASS, NOTIFY_EMAIL }).filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) {
-    console.warn(`Alert email skipped: ${missing.join(", ")} not set in .env.local (restart the server after adding).`);
-    return;
+    console.warn(`Alert email skipped: ${missing.join(", ")} not set (Admin → API keys, or .env.local).`);
+    return false;
   }
   try {
     const port = Number(SMTP_PORT);
@@ -33,22 +29,29 @@ export async function notifyAdmin(subject: string, rows: [string, string][], lin
       }</div>`,
     });
     console.log(`Alert email sent to ${NOTIFY_EMAIL}`);
+    return true;
   } catch (e) {
     const code = (e as { responseCode?: number }).responseCode;
     if (code === 535) {
-      console.error("Alert email failed: Gmail rejected SMTP_USER / SMTP_PASS. Use a 16-letter App Password created on the same Gmail account (myaccount.google.com/apppasswords), then restart the server.");
+      console.error("Alert email failed: Gmail rejected the email login / password. Use a 16-letter App Password created on the same Gmail account (myaccount.google.com/apppasswords).");
     } else {
       console.error("Alert email failed:", e);
     }
+    return false;
   }
 }
 
-function smtp() {
-  const tidy = (v?: string) => (v ?? "").trim().replace(/^["']|["']$/g, "");
-  const host = tidy(process.env.SMTP_HOST), user = tidy(process.env.SMTP_USER), pass = tidy(process.env.SMTP_PASS).replace(/\s+/g, "");
-  const port = Number(tidy(process.env.SMTP_PORT) || "465");
+// SMTP settings from Admin → API keys, falling back to .env.local.
+export async function smtpSettings() {
+  const [SMTP_HOST, port, SMTP_USER, pass, NOTIFY_EMAIL] = await Promise.all(["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "NOTIFY_EMAIL"].map(getSecret));
+  return { SMTP_HOST, SMTP_PORT: port || "465", SMTP_USER, SMTP_PASS: pass.replace(/\s+/g, ""), NOTIFY_EMAIL };
+}
+
+async function smtp() {
+  const { SMTP_HOST: host, SMTP_PORT, SMTP_USER: user, SMTP_PASS: pass, NOTIFY_EMAIL } = await smtpSettings();
+  const port = Number(SMTP_PORT);
   if (!host || !user || !pass) return null;
-  return { transport: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } }), from: user, replyTo: tidy(process.env.NOTIFY_EMAIL) || user };
+  return { transport: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } }), from: user, replyTo: NOTIFY_EMAIL || user };
 }
 
 const wrap = (title: string, paragraphs: string[], button?: { label: string; url: string }) => `
@@ -63,7 +66,7 @@ const wrap = (title: string, paragraphs: string[], button?: { label: string; url
 
 // Email to an applicant or intern. Returns false if email isn't set up or sending failed.
 export async function emailPerson(to: string, subject: string, title: string, paragraphs: string[], button?: { label: string; url: string }) {
-  const s = smtp();
+  const s = await smtp();
   if (!s || !to) return false;
   try {
     await s.transport.sendMail({

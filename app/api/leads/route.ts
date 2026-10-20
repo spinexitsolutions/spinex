@@ -4,6 +4,7 @@ import { cleanLead, leadsCol } from "@/lib/lead-db";
 import { LEAD_SOURCES, type LeadSource } from "@/lib/leads";
 import { notifyAdmin } from "@/lib/notify";
 import { checkHuman } from "@/lib/antispam";
+import { sendLeadWebhook } from "@/lib/webhook";
 
 
 // Public endpoint used by the contact form, home contact section and project planner.
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
   const stamp = new Date().toISOString();
 
   await (await leadsCol()).insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", notes: "", createdAt: stamp, updatedAt: stamp });
+
+  await sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], createdAt: stamp });
 
   await notifyAdmin(
     `New enquiry from ${data.name}`,

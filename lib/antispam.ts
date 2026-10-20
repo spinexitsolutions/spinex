@@ -1,4 +1,5 @@
 import { getDb, hasDb } from "./db";
+import { getSecret } from "./secrets";
 
 export type SpamCheck = { ok: true } | { ok: false; silent: boolean; status: number; error: string };
 
@@ -21,7 +22,7 @@ async function rateLimited(key: string, max: number, windowMs: number) {
 }
 
 async function turnstileOk(token: string, ip: string) {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const secret = await getSecret("TURNSTILE_SECRET_KEY");
   if (!secret) return true; // not set up: skip this check
   if (!token) return false;
   try {

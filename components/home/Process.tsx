@@ -65,14 +65,14 @@ export default function Process() {
                   className="group relative flex flex-col items-center gap-3 pb-2 text-center"
                 >
                   <motion.span
-                    animate={{ backgroundColor: on || done ? "#120F1B" : "#FFFFFF", color: on || done ? "#C2B6FF" : "#625C74", scale: on ? 1.1 : 1 }}
+                    animate={{ scale: on ? 1.1 : 1 }}
                     transition={{ duration: 0.35 }}
-                    className="relative z-10 grid h-12 w-12 place-items-center rounded-full border border-line group-hover:border-ink"
+                    className={`relative z-10 grid h-12 w-12 place-items-center rounded-full border border-line transition-colors duration-300 group-hover:border-ink ${on || done ? "bg-ink text-lav-300" : "bg-white text-muted"}`}
                   >
                     {done ? <Check size={18} /> : <s.Icon size={19} />}
                     {on && (
                       <svg className="absolute -inset-1 h-14 w-14 -rotate-90" viewBox="0 0 56 56" aria-hidden>
-                        <motion.circle cx="28" cy="28" r="26" fill="none" stroke="#8873EE" strokeWidth="2" style={{ pathLength: stepFill }} />
+                        <motion.circle cx="28" cy="28" r="26" fill="none" className="stroke-lav-500" strokeWidth="2" style={{ pathLength: stepFill }} />
                       </svg>
                     )}
                   </motion.span>
@@ -172,7 +172,7 @@ function DesignVisual({ play }: { play: boolean }) {
         </motion.div>
       </div>
       <div className="absolute right-0 top-0 hidden flex-col gap-1.5 sm:flex">
-        {["#120F1B", "#6E59D9", "#C2B6FF", "#F5F3FA"].map((c, i) => (
+        {["rgb(var(--c-ink))", "rgb(var(--c-lav-600))", "rgb(var(--c-lav-300))", "rgb(var(--c-mist))"].map((c, i) => (
           <motion.span key={c} {...pop(play, 0.2 + i * 0.12)} className="h-7 w-7 rounded-lg border border-white/15" style={{ backgroundColor: c }} />
         ))}
       </div>
@@ -224,12 +224,12 @@ function LaunchVisual({ play }: { play: boolean }) {
       <svg viewBox="0 0 340 130" className="mt-4 w-full flex-1" preserveAspectRatio="none" aria-hidden>
         <defs>
           <linearGradient id="launch-fill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#8873EE" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#8873EE" stopOpacity="0" />
+            <stop offset="0%" style={{ stopColor: "rgb(var(--c-lav-500))" }} stopOpacity="0.45" />
+            <stop offset="100%" style={{ stopColor: "rgb(var(--c-lav-500))" }} stopOpacity="0" />
           </linearGradient>
         </defs>
         <motion.path d={`${path} L 340 130 L 0 130 Z`} fill="url(#launch-fill)" initial={{ opacity: 0 }} animate={play ? { opacity: 1 } : undefined} transition={{ delay: 1.2, duration: 0.8 }} />
-        <motion.path d={path} fill="none" stroke="#A595FB" strokeWidth="3" strokeLinecap="round" initial={{ pathLength: 0 }} animate={play ? { pathLength: 1 } : undefined} transition={{ delay: 0.3, duration: 1.6, ease }} />
+        <motion.path d={path} fill="none" className="stroke-lav-400" strokeWidth="3" strokeLinecap="round" initial={{ pathLength: 0 }} animate={play ? { pathLength: 1 } : undefined} transition={{ delay: 0.3, duration: 1.6, ease }} />
       </svg>
     </div>
   );

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { getSecret } from "@/lib/secrets";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-// Optional: only used when ANTHROPIC_API_KEY is set. Otherwise the chatbot answers offline.
+// Optional: only used when an Anthropic key is set (Admin → API keys or .env.local). Otherwise the chatbot answers offline.
 export async function POST(req: Request) {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = await getSecret("ANTHROPIC_API_KEY");
+  const model = (await getSecret("CHAT_MODEL")) || "claude-haiku-4-5-20251001";
   if (!key) return NextResponse.json({ error: "not_configured" }, { status: 501 });
 
   const { messages, knowledge } = (await req.json()) as { messages: Msg[]; knowledge: string };
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
-      model: process.env.CHAT_MODEL || "claude-haiku-4-5-20251001",
+      model,
       max_tokens: 400,
       system:
         "You are the website assistant for a web and digital agency. Answer briefly (2-4 sentences), friendly and professional. Reply in the user's language (English, Hindi or Hinglish). Use only the facts below; for prices or anything not listed, invite them to share details or contact the team.\n\n" +

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useContent } from "./ContentProvider";
 
 type TurnstileApi = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -12,7 +13,6 @@ declare global {
   }
 }
 
-const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 let loading: Promise<void> | null = null;
 
 function loadScript() {
@@ -30,8 +30,10 @@ function loadScript() {
 }
 
 // Cloudflare Turnstile. Usually invisible; shows a small check only when a visitor looks suspicious.
-// Renders nothing if NEXT_PUBLIC_TURNSTILE_SITE_KEY isn't set.
+// Renders nothing until a site key is set in Admin → API keys (or NEXT_PUBLIC_TURNSTILE_SITE_KEY).
 export default function HumanCheck({ onToken }: { onToken: (token: string) => void }) {
+  const { turnstileKey } = useContent();
+  const SITE_KEY = turnstileKey || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
   const box = useRef<HTMLDivElement>(null);
   const cb = useRef(onToken);
   cb.current = onToken;
@@ -54,7 +56,7 @@ export default function HumanCheck({ onToken }: { onToken: (token: string) => vo
       cancelled = true;
       if (id && window.turnstile) window.turnstile.remove(id);
     };
-  }, []);
+  }, [SITE_KEY]);
 
   if (!SITE_KEY) return null;
   return <div ref={box} className="mt-4 empty:hidden" />;

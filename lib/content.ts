@@ -116,7 +116,10 @@ export type PlanSize = { id: string; label: string; hint: string; factor: number
 export type PlanExtra = { id: string; label: string; days: number };
 export type PlannerSettings = { times: PlanTime[]; sizes: PlanSize[]; extras: PlanExtra[]; note: string };
 
+import type { ThemeSettings } from "./theme";
+
 export type SiteContent = {
+  theme: ThemeSettings;
   planner: PlannerSettings;
   removedServices: string[]; // built-in service ids the admin deleted on purpose
   brand: { name: string; logo: string; tagline: string };
@@ -141,7 +144,7 @@ export type SiteContent = {
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
-  integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string };
+  integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string; metaPixelId: string; gtmId: string };
   internship: { open: boolean; intro: string; modes: string[]; durations: string[]; perks: string[]; roles: InternRole[] };
   contact: {
     email: string;
@@ -159,6 +162,7 @@ export type SiteContent = {
 const img = (id: string, _w = 1400) => `/images/stock/${id}.jpg`;
 
 const baseContent: SiteContent = {
+  theme: { preset: "lavender", accent: "#6E59D9", dark: "#120F1B" },
   planner: {
     times: [
       { id: "web", min: 7, max: 14, monthly: false },
@@ -463,6 +467,8 @@ const baseContent: SiteContent = {
     whatsappText: "Hi Spinex, I found you on your website and want to know more.",
     gaId: "",
     clarityId: "",
+    metaPixelId: "",
+    gtmId: "",
   },
   internship: {
     open: true,

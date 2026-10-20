@@ -120,8 +120,8 @@ function SpeedTest() {
       </div>
       <div className="mt-4 flex items-center gap-5">
         <svg viewBox="0 0 110 110" className="h-28 w-28 -rotate-90" aria-hidden>
-          <circle cx="55" cy="55" r={r} fill="none" stroke="#E6E2EF" strokeWidth="9" />
-          <circle cx="55" cy="55" r={r} fill="none" stroke="#6E59D9" strokeWidth="9" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - score / 100)} />
+          <circle cx="55" cy="55" r={r} fill="none" className="stroke-line" strokeWidth="9" />
+          <circle cx="55" cy="55" r={r} fill="none" className="stroke-lav-600" strokeWidth="9" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - score / 100)} />
         </svg>
         <div>
           <p className="h-display text-5xl" aria-live="polite">{score}</p>
@@ -194,10 +194,10 @@ function SeoChecklist() {
         {seoItems.map((s, i) => (
           <li key={s} className="flex items-center gap-3 text-[15px]">
             <motion.span
-              initial={{ scale: 0, backgroundColor: "#E6E2EF" }}
-              animate={inView ? { scale: 1, backgroundColor: "#6E59D9" } : undefined}
+              initial={{ scale: 0 }}
+              animate={inView ? { scale: 1 } : undefined}
               transition={{ delay: 0.2 + i * 0.25, type: "spring", stiffness: 400, damping: 18 }}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-white"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lav-600 text-white"
             >
               <Check size={13} />
             </motion.span>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Manrope } from "next/font/google";
 import { ContentProvider } from "@/components/ContentProvider";
 import { getContent } from "@/lib/content-server";
+import { getSecret } from "@/lib/secrets";
+import { themeCss } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -29,11 +31,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const content = await getContent();
+  const [content, turnstileKey] = await Promise.all([getContent(), getSecret("TURNSTILE_SITE_KEY")]);
   return (
     <html lang="en-IN" className={`${display.variable} ${body.variable}`}>
+      <head>
+        {/* Colour theme from Admin → Colour theme */}
+        <style id="theme-vars" dangerouslySetInnerHTML={{ __html: themeCss(content.theme) }} />
+      </head>
       <body>
-        <ContentProvider initial={content}>{children}</ContentProvider>
+        <ContentProvider initial={content} turnstileKey={turnstileKey}>{children}</ContentProvider>
       </body>
     </html>
   );

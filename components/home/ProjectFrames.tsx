@@ -472,9 +472,9 @@ function EcommerceFrame({ project, play }: { project: Project; play: boolean }) 
           <>
             <div className="relative mx-[4%] mt-[4%] h-[38%] overflow-hidden rounded-[clamp(8px,1.2vw,12px)] bg-mist">
               <svg viewBox="0 0 300 120" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
-                <defs><linearGradient id="ecg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8873EE" stopOpacity=".35" /><stop offset="1" stopColor="#8873EE" stopOpacity="0" /></linearGradient></defs>
+                <defs><linearGradient id="ecg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: "rgb(var(--c-lav-500))" }} stopOpacity=".35" /><stop offset="1" style={{ stopColor: "rgb(var(--c-lav-500))" }} stopOpacity="0" /></linearGradient></defs>
                 <path d="M0,108 L30,104 L60,100 L90,92 L120,94 L150,80 L180,70 L210,56 L240,44 L270,30 L300,14 L300,120 L0,120Z" fill="url(#ecg)" />
-                <motion.path d="M0,108 L30,104 L60,100 L90,92 L120,94 L150,80 L180,70 L210,56 L240,44 L270,30 L300,14" stroke="#6E59D9" strokeWidth="3" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: play || reduced ? 1 : 0 }} transition={{ duration: 1.6, ease }} />
+                <motion.path d="M0,108 L30,104 L60,100 L90,92 L120,94 L150,80 L180,70 L210,56 L240,44 L270,30 L300,14" className="stroke-lav-600" strokeWidth="3" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: play || reduced ? 1 : 0 }} transition={{ duration: 1.6, ease }} />
               </svg>
               <span className="absolute left-[3%] top-[6%] rounded-full bg-white px-[3%] py-[1%] text-[clamp(6px,0.85vw,11px)] font-semibold text-lav-700">Sales</span>
             </div>
@@ -555,8 +555,8 @@ function OnDemandFrame({ project, play }: { project: Project; play: boolean }) {
             <div className="relative h-[48%] bg-[#E9E6F2]">
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
                 <path d="M0,25 L100,40 M0,70 L100,58 M30,0 L42,100 M74,0 L68,100" stroke="#fff" strokeWidth="5" />
-                <motion.path d="M22,82 C40,62 52,58 70,30" stroke="#6E59D9" strokeWidth="3" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: play ? 1 : 0.3 }} transition={{ duration: 2, ease }} />
-                <circle cx="22" cy="82" r="4" fill="#120F1B" /><circle cx="70" cy="30" r="5" fill="#6E59D9" stroke="#fff" strokeWidth="2" />
+                <motion.path d="M22,82 C40,62 52,58 70,30" className="stroke-lav-600" strokeWidth="3" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: play ? 1 : 0.3 }} transition={{ duration: 2, ease }} />
+                <circle cx="22" cy="82" r="4" className="fill-ink" /><circle cx="70" cy="30" r="5" className="fill-lav-600" stroke="#fff" strokeWidth="2" />
               </svg>
             </div>
             <div className="flex flex-1 flex-col p-[9%] text-white">

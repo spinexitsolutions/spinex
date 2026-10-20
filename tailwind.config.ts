@@ -1,23 +1,18 @@
 import type { Config } from "tailwindcss";
 
+const c = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        ink: { DEFAULT: "#120F1B", 2: "#1B1727", 3: "#262036" },
-        mist: "#F5F3FA",
-        line: "#E6E2EF",
-        muted: "#625C74",
-        lav: {
-          100: "#EEEAFF",
-          200: "#DCD4FF",
-          300: "#C2B6FF",
-          400: "#A595FB",
-          500: "#8873EE",
-          600: "#6E59D9",
-          700: "#5745B5",
-        },
+        // Colours come from CSS variables so Admin → Colour theme can change them (see lib/theme.ts).
+        ink: { DEFAULT: c("ink"), 2: c("ink-2"), 3: c("ink-3") },
+        mist: c("mist"),
+        line: c("line"),
+        muted: c("muted"),
+        lav: { 100: c("lav-100"), 200: c("lav-200"), 300: c("lav-300"), 400: c("lav-400"), 500: c("lav-500"), 600: c("lav-600"), 700: c("lav-700") },
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],

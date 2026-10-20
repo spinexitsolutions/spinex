@@ -149,7 +149,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
             </div>
             <div className="mt-5 flex justify-center gap-1.5 lg:hidden" aria-hidden>
               {projects.map((p, i) => (
-                <motion.span key={p.id} animate={{ width: i === index ? 22 : 6, backgroundColor: i === index ? "#6E59D9" : "#E6E2EF" }} className="h-1.5 rounded-full" />
+                <motion.span key={p.id} animate={{ width: i === index ? 22 : 6 }} className={`h-1.5 rounded-full transition-colors ${i === index ? "bg-lav-600" : "bg-line"}`} />
               ))}
             </div>
           </div>

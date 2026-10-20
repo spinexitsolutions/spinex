@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, History, GraduationCap, Check, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -19,6 +19,8 @@ import PlannerEditor from "./PlannerEditor";
 import HistoryPanel from "./HistoryPanel";
 import Dashboard from "./Dashboard";
 import UsersManager from "./UsersManager";
+import ApiKeysManager from "./ApiKeysManager";
+import ThemeEditor from "./ThemeEditor";
 import { can, roleLabel, type Perm, type Role } from "@/lib/roles";
 import type { Lead } from "@/lib/leads";
 
@@ -44,6 +46,7 @@ const sections = [
   { id: "internship", label: "Internship", Icon: GraduationCap, group: "Content" , perm: "content" },
   { id: "showreel", label: "Showreel video", Icon: Film, group: "Content" , perm: "content" },
   { id: "chatbot", label: "Chatbot and FAQ", Icon: Bot, group: "Content" , perm: "content" },
+  { id: "theme", label: "Colour theme", Icon: Palette, group: "Files and settings" , perm: "content" },
   { id: "media", label: "Media", Icon: Images, group: "Files and settings" , perm: "content" },
   { id: "banners", label: "Page banners", Icon: ImageIcon, group: "Files and settings" , perm: "content" },
   { id: "seo", label: "SEO", Icon: Search, group: "Files and settings" , perm: "content" },
@@ -51,6 +54,7 @@ const sections = [
   { id: "history", label: "History", Icon: History, group: "Files and settings" , perm: "content" },
   { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Files and settings" , perm: "content" },
   { id: "backup", label: "Backup and restore", Icon: DatabaseBackup, group: "Files and settings" , perm: "content" },
+  { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Files and settings" , perm: "users" },
   { id: "team", label: "Team and roles", Icon: UserCog, group: "Files and settings" , perm: "users" },
 ] as const;
 
@@ -130,7 +134,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team"] as string[]).includes(section) && (!me || can(me.role, "content"));
+  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys"] as string[]).includes(section) && (!me || can(me.role, "content"));
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
@@ -188,6 +192,10 @@ function AdminShell() {
             {section === "overview" && <Dashboard go={(id) => setSection(id as SectionId)} name={me?.name ?? "there"} />}
 
             {section === "team" && <UsersManager />}
+
+            {section === "apikeys" && <ApiKeysManager />}
+
+            {section === "theme" && <ThemeEditor value={draft.theme} onChange={(v) => set("theme", v)} />}
 
             {section === "leads" && <LeadsManager onNewCount={setNewLeads} />}
 
@@ -345,7 +353,10 @@ function AdminShell() {
                   <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[
                     { key: "gaId", label: "Google Analytics 4 ID", hint: "looks like G-XXXXXXXXXX" },
                     { key: "clarityId", label: "Microsoft Clarity project ID", hint: "10 letters, from clarity.microsoft.com" },
+                    { key: "metaPixelId", label: "Meta (Facebook) Pixel ID", hint: "numbers only, from Meta Events Manager" },
+                    { key: "gtmId", label: "Google Tag Manager ID", hint: "looks like GTM-XXXXXXX" },
                   ]} />
+                  <p className="mt-4 text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => setSection("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>
                 </Card>
               </div>
             )}
