@@ -443,7 +443,7 @@ const baseContent: SiteContent = {
     whatsapp: "919509211852",
     location: "Jaipur, Rajasthan, India",
     instagram: "https://www.instagram.com/spinex.websolutions",
-    linkedin: "https://www.linkedin.com/company/spinex-web-solutions/",
+    linkedin: "https://in.linkedin.com/company/spinex-it-solutions",
     youtube: "https://www.youtube.com/@SpiNexITSolutions",
   },
   chatbot: {
@@ -552,6 +552,9 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   // Logo used to load from the old website; it now ships with this site.
   const brand = out.brand as SiteContent["brand"];
   if (!brand.logo || /spinexwebsolutions\.in\/img\/d\.png/i.test(brand.logo)) out.brand = { ...brand, logo: base.brand.logo };
+  // Old LinkedIn page saved in the admin panel → new company page.
+  const ct = out.contact as SiteContent["contact"];
+  if (!ct.linkedin || /linkedin\.com\/company\/spinex-web-solutions/i.test(ct.linkedin)) out.contact = { ...ct, linkedin: base.contact.linkedin };
   // Old company email saved in the admin panel → new one.
   const contact = out.contact as SiteContent["contact"];
   if (contact.email?.trim().toLowerCase() === "info.spinexwebsolutions@gmail.com") out.contact = { ...contact, email: base.contact.email };
