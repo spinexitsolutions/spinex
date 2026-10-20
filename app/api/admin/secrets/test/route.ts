@@ -3,6 +3,7 @@ import { guard, jsonBody } from "@/lib/admin-guard";
 import { getSecret } from "@/lib/secrets";
 import { notifyAdmin, smtpSettings } from "@/lib/notify";
 import { sendLeadWebhook } from "@/lib/webhook";
+import { leadAlertText, sendWhatsAppAlert } from "@/lib/whatsapp-alert";
 
 // Buttons in Admin → API keys: send a test email, ask the AI one question, or send a sample lead.
 export async function POST(req: Request) {
@@ -39,6 +40,12 @@ export async function POST(req: Request) {
   if (kind === "webhook") {
     const r = await sendLeadWebhook({ name: "Test lead", phone: "9999999999", email: "test@example.com", services: "Website development", message: "This is a test from Admin → API keys.", source: "test", createdAt: new Date().toISOString() });
     return NextResponse.json({ ok: r.ok, message: r.ok ? "Sample lead sent. Check your app." : r.error });
+  }
+
+  if (kind === "whatsapp") {
+    const text = leadAlertText({ name: "Test lead", phone: "9999999999", services: "Website development", message: "This is a test from Admin → API keys." }, "Test", `${new URL(req.url).origin}/admin`);
+    const r = await sendWhatsAppAlert(text);
+    return NextResponse.json({ ok: r.ok, message: r.ok ? "Test message sent. Check WhatsApp (it can take a minute)." : r.error });
   }
 
   return NextResponse.json({ ok: false, message: "Unknown test." }, { status: 400 });

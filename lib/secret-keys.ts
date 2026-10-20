@@ -2,7 +2,7 @@
 // Shared by the server and the admin screen; holds names only, never values.
 
 export type KeyDef = { name: string; label: string; hint?: string; secret?: boolean; placeholder?: string };
-export type KeyGroup = { id: string; title: string; note: string; keys: KeyDef[]; test?: "email" | "chat" | "webhook" };
+export type KeyGroup = { id: string; title: string; note: string; keys: KeyDef[]; test?: "email" | "chat" | "webhook" | "whatsapp" };
 
 export const KEY_GROUPS: KeyGroup[] = [
   {
@@ -16,6 +16,21 @@ export const KEY_GROUPS: KeyGroup[] = [
       { name: "SMTP_USER", label: "Email login", placeholder: "you@gmail.com" },
       { name: "SMTP_PASS", label: "Password / App password", secret: true },
       { name: "NOTIFY_EMAIL", label: "Send alerts to", placeholder: "spinexitsolutions@gmail.com" },
+    ],
+  },
+  {
+    id: "whatsapp",
+    title: "WhatsApp alerts",
+    note: "Get a WhatsApp message for every new enquiry. Fill ONE of the three options: (1) your own WhatsApp API panel link, (2) Meta WhatsApp Cloud API, or (3) CallMeBot, free for your own number: follow the 3 steps on callmebot.com (save their number, send them the activation message on WhatsApp) and paste the API key they reply with. Turn alerts on or off in Admin → Auto-reply and alerts.",
+    test: "whatsapp",
+    keys: [
+      { name: "WA_ALERT_TO", label: "Send alerts to (your WhatsApp number)", placeholder: "91 98765 43210", hint: "with country code" },
+      { name: "WA_API_URL", label: "Option 1 · Your WhatsApp panel's send link", secret: true, placeholder: "https://yourpanel.com/api/send?to={to}&message={text}&token=…", hint: "put {to} and {text} where the number and message go" },
+      { name: "WA_CLOUD_TOKEN", label: "Option 2 · Cloud API access token", secret: true, hint: "Meta → WhatsApp → API setup (use a permanent system user token)" },
+      { name: "WA_CLOUD_PHONE_ID", label: "Option 2 · Phone number ID", hint: "the sending number's ID, not the number itself" },
+      { name: "WA_CLOUD_TEMPLATE", label: "Option 2 · Template name", placeholder: "new_lead_alert", hint: "an approved Utility template with one {{1}} in the body" },
+      { name: "WA_CLOUD_LANG", label: "Option 2 · Template language", placeholder: "en", hint: "e.g. en, en_US, hi" },
+      { name: "CALLMEBOT_APIKEY", label: "Option 3 · CallMeBot API key", secret: true },
     ],
   },
   {

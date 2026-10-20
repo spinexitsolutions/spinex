@@ -5,6 +5,9 @@ import { LEAD_SOURCES, type LeadSource } from "@/lib/leads";
 import { notifyAdmin } from "@/lib/notify";
 import { checkHuman } from "@/lib/antispam";
 import { sendLeadWebhook } from "@/lib/webhook";
+import { getContent } from "@/lib/content-server";
+import { sendAutoReply } from "@/lib/auto-reply";
+import { leadAlertText, sendWhatsAppAlert } from "@/lib/whatsapp-alert";
 
 // Public endpoint used by the contact form, home contact section and project planner.
 export async function POST(req: Request) {
@@ -26,10 +29,25 @@ export async function POST(req: Request) {
   const plan = String(body.plan ?? "").slice(0, 2000);
   const stamp = new Date().toISOString();
 
-  await (await leadsCol()).insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", notes: "", createdAt: stamp, updatedAt: stamp });
+  const col = await leadsCol();
+  // One thank-you email per address per day, so the form can't be used to flood someone's inbox.
+  const repliedToday = data.email
+    ? (await col.countDocuments({ email: data.email, createdAt: { $gte: new Date(Date.now() - 864e5).toISOString() } }, { collation: { locale: "en", strength: 2 } }).catch(() => 1)) > 0
+    : true;
+  await col.insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", notes: "", createdAt: stamp, updatedAt: stamp });
 
-  // Webhook and alert email run side by side; both give up quickly and never throw.
+  const content = await getContent().catch(() => null);
+  const adminUrl = `${new URL(req.url).origin}/admin`;
+
+  // Webhook, alert email, thank-you email and WhatsApp alert run side by side; all give up quickly and never throw.
   await Promise.allSettled([
+    content && !repliedToday ? sendAutoReply(content, data) : Promise.resolve(false),
+    content?.leadReplies?.whatsappAlert
+      ? sendWhatsAppAlert(leadAlertText({ ...data }, LEAD_SOURCES[source], adminUrl)).then((r) => {
+          if (!r.ok && r.via) console.error("WhatsApp alert failed:", r.error);
+          return r;
+        })
+      : Promise.resolve(null),
     sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], createdAt: stamp }),
     notifyAdmin(
       `New enquiry from ${data.name}`,
@@ -43,7 +61,7 @@ export async function POST(req: Request) {
         ["Plan", plan],
         ["From", LEAD_SOURCES[source]],
       ],
-      `${new URL(req.url).origin}/admin`,
+      adminUrl,
     ),
   ]);
 

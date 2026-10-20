@@ -119,6 +119,16 @@ export type TrustedBy = {
   reviewUrl: string; // link to the reviews
 };
 
+// Email sent to the visitor right after an enquiry, and the WhatsApp alert to you (Admin → Auto-reply and alerts).
+export type LeadReplies = {
+  autoReply: boolean;
+  replySubject: string; // {name} {service} {phone} {email} {company} are filled in
+  replyTitle: string;
+  replyBody: string; // blank line = new paragraph
+  replyWhatsappButton: boolean; // "Chat with us on WhatsApp" button (number from Contact details)
+  whatsappAlert: boolean; // WhatsApp message to you for every new enquiry (set up in API keys)
+};
+
 export type Signer = { id: string; name: string; title: string; image: string };
 
 export type InternRole = { id: string; title: string; description: string; skills: string[] };
@@ -179,6 +189,7 @@ export type SiteContent = {
   industries: Industry[];
   testimonials: Testimonial[];
   trusted: TrustedBy;
+  leadReplies: LeadReplies;
   showreel: { title: string; video: string; poster: string };
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
@@ -491,6 +502,14 @@ const baseContent: SiteContent = {
     reviewCount: "",
     ratingSource: "Google",
     reviewUrl: "",
+  },
+  leadReplies: {
+    autoReply: true,
+    replySubject: "Thanks {name}, we got your enquiry",
+    replyTitle: "Thanks for reaching out, {name}!",
+    replyBody: "We've received your enquiry about {service}. Someone from our team will call you on {phone} within 24 hours.\n\nIf it's urgent, just reply to this email or message us on WhatsApp.\n\nTeam {company}",
+    replyWhatsappButton: true,
+    whatsappAlert: true,
   },
   banners: {
     about: img("photo-1556761175-5973dc0f32e7", 1600),

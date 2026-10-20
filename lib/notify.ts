@@ -62,7 +62,7 @@ const wrap = (title: string, paragraphs: string[], button?: { label: string; url
   <div style="background:#120F1B;color:#fff;padding:20px 24px;border-radius:16px 16px 0 0;font-size:18px;font-weight:bold">Spinex IT Solutions</div>
   <div style="border:1px solid #E6E2EF;border-top:0;padding:24px;border-radius:0 0 16px 16px">
     <h2 style="margin:0 0 14px;font-size:20px">${esc(title)}</h2>
-    ${paragraphs.map((p) => `<p style="margin:0 0 12px">${esc(p)}</p>`).join("")}
+    ${paragraphs.map((p) => `<p style="margin:0 0 12px;white-space:pre-line">${esc(p)}</p>`).join("")}
     ${button ? `<p style="margin:20px 0 4px"><a href="${esc(button.url)}" style="background:#6E59D9;color:#fff;padding:11px 20px;border-radius:999px;text-decoration:none">${esc(button.label)}</a></p>` : ""}
   </div>
 </div>`;

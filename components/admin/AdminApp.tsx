@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -21,6 +21,7 @@ import Dashboard from "./Dashboard";
 import UsersManager from "./UsersManager";
 import ApiKeysManager from "./ApiKeysManager";
 import ThemeEditor from "./ThemeEditor";
+import ReplyPreview from "./ReplyPreview";
 import { can, roleLabel, type Perm, type Role } from "@/lib/roles";
 import type { Lead } from "@/lib/leads";
 
@@ -29,6 +30,7 @@ const sections = [
   { id: "leads", label: "Leads", Icon: Inbox, group: "Inbox" , perm: "leads" },
   { id: "interns", label: "Interns", Icon: Users, group: "Inbox" , perm: "people" },
   { id: "certificates", label: "Certificates", Icon: Award, group: "Inbox" , perm: "people" },
+  { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "content" },
   { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Content" , perm: "content" },
@@ -664,6 +666,40 @@ function AdminShell() {
                   newItem={() => ({ id: uid(), name: "", role: "", quote: "" })}
                   fields={[{ key: "name", label: "Client name" }, { key: "role", label: "Role and company" }, { key: "quote", label: "Quote", type: "textarea" }]} />
               </>
+            )}
+
+            {section === "replies" && (
+              <div className="space-y-6">
+                <Card title="Thank-you email to the visitor" note="Sent right after someone sends an enquiry with their email address. It goes from the email set up in API keys → Email alerts, and their reply comes to your 'Send alerts to' address. One email per address per day.">
+                  <label className="flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.leadReplies.autoReply} onChange={(e) => set("leadReplies", { ...draft.leadReplies, autoReply: e.target.checked })} />
+                    <span className="font-medium">Send the thank-you email</span>
+                  </label>
+                  <div className="mt-5">
+                    <ObjectEditor value={draft.leadReplies} onChange={(v) => set("leadReplies", v)} fields={[
+                      { key: "replySubject", label: "Subject" },
+                      { key: "replyTitle", label: "Heading inside the email" },
+                      { key: "replyBody", label: "Message", type: "textarea", hint: "Leave a blank line for a new paragraph. {name} {service} {phone} {email} {company} are filled in automatically." },
+                    ]} />
+                  </div>
+                  <label className="mt-5 flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.leadReplies.replyWhatsappButton} onChange={(e) => set("leadReplies", { ...draft.leadReplies, replyWhatsappButton: e.target.checked })} />
+                    <span className="font-medium">Add a "Chat with us on WhatsApp" button</span>
+                  </label>
+                  <p className="mt-1 pl-8 text-sm text-muted">Uses the WhatsApp number from Contact details.</p>
+                  <p className="mb-3 mt-7 text-sm font-semibold text-lav-700">Preview (with a sample enquiry)</p>
+                  <ReplyPreview content={draft} />
+                </Card>
+                <Card title="WhatsApp alert to you" note="A WhatsApp message to your number for every new enquiry, with the lead's details and a one-tap link to reply to them on WhatsApp. You still get the alert email too.">
+                  <label className="flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.leadReplies.whatsappAlert} onChange={(e) => set("leadReplies", { ...draft.leadReplies, whatsappAlert: e.target.checked })} />
+                    <span className="font-medium">Send me a WhatsApp alert for new enquiries</span>
+                  </label>
+                  <p className="mt-4 rounded-xl bg-mist px-4 py-3 text-sm text-muted">
+                    Your number and the WhatsApp service are set in {me && can(me.role, "users") ? <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys → WhatsApp alerts</button> : <b>API keys → WhatsApp alerts</b>} (owner only). There is a &quot;Send test WhatsApp&quot; button there. Until it is set up, nothing is sent.
+                  </p>
+                </Card>
+              </div>
             )}
 
             {section === "trusted" && (

@@ -103,7 +103,7 @@ export default function ApiKeysManager() {
             </div>
             {g.test && (
               <button type="button" onClick={() => test(g.test!)} disabled={tests[g.test]?.busy || dirty} title={dirty ? "Save your changes first" : undefined} className="btn-ghost px-4 py-2 text-sm disabled:opacity-50">
-                {tests[g.test]?.busy ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />} {g.test === "email" ? "Send test email" : g.test === "chat" ? "Test chatbot" : "Send test lead"}
+                {tests[g.test]?.busy ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />} {g.test === "email" ? "Send test email" : g.test === "chat" ? "Test chatbot" : g.test === "whatsapp" ? "Send test WhatsApp" : "Send test lead"}
               </button>
             )}
           </div>
