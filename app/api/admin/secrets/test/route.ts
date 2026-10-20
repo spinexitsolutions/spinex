@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { getSecret } from "@/lib/secrets";
 import { notifyAdmin, smtpSettings } from "@/lib/notify";
 import { sendLeadWebhook } from "@/lib/webhook";
@@ -8,7 +8,7 @@ import { sendLeadWebhook } from "@/lib/webhook";
 export async function POST(req: Request) {
   const deny = await guard("users");
   if (deny) return deny;
-  const { kind } = (await req.json().catch(() => ({}))) as { kind?: string };
+  const { kind } = (await jsonBody(req)) as { kind?: string };
 
   if (kind === "email") {
     const s = await smtpSettings();

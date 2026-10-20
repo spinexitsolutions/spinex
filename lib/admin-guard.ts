@@ -12,8 +12,10 @@ export async function getSession(): Promise<Session | null> {
     const { usersCol } = await import("./users");
     const { ObjectId } = await import("mongodb");
     if (!ObjectId.isValid(s.uid)) return null;
-    const u = await (await usersCol()).findOne({ _id: new ObjectId(s.uid) }, { projection: { role: 1, active: 1, name: 1 } });
+    const u = await (await usersCol()).findOne({ _id: new ObjectId(s.uid) }, { projection: { role: 1, active: 1, name: 1, tokenVersion: 1 } });
     if (!u || u.active === false) return null;
+    // Password changed / account deactivated since this login: the old session is no longer valid.
+    if ((Number(u.tokenVersion) || 0) !== (s.tv ?? 0)) return null;
     return { ...s, role: u.role, name: u.name || s.name };
   } catch (e) {
     // Can't confirm this team member is still active, so don't let them in (the env owner is unaffected).
@@ -38,4 +40,10 @@ export async function guard(perm: Perm, needDb = true): Promise<NextResponse | n
   if (!can(s.role, perm)) return forbidden();
   if (needDb && !hasDb()) return noDb();
   return null;
+}
+
+// The request's JSON body as a plain object. A missing/invalid body, `null`, an array or a primitive gives {}.
+export async function jsonBody(req: Request): Promise<Record<string, unknown>> {
+  const b: unknown = (await req.json().catch(() => null)) ?? {};
+  return b && typeof b === "object" && !Array.isArray(b) ? (b as Record<string, unknown>) : {};
 }

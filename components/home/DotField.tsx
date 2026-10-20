@@ -26,7 +26,13 @@ export default function DotField({ className = "" }: { className?: string }) {
     let visible = true;
     let running = false;
 
+    // Theme colours are CSS variables ("R G B"), read on every paint so a theme change recolours the dots.
+    const themeVar = (name: string, fallback: string) =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
     const paint = () => {
+      const accent = themeVar("--c-lav-600", "110 89 217");
+      const base = themeVar("--c-ink", "18 15 27");
       ctx.clearRect(0, 0, w, h);
       for (let x = gap / 2; x < w; x += gap) {
         for (let y = gap / 2; y < h; y += gap) {
@@ -35,7 +41,7 @@ export default function DotField({ className = "" }: { className?: string }) {
           const f = d < 150 ? 1 - d / 150 : 0;
           const px = x + (dx / (d || 1)) * f * 14;
           const py = y + (dy / (d || 1)) * f * 14;
-          ctx.fillStyle = f > 0 ? `rgba(110, 89, 217, ${0.16 + f * 0.7})` : "rgba(18, 15, 27, 0.10)";
+          ctx.fillStyle = f > 0 ? `rgb(${accent} / ${0.16 + f * 0.7})` : `rgb(${base} / 0.1)`;
           ctx.beginPath();
           ctx.arc(px, py, 1.1 + f * 1.6, 0, Math.PI * 2);
           ctx.fill();

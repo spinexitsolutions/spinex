@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
 import { cleanLead, leadsCol, toLead } from "@/lib/lead-db";
 
@@ -10,7 +10,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
-  const data = cleanLead(await req.json().catch(() => ({})));
+  const data = cleanLead(await jsonBody(req));
   if (data.name === "") return NextResponse.json({ error: "Name can't be empty." }, { status: 400 });
   const doc = await (await leadsCol()).findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });

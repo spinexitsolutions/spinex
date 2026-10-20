@@ -5,7 +5,8 @@ import type { Role } from "./roles";
 export const COOKIE = "spinex_admin";
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "");
 
-export type Session = { email: string; name: string; role: Role; uid: string };
+// tv = the team member's tokenVersion at login; bumping it in the database logs out older sessions.
+export type Session = { email: string; name: string; role: Role; uid: string; tv?: number };
 
 export async function createToken(s: Session) {
   return new SignJWT({ ...s }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("7d").sign(secret());
@@ -20,6 +21,7 @@ export async function verifyToken(token?: string): Promise<Session | null> {
       name: String(payload.name ?? payload.email),
       role: (payload.role as Role) || "owner",
       uid: String(payload.uid ?? "env"),
+      tv: typeof payload.tv === "number" ? payload.tv : 0,
     };
   } catch {
     return null;

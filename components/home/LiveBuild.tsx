@@ -51,7 +51,7 @@ export default function LiveBuild() {
         my.set((e.clientY - r.top) / r.height);
       }}
     >
-      <motion.div style={{ rotateX: rx, rotateY: ry }} className="relative rounded-[22px] border border-line bg-white shadow-[0_40px_90px_-30px_rgba(41,26,110,0.45)] [transform-style:preserve-3d]">
+      <motion.div style={{ rotateX: rx, rotateY: ry }} className="relative rounded-[22px] border border-line bg-white shadow-[0_40px_90px_-30px_rgb(var(--c-lav-700)/0.45)] [transform-style:preserve-3d]">
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <div className="flex gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#FF6159]" />

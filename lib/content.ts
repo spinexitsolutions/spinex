@@ -109,7 +109,7 @@ export type Product = {
 };
 
 export const productSlug = (p: Pick<Product, "slug" | "name" | "id">) =>
-  (p.slug || p.name || p.id).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || p.id;
+  String(p.slug || p.name || p.id || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || p.id;
 
 export type PlanTime = { id: string; min: number; max: number; monthly: boolean }; // id = service id, days
 export type PlanSize = { id: string; label: string; hint: string; factor: number };
@@ -119,6 +119,7 @@ export type PlannerSettings = { times: PlanTime[]; sizes: PlanSize[]; extras: Pl
 import type { ThemeSettings } from "./theme";
 
 export type SiteContent = {
+  contentVersion: number; // format of the saved data; one-time upgrades of old defaults run only below CONTENT_VERSION
   theme: ThemeSettings;
   planner: PlannerSettings;
   removedServices: string[]; // built-in service ids the admin deleted on purpose
@@ -161,7 +162,17 @@ export type SiteContent = {
 // Stock photos live in public/images/stock (run `npm run offline-images` once to download them).
 const img = (id: string, _w = 1400) => `/images/stock/${id}.jpg`;
 
+// Saved data with a lower (or no) contentVersion gets the one-time upgrades in mergeContent.
+export const CONTENT_VERSION = 2;
+
+// Website timeline in the default FAQs. Saved copies of the old text ("1 to 2 weeks") are upgraded.
+const WEB_TIME_NEW = "A business website usually takes 2 to 4 weeks, depending on pages and content.";
+const WEB_TIME_OLD_FAQ = "A business website usually takes 1 to 2 weeks after we receive your content.";
+const CHAT_TIME_NEW = `${WEB_TIME_NEW} Online stores also take 2 to 4 weeks, depending on products and integrations.`;
+const CHAT_TIME_OLD = "A business website usually takes 1 to 2 weeks. Online stores take 2 to 4 weeks depending on products and integrations.";
+
 const baseContent: SiteContent = {
+  contentVersion: CONTENT_VERSION,
   theme: { preset: "lavender", accent: "#6E59D9", dark: "#120F1B" },
   planner: {
     times: [
@@ -292,7 +303,7 @@ const baseContent: SiteContent = {
       seoDescription: "Custom websites and WordPress sites in Jaipur that load fast, rank on Google and bring enquiries. Free quote from Spinex IT Solutions.",
       features: ["Custom design for your brand", "Mobile-first and fast loading", "SEO-ready pages and Google Analytics", "Contact forms, WhatsApp and call buttons", "Easy to update admin panel", "Hosting, domain and SSL setup"],
       body: "Your website is often the first thing a customer checks before they call you. We build websites for Jaipur businesses that look professional, load in seconds on mobile data and are set up to show on Google.\n\n## What we build\n\n- Business and company websites\n- Landing pages for ads and campaigns\n- WordPress websites you can update yourself\n- Custom Next.js and React websites for startups\n\n## How it works\n\nWe start with a short call to understand your business and customers. You see the design before any code is written, so changes are quick. Once you approve it, we build, test on every screen size and launch on your domain.\n\n## Why businesses choose Spinex\n\nEvery site we deliver is fast, secure and ready for search from day one. You get one team for design, development and marketing, and you own your domain, code and content.",
-      faqs: "How much does a website cost in Jaipur?\nIt depends on the number of pages and features. Share what you need and we send a clear written quote within a day.\n\nHow long does it take to build a website?\nA business website usually takes 1 to 2 weeks after we receive your content.\n\nWill I be able to update the website myself?\nYes. We give you an easy admin panel and show you how to change text and images.",
+      faqs: "How much does a website cost in Jaipur?\nIt depends on the number of pages and features. Share what you need and we send a clear written quote within a day.\n\nHow long does it take to build a website?\nA business website usually takes 2 to 4 weeks, depending on pages and content.\n\nWill I be able to update the website myself?\nYes. We give you an easy admin panel and show you how to change text and images.",
     },
     {
       id: "ecommerce",
@@ -512,7 +523,7 @@ const baseContent: SiteContent = {
       {
         id: "f2",
         q: "How long does it take?",
-        a: "A business website usually takes 1 to 2 weeks. Online stores take 2 to 4 weeks depending on products and integrations.",
+        a: CHAT_TIME_NEW,
         keywords: ["time", "long", "days", "weeks", "kitne din", "timeline", "deadline", "when"],
       },
       {
@@ -554,7 +565,7 @@ const serviceBlank = { slug: "", seoTitle: "", seoDescription: "", body: "", fea
 // Web address of a service page: /services/<slug>
 // Normalised like productSlug, so "/services/Web Design" and "Web Design" both become "web-design".
 export const serviceSlug = (s: Pick<Service, "slug" | "title" | "id">) =>
-  (s.slug || s.title || s.id)
+  String(s.slug || s.title || s.id || "")
     .toLowerCase()
     .trim()
     .replace(/^\/?services\//, "")
@@ -597,6 +608,9 @@ export const LATER_SERVICES = ["ondemand", "promotion"];
 
 export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): SiteContent {
   const out = { ...base } as Record<string, unknown>;
+  // Upgrades of old built-in values run only for data saved before contentVersion 2, so a value
+  // the admin later sets on purpose (even one equal to an old default) is never overwritten again.
+  const legacy = !(Number(saved?.contentVersion) >= CONTENT_VERSION);
   for (const key of Object.keys(base) as (keyof SiteContent)[]) {
     const value = saved?.[key];
     if (value === undefined || value === null) continue;
@@ -607,21 +621,25 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   out.services = (out.services as Service[]).map((sv) => ({ ...serviceBlank, ...(base.services.find((d) => d.id === sv.id) ?? {}), ...sv }));
   // Upgrade untouched old SEO defaults.
   const seo = { ...(out.seo as SiteContent["seo"]) };
-  for (const k of ["metaTitle", "metaDescription", "heading", "text"] as const) {
-    if (seo[k] === OLD_SEO_DEFAULTS[k]) seo[k] = base.seo[k];
+  if (legacy) {
+    for (const k of ["metaTitle", "metaDescription", "heading", "text"] as const) {
+      if (seo[k] === OLD_SEO_DEFAULTS[k]) seo[k] = base.seo[k];
+    }
+    if (seo.text === "Spinex IT Solutions is an IT and digital marketing company based in Jaipur, Rajasthan. We work with businesses all over India, from local shops and clinics to growing D2C brands and startups, and handle everything they need to grow online under one roof.\n\nWe design and build business websites, Shopify and WooCommerce stores, and on-demand apps for booking, delivery and services, complete with customer app, partner app and admin panel. Everything we build is fast, works well on mobile and is ready for Google from day one.\n\nOnce you are live, our team takes care of growth: SEO, Google Business Profile, Google and Meta ads, social media management, reels and video editing, graphic design, and brand promotion with influencers and launch campaigns.\n\nClients outside Jaipur work with us online through video calls, WhatsApp updates and shared progress links, and get the same team and the same quality. Every project starts with a free call and a clear written quote.") seo.text = base.seo.text;
+    if (Array.isArray(seo.areas) && seo.areas.join("|") === OLD_SEO_DEFAULTS.areas.join("|")) seo.areas = base.seo.areas;
   }
-  if (seo.text === "Spinex IT Solutions is an IT and digital marketing company based in Jaipur, Rajasthan. We work with businesses all over India, from local shops and clinics to growing D2C brands and startups, and handle everything they need to grow online under one roof.\n\nWe design and build business websites, Shopify and WooCommerce stores, and on-demand apps for booking, delivery and services, complete with customer app, partner app and admin panel. Everything we build is fast, works well on mobile and is ready for Google from day one.\n\nOnce you are live, our team takes care of growth: SEO, Google Business Profile, Google and Meta ads, social media management, reels and video editing, graphic design, and brand promotion with influencers and launch campaigns.\n\nClients outside Jaipur work with us online through video calls, WhatsApp updates and shared progress links, and get the same team and the same quality. Every project starts with a free call and a clear written quote.") seo.text = base.seo.text;
-  if (Array.isArray(seo.areas) && seo.areas.join("|") === OLD_SEO_DEFAULTS.areas.join("|")) seo.areas = base.seo.areas;
   out.seo = seo;
   out.projects = (out.projects as Project[]).filter((pr) => SAMPLE_PROJECTS[pr.id] !== pr.title);
   // Placeholder numbers from the first version are swapped for honest defaults;
   // stats the admin has edited are kept as they are.
   const OLD_STATS: Record<string, string> = { "100+": "Projects delivered", "98%": "Client satisfaction", "24/7": "Support", "250%": "Avg. visibility lift" };
-  out.stats = (out.stats as SiteContent["stats"]).map((st, i) => (OLD_STATS[st.value] === st.label ? base.stats[i] ?? st : st));
+  if (legacy) out.stats = (out.stats as SiteContent["stats"]).map((st, i) => (OLD_STATS[st.value] === st.label ? base.stats[i] ?? st : st));
   out.chatbot = {
     ...(out.chatbot as SiteContent["chatbot"]),
     faqs: (out.chatbot as SiteContent["chatbot"]).faqs.map((f) =>
-      f.a === "Yes. We offer 24/7 support and maintenance plans for updates, backups and security." ? { ...f, a: base.chatbot.faqs.find((x) => x.id === f.id)?.a ?? f.a } : f,
+      f.a === "Yes. We offer 24/7 support and maintenance plans for updates, backups and security." || f.a === CHAT_TIME_OLD
+        ? { ...f, a: base.chatbot.faqs.find((x) => x.id === f.id)?.a ?? f.a }
+        : f,
     ),
   };
   // Logo used to load from the old website; it now ships with this site.
@@ -641,15 +659,20 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   const contact = out.contact as SiteContent["contact"];
   if (contact.email?.trim().toLowerCase() === "info.spinexwebsolutions@gmail.com") out.contact = { ...contact, email: base.contact.email };
   const hero = out.hero as SiteContent["hero"];
-  if (hero.kicker === "Website development company in Jaipur") out.hero = { ...hero, kicker: base.hero.kicker };
+  if (legacy && hero.kicker === "Website development company in Jaipur") out.hero = { ...hero, kicker: base.hero.kicker };
   // Planner timings: keep saved values, add defaults for services that have none yet.
   const pl = out.planner as SiteContent["planner"];
   const savedTimes = (Array.isArray(pl.times) ? pl.times : []).map((t) =>
-    t.id === "ecommerce" && t.min === 14 && t.max === 28 && !t.monthly ? { ...t, min: 0, max: 0, monthly: true } : t,
+    legacy && t.id === "ecommerce" && t.min === 14 && t.max === 28 && !t.monthly ? { ...t, min: 0, max: 0, monthly: true } : t,
   );
   out.planner = { ...pl, times: [...savedTimes, ...base.planner.times.filter((t) => !savedTimes.some((x) => x.id === t.id))] };
   out.services = (out.services as Service[]).map((sv) => {
-    if (sv.id !== "ecommerce") return sv;
+    // Old built-in website timeline in a service's FAQs (only when the whole text is still the old default).
+    const fresh0 = base.services.find((d) => d.id === sv.id);
+    if (fresh0 && typeof sv.faqs === "string" && fresh0.faqs.includes(WEB_TIME_NEW) && sv.faqs === fresh0.faqs.replace(WEB_TIME_NEW, WEB_TIME_OLD_FAQ)) {
+      sv = { ...sv, faqs: fresh0.faqs };
+    }
+    if (!legacy || sv.id !== "ecommerce") return sv;
     const fresh = base.services.find((d) => d.id === "ecommerce");
     if (!fresh) return sv;
     const next = { ...sv } as Record<string, unknown>;
@@ -667,6 +690,12 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
       if (d && !list.some((x) => x.id === id) && !(saved.removedServices ?? []).includes(id)) list.push(d);
     }
   }
+  // "Services under one roof" shows the real number of services (only when it is a plain number).
+  const serviceCount = String((out.services as Service[]).length);
+  out.stats = (out.stats as SiteContent["stats"]).map((st) =>
+    st && st.label === "Services under one roof" && /^\d+$/.test(String(st.value ?? "").trim()) ? { ...st, value: serviceCount } : st,
+  );
+  out.contentVersion = CONTENT_VERSION;
   return out as SiteContent;
 }
 

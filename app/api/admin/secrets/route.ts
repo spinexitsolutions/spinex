@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { saveSecrets, secretsView } from "@/lib/secrets";
 
 // Admin → API keys. Owner only (same permission as Team and roles). Values are never sent back,
@@ -14,7 +14,7 @@ export async function GET() {
 export async function PUT(req: Request) {
   const deny = await guard("users");
   if (deny) return deny;
-  const body = (await req.json().catch(() => ({}))) as { keys?: Record<string, unknown>; custom?: Record<string, unknown>; headCode?: unknown };
+  const body = (await jsonBody(req)) as { keys?: Record<string, unknown>; custom?: Record<string, unknown>; headCode?: unknown };
   const clean = (o?: Record<string, unknown>) =>
     Object.fromEntries(Object.entries(o ?? {}).filter(([, v]) => v === null || typeof v === "string").map(([k, v]) => [k, v as string | null]));
   try {

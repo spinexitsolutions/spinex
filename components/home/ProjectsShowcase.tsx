@@ -11,6 +11,12 @@ import ProjectStage from "./ProjectFrames";
 
 const AUTO_MS = 6000;
 
+// Live link for a project: only http(s) or site-relative links (the server sanitises these too).
+const liveUrl = (p: Project) => {
+  const u = p.url?.trim() ?? "";
+  return /^https?:\/\//i.test(u) || /^\/(?!\/)/.test(u) || u === "/" ? u : "";
+};
+
 // Each project plays inside a laptop (and a phone on larger screens).
 // Pick from the list, or let it move on by itself; hovering pauses it.
 // `full` (Work page): every project, category filters, no section heading.
@@ -95,8 +101,10 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
           <ul className="hidden max-h-[560px] overflow-y-auto pr-1 lg:block" role="tablist" aria-label="Projects" data-lenis-prevent>
             {projects.map((p, i) => {
               const on = i === index;
+              const url = on ? liveUrl(p) : "";
               return (
-                <li key={p.id}>
+                <li key={p.id} className="relative">
+                  {on && <motion.span layoutId="project-active" className="absolute inset-0 rounded-2xl bg-white shadow-[0_10px_30px_-18px_rgba(18,15,27,0.35)]" transition={{ type: "spring", stiffness: 380, damping: 34 }} />}
                   <button
                     role="tab"
                     aria-selected={on}
@@ -104,7 +112,6 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
                     onFocus={() => setPaused(true)}
                     className="group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-left"
                   >
-                    {on && <motion.span layoutId="project-active" className="absolute inset-0 rounded-2xl bg-white shadow-[0_10px_30px_-18px_rgba(18,15,27,0.35)]" transition={{ type: "spring", stiffness: 380, damping: 34 }} />}
                     <span className="relative flex items-center justify-between gap-4">
                       <span>
                         <span className={`flex items-center gap-2 text-xs ${on ? "text-lav-700" : "text-muted"}`}>{p.category}{isDemo(p) && <DemoTag />}</span>
@@ -124,6 +131,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
                       </span>
                     )}
                   </button>
+                  {url && <VisitLink href={url} className="relative -mt-1 mb-3 ml-5" />}
                 </li>
               );
             })}
@@ -140,6 +148,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
                   <p className="flex items-center gap-2 text-xs text-lav-700">{current.category}{isDemo(current) && <DemoTag />}</p>
                   <h3 className="font-display text-2xl font-semibold tracking-tight">{current.title}</h3>
                   <p className="mt-1 text-sm text-muted">{current.summary}</p>
+                  {liveUrl(current) && <VisitLink href={liveUrl(current)} className="mt-2" />}
                 </motion.div>
               </AnimatePresence>
               <div className="flex shrink-0 gap-2">
@@ -156,6 +165,14 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function VisitLink({ href, className = "" }: { href: string; className?: string }) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={`inline-flex min-h-6 items-center gap-1 text-sm font-medium text-lav-700 underline-offset-4 hover:underline ${className}`}>
+      Visit site <span aria-hidden>↗</span>
+    </a>
   );
 }
 

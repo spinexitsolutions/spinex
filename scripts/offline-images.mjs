@@ -18,7 +18,8 @@ const BUILT_IN = [
   "photo-1574717024653-61fd2cf4d44d", "photo-1611162617474-5b21e879e113",
 ];
 
-const UNSPLASH = /https:\/\/images\.unsplash\.com\/(photo-[0-9]+-[0-9a-f]+)[^"'\s)]*/g;
+// Stops at quotes, spaces, ")" and backslashes (the text searched is JSON, where a quote appears as \").
+const UNSPLASH = /https:\/\/images\.unsplash\.com\/(photo-[0-9]+-[0-9a-f]+)[^"'\s)\\]*/g;
 
 async function download(id) {
   const file = path.join(DIR, `${id}.jpg`);
@@ -80,10 +81,25 @@ async function main() {
             console.log(`   FAILED  ${id}  (${e.message})`);
           }
         }
-        const replaced = text.replace(UNSPLASH, (_m, id) => (fs.existsSync(path.join(DIR, `${id}.jpg`)) ? `/images/stock/${id}.jpg` : _m));
-        const count = ids.length;
-        await col.updateOne({ _id: "content" }, { $set: { data: JSON.parse(replaced), updatedAt: new Date() } });
-        console.log(`   Updated ${count} image link${count === 1 ? "" : "s"} in the saved website content.`);
+        let count = 0;
+        const replaced = text.replace(UNSPLASH, (m, id) => {
+          if (!fs.existsSync(path.join(DIR, `${id}.jpg`))) return m;
+          count++;
+          return `/images/stock/${id}.jpg`;
+        });
+        if (!count) {
+          console.log("   No Unsplash links to replace in the saved website content.");
+        } else {
+          // Only write if nobody saved from Admin since we read it (same updatedAt), so no edit is lost.
+          const res = await col.updateOne(
+            { _id: "content", updatedAt: doc.updatedAt ?? null },
+            { $set: { data: JSON.parse(replaced), updatedAt: new Date() } },
+          );
+          if (res.matchedCount) console.log(`   Updated ${count} image link${count === 1 ? "" : "s"} in the saved website content.`);
+          else {
+            console.warn("   WARNING: the website content was saved by someone else meanwhile, so it was not changed. Run this again.");
+          }
+        }
       }
     } catch (e) {
       failed++;

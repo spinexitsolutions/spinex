@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
 import { hashPassword, toUser, usersCol, validRole } from "@/lib/users";
 
@@ -10,7 +10,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Team member not found." }, { status: 404 });
-  const b = ((await req.json().catch(() => null)) ?? {}) as Record<string, unknown>; // a "null" body is treated as empty
+  const b = await jsonBody(req); // a "null" body is treated as empty
   const set: Record<string, unknown> = {};
   if (b.name !== undefined) set.name = String(b.name).trim().slice(0, 80);
   if (b.role !== undefined) set.role = validRole(b.role);
@@ -24,7 +24,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
     const cur = await (await usersCol()).findOne({ _id }, { projection: { passwordHash: 0 } });
     return cur ? NextResponse.json(toUser(cur)) : NextResponse.json({ error: "Team member not found." }, { status: 404 });
   }
-  const doc = await (await usersCol()).findOneAndUpdate({ _id }, { $set: set }, { returnDocument: "after", projection: { passwordHash: 0 } });
+  // A new password or deactivation logs out the member's existing sessions.
+  const update: Record<string, unknown> = { $set: set };
+  if (set.passwordHash !== undefined || set.active === false) update.$inc = { tokenVersion: 1 };
+  const doc = await (await usersCol()).findOneAndUpdate({ _id }, update, { returnDocument: "after", projection: { passwordHash: 0 } });
   if (!doc) return NextResponse.json({ error: "Team member not found." }, { status: 404 });
   return NextResponse.json(toUser(doc));
 }

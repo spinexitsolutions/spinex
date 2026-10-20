@@ -4,23 +4,33 @@ import { useEffect, useRef, useState } from "react";
 import { animate, useInView } from "framer-motion";
 import { useContent } from "../ContentProvider";
 
+// Splits "4.9", "1,200+", "₹10L" into prefix, number and suffix. Returns null when there's no
+// single number to count ("All India", "Free", "24/7").
+function parse(value: string) {
+  const m = value.match(/^(\D*?)(\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)(.*)$/);
+  if (!m || m[3].startsWith("/")) return null;
+  const [, pre, raw, post] = m;
+  const decimals = raw.split(".")[1]?.length ?? 0;
+  const grouped = raw.includes(",");
+  // "12,00,000" uses Indian grouping; "1,200" / "1,200,000" use international grouping.
+  const fmt = new Intl.NumberFormat(/\d,\d{2},/.test(raw) ? "en-IN" : "en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: grouped });
+  return { pre, post, target: parseFloat(raw.replace(/,/g, "")), format: (v: number) => `${pre}${fmt.format(v)}${post}` };
+}
+
 function Counter({ value }: { value: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
-  const match = value.match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/);
-  const [shown, setShown] = useState(match && !match[3].startsWith("/") ? `${match[1]}0${match[3]}` : value);
+  const [shown, setShown] = useState(() => parse(value)?.format(0) ?? value);
 
   useEffect(() => {
-    if (!inView || !match) return;
-    const [, pre, num, post] = match;
-    // "24/7" style values have no single number to count; show as-is.
-    if (post.startsWith("/")) {
+    const p = parse(value);
+    if (!p) {
       setShown(value);
       return;
     }
-    const c = animate(0, parseFloat(num), { duration: 1.8, ease: [0.22, 1, 0.36, 1], onUpdate: (v) => setShown(`${pre}${Math.round(v)}${post}`) });
+    if (!inView) return;
+    const c = animate(0, p.target, { duration: 1.8, ease: [0.22, 1, 0.36, 1], onUpdate: (v) => setShown(p.format(v)), onComplete: () => setShown(value) });
     return () => c.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inView, value]);
 
   return <span ref={ref}>{shown}</span>;

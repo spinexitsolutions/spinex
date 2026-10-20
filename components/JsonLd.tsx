@@ -14,7 +14,7 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
     name: content.brand.name,
     description: content.seo.metaDescription,
     url: SITE_URL,
-    logo: abs(content.brand.logo),
+    ...(content.brand.logo?.trim() ? { logo: abs(content.brand.logo.trim()) } : {}),
     image: `${SITE_URL}/og-image.jpg`,
     telephone: `+91${c.phone}`,
     email: c.email,

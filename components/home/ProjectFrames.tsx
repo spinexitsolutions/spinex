@@ -170,7 +170,7 @@ function Laptop({ project, open, play }: { project: Project; open: boolean; play
         animate={open ? { rotateX: 0, opacity: 1 } : undefined}
         transition={{ duration: 1.3, ease }}
         style={{ transformOrigin: "bottom center" }}
-        className="relative mx-[6%] rounded-t-[18px] border border-[#2c2836] bg-[#17141f] p-[1.6%] pb-[2.4%] shadow-[0_40px_80px_-30px_rgba(41,26,110,0.45)]"
+        className="relative mx-[6%] rounded-t-[18px] border border-[#2c2836] bg-[#17141f] p-[1.6%] pb-[2.4%] shadow-[0_40px_80px_-30px_rgb(var(--c-lav-700)/0.45)]"
       >
         <span aria-hidden className="absolute left-1/2 top-[0.6%] z-10 h-[2.4%] w-[12%] -translate-x-1/2 rounded-b-md bg-[#17141f]" />
         <div className="relative aspect-[16/10] overflow-hidden rounded-[6px] bg-white">
@@ -552,7 +552,7 @@ function OnDemandFrame({ project, play }: { project: Project; play: boolean }) {
           <ScrollShot src={project.partner} alt="" play={play} frameRatio={19 / 9} />
         ) : (
           <div className="flex h-full flex-col">
-            <div className="relative h-[48%] bg-[#E9E6F2]">
+            <div className="relative h-[48%] bg-line">
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
                 <path d="M0,25 L100,40 M0,70 L100,58 M30,0 L42,100 M74,0 L68,100" stroke="#fff" strokeWidth="5" />
                 <motion.path d="M22,82 C40,62 52,58 70,30" className="stroke-lav-600" strokeWidth="3" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: play ? 1 : 0.3 }} transition={{ duration: 2, ease }} />

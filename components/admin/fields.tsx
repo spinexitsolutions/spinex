@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import ImageField from "./ImageField";
@@ -33,7 +33,7 @@ export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unk
     return (
       <div>
         {label}
-        <textarea id={id} className="input min-h-[96px] resize-y" value={((value as string[] | undefined) ?? []).join("\n")} onChange={(e) => onChange(e.target.value.split("\n"))} />
+        <textarea id={id} className="input min-h-[96px] resize-y" value={((value as string[] | undefined) ?? []).join("\n")} onChange={(e) => onChange(e.target.value.split("\n"))} onBlur={(e) => { const clean = e.target.value.split("\n").map((l) => l.trim()).filter(Boolean); if (clean.join("\n") !== e.target.value) onChange(clean); }} />
         <p className="mt-1 text-xs text-muted">One per line</p>
       </div>
     );
@@ -84,6 +84,8 @@ export function TagInput({ id, value, onChange, className = "input" }: { id?: st
   const joined = (value ?? []).join(", ");
   const [text, setText] = useState(joined);
   const [focused, setFocused] = useState(false);
+  // Text shown when the field was focused; untouched text is never re-split on blur.
+  const shownOnFocus = useRef(joined);
   useEffect(() => {
     if (!focused) setText(joined);
   }, [joined, focused]);
@@ -92,9 +94,9 @@ export function TagInput({ id, value, onChange, className = "input" }: { id?: st
       id={id}
       className={className}
       value={focused ? text : joined}
-      onFocus={() => { setText(joined); setFocused(true); }}
+      onFocus={() => { shownOnFocus.current = joined; setText(joined); setFocused(true); }}
       onChange={(e) => { setText(e.target.value); onChange(parseTags(e.target.value)); }}
-      onBlur={() => { setFocused(false); onChange(parseTags(text)); }}
+      onBlur={() => { setFocused(false); if (text !== shownOnFocus.current) onChange(parseTags(text)); }}
     />
   );
 }

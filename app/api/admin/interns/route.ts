@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { clean, internsCol, toIntern } from "@/lib/intern-db";
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const deny = await guard("people");
   if (deny) return deny;
-  const body = await req.json().catch(() => ({}));
+  const body = await jsonBody(req);
   const data = clean(body);
   if (!data.name) return NextResponse.json({ error: "Enter the intern's name." }, { status: 400 });
   const doc = { status: "applied", ...data, kind: body.kind === "job" ? "job" : "internship", source: "admin", certId: "", issuedOn: "", createdAt: new Date().toISOString() };

@@ -61,6 +61,9 @@ function inline(text: string) {
   return s;
 }
 
+// A line that is just one image: ![alt](url)
+const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
+
 export type TocItem = { id: string; text: string; level: 2 | 3 };
 
 // Small, safe Markdown renderer: headings, paragraphs, lists, quotes, images, links, code, dividers.
@@ -106,7 +109,7 @@ export function renderMarkdown(md: string): { html: string; toc: TocItem[] } {
 
     if (/^(-{3,}|\*{3,})$/.test(line.trim())) { out.push("<hr />"); i++; continue; }
 
-    const img = line.trim().match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
+    const img = line.trim().match(IMAGE_LINE);
     if (img) {
       out.push(`<figure><img src="${esc(safeUrl(img[2]))}" alt="${esc(img[1])}" loading="lazy" />${img[1] ? `<figcaption>${esc(img[1])}</figcaption>` : ""}</figure>`);
       i++;
@@ -134,10 +137,16 @@ export function renderMarkdown(md: string): { html: string; toc: TocItem[] } {
       continue;
     }
 
-    const para: string[] = [];
-    while (i < lines.length && lines[i].trim() && !/^(#{2,3}\s|>|```|\s*[-*]\s+|\s*\d+[.)]\s+|!\[|-{3,}\s*$)/.test(lines[i])) para.push(lines[i++]);
-    if (para.length) out.push(`<p>${inline(para.join(" "))}</p>`);
-    else i++;
+    // A paragraph: this line (whatever it starts with, e.g. an incomplete "![…" ) plus following lines
+    // until a blank line or another block. Only a complete image line ends it, not any "![" text.
+    const para: string[] = [lines[i++]];
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^(#{2,3}\s|>|```|\s*[-*]\s+|\s*\d+[.)]\s+|-{3,}\s*$)/.test(lines[i]) &&
+      !IMAGE_LINE.test(lines[i].trim())
+    ) para.push(lines[i++]);
+    out.push(`<p>${inline(para.join(" "))}</p>`);
   }
 
   return { html: out.join("\n"), toc };

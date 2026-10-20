@@ -12,7 +12,7 @@ import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type Si
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
-import MediaLibrary from "./MediaLibrary";
+import MediaLibrary, { MediaDeleteContext } from "./MediaLibrary";
 import PostsManager from "./PostsManager";
 import HomeLayoutEditor from "./HomeLayoutEditor";
 import PlannerEditor from "./PlannerEditor";
@@ -98,6 +98,8 @@ function AdminShell() {
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
   const [conflict, setConflict] = useState("");
+  // True when the latest saved content couldn't be fetched, so the save base is unknown.
+  const [loadFailed, setLoadFailed] = useState(false);
   const [certSaving, setCertSaving] = useState(false);
   const [postDirty, setPostDirty] = useState(false);
   // Last x-content-updated seen from the server; sent back on save so edits by someone else aren't overwritten.
@@ -130,19 +132,26 @@ function AdminShell() {
         window.location.href = "/admin/login";
         return false;
       }
-      if (!res.ok) return false;
+      if (!res.ok) {
+        if (baseUpdated.current === null) setLoadFailed(true);
+        return false;
+      }
       const data = (await res.json()) as SiteContent;
       if (!replace && dirtyRef.current) {
         // Edits were made before this load finished. Safe only if the saved content is what the edits started from.
-        if (JSON.stringify(data) === JSON.stringify(prevContent.current)) baseUpdated.current = res.headers.get("x-content-updated") ?? "";
-        else setConflict("The saved website content changed after this page opened. Reload to get the latest version before saving.");
+        if (JSON.stringify(data) === JSON.stringify(prevContent.current)) {
+          baseUpdated.current = res.headers.get("x-content-updated") ?? "";
+          setLoadFailed(false);
+        } else setConflict("The saved website content changed after this page opened. Reload to get the latest version before saving.");
         return false;
       }
       baseUpdated.current = res.headers.get("x-content-updated") ?? "";
+      setLoadFailed(false);
       update(data);
       setDraft(data);
       return true;
     } catch {
+      if (baseUpdated.current === null) setLoadFailed(true);
       return false;
     }
   };
@@ -173,7 +182,7 @@ function AdminShell() {
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2200); };
   // Saves to the database; the public site updates straight away.
-  const saveContent = async (next: SiteContent, done: string) => {
+  const saveContent = async (next: SiteContent, done: string, replace = false) => {
     setSaving(true);
     try {
       const headers: Record<string, string> = { "content-type": "application/json" };
@@ -196,7 +205,19 @@ function AdminShell() {
       baseUpdated.current = res.headers.get("x-content-updated") ?? baseUpdated.current;
       setConflict("");
       update(data);
-      setDraft(data);
+      // Import and reset replace everything. A normal save keeps any part edited while it was in progress.
+      if (replace) {
+        setDraft(data as SiteContent);
+        flash(done);
+        return;
+      }
+      setDraft((d) => {
+        const out = { ...(data as SiteContent) } as Record<string, unknown>;
+        const dr = d as unknown as Record<string, unknown>;
+        const sent = next as unknown as Record<string, unknown>;
+        for (const k of Object.keys(dr)) if (JSON.stringify(dr[k]) !== JSON.stringify(sent[k])) out[k] = dr[k];
+        return out as unknown as SiteContent;
+      });
       flash(done);
     } catch (e) {
       flash(e instanceof Error ? e.message : "Couldn't save. Try again.");
@@ -208,8 +229,11 @@ function AdminShell() {
   // Certificate design and signers save on their own, so HR can save them too.
   const saveCertificate = async () => {
     setCertSaving(true);
+    const sent = draft.certificate;
     try {
-      const res = await fetch("/api/admin/content/certificate", { method: "PUT", headers: { "content-type": "application/json", ...(baseUpdated.current ? { "x-base-updated": baseUpdated.current } : {}) }, body: JSON.stringify({ certificate: draft.certificate }) });
+      // "none" = nothing was saved yet when we loaded (same as the content save).
+      const base: Record<string, string> = baseUpdated.current === null ? {} : { "x-base-updated": baseUpdated.current || "none" };
+      const res = await fetch("/api/admin/content/certificate", { method: "PUT", headers: { "content-type": "application/json", ...base }, body: JSON.stringify({ certificate: sent }) });
       if (res.status === 401) {
         window.location.href = "/admin/login";
         return;
@@ -221,7 +245,8 @@ function AdminShell() {
       // so our next content save still warns about their newer changes.
       if (res.headers.get("x-base-current") === "1") baseUpdated.current = res.headers.get("x-content-updated") ?? baseUpdated.current;
       update({ ...content, certificate });
-      setDraft((d) => ({ ...d, certificate }));
+      // Keep certificate edits made while the save was in progress.
+      setDraft((d) => (JSON.stringify(d.certificate) !== JSON.stringify(sent) ? d : { ...d, certificate }));
       flash("Certificate saved");
     } catch (e) {
       flash(e instanceof Error ? e.message : "Couldn't save the certificate. Try again.");
@@ -230,6 +255,8 @@ function AdminShell() {
     }
   };
   const canCert = !!me && (can(me.role, "people") || can(me.role, "content"));
+  // The server ignores integration changes from anyone but the owner or an admin.
+  const canIntegrations = !!me && (me.role === "owner" || me.role === "admin");
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
@@ -239,6 +266,7 @@ function AdminShell() {
   const current = sections.find((s) => s.id === section)!;
 
   return (
+    <MediaDeleteContext.Provider value={!!me && can(me.role, "content")}>
     <div className="min-h-screen bg-mist lg:flex">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col bg-ink p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between px-2 pb-8 pt-2">
@@ -292,6 +320,12 @@ function AdminShell() {
         </header>
 
         <main className="mx-auto max-w-4xl p-5 sm:p-8">
+          {loadFailed && !conflict && (
+            <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+              <p className="min-w-[200px] flex-1">Couldn&apos;t load the latest saved content. Reload before saving.</p>
+              <button onClick={reload} className="btn-ghost bg-white px-4 py-2 text-sm"><RotateCcw size={15} /> Reload</button>
+            </div>
+          )}
           {conflict && (
             <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
               <p className="min-w-[200px] flex-1"><span className="font-semibold">Not saved.</span> {conflict} Your changes are still here.</p>
@@ -401,7 +435,7 @@ function AdminShell() {
                 <p className="mb-4 text-sm text-muted">The stages shown in the home page Process section, in order. Each step keeps its picture by position.</p>
                 <ListEditor items={draft.process} titleKey="title" addLabel="Add step" onChange={(v) => set("process", v)}
                   newItem={() => ({ id: uid(), title: "", time: "", text: "", gets: [] })}
-                  fields={[{ key: "title", label: "Name" }, { key: "time", label: "Time", hint: "e.g. 3–5 days" }, { key: "text", label: "Description", type: "textarea" }, { key: "gets", label: "What the client gets", type: "tags" }]} />
+                  fields={[{ key: "title", label: "Name" }, { key: "time", label: "Time", hint: "e.g. 3–5 days" }, { key: "text", label: "Description", type: "textarea" }, { key: "gets", label: "What the client gets", type: "lines" }]} />
               </>
             )}
 
@@ -417,7 +451,7 @@ function AdminShell() {
                 <p className="mb-4 text-sm text-muted">Shown as &quot;I want to …&quot; on the home page. Service ids: {draft.services.map((s) => s.id).join(", ")}.</p>
                 <ListEditor items={draft.goals} titleKey="short" addLabel="Add goal" onChange={(v) => set("goals", v)}
                   newItem={() => ({ id: uid(), short: "", label: "", steps: [], services: [] })}
-                  fields={[{ key: "short", label: "Button text" }, { key: "label", label: "Sentence ending", hint: "after \"I want to\"" }, { key: "steps", label: "What we'd do", type: "tags" }, { key: "services", label: "Related service ids", type: "tags" }]} />
+                  fields={[{ key: "short", label: "Button text" }, { key: "label", label: "Sentence ending", hint: "after \"I want to\"" }, { key: "steps", label: "What we'd do", type: "lines" }, { key: "services", label: "Related service ids", type: "tags" }]} />
               </>
             )}
 
@@ -431,7 +465,7 @@ function AdminShell() {
                   <div className="mt-6">
                     <ObjectEditor value={draft.careers} onChange={(v) => set("careers", v)} fields={[
                       { key: "intro", label: "Intro text", type: "textarea" },
-                      { key: "perks", label: "Why work with us", type: "tags" },
+                      { key: "perks", label: "Why work with us", type: "lines" },
                     ]} />
                   </div>
                 </Card>
@@ -442,7 +476,7 @@ function AdminShell() {
                       { key: "title", label: "Job title" }, { key: "type", label: "Type", hint: "Full-time, part-time, contract" },
                       { key: "location", label: "Location" }, { key: "experience", label: "Experience", hint: "e.g. 1–3 years" },
                       { key: "salary", label: "Salary", hint: "optional, e.g. ₹15,000–25,000 / month" },
-                      { key: "description", label: "What they'll do", type: "textarea" }, { key: "requirements", label: "Requirements", type: "tags" },
+                      { key: "description", label: "What they'll do", type: "textarea" }, { key: "requirements", label: "Requirements", type: "lines" },
                     ]} />
                 </Card>
               </div>
@@ -450,6 +484,8 @@ function AdminShell() {
 
             {section === "integrations" && (
               <div className="space-y-6">
+                {!canIntegrations && <p className="rounded-2xl border border-line bg-white px-4 py-3 text-sm text-muted">Only the owner or an admin can change these.</p>}
+                <fieldset disabled={!canIntegrations} className="space-y-6 disabled:opacity-70">
                 <Card title="Floating WhatsApp button" note="A green button on every page that opens WhatsApp chat with you.">
                   <label className="flex items-center gap-3">
                     <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={draft.integrations.whatsappButton} onChange={(e) => set("integrations", { ...draft.integrations, whatsappButton: e.target.checked })} />
@@ -467,8 +503,9 @@ function AdminShell() {
                     { key: "metaPixelId", label: "Meta (Facebook) Pixel ID", hint: "numbers only, from Meta Events Manager" },
                     { key: "gtmId", label: "Google Tag Manager ID", hint: "looks like GTM-XXXXXXX" },
                   ]} />
-                  <p className="mt-4 text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>
                 </Card>
+                </fieldset>
+                {me && can(me.role, "users") && <p className="text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>}
               </div>
             )}
 
@@ -529,7 +566,7 @@ function AdminShell() {
                   { key: "slug", label: "Page address", hint: "/services/… (e.g. website-development)" },
                   { key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
                   { key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
-                  { key: "features", label: "What you get (page side box)", type: "tags" },
+                  { key: "features", label: "What you get (page side box)", type: "lines" },
                   { key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
                   { key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },
                 ]} />
@@ -551,7 +588,7 @@ function AdminShell() {
                     { key: "price", label: "Price", hint: "e.g. ₹2,999/month — empty shows \"Price on request\"" },
                     { key: "image", label: "Cover screenshot", type: "image" },
                     { key: "gallery", label: "More screenshots", type: "images" },
-                    { key: "features", label: "Key features", type: "tags" },
+                    { key: "features", label: "Key features", type: "lines" },
                     { key: "demoUrl", label: "Live demo link", hint: "Optional" },
                     { key: "videoUrl", label: "YouTube video link", hint: "Optional, shown on the page" },
                     { key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
@@ -592,7 +629,7 @@ function AdminShell() {
                 newItem={() => ({ id: uid(), title: "", description: "", image: "", points: [] })}
                 fields={[
                   { key: "title", label: "Name" }, { key: "description", label: "Description" },
-                  { key: "points", label: "Key points", type: "tags" }, { key: "image", label: "Image", type: "image" },
+                  { key: "points", label: "Key points", type: "lines" }, { key: "image", label: "Image", type: "image" },
                 ]} />
             )}
 
@@ -616,7 +653,7 @@ function AdminShell() {
                   <div className="mt-6">
                     <ObjectEditor value={draft.internship} onChange={(v) => set("internship", v)} fields={[
                       { key: "intro", label: "Intro text", type: "textarea" },
-                      { key: "perks", label: "What interns get", type: "tags" },
+                      { key: "perks", label: "What interns get", type: "lines" },
                       { key: "durations", label: "Duration options", type: "tags" },
                       { key: "modes", label: "Work mode options", type: "tags" },
                     ]} />
@@ -626,7 +663,7 @@ function AdminShell() {
                   <ListEditor items={draft.internship.roles} titleKey="title" addLabel="Add role"
                     onChange={(v) => set("internship", { ...draft.internship, roles: v })}
                     newItem={() => ({ id: uid(), title: "", description: "", skills: [] })}
-                    fields={[{ key: "title", label: "Role name" }, { key: "description", label: "What they'll do", type: "textarea" }, { key: "skills", label: "Skills needed", type: "tags" }]} />
+                    fields={[{ key: "title", label: "Role name" }, { key: "description", label: "What they'll do", type: "textarea" }, { key: "skills", label: "Skills needed", type: "lines" }]} />
                 </Card>
               </div>
             )}
@@ -650,7 +687,7 @@ function AdminShell() {
               <Card title="Showreel">
                 <ObjectEditor value={draft.showreel} onChange={(v) => set("showreel", v)} fields={[
                   { key: "title", label: "Heading" },
-                  { key: "video", label: "Video URL", hint: "MP4 link, or put showreel.mp4 in the public folder" },
+                  { key: "video", label: "Video URL", hint: "MP4 link, or put showreel.mp4 in the public folder and enter /showreel.mp4" },
                   { key: "poster", label: "Cover image", type: "image", hint: "Shown before the video loads" },
                 ]} />
               </Card>
@@ -682,7 +719,7 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "backup" && <Backup draft={draft} onImport={(c) => { if (dirty && !confirm("You have unsaved changes. Importing replaces them with the file's content. Continue?")) return; saveContent(c, "Content imported and live"); }} onReset={() => saveContent(defaultContent, "Default content restored")} />}
+            {section === "backup" && <Backup draft={draft} onImport={(c) => { if (!confirm(`Replace the live website content with this backup? Current content stays in History.${dirty ? " Your unsaved changes here will be replaced too." : ""}`)) return; saveContent(c, "Content imported and live", true); }} onReset={() => saveContent(defaultContent, "Default content restored", true)} />}
           </motion.div>
         </main>
       </div>
@@ -697,6 +734,7 @@ function AdminShell() {
         )}
       </AnimatePresence>
     </div>
+    </MediaDeleteContext.Provider>
   );
 }
 
@@ -762,9 +800,18 @@ function Backup({ draft, onImport, onReset }: { draft: SiteContent; onImport: (c
         <input ref={file} type="file" accept="application/json" className="hidden" onChange={async (e) => {
           const f = e.target.files?.[0];
           if (!f) return;
-          try { onImport(mergeContent(defaultContent, JSON.parse(await f.text()))); setError(""); }
-          catch { setError("That file isn't a valid content.json. Download one from this page and try again."); }
           e.target.value = "";
+          let parsed: unknown;
+          try { parsed = JSON.parse(await f.text()); }
+          catch { setError("That file isn't a valid content.json. Download one from this page and try again."); return; }
+          // Must look like site content: a plain object with at least one known top-level key.
+          const known = Object.keys(defaultContent);
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !Object.keys(parsed).some((k) => known.includes(k))) {
+            setError("That file doesn't contain website content. Choose a content.json downloaded from this page.");
+            return;
+          }
+          try { const merged = mergeContent(defaultContent, parsed as Partial<SiteContent>); setError(""); onImport(merged); }
+          catch { setError("That file isn't a valid content.json. Download one from this page and try again."); }
         }} />
         <button onClick={() => file.current?.click()} className="btn-ghost"><Upload size={17} /> Choose file</button>
         {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}

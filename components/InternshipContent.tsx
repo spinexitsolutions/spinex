@@ -121,7 +121,11 @@ export default function InternshipContent() {
           {!intern.open ? (
             <div className="rounded-[28px] border border-line bg-mist p-10 text-center">
               <h3 className="font-display text-2xl font-semibold">Applications are closed right now.</h3>
-              <p className="mt-2 text-muted">Follow us on Instagram to hear when the next batch opens.</p>
+              {/^https?:\/\//i.test(content.contact.instagram?.trim() ?? "") && (
+                <p className="mt-2 text-muted">
+                  <a href={content.contact.instagram.trim()} target="_blank" rel="noreferrer" className="font-medium text-ink underline underline-offset-4 hover:text-lav-700">Follow us on Instagram</a> to hear when the next batch opens.
+                </p>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

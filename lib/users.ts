@@ -4,6 +4,8 @@ import { ROLES, type Role } from "./roles";
 
 export type AdminUser = { id: string; name: string; email: string; role: Role; active: boolean; createdAt: string; lastLogin: string };
 
+// Stored on each admin_users document: tokenVersion (number, default 0). It is copied into the login
+// token as `tv`; bumping it (password reset, deactivation) logs out every older session of that member.
 export const usersCol = async () => (await getDb()).collection("admin_users");
 
 export function hashPassword(pw: string) {

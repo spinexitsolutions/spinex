@@ -11,7 +11,7 @@ export default function CTA() {
   const { content } = useContent();
   const box = useRef<HTMLDivElement>(null);
   const gx = useMotionValue(50), gy = useMotionValue(50);
-  const bg = useTransform([gx, gy], ([x, y]) => `radial-gradient(600px circle at ${x}% ${y}%, rgba(136,115,238,0.35), transparent 60%)`);
+  const bg = useTransform([gx, gy], ([x, y]) => `radial-gradient(600px circle at ${x}% ${y}%, rgb(var(--c-lav-500) / 0.35), transparent 60%)`);
   const bx = useSpring(0, { stiffness: 200, damping: 15 }), by = useSpring(0, { stiffness: 200, damping: 15 });
 
   return (

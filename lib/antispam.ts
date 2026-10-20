@@ -5,9 +5,14 @@ export type SpamCheck = { ok: true } | { ok: false; silent: boolean; status: num
 
 let indexReady = false;
 
-// The visitor's IP address as seen by the server (first entry of x-forwarded-for on Vercel).
+// The visitor's IP address as seen by the server. Prefers x-real-ip (set by the proxy), else the LAST
+// x-forwarded-for entry (added by the nearest proxy; earlier entries can be spoofed by the client).
+// On Vercel x-forwarded-for holds a single trusted value, so last == first.
 export function clientIp(req: Request) {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "local";
+  const real = req.headers.get("x-real-ip")?.trim();
+  if (real) return real;
+  const fwd = (req.headers.get("x-forwarded-for") || "").split(",").map((x) => x.trim()).filter(Boolean);
+  return fwd[fwd.length - 1] || "local";
 }
 
 async function limitsCol() {
@@ -59,13 +64,25 @@ async function turnstileOk(token: string, ip: string) {
   }
 }
 
+// True when the form was filled faster than a person could. Prefers the client-measured `elapsed` (ms);
+// otherwise compares server time with `startedAt`. Negative values (visitor's clock ahead) or huge ones pass.
+export function tooFast(f: { startedAt?: unknown; elapsed?: unknown }) {
+  const fast = (ms: number) => Number.isFinite(ms) && ms >= 0 && ms < 2500;
+  if (f.elapsed !== undefined && f.elapsed !== null && f.elapsed !== "") {
+    const e = Number(f.elapsed);
+    if (Number.isFinite(e)) return fast(e);
+  }
+  const started = Number(f.startedAt);
+  if (!started || !Number.isFinite(started)) return false;
+  return fast(Date.now() - started);
+}
+
 // Runs every spam check for a public form.
-export async function checkHuman(req: Request, f: { website?: unknown; startedAt?: unknown; cfToken?: unknown }, bucket: string, max = 6): Promise<SpamCheck> {
+export async function checkHuman(req: Request, f: { website?: unknown; startedAt?: unknown; elapsed?: unknown; cfToken?: unknown }, bucket: string, max = 6): Promise<SpamCheck> {
   // 1. Hidden field that only bots fill
   if (String(f.website ?? "")) return { ok: false, silent: true, status: 200, error: "" };
   // 2. Filled faster than a person could
-  const started = Number(f.startedAt);
-  if (started && Date.now() - started < 2500) return { ok: false, silent: true, status: 200, error: "" };
+  if (tooFast(f)) return { ok: false, silent: true, status: 200, error: "" };
   const ip = clientIp(req);
   // 3. Cloudflare Turnstile (only when keys are set)
   if (!(await turnstileOk(String(f.cfToken ?? ""), ip))) {

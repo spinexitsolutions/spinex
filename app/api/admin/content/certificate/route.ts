@@ -12,7 +12,9 @@ export async function PUT(req: Request) {
   const body = (await req.json().catch(() => null)) as { certificate?: unknown } | null;
   // The admin panel sends the content version it loaded; we report whether it was still current,
   // so the panel doesn't hide someone else's newer save from its own next content save.
-  const clientBase = req.headers.get("x-base-updated") ?? "";
+  // "none" = the panel loaded before any content was saved (same as an empty save time).
+  const rawBase = (req.headers.get("x-base-updated") ?? "").trim();
+  const clientBase = rawBase === "none" ? "" : rawBase;
   const certificate = cleanCertificate(body && typeof body === "object" ? body.certificate : null);
   if (!certificate) {
     return NextResponse.json({ error: "Check the certificate settings: title, text and verify link must be text, with at most 3 signers." }, { status: 400 });
@@ -30,7 +32,7 @@ export async function PUT(req: Request) {
     try {
       const updatedAt = await saveContent({ ...doc.content, certificate }, "Before changing certificate settings", doc.updatedAt || undefined);
       revalidateTag("content");
-      const baseWasCurrent = !!clientBase && clientBase === (doc.updatedAt || "");
+      const baseWasCurrent = rawBase !== "" && rawBase !== "unknown" && clientBase === (doc.updatedAt || "");
       return NextResponse.json({ certificate }, { headers: { "x-content-updated": updatedAt, "x-base-current": baseWasCurrent ? "1" : "0" } });
     } catch (e) {
       if (!(e instanceof ContentConflictError)) throw e;

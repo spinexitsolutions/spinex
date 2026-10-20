@@ -9,7 +9,7 @@ import type { Industry } from "@/lib/content";
 import { SplitHeading } from "../Reveal";
 
 const icons: Record<string, LucideIcon> = { local: Store, ecom: ShoppingBag, creators: Sparkles, startups: Rocket };
-const tones = ["bg-ink", "bg-[#2A2340]", "bg-lav-700", "bg-ink-3"];
+const tones = ["bg-ink", "bg-ink-3", "bg-lav-700", "bg-ink-3"];
 
 // Stacking cards: each industry pins near the top and the next one slides over it,
 // while the cards underneath shrink and dim. Works by scroll alone. Below md the cards

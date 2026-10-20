@@ -4,13 +4,21 @@ import { type SiteContent } from "./content";
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
-// Keeps http(s) links and site paths like "/work". A bare domain ("example.com/page") gets https:// added.
-// Anything else (javascript:, data:, vbscript:, "//host" …) becomes "".
+// Keeps http(s) links and site paths like "/work". A bare domain ("example.com/page") gets https:// added,
+// and a bare file name ("showreel.mp4") becomes a site path ("/showreel.mp4").
+// Anything else (javascript:, data:, vbscript:, "//host", text with spaces or control characters …) becomes "".
+const FILE_EXT = /\.(mp4|webm|mov|m4v|ogg|ogv|mp3|wav|jpe?g|png|gif|webp|avif|svg|ico|pdf|txt|json|xml|html?)$/i;
 export function safeUrl(v: unknown): string {
-  const s = typeof v === "string" ? v.trim() : "";
-  if (!s) return "";
+  const raw = typeof v === "string" ? v.trim() : "";
+  if (!raw) return "";
+  // Browsers strip tabs/newlines inside URLs ("/\t/evil.com" → "//evil.com"), so reject them outright.
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(raw)) return "";
+  // Ordinary spaces (e.g. "Show reel.mp4") are kept by encoding them.
+  const s = raw.replace(/ /g, "%20");
   if (/^https?:\/\/[^\s]/i.test(s)) return s;
   if (s.startsWith("/") && !s.startsWith("//") && !s.startsWith("/\\")) return s;
+  // A file name with no folder or scheme, e.g. "showreel.mp4" (not a domain like "example.com/x").
+  if (/^[\w-]+(\.[\w-]+)*$/.test(s) && FILE_EXT.test(s)) return `/${s}`;
   if (/^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#]|$)/i.test(s)) return `https://${s}`;
   return "";
 }
@@ -21,8 +29,11 @@ function shape(def: unknown, value: unknown): unknown {
   if (Array.isArray(def)) {
     if (!Array.isArray(value)) return undefined;
     const first = def[0];
-    if (isObj(first)) return value.filter(isObj);
-    if (typeof first === "string") return value.filter((x) => typeof x === "string");
+    // Each item is checked field by field against the first default item, so e.g. a number as a
+    // service title is dropped (and the default/blank is used) instead of crashing the pages.
+    if (isObj(first)) return value.filter(isObj).map((item) => shape(first, item) as Record<string, unknown>);
+    // Text lists: blank items (e.g. an empty line left in a "one per line" field) are removed.
+    if (typeof first === "string") return value.filter((x) => typeof x === "string" && x.trim() !== "");
     // No default item to compare with (an empty list): a list of objects keeps only objects.
     if (first === undefined && value.some(isObj)) return value.filter(isObj);
     return value.filter((x) => x !== null && x !== undefined);
@@ -38,7 +49,10 @@ function shape(def: unknown, value: unknown): unknown {
     }
     return out;
   }
-  return typeof value === typeof def ? value : undefined;
+  if (typeof value === typeof def) return value;
+  // A number or true/false where text is expected (e.g. a title of 5) is kept as text.
+  if (typeof def === "string" && ((typeof value === "number" && Number.isFinite(value)) || typeof value === "boolean")) return String(value);
+  return undefined;
 }
 
 // Keeps only known top-level sections, each with the same kind of value as the defaults.

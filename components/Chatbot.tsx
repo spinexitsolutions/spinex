@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { useContent } from "./ContentProvider";
-import { knowledgeText, localAnswer } from "@/lib/chat";
+import { localAnswer } from "@/lib/chat";
 import { ease } from "./Reveal";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -51,7 +51,7 @@ export default function Chatbot() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next.filter((m, i) => !(i === 0 && m.role === "assistant")), knowledge: knowledgeText(content) }),
+        body: JSON.stringify({ messages: next.filter((m, i) => !(i === 0 && m.role === "assistant")) }),
       });
       if (res.ok) reply = (await res.json()).reply ?? "";
     } catch {
@@ -70,7 +70,7 @@ export default function Chatbot() {
       <motion.button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close chat" : "Open chat"}
-        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-ink text-white shadow-[0_14px_40px_-10px_rgba(87,69,181,0.7)]"
+        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-ink text-white shadow-[0_14px_40px_-10px_rgb(var(--c-lav-700)/0.7)]"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         initial={{ scale: 0 }}

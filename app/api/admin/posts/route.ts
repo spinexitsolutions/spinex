@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { cleanPost, postsCol, toPost, uniqueSlug } from "@/lib/post-db";
 
 export async function GET() {
@@ -13,7 +13,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const deny = await guard("content");
   if (deny) return deny;
-  const data = cleanPost(await req.json().catch(() => ({})));
+  const data = cleanPost(await jsonBody(req));
   const title = String(data.title || "Untitled post");
   const stamp = new Date().toISOString();
   const doc = {

@@ -189,7 +189,14 @@ function PostEditor({ initial, onBack, onDirtyChange }: { initial: Post; onBack:
       const saved = post.id
         ? await api<Post>(`/api/admin/posts/${post.id}`, { method: "PATCH", body: JSON.stringify(body) })
         : await api<Post>("/api/admin/posts", { method: "POST", body: JSON.stringify(body) });
-      setPost(saved);
+      // Keep fields edited while the save was in progress (they differ from what was sent).
+      const sent = post as unknown as Record<string, unknown>;
+      setPost((cur) => {
+        const out = { ...saved } as unknown as Record<string, unknown>;
+        const c = cur as unknown as Record<string, unknown>;
+        for (const k of Object.keys(c)) if (JSON.stringify(c[k]) !== JSON.stringify(sent[k])) out[k] = c[k];
+        return out as unknown as Post;
+      });
       savedJson.current = JSON.stringify(saved);
       setSlugTouched(true);
       setMsg(status === "published" && post.status !== "published" ? "Published. It's live on the website." : status === "draft" && post.status === "published" ? "Moved back to drafts." : "Saved");

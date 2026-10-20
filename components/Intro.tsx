@@ -1,21 +1,39 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { AnimatePresence, animate, motion } from "framer-motion";
 import { ease } from "./Reveal";
 
 const SEEN_KEY = "spinex-intro-seen";
 const IntroContext = createContext(true);
+// Layout effect on the client so the decision lands before the first paint after hydration.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// Lock page scroll while the intro plays, padding the scrollbar's width so nothing shifts sideways.
+function lockScroll() {
+  const root = document.documentElement;
+  const bar = window.innerWidth - root.clientWidth;
+  root.style.overflow = "hidden";
+  if (bar > 0) root.style.paddingRight = `${bar}px`;
+}
+function unlockScroll() {
+  const root = document.documentElement;
+  root.style.overflow = "";
+  root.style.paddingRight = "";
+}
 
 // True once the intro loader has finished (or was skipped). Hero waits for this.
 export const useIntroDone = () => useContext(IntroContext);
 
+// The overlay is never part of the server HTML (no flash for returning visitors, nothing stuck
+// on screen without JS). On mount we decide: first visit in this session plays it, otherwise
+// the hero is released straight away.
 export function IntroProvider({ children }: { children: React.ReactNode }) {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
   const [done, setDone] = useState(false);
   const [count, setCount] = useState(0);
 
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let seen = true;
     try {
@@ -28,7 +46,8 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       setDone(true);
       return;
     }
-    document.documentElement.style.overflow = "hidden";
+    setShow(true);
+    lockScroll();
     const c = animate(0, 100, {
       duration: 1.3,
       ease: [0.65, 0, 0.35, 1],
@@ -44,7 +63,7 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
     });
     return () => {
       c.stop();
-      document.documentElement.style.overflow = "";
+      unlockScroll();
     };
   }, []);
 
@@ -53,7 +72,7 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       {children}
       <AnimatePresence
         onExitComplete={() => {
-          document.documentElement.style.overflow = "";
+          unlockScroll();
           setDone(true);
         }}
       >

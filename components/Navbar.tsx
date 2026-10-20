@@ -110,10 +110,14 @@ export default function Navbar() {
             aria-label="Main"
           >
             <Link href="/" className="group flex items-center gap-2 rounded-full pl-0.5 pr-3" aria-label={`${content.brand.name} home`}>
-              <span className="relative grid h-10 w-10 place-items-center">
-                <span className="absolute inset-0 scale-0 rounded-full bg-lav-100 transition-transform duration-500 group-hover:scale-100" />
-                <img src="/api/brand-icon?size=160" alt="" className="relative h-8 w-8 object-contain transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-[360deg]" />
-              </span>
+              {content.brand.logo?.trim() ? (
+                <span className="relative grid h-10 w-10 place-items-center">
+                  <span className="absolute inset-0 scale-0 rounded-full bg-lav-100 transition-transform duration-500 group-hover:scale-100" />
+                  <img src="/api/brand-icon?size=160" alt="" className="relative h-8 w-8 object-contain transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-[360deg]" />
+                </span>
+              ) : (
+                <span className="w-2" aria-hidden />
+              )}
               <span className="font-display text-[22px] font-semibold tracking-tight">Spinex</span>
             </Link>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { guard } from "@/lib/admin-guard";
+import { guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
 import { cleanPost, postsCol, toPost, uniqueSlug } from "@/lib/post-db";
 
@@ -20,7 +20,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Post not found." }, { status: 404 });
-  const data = cleanPost(await req.json().catch(() => ({})));
+  const data = cleanPost(await jsonBody(req));
   if (data.title === "") return NextResponse.json({ error: "Add a title." }, { status: 400 });
   if (data.slug !== undefined || data.title !== undefined) {
     data.slug = await uniqueSlug(String(data.slug || data.title || "post"), params.id);

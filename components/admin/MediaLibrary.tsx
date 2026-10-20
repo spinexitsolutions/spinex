@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { uploadImagesEach, type Uploaded } from "@/lib/upload-client";
 
+// Whether the signed-in user may delete uploads (needs the "content" permission). Set by AdminApp.
+export const MediaDeleteContext = createContext(false);
+
 // Grid of uploaded images. In "pick" mode, clicking an image chooses it.
 export default function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
+  const canDelete = useContext(MediaDeleteContext);
   const [items, setItems] = useState<Uploaded[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -101,7 +105,7 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
                   <button type="button" onClick={() => copy(it)} aria-label="Copy link" title="Copy link" className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink">
                     {copied === it.id ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
                   </button>
-                  <button type="button" onClick={() => remove(it)} aria-label="Delete image" title="Delete" className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
+                  {canDelete && <button type="button" onClick={() => remove(it)} aria-label="Delete image" title="Delete" className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
                 </figcaption>
               </motion.figure>
             ))}

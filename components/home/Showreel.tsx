@@ -11,6 +11,13 @@ const tags = ["Websites", "Online stores", "Reels", "Ad films", "Brand design"];
 // and the full video settles into a framed player.
 export default function Showreel() {
   const { content } = useContent();
+  // Nothing to show without a video.
+  if (!content.showreel.video?.trim()) return null;
+  return <ShowreelInner />;
+}
+
+function ShowreelInner() {
+  const { content } = useContent();
   const ref = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);

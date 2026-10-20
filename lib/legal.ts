@@ -8,12 +8,13 @@ export type LegalDoc = { slug: "privacy" | "terms" | "refund"; title: string; su
 export const LEGAL_UPDATED = "20 October 2026";
 
 const who = (c: SiteContent) => `${c.brand.name} ("Spinex", "we", "us"), ${c.contact.location}`;
-// Tracking tools switched on in Admin → Integrations (Google Analytics can also come from NEXT_PUBLIC_GA_ID).
+// Tracking tools switched on in Admin → Integrations (Google Analytics and Clarity can also come from
+// NEXT_PUBLIC_GA_ID / NEXT_PUBLIC_CLARITY_ID).
 const trackers = (c: SiteContent) => {
   const i = c.integrations;
   return {
     ga: !!(i?.gaId?.trim() || process.env.NEXT_PUBLIC_GA_ID?.trim()),
-    clarity: !!i?.clarityId?.trim(),
+    clarity: !!(i?.clarityId?.trim() || process.env.NEXT_PUBLIC_CLARITY_ID?.trim()),
     pixel: !!i?.metaPixelId?.trim(),
     gtm: !!i?.gtmId?.trim(),
   };
@@ -302,7 +303,25 @@ export function termsOfService(c: SiteContent): LegalDoc {
   };
 }
 
+// "a, b and c"
+const joinAnd = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+// Services marked "monthly" in the project planner (Admin → Planner), by their titles on the site.
+const monthlyServices = (c: SiteContent) => {
+  const times = Array.isArray(c.planner?.times) ? c.planner.times : [];
+  const services = Array.isArray(c.services) ? c.services : [];
+  const titles = times
+    .filter((t) => t?.monthly)
+    .map((t) => services.find((sv) => sv.id === t.id)?.title?.trim())
+    .filter((x): x is string => !!x);
+  return Array.from(new Set(titles));
+};
+
 export function refundPolicy(c: SiteContent): LegalDoc {
+  const monthly = monthlyServices(c);
+  const monthlyText = monthly.length
+    ? `${joinAnd([...monthly, "maintenance plans"])} are billed monthly and can be cancelled with 15 days' written notice before the next billing date. Fees for the current month are not refundable.`
+    : "Maintenance plans and other monthly services can be cancelled with 15 days' written notice before the next billing date. Fees for the current month are not refundable.";
   return {
     slug: "refund",
     title: "Refund & Cancellation Policy",
@@ -341,7 +360,7 @@ export function refundPolicy(c: SiteContent): LegalDoc {
         id: "monthly",
         title: "Monthly services",
         body: [
-          "Social media management, marketing and maintenance plans can be cancelled with 15 days' written notice before the next billing date. Fees for the current month are not refundable.",
+          monthlyText,
         ],
       },
       {

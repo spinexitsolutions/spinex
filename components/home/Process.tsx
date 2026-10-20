@@ -136,7 +136,7 @@ export default function Process() {
                     ))}
                   </ul>
                 </div>
-                <div className="hidden border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(136,115,238,0.22),transparent_60%)] p-6 md:block md:min-h-[300px] md:border-l">
+                <div className="hidden border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgb(var(--c-lav-500)/0.22),transparent_60%)] p-6 md:block md:min-h-[300px] md:border-l">
                   <step.Visual play />
                 </div>
               </motion.div>
