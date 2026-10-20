@@ -1,6 +1,7 @@
 // Server only. "Who changed what": a short record of every important change in the admin panel.
 // Kept for one year, then removed automatically. Writing never throws, so it can't break the action itself.
 import { getDb, hasDb } from "./db";
+import { clientIp } from "./antispam";
 
 export type Activity = {
   id: string;
@@ -29,7 +30,7 @@ const col = async () => {
 export async function logActivity(who: Who, area: string, action: string, target = "", req?: Request) {
   if (!hasDb()) return;
   try {
-    const ip = req ? (req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "").split(",")[0].trim().slice(0, 60) : "";
+    const ip = req ? clientIp(req).slice(0, 60) : "";
     await (await col()).insertOne({
       at: new Date(),
       uid: String(who?.uid ?? ""),

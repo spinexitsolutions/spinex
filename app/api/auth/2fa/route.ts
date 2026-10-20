@@ -14,9 +14,11 @@ export async function POST(req: Request) {
   const ticket = await verifyTicket(String(body.ticket ?? ""));
   if (!ticket) return NextResponse.json({ error: "This took too long. Log in again.", restart: true }, { status: 401 });
 
+  // The attempt is recorded before it is checked, so many requests sent at once can't get past the limit.
   const key = `login-2fa:${ticket.uid}`;
-  if ((await recentHits(key, 15 * 60 * 1000).catch(() => 0)) >= 6) {
-    return NextResponse.json({ error: "Too many wrong codes. Try again in 15 minutes." }, { status: 429 });
+  await recordHit(key).catch(() => undefined);
+  if ((await recentHits(key, 15 * 60 * 1000).catch(() => 0)) > 8) {
+    return NextResponse.json({ error: "Too many tries. Try again in 15 minutes." }, { status: 429 });
   }
   const account = await getAccount(ticket.uid);
   if (!account || !account.active || account.tokenVersion !== (ticket.tv ?? 0)) {
@@ -24,7 +26,6 @@ export async function POST(req: Request) {
   }
   const used = await checkSecondStep(account, String(body.code ?? "").trim().slice(0, 20));
   if (!used) {
-    await recordHit(key).catch(() => undefined);
     await logActivity(ticket, "Login", "Wrong two-step code", "", req);
     await new Promise((r) => setTimeout(r, 500));
     return NextResponse.json({ error: "That code isn't right. Check the app and try again." }, { status: 401 });

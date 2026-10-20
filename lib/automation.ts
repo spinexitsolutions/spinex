@@ -98,7 +98,17 @@ export async function runReminders(origin: string) {
 // ---------- Database backup ----------
 
 // Image files are left out (they can be large); everything else is included. Passwords and API keys are never included.
-const SKIP = (name: string) => name.startsWith("uploads.") || name.startsWith("safety_backups.") || name === "rate_limits" || name === "secrets" || name.startsWith("system.");
+const SKIP = (name: string) =>
+  name.startsWith("uploads.") || name.startsWith("safety_backups.") || name === "rate_limits" || name === "secrets" || name === "password_resets" || name.startsWith("system.");
+
+// Settings documents that stay out of backups and are never replaced by a restore:
+// job state (scheduler key), the owner's login (password, two-step secret) and unsaved previews.
+const PRIVATE_SETTING = (id: unknown) => {
+  const s = String(id);
+  return s.startsWith("state:") || s === "owner_account" || s.startsWith("content_preview:");
+};
+// Login secrets removed from team members in a backup.
+const LOGIN_FIELDS = ["passwordHash", "totpSecret", "totpPending", "totpLastStep", "backupCodes"];
 
 // Never replaced by a restore: team logins (a backup has no passwords, so restoring them would lock people out),
 // API keys and internal collections.
@@ -112,9 +122,9 @@ export async function createBackup() {
   for (const name of names) {
     const docs = await db.collection(name).find({}).toArray();
     collections[name] =
-      name === "admin_users" ? docs.map(({ passwordHash: _p, ...rest }) => rest)
-      // Job state (holds the scheduler key) is left out, so a backup email can't be used to run the jobs.
-      : name === "settings" ? docs.filter((d) => !String(d._id).startsWith("state:"))
+      name === "admin_users" ? docs.map((d) => Object.fromEntries(Object.entries(d).filter(([k]) => !LOGIN_FIELDS.includes(k))))
+      // Job state, the owner's login and previews are left out, so a backup can't be used to log in or run the jobs.
+      : name === "settings" ? docs.filter((d) => !PRIVATE_SETTING(d._id))
       : docs;
     count += docs.length;
   }
@@ -226,9 +236,9 @@ export async function restoreBackup(buf: Buffer, only: string[]) {
     const col = db.collection(name);
     let docs = backup.collections[name] as Record<string, unknown>[];
     if (name === "settings") {
-      // Keep this website's own job state (scheduler key, last run times).
-      docs = docs.filter((d) => !String(d._id).startsWith("state:"));
-      await col.deleteMany({ _id: { $not: /^state:/ } } as Record<string, unknown>);
+      // Keep this website's own job state, the owner's login and previews as they are now.
+      docs = docs.filter((d) => !PRIVATE_SETTING(d._id));
+      await col.deleteMany({ _id: { $not: /^(state:|owner_account$|content_preview:)/ } } as Record<string, unknown>);
     } else {
       await col.deleteMany({});
     }

@@ -8,6 +8,7 @@ export default function PreviewBar() {
   const [busy, setBusy] = useState(false);
   const exit = async () => {
     setBusy(true);
+    await fetch("/api/preview/exit", { method: "POST" }).catch(() => undefined);
     await fetch("/api/admin/preview", { method: "DELETE" }).catch(() => undefined);
     window.location.reload();
   };

@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 import { getDb, hasDb } from "./db";
 import { checkPassword, hashPassword, usersCol } from "./users";
 import { decrypt, encrypt } from "./secrets";
-import { hashCode, verifyTotp } from "./totp";
+import { hashCode, totpStep } from "./totp";
 
 export type Account = {
   uid: string; // "env" = owner
@@ -64,9 +64,15 @@ export async function findAccountByEmail(email: string): Promise<Account | null>
 }
 
 export function passwordMatches(a: Account, password: string) {
-  if (a.uid === "env" && !a.passwordHash) return same(password, process.env.ADMIN_PASSWORD || "");
+  if (a.uid === "env" && !a.passwordHash) {
+    const env = process.env.ADMIN_PASSWORD || "";
+    return !!env && !!password && same(password, env);
+  }
   return checkPassword(password, a.passwordHash);
 }
+
+// A stored password hash to check against when the email is unknown, so the reply takes the same time.
+export const DUMMY_HASH = "0000000000000000000000000000000000000000000000000000000000000000:" + "0".repeat(128);
 
 // Saves fields on the account. Secrets are encrypted before they are stored.
 async function update(a: Pick<Account, "uid">, set: Record<string, unknown>, bumpVersion = false) {
@@ -83,18 +89,29 @@ async function update(a: Pick<Account, "uid">, set: Record<string, unknown>, bum
 export const setPassword = (a: Account, password: string) => update(a, { passwordHash: hashPassword(password) }, true);
 export const startTotp = (a: Account, secret: string) => update(a, { totpPending: secret });
 export const enableTotp = (a: Account, backupHashes: string[]) =>
-  update(a, { totpSecret: a.totpPending, totpPending: "", totpEnabled: true, backupCodes: backupHashes }, true);
-export const disableTotp = (a: Account) => update(a, { totpSecret: "", totpPending: "", totpEnabled: false, backupCodes: [] }, true);
+  update(a, { totpSecret: a.totpPending, totpPending: "", totpEnabled: true, backupCodes: backupHashes, totpLastStep: 0 }, true);
+export const disableTotp = (a: Account) => update(a, { totpSecret: "", totpPending: "", totpEnabled: false, backupCodes: [], totpLastStep: 0 }, true);
 export const setBackupCodes = (a: Account, hashes: string[]) => update(a, { backupCodes: hashes });
 
-// Checks a 6-digit app code, or a backup code (which is then used up).
+// The document holding this account, for single atomic updates.
+async function accountUpdate(a: Pick<Account, "uid">, filter: Record<string, unknown>, op: Record<string, unknown>) {
+  if (a.uid === "env") return (await ownerCol()).updateOne({ _id: OWNER_DOC, ...filter }, op);
+  return (await usersCol()).updateOne({ _id: new ObjectId(a.uid), ...filter }, op);
+}
+
+// Checks a 6-digit app code (each code works once), or a backup code (used up the moment it works,
+// even if two requests send it at the same time).
 export async function checkSecondStep(a: Account, code: string): Promise<"app" | "backup" | false> {
   if (!a.totpEnabled) return false;
-  if (verifyTotp(a.totpSecret, code)) return "app";
+  const step = totpStep(a.totpSecret, code);
+  if (step >= 0) {
+    const r = await accountUpdate(a, { $or: [{ totpLastStep: { $exists: false } }, { totpLastStep: { $lt: step } }] }, { $set: { totpLastStep: step } });
+    return r.modifiedCount === 1 ? "app" : false;
+  }
   const h = hashCode(code);
   if (code.replace(/[\s-]/g, "").length === 10 && a.backupCodes.includes(h)) {
-    await update(a, { backupCodes: a.backupCodes.filter((x) => x !== h) });
-    return "backup";
+    const r = await accountUpdate(a, { backupCodes: h }, { $pull: { backupCodes: h } });
+    return r.modifiedCount === 1 ? "backup" : false;
   }
   return false;
 }

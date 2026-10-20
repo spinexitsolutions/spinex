@@ -10,17 +10,20 @@ import { SITE_URL } from "@/lib/site";
 // "Forgot password": emails a link (valid 30 minutes) to set a new password.
 // The answer is the same whether or not the email is registered, so nobody can find out who has an account.
 export async function POST(req: Request) {
+  const started = Date.now();
+  // Every answer takes about the same time, so the timing doesn't reveal whether the email has an account.
+  const evenOut = () => new Promise((r) => setTimeout(r, Math.max(0, 2500 - (Date.now() - started))));
   const raw: unknown = await req.json().catch(() => null);
   const email = String((raw as { email?: unknown } | null)?.email ?? "").trim().toLowerCase().slice(0, 200);
   const reply = NextResponse.json({ ok: true, message: "If this email has an admin account, a reset link is on its way. Check your inbox and spam folder." });
-  if (!hasDb() || !/^\S+@\S+\.\S+$/.test(email)) return reply;
+  if (!hasDb() || !/^\S+@\S+\.\S+$/.test(email)) return evenOut().then(() => reply);
   if (await rateLimited(`forgot:${clientIp(req)}`, 5, 60 * 60 * 1000).catch(() => false)) {
     return NextResponse.json({ error: "Too many requests. Try again in an hour." }, { status: 429 });
   }
-  if (await rateLimited(`forgot-email:${email}`, 3, 60 * 60 * 1000).catch(() => false)) return reply;
+  if (await rateLimited(`forgot-email:${email}`, 3, 60 * 60 * 1000).catch(() => false)) return evenOut().then(() => reply);
 
   const account = await findAccountByEmail(email).catch(() => null);
-  if (!account || !account.active || !account.email) return reply;
+  if (!account || !account.active || !account.email) return evenOut().then(() => reply);
   const token = randomBytes(32).toString("base64url");
   const col = (await getDb()).collection("password_resets");
   await col.createIndex({ exp: 1 }, { expireAfterSeconds: 0 }).catch(() => undefined);
@@ -37,5 +40,6 @@ export async function POST(req: Request) {
     { label: "Set a new password", url: `${origin}/admin/reset?token=${token}` },
   );
   await logActivity({ uid: account.uid, name: account.name || account.email, role: account.role }, "Login", "Asked for a password reset link", "", req);
+  await evenOut();
   return reply;
 }

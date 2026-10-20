@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createTicket, createToken, type Session } from "@/lib/auth";
 import { sessionCookie } from "@/lib/session-cookie";
-import { findAccountByEmail, ownerTwoStepBypassed, passwordMatches } from "@/lib/account";
-import { usersCol } from "@/lib/users";
+import { DUMMY_HASH, findAccountByEmail, getAccount, ownerTwoStepBypassed, passwordMatches } from "@/lib/account";
+import { checkPassword, usersCol } from "@/lib/users";
+import { rateLimited } from "@/lib/antispam";
 import { clientIp, recentHits, recordHit } from "@/lib/antispam";
 import { logActivity } from "@/lib/activity";
 import { ObjectId } from "mongodb";
@@ -19,7 +20,9 @@ const MAX_EMAIL_FAILS = 30;
 // With two-step login on, a correct password returns a short ticket and the app code is asked next (/api/auth/2fa).
 export async function POST(req: Request) {
   const { ADMIN_EMAIL = "", ADMIN_PASSWORD = "", AUTH_SECRET = "" } = process.env;
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD || AUTH_SECRET.length < 32) {
+  // ADMIN_PASSWORD is needed only until the owner sets a password in Admin → My account.
+  const ownerHasPassword = !!(await getAccount("env").catch(() => null))?.passwordHash;
+  if (!ADMIN_EMAIL || (!ADMIN_PASSWORD && !ownerHasPassword) || AUTH_SECRET.length < 32) {
     return NextResponse.json({ error: "Admin login isn't set up. Add ADMIN_EMAIL, ADMIN_PASSWORD and AUTH_SECRET (32+ characters) to .env.local." }, { status: 500 });
   }
   const raw: unknown = await req.json().catch(() => null);
@@ -41,12 +44,21 @@ export async function POST(req: Request) {
   }
   const emailLocked = fails[2] >= limits[2];
 
+  // Every attempt from this connection counts (recorded first), so a burst of parallel requests can't slip past.
+  if (await rateLimited(`login-try:${ip}`, 30, WINDOW).catch(() => false)) {
+    return NextResponse.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429 });
+  }
+
   const account = await findAccountByEmail(email).catch(() => null);
+  if (!account) checkPassword(password, DUMMY_HASH); // same work as a real check, so the reply time doesn't reveal which emails exist
   const ok = !!account && account.active && passwordMatches(account, password);
 
   if (!ok || !account) {
     await Promise.all(keys.map((k) => recordHit(k).catch(() => undefined)));
-    if (account) await logActivity({ uid: account.uid, name: account.name || email, role: account.role }, "Login", "Wrong password", "", req);
+    // Logged, but at most 5 times per account in 15 minutes so the log can't be flooded.
+    if (account && !(await rateLimited(`log-fail:${account.uid}`, 5, WINDOW).catch(() => true))) {
+      await logActivity({ uid: account.uid, name: account.name || email, role: account.role }, "Login", "Wrong password", "", req);
+    }
     await new Promise((r) => setTimeout(r, 700)); // slows down guessing
     if (emailLocked) return NextResponse.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429 });
     return NextResponse.json({ error: "Wrong email or password." }, { status: 401 });

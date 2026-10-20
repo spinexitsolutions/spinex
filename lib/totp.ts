@@ -49,16 +49,18 @@ function hotp(secret: string, counter: number) {
 
 export const totpNow = (secret: string, at = Date.now()) => hotp(secret, Math.floor(at / 30000));
 
-// Accepts the current code and the one just before/after (phone clocks are often a few seconds off).
-export function verifyTotp(secret: string, code: string, at = Date.now()) {
+// Which 30-second step the code belongs to (current, or one before/after since phone clocks are often a
+// few seconds off), or -1 when it is wrong. The step lets the caller refuse the same code twice.
+export function totpStep(secret: string, code: string, at = Date.now()) {
   const c = String(code || "").replace(/\s+/g, "");
-  if (!/^\d{6}$/.test(c) || !secret) return false;
+  if (!/^\d{6}$/.test(c) || !secret) return -1;
   const step = Math.floor(at / 30000);
-  return [-1, 0, 1].some((d) => {
-    const want = hotp(secret, step + d);
-    return timingSafeEqual(Buffer.from(want), Buffer.from(c));
-  });
+  for (const d of [-1, 0, 1]) {
+    if (timingSafeEqual(Buffer.from(hotp(secret, step + d)), Buffer.from(c))) return step + d;
+  }
+  return -1;
 }
+export const verifyTotp = (secret: string, code: string, at = Date.now()) => totpStep(secret, code, at) >= 0;
 
 export function otpauthUrl(secret: string, account: string, issuer = "Spinex Admin") {
   return `otpauth://totp/${encodeURIComponent(`${issuer}:${account}`)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;

@@ -23,7 +23,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     set.passwordHash = hashPassword(String(b.password));
   }
   // The member lost their phone and backup codes: the owner turns two-step login off so they can set it up again.
-  if (b.reset2fa) Object.assign(set, { totpSecret: "", totpPending: "", totpEnabled: false, backupCodes: [] });
+  if (b.reset2fa) Object.assign(set, { totpSecret: "", totpPending: "", totpEnabled: false, backupCodes: [], totpLastStep: 0 });
   // Nothing to change: MongoDB rejects an empty $set, so just return the member as they are.
   if (!Object.keys(set).length) {
     const cur = await (await usersCol()).findOne({ _id }, { projection: { passwordHash: 0 } });
