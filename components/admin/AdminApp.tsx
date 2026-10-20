@@ -8,7 +8,7 @@ import {
   LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, History, GraduationCap, Check, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import { defaultContent, mergeContent, LATER_SERVICES, type SiteContent } from "@/lib/content";
+import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -442,14 +442,25 @@ function AdminShell() {
 
             {section === "projects" && (
               <>
-              <p className="mb-4 text-sm text-muted">Projects show on the home page (first 6), the Work page, and on the matching service page. Add a cover image (a screenshot of the website or app works best) and a live link if there is one.</p>
+              <p className="mb-4 text-sm text-muted">Projects show on the home page (first 6), the Work page, and on the matching service page. &quot;Show as&quot; picks the frame: website in a laptop, social media as an Instagram profile, video in a player, ads with results, design as a collage, e-commerce management as a seller dashboard, on-demand apps as customer app + admin + partner app. Fill only the fields that frame uses; the hint on each field says which.</p>
               <ListEditor items={draft.projects} titleKey="title" addLabel="Add project" onChange={(v) => set("projects", v)}
-                newItem={() => ({ id: uid(), title: "", type: "client" as const, category: "", summary: "", image: "", url: "" })}
+                newItem={() => ({ id: uid(), title: "", type: "client" as const, display: "" as const, category: "", summary: "", image: "", url: "" })}
                 fields={[
                   { key: "title", label: "Project name" },
                   { key: "type", label: "Type", type: "select", hint: "Demo = made to show our skills, gets a \"Demo\" label", options: [{ value: "client", label: "Client project" }, { value: "demo", label: "Demo / concept" }] }, { key: "category", label: "Category", hint: `Filter tab. Use a service name to show it on that service page too: ${draft.services.map((x) => x.title).join(", ")}` },
+                  { key: "display", label: "Show as", type: "select", hint: "Auto picks from the category", options: [{ value: "", label: "Auto (from category)" }, ...PROJECT_DISPLAYS] },
                   { key: "summary", label: "Short description", type: "textarea" }, { key: "url", label: "Live link", hint: "Optional" },
-                  { key: "image", label: "Cover image", type: "image" },
+                  { key: "image", label: "Cover image", type: "image", hint: "All types. Also the video poster and the social profile photo" },
+                  { key: "screen", label: "Full-page screenshot / dashboard", type: "image", hint: "Website: full-page desktop screenshot (scrolls in the laptop). E-commerce: seller dashboard. On-demand: admin panel. Use JPG under 4 MB" },
+                  { key: "mobile", label: "Mobile screenshot", type: "image", hint: "Website: mobile view. On-demand: customer app" },
+                  { key: "partner", label: "Partner app screenshot", type: "image", hint: "On-demand only" },
+                  { key: "video", label: "Video link", hint: "Website or Video: YouTube link or .mp4 link. Plays muted on loop" },
+                  { key: "videoShape", label: "Video shape", type: "select", options: [{ value: "wide", label: "Wide 16:9 (YouTube)" }, { value: "reel", label: "Reel 9:16 (Instagram / Shorts)" }] },
+                  { key: "images", label: "More images", type: "images", hint: "Social: 6–9 posts · Design: 3–6 pieces · Ads: ad creative · E-commerce: product photos (same order as Products below)" },
+                  { key: "results", label: "Results", type: "lines", hint: "Label: value, e.g. Leads per month: 40 → 180 (only real numbers)" },
+                  { key: "handle", label: "Account / brand name", hint: "Social: @handle · Ads: advertiser name · E-commerce: store name" },
+                  { key: "platforms", label: "Marketplaces", type: "tags", hint: "E-commerce: Amazon, Flipkart, Meesho, Shopify" },
+                  { key: "items", label: "Products (e-commerce)", type: "lines", hint: "Name | price | note, e.g. Cotton saree | ₹1,299 | 312 sold" },
                 ]} />
               </>
             )}

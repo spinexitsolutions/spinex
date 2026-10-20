@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import ImageField from "./ImageField";
 
-export type FieldDef = { key: string; label: string; type?: "text" | "textarea" | "tags" | "image" | "url" | "select" | "images"; hint?: string; options?: { value: string; label: string }[] };
+export type FieldDef = { key: string; label: string; type?: "text" | "textarea" | "tags" | "image" | "url" | "select" | "images" | "lines"; hint?: string; options?: { value: string; label: string }[] };
 type Rec = Record<string, unknown>;
 
 export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: unknown) => void }) {
@@ -26,6 +26,15 @@ export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unk
         {label}
         <input id={id} className="input" value={(value as string[] | undefined)?.join(", ") ?? ""} onChange={(e) => onChange(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
         <p className="mt-1 text-xs text-muted">Separate with commas</p>
+      </div>
+    );
+
+  if (def.type === "lines")
+    return (
+      <div>
+        {label}
+        <textarea id={id} className="input min-h-[96px] resize-y" value={((value as string[] | undefined) ?? []).join("\n")} onChange={(e) => onChange(e.target.value.split("\n"))} />
+        <p className="mt-1 text-xs text-muted">One per line</p>
       </div>
     );
 
@@ -73,7 +82,7 @@ export function ObjectEditor<T extends object>({ value, fields, onChange }: { va
   return (
     <div className="grid gap-5 md:grid-cols-2">
       {fields.map((f) => (
-        <div key={f.key} className={f.type === "textarea" || f.type === "image" || f.type === "images" ? "md:col-span-2" : ""}>
+        <div key={f.key} className={f.type === "textarea" || f.type === "image" || f.type === "images" || f.type === "lines" ? "md:col-span-2" : ""}>
           <FieldInput def={f} value={rec[f.key]} onChange={(v) => onChange({ ...rec, [f.key]: v } as unknown as T)} />
         </div>
       ))}

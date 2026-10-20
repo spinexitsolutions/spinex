@@ -18,6 +18,9 @@ export type Service = {
 
 export type Job = { id: string; title: string; type: string; location: string; experience: string; salary: string; description: string; requirements: string[] };
 
+import type { ProjectDisplay } from "./project-display";
+export { PROJECT_DISPLAYS, projectDisplay, type ProjectDisplay } from "./project-display";
+
 export type Project = {
   id: string;
   title: string;
@@ -26,7 +29,20 @@ export type Project = {
   summary: string;
   image: string;
   url: string;
+  display?: ProjectDisplay | "";
+  screen?: string; // website: full-page screenshot · e-commerce: seller dashboard · on-demand: admin panel
+  mobile?: string; // website: mobile screenshot · on-demand: customer app
+  partner?: string; // on-demand: partner app
+  video?: string; // YouTube or .mp4 link
+  videoShape?: "wide" | "reel";
+  images?: string[]; // social posts, design pieces, ad creative, product photos
+  results?: string[]; // "Label: value", e.g. "Leads per month: 40 → 180"
+  handle?: string; // @account or brand name
+  platforms?: string[]; // marketplaces for e-commerce management
+  items?: string[]; // e-commerce products: "Name | price | note"
 };
+
+
 
 export type Industry = {
   id: string;
@@ -146,7 +162,7 @@ const baseContent: SiteContent = {
   planner: {
     times: [
       { id: "web", min: 7, max: 14, monthly: false },
-      { id: "ecommerce", min: 14, max: 28, monthly: false },
+      { id: "ecommerce", min: 0, max: 0, monthly: true },
       { id: "marketing", min: 0, max: 0, monthly: true },
       { id: "social", min: 0, max: 0, monthly: true },
       { id: "video", min: 2, max: 5, monthly: false },
@@ -204,7 +220,7 @@ const baseContent: SiteContent = {
   ],
   goals: [
     { id: "customers", short: "More customers", label: "get more customers from Google", steps: ["A fast website that shows up on Google", "Your Google Business Profile set up properly", "Ads that bring calls and WhatsApp enquiries"], services: ["web", "marketing"] },
-    { id: "sell", short: "Sell online", label: "sell my products online", steps: ["An online store with easy checkout", "Online payments and cash on delivery", "Ads and posts that bring buyers"], services: ["ecommerce", "marketing", "social"] },
+    { id: "sell", short: "Sell online", label: "sell my products online", steps: ["Your products listed on Amazon, Flipkart and Meesho", "Orders, returns and ads managed for you", "Your own online store if you want one"], services: ["ecommerce", "web", "marketing"] },
     { id: "brand", short: "Look professional", label: "look more professional", steps: ["A logo and brand look you're proud of", "A clean website that builds trust", "Matching social media designs"], services: ["design", "web"] },
     { id: "instagram", short: "Grow on Instagram", label: "grow on Instagram", steps: ["A posting plan that fits your business", "Reels that people watch till the end", "Designs that look like one brand"], services: ["social", "video", "design"] },
     { id: "launch", short: "Launch a business", label: "launch a new business", steps: ["Logo, colours and brand look", "Website live from day one", "Social pages ready to post"], services: ["design", "web", "social"] },
@@ -242,7 +258,7 @@ const baseContent: SiteContent = {
       "video editing services",
     ],
     heading: "An IT company in Jaipur, working with businesses across India",
-    text: "Spinex IT Solutions is an IT and digital marketing company based in Jaipur, Rajasthan. We work with businesses all over India, from local shops and clinics to growing D2C brands and startups, and handle everything they need to grow online under one roof.\n\nWe design and build business websites, Shopify and WooCommerce stores, and on-demand apps for booking, delivery and services, complete with customer app, partner app and admin panel. Everything we build is fast, works well on mobile and is ready for Google from day one.\n\nOnce you are live, our team takes care of growth: SEO, Google Business Profile, Google and Meta ads, social media management, reels and video editing, graphic design, and brand promotion with influencers and launch campaigns.\n\nClients outside Jaipur work with us online through video calls, WhatsApp updates and shared progress links, and get the same team and the same quality. Every project starts with a free call and a clear written quote.",
+    text: "Spinex IT Solutions is an IT and digital marketing company based in Jaipur, Rajasthan. We work with businesses all over India, from local shops and clinics to growing D2C brands and startups, and handle everything they need to grow online under one roof.\n\nWe design and build business websites, Shopify and WooCommerce stores, and on-demand apps for booking, delivery and services, complete with customer app, partner app and admin panel. Everything we build is fast, works well on mobile and is ready for Google from day one.\n\nOnce you are live, our team takes care of growth: SEO, Google Business Profile, Google and Meta ads, social media management, reels and video editing, graphic design, brand promotion with influencers and launch campaigns, and complete e-commerce management for sellers on Amazon, Flipkart and Meesho.\n\nClients outside Jaipur work with us online through video calls, WhatsApp updates and shared progress links, and get the same team and the same quality. Every project starts with a free call and a clear written quote.",
     areas: ["Jaipur", "Delhi NCR", "Mumbai", "Bengaluru", "Pune", "Hyderabad", "Ahmedabad", "Chennai", "Kolkata", "Indore", "Lucknow", "Chandigarh", "Surat", "Udaipur", "Jodhpur", "Kota"],
   },
   about: {
@@ -276,18 +292,18 @@ const baseContent: SiteContent = {
     },
     {
       id: "ecommerce",
-      title: "E-commerce",
-      short: "Shopify and WooCommerce stores built to convert.",
+      title: "E-commerce management",
+      short: "We run your Amazon, Flipkart, Meesho and Shopify stores day to day.",
       description:
-        "Online stores on Shopify or WooCommerce with smooth checkout, payment gateways, inventory and shipping set up properly. Designed so customers find, trust and buy.",
-      tags: ["Shopify", "WooCommerce", "Payment gateways"],
+        "Complete e-commerce account management: listings, catalogue, pricing, orders, returns, ads and growth on Amazon, Flipkart, Meesho and your own Shopify store, handled by one team.",
+      tags: ["Amazon & Flipkart", "Meesho", "Listings & ads"],
       image: img("photo-1556742049-0cfed4f6a45d"),
-      slug: "ecommerce-website-development",
-      seoTitle: "E-commerce Website Development in Jaipur | Shopify & WooCommerce",
-      seoDescription: "Shopify and WooCommerce online stores in Jaipur with payment gateway, COD and inventory set up. Start selling online with Spinex IT Solutions.",
-      features: ["Shopify or WooCommerce store", "Razorpay, UPI and cash on delivery", "Product, stock and order management", "Shipping and delivery setup", "Fast mobile checkout", "Training to run your store"],
-      body: "Selling online needs more than a nice-looking shop. Customers must find products quickly, trust the store and pay without friction. We build online stores that do all three.\n\n## What's included\n\n- Store setup on Shopify or WooCommerce\n- Product pages, categories and filters\n- Payment gateway, UPI and cash on delivery\n- Shipping rates, order emails and invoices\n\n## Built to sell\n\nWe design the store around how your customers shop on their phones: clear photos, simple checkout and fast pages. Once you go live, we can run ads and social media to bring buyers to your store.",
-      faqs: "Shopify or WooCommerce, which is better?\nShopify is simpler to run and has monthly fees. WooCommerce has no platform fee and more control. We help you choose based on your products and budget.\n\nCan you add cash on delivery?\nYes. We set up COD along with Razorpay, UPI and cards.\n\nHow long does an online store take?\nUsually 2 to 4 weeks, depending on the number of products and integrations.",
+      slug: "ecommerce-management",
+      seoTitle: "E-commerce Management Services | Amazon, Flipkart, Meesho",
+      seoDescription: "E-commerce account management for Amazon, Flipkart, Meesho and Shopify sellers: listings, catalogue, orders, returns, ads and reports. Spinex IT Solutions, Jaipur, serving all India.",
+      features: ["Seller account setup and verification", "Product listing and catalogue with SEO titles", "Pricing, stock and order management", "Returns, claims and account health", "Sponsored ads on every marketplace", "Weekly sales and profit reports"],
+      body: "Selling online takes daily work: new listings, price changes, stock, orders, returns, claims and ads. We take that work off your hands so you can focus on your products, and you get one team for every marketplace.\n\n## What we manage\n\n- Seller accounts on Amazon, Flipkart, Meesho and your Shopify store\n- Product listings with search-friendly titles, photos and A+ content\n- Pricing, stock and order processing\n- Returns, claims and account health\n- Sponsored ads and sale events\n\n## Reports you can trust\n\nEvery week you get a simple report: orders, revenue, ad spend, returns and what we plan next. You always know where your money goes and what is working.\n\n## New to selling online?\n\nWe set up your seller accounts, get your brand registered, list your first products and set up your own Shopify store if you want one.",
+      faqs: "Which marketplaces do you manage?\nAmazon, Flipkart, Meesho and Shopify stores. We can also help with other marketplaces on request.\n\nDo I need to give you my seller account login?\nWe work through the marketplace's official user access wherever possible, so you keep full control of your account.\n\nHow is e-commerce management priced?\nUsually a monthly fee based on the number of products and marketplaces, with ad spend paid separately. We share a clear quote after a short call.",
     },
     {
       id: "marketing",
@@ -393,9 +409,9 @@ const baseContent: SiteContent = {
     {
       id: "ecom",
       title: "E-commerce",
-      description: "Stores with smooth checkout and inventory that updates itself.",
+      description: "Sellers on Amazon, Flipkart, Meesho and their own online stores.",
       image: "/images/industries/ecommerce.webp",
-      points: ["Shopify and WooCommerce", "Payment gateways and COD", "Inventory and order automation"],
+      points: ["Marketplace account management", "Listings, ads and orders", "Shopify stores and payments"],
     },
     {
       id: "creators",
@@ -549,6 +565,22 @@ const OLD_SEO_DEFAULTS: Partial<Record<"metaTitle" | "metaDescription" | "headin
 // automatically so only real projects added in the admin panel are shown.
 const SAMPLE_PROJECTS: Record<string, string> = { p1: "Handloom brand online store", p2: "Clinic booking website", p3: "Café launch campaign", p4: "Coaching institute lead funnel", p5: "Real estate walkthrough films", p6: "Startup corporate site" };
 
+// The first E-commerce service (store building). Fields a saved site still has unchanged
+// are upgraded to E-commerce management; anything edited in the admin panel is kept.
+const OLD_ECOMMERCE: Partial<Service> = {
+  title: "E-commerce",
+  short: "Shopify and WooCommerce stores built to convert.",
+  description:
+  "Online stores on Shopify or WooCommerce with smooth checkout, payment gateways, inventory and shipping set up properly. Designed so customers find, trust and buy.",
+  tags: ["Shopify", "WooCommerce", "Payment gateways"],
+  slug: "ecommerce-website-development",
+  seoTitle: "E-commerce Website Development in Jaipur | Shopify & WooCommerce",
+  seoDescription: "Shopify and WooCommerce online stores in Jaipur with payment gateway, COD and inventory set up. Start selling online with Spinex IT Solutions.",
+  features: ["Shopify or WooCommerce store", "Razorpay, UPI and cash on delivery", "Product, stock and order management", "Shipping and delivery setup", "Fast mobile checkout", "Training to run your store"],
+  body: "Selling online needs more than a nice-looking shop. Customers must find products quickly, trust the store and pay without friction. We build online stores that do all three.\n\n## What's included\n\n- Store setup on Shopify or WooCommerce\n- Product pages, categories and filters\n- Payment gateway, UPI and cash on delivery\n- Shipping rates, order emails and invoices\n\n## Built to sell\n\nWe design the store around how your customers shop on their phones: clear photos, simple checkout and fast pages. Once you go live, we can run ads and social media to bring buyers to your store.",
+  faqs: "Shopify or WooCommerce, which is better?\nShopify is simpler to run and has monthly fees. WooCommerce has no platform fee and more control. We help you choose based on your products and budget.\n\nCan you add cash on delivery?\nYes. We set up COD along with Razorpay, UPI and cards.\n\nHow long does an online store take?\nUsually 2 to 4 weeks, depending on the number of products and integrations.",
+};
+
 export const LATER_SERVICES = ["ondemand", "promotion"];
 
 export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): SiteContent {
@@ -566,6 +598,7 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   for (const k of ["metaTitle", "metaDescription", "heading", "text"] as const) {
     if (seo[k] === OLD_SEO_DEFAULTS[k]) seo[k] = base.seo[k];
   }
+  if (seo.text === "Spinex IT Solutions is an IT and digital marketing company based in Jaipur, Rajasthan. We work with businesses all over India, from local shops and clinics to growing D2C brands and startups, and handle everything they need to grow online under one roof.\n\nWe design and build business websites, Shopify and WooCommerce stores, and on-demand apps for booking, delivery and services, complete with customer app, partner app and admin panel. Everything we build is fast, works well on mobile and is ready for Google from day one.\n\nOnce you are live, our team takes care of growth: SEO, Google Business Profile, Google and Meta ads, social media management, reels and video editing, graphic design, and brand promotion with influencers and launch campaigns.\n\nClients outside Jaipur work with us online through video calls, WhatsApp updates and shared progress links, and get the same team and the same quality. Every project starts with a free call and a clear written quote.") seo.text = base.seo.text;
   if (Array.isArray(seo.areas) && seo.areas.join("|") === OLD_SEO_DEFAULTS.areas.join("|")) seo.areas = base.seo.areas;
   out.seo = seo;
   out.projects = (out.projects as Project[]).filter((pr) => SAMPLE_PROJECTS[pr.id] !== pr.title);
@@ -598,8 +631,20 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   if (hero.kicker === "Website development company in Jaipur") out.hero = { ...hero, kicker: base.hero.kicker };
   // Planner timings: keep saved values, add defaults for services that have none yet.
   const pl = out.planner as SiteContent["planner"];
-  const savedTimes = Array.isArray(pl.times) ? pl.times : [];
+  const savedTimes = (Array.isArray(pl.times) ? pl.times : []).map((t) =>
+    t.id === "ecommerce" && t.min === 14 && t.max === 28 && !t.monthly ? { ...t, min: 0, max: 0, monthly: true } : t,
+  );
   out.planner = { ...pl, times: [...savedTimes, ...base.planner.times.filter((t) => !savedTimes.some((x) => x.id === t.id))] };
+  out.services = (out.services as Service[]).map((sv) => {
+    if (sv.id !== "ecommerce") return sv;
+    const fresh = base.services.find((d) => d.id === "ecommerce");
+    if (!fresh) return sv;
+    const next = { ...sv } as Record<string, unknown>;
+    for (const [k, v] of Object.entries(OLD_ECOMMERCE)) {
+      if (JSON.stringify(next[k]) === JSON.stringify(v)) next[k] = (fresh as Record<string, unknown>)[k];
+    }
+    return next as Service;
+  });
   // Services added to the defaults later (on-demand, brand promotion) also show up on sites
   // whose service list was already saved in the admin panel.
   if (Array.isArray(saved?.services)) {

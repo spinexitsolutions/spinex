@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import type { Project } from "@/lib/content";
 import { SplitHeading, ease } from "../Reveal";
+import ProjectStage from "./ProjectFrames";
 
 const AUTO_MS = 6000;
 
@@ -130,12 +131,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
 
           {/* Devices */}
           <div>
-            <div className="relative mx-auto max-w-[760px] pb-[4%] [perspective:1800px]">
-              <Laptop project={current} open={opened} play={inView} />
-              <div className="absolute -right-[2%] bottom-0 hidden w-[21%] sm:block">
-                <Phone project={current} show={opened} />
-              </div>
-            </div>
+            <ProjectStage project={current} open={opened} play={inView} />
 
             {/* Caption + controls (mobile and tablet) */}
             <div className="mt-8 flex items-center justify-between gap-4 lg:hidden">
@@ -160,107 +156,6 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
         </div>
       </div>
     </section>
-  );
-}
-
-function Laptop({ project, open, play }: { project: Project; open: boolean; play: boolean }) {
-  return (
-    <div>
-      {/* Lid opens when the section first comes into view */}
-      <motion.div
-        initial={{ rotateX: -70, opacity: 0 }}
-        animate={open ? { rotateX: 0, opacity: 1 } : undefined}
-        transition={{ duration: 1.3, ease }}
-        style={{ transformOrigin: "bottom center" }}
-        className="relative mx-[6%] rounded-t-[18px] border border-[#2c2836] bg-[#17141f] p-[1.6%] pb-[2.4%] shadow-[0_40px_80px_-30px_rgba(41,26,110,0.45)]"
-      >
-        <span aria-hidden className="absolute left-1/2 top-[0.6%] z-10 h-[2.4%] w-[12%] -translate-x-1/2 rounded-b-md bg-[#17141f]" />
-        <div className="relative aspect-[16/10] overflow-hidden rounded-[6px] bg-white">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div key={project.id} initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease }} className="absolute inset-0">
-              <SiteScreen project={project} play={play} />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </motion.div>
-      {/* Base */}
-      <div aria-hidden className="relative h-[14px] rounded-b-[14px] rounded-t-[3px] bg-gradient-to-b from-[#d9d5e3] to-[#a8a3b5] sm:h-[18px]">
-        <span className="absolute left-1/2 top-0 h-[40%] w-[14%] -translate-x-1/2 rounded-b-lg bg-[#bdb8c9]" />
-      </div>
-    </div>
-  );
-}
-
-// A small website built from the project's image and text; it scrolls slowly like someone browsing.
-function SiteScreen({ project, play }: { project: Project; play: boolean }) {
-  const reduced = useReducedMotion();
-  return (
-    <div className="h-full overflow-hidden">
-      <motion.div
-        className="h-[230%]"
-        animate={reduced || !play ? { y: "0%" } : { y: ["0%", "0%", "-56%", "-56%"] }}
-        transition={play && !reduced ? { duration: 11, times: [0, 0.12, 0.85, 1], repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } : { duration: 0.4 }}
-      >
-        <div className="flex h-[5%] items-center justify-between border-b border-line px-[4%]">
-          <span className="truncate text-[clamp(7px,1.1vw,12px)] font-bold">{project.title.split(" ").slice(0, 2).join(" ")}</span>
-          <span className="flex gap-[6px]">{[0, 1, 2].map((i) => <span key={i} className="h-[5px] w-[22px] rounded bg-line" />)}</span>
-        </div>
-        <div className="relative h-[34%] overflow-hidden bg-ink">
-          <img src={project.image} alt={project.title} className="h-full w-full object-cover opacity-70" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink/80 to-transparent" />
-          <div className="absolute left-[5%] top-1/2 w-[60%] -translate-y-1/2 text-white">
-            <p className="font-display text-[clamp(11px,2.3vw,26px)] font-semibold leading-tight">{project.title}</p>
-            <p className="mt-1 text-[clamp(7px,1vw,12px)] text-white/75">{project.summary}</p>
-            <span className="mt-2 inline-block rounded-full bg-lav-400 px-[8%] py-[2%] text-[clamp(6px,0.9vw,11px)] font-semibold text-ink">Learn more</span>
-          </div>
-        </div>
-        <div className="grid h-[22%] grid-cols-3 gap-[3%] p-[4%]">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex flex-col gap-[8%] rounded-lg border border-line p-[6%]">
-              <div className="flex-1 rounded-md bg-lav-100" />
-              <div className="h-[8%] w-4/5 rounded bg-line" />
-              <div className="h-[8%] w-1/2 rounded bg-line" />
-            </div>
-          ))}
-        </div>
-        <div className="grid h-[24%] grid-cols-2 gap-[4%] px-[4%] pb-[4%]">
-          <div className="overflow-hidden rounded-lg bg-mist"><img src={project.image} alt="" className="h-full w-full object-cover" /></div>
-          <div className="flex flex-col justify-center gap-[8%]">
-            <div className="h-[8%] w-4/5 rounded bg-ink" />
-            <div className="h-[6%] w-full rounded bg-line" />
-            <div className="h-[6%] w-11/12 rounded bg-line" />
-            <div className="h-[6%] w-3/5 rounded bg-line" />
-          </div>
-        </div>
-        <div className="h-[15%] bg-ink" />
-      </motion.div>
-    </div>
-  );
-}
-
-function Phone({ project, show }: { project: Project; show: boolean }) {
-  return (
-    <motion.div
-      initial={{ y: 40, opacity: 0 }}
-      animate={show ? { y: 0, opacity: 1 } : undefined}
-      transition={{ duration: 0.9, delay: 0.8, ease }}
-      className="relative aspect-[9/19] overflow-hidden rounded-[22%/10%] border-[5px] border-[#17141f] bg-white shadow-[0_30px_60px_-20px_rgba(18,15,27,0.55)]"
-    >
-      <span aria-hidden className="absolute left-1/2 top-[2%] z-10 h-[3%] w-[34%] -translate-x-1/2 rounded-full bg-[#17141f]" />
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.div key={project.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.5, delay: 0.1, ease }} className="absolute inset-0 flex flex-col">
-          <div className="relative h-[46%] bg-ink">
-            <img src={project.image} alt="" className="h-full w-full object-cover opacity-75" />
-            <p className="absolute bottom-[8%] left-[8%] right-[8%] font-display text-[clamp(8px,1vw,13px)] font-semibold leading-tight text-white">{project.title}</p>
-          </div>
-          <div className="flex flex-1 flex-col gap-[5%] p-[9%]">
-            <div className="h-[6%] w-4/5 rounded bg-line" />
-            <div className="h-[6%] w-3/5 rounded bg-line" />
-            <div className="mt-auto h-[16%] rounded-full bg-ink" />
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
   );
 }
 
