@@ -442,7 +442,7 @@ const baseContent: SiteContent = {
     phone: "9509211852",
     whatsapp: "919509211852",
     location: "Jaipur, Rajasthan, India",
-    instagram: "https://www.instagram.com/spinex.websolutions",
+    instagram: "https://www.instagram.com/spinex_it_solutions/",
     linkedin: "https://in.linkedin.com/company/spinex-it-solutions",
     youtube: "https://www.youtube.com/@SpinexItSolutions1",
   },
@@ -558,6 +558,9 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   // Old YouTube channel link → new channel.
   const yt = out.contact as SiteContent["contact"];
   if (!yt.youtube || /youtube\.com\/@SpiNexITSolutions\/?$/.test(yt.youtube)) out.contact = { ...yt, youtube: base.contact.youtube };
+  // Old Instagram handle → new account.
+  const ig = out.contact as SiteContent["contact"];
+  if (!ig.instagram || /instagram\.com\/spinex\.websolutions\/?$/i.test(ig.instagram)) out.contact = { ...ig, instagram: base.contact.instagram };
   // Old company email saved in the admin panel → new one.
   const contact = out.contact as SiteContent["contact"];
   if (contact.email?.trim().toLowerCase() === "info.spinexwebsolutions@gmail.com") out.contact = { ...contact, email: base.contact.email };
