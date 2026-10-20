@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -43,6 +43,7 @@ const sections = [
   { id: "planner", label: "Project planner", Icon: CalendarClock, group: "Content" , perm: "content" },
   { id: "about", label: "About and stats", Icon: Info, group: "Content" , perm: "content" },
   { id: "testimonials", label: "Testimonials", Icon: Quote, group: "Content" , perm: "content" },
+  { id: "trusted", label: "Trusted by (clients)", Icon: BadgeCheck, group: "Content" , perm: "content" },
   { id: "internship", label: "Internship", Icon: GraduationCap, group: "Content" , perm: "content" },
   { id: "showreel", label: "Showreel video", Icon: Film, group: "Content" , perm: "content" },
   { id: "chatbot", label: "Chatbot and FAQ", Icon: Bot, group: "Content" , perm: "content" },
@@ -663,6 +664,45 @@ function AdminShell() {
                   newItem={() => ({ id: uid(), name: "", role: "", quote: "" })}
                   fields={[{ key: "name", label: "Client name" }, { key: "role", label: "Role and company" }, { key: "quote", label: "Quote", type: "textarea" }]} />
               </>
+            )}
+
+            {section === "trusted" && (
+              <div className="space-y-6">
+                <Card title="Client logo strip" note="A strip right under the hero with the logos (or names) of businesses you have worked with. Keep it off until you have 4–5 clients, then turn it on. Only add clients who are happy for you to show their name.">
+                  <label className="flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.trusted.show} onChange={(e) => set("trusted", { ...draft.trusted, show: e.target.checked })} />
+                    <span className="font-medium">Show the client logo strip</span>
+                  </label>
+                  {draft.trusted.show && draft.trusted.items.length === 0 && <p className="mt-3 text-sm text-amber-700">Add at least one client below; the strip stays hidden until then.</p>}
+                  <div className="mt-5">
+                    <ObjectEditor value={draft.trusted} onChange={(v) => set("trusted", v)} fields={[{ key: "title", label: "Line above the logos", hint: "e.g. Trusted by businesses across India" }]} />
+                  </div>
+                </Card>
+                <Card title="Clients" note="No logo? Leave the logo empty and the client's name is shown in clean text instead. More than 6 clients scroll slowly in a line. Use the arrows to change the order.">
+                  <ListEditor items={draft.trusted.items} titleKey="name" addLabel="Add client" onChange={(v) => set("trusted", { ...draft.trusted, items: v })}
+                    newItem={() => ({ id: uid(), name: "", logo: "", url: "" })}
+                    fields={[
+                      { key: "name", label: "Client / business name" },
+                      { key: "url", label: "Their website or Instagram (optional)", type: "url" },
+                      { key: "logo", label: "Logo (optional)", type: "image", hint: "PNG with a transparent background looks best. It shows in grey and turns to colour on hover." },
+                    ]} />
+                </Card>
+                <Card title="Google rating" note="A small line like ★ 4.9 on Google · 25 reviews, shown in the same strip. Turn it on once you have real reviews and keep the numbers the same as your Google profile.">
+                  <label className="flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.trusted.ratingShow} onChange={(e) => set("trusted", { ...draft.trusted, ratingShow: e.target.checked })} />
+                    <span className="font-medium">Show the rating</span>
+                  </label>
+                  <div className="mt-5">
+                    <ObjectEditor value={draft.trusted} onChange={(v) => set("trusted", v)} fields={[
+                      { key: "rating", label: "Rating", hint: "e.g. 4.9" },
+                      { key: "reviewCount", label: "Number of reviews", hint: "e.g. 25" },
+                      { key: "ratingSource", label: "Where the reviews are", hint: "e.g. Google" },
+                      { key: "reviewUrl", label: "Link to your reviews", type: "url", hint: "Your Google Business Profile link" },
+                    ]} />
+                  </div>
+                </Card>
+                <p className="text-sm text-muted">The strip's place on the home page can be changed in <button onClick={() => go("home")} className="font-semibold text-lav-700 underline">Home page</button>. Press Save to make changes live.</p>
+              </div>
             )}
 
             {section === "internship" && (

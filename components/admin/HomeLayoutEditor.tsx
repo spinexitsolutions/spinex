@@ -2,12 +2,11 @@
 
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUp, Eye, EyeOff } from "lucide-react";
-import { HOME_BLOCKS, type HomeBlock } from "@/lib/content";
+import { HOME_BLOCKS, homeOrder, type HomeBlock } from "@/lib/content";
 
 // Show, hide and reorder the home page sections. The hero always stays first.
 export default function HomeLayoutEditor({ value, onChange }: { value: HomeBlock[]; onChange: (v: HomeBlock[]) => void }) {
-  const known = value.filter((b) => b.id in HOME_BLOCKS);
-  const list = [...known, ...Object.keys(HOME_BLOCKS).filter((id) => !known.some((b) => b.id === id)).map((id) => ({ id, visible: true }))];
+  const list = homeOrder(value);
 
   const move = (i: number, d: -1 | 1) => {
     const j = i + d;

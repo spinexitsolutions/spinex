@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import type { Metadata } from "next";
 import Hero from "@/components/home/Hero";
 import Marquee from "@/components/home/Marquee";
+import TrustedBy from "@/components/home/TrustedBy";
 import ServicesList from "@/components/home/ServicesList";
 import WhySpinex from "@/components/home/WhySpinex";
 import Process from "@/components/home/Process";
@@ -18,6 +19,7 @@ import JsonLd from "@/components/JsonLd";
 import LatestPosts from "@/components/home/LatestPosts";
 import { getPublishedPosts } from "@/lib/post-db";
 import { getContent } from "@/lib/content-server";
+import { homeOrder } from "@/lib/content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { seo, brand } = await getContent();
@@ -43,6 +45,7 @@ export default async function HomePage() {
   const [content, posts] = await Promise.all([getContent(), getPublishedPosts()]);
 
   const blocks: Record<string, React.ReactNode> = {
+    trusted: <TrustedBy />,
     marquee: <Marquee />,
     services: <ServicesList />,
     why: <WhySpinex />,
@@ -59,9 +62,8 @@ export default async function HomePage() {
     contact: <QuickContact />,
   };
 
-  // Order and visibility come from Admin > Home page. Sections added later show at the end.
-  const saved = (content.homeLayout ?? []).filter((b) => b.id in blocks);
-  const order = [...saved, ...Object.keys(blocks).filter((id) => !saved.some((b) => b.id === id)).map((id) => ({ id, visible: true }))];
+  // Order and visibility come from Admin > Home page. Sections added later are filled in by homeOrder.
+  const order = homeOrder(content.homeLayout).filter((b) => b.id in blocks);
   const faqShown = order.some((b) => b.id === "faq" && b.visible);
 
   return (

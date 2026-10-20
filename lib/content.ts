@@ -81,6 +81,7 @@ export type HomeBlock = { id: string; visible: boolean };
 
 // Home page sections that can be shown, hidden and reordered from the admin panel.
 export const HOME_BLOCKS: Record<string, string> = {
+  trusted: "Trusted by (client logos)",
   marquee: "Tools strip",
   services: "Services",
   why: "Why Spinex",
@@ -95,6 +96,27 @@ export const HOME_BLOCKS: Record<string, string> = {
   seo: "SEO text",
   faq: "FAQ",
   contact: "Contact section",
+};
+
+// Saved order of home sections plus any section added later. "trusted" (added later) goes to the top,
+// right under the hero; other new sections go to the end.
+export function homeOrder(layout: HomeBlock[] | undefined): HomeBlock[] {
+  const saved = (layout ?? []).filter((b) => b && b.id in HOME_BLOCKS);
+  const missing = Object.keys(HOME_BLOCKS).filter((id) => !saved.some((b) => b.id === id)).map((id) => ({ id, visible: true }));
+  return [...missing.filter((b) => b.id === "trusted"), ...saved, ...missing.filter((b) => b.id !== "trusted")];
+}
+
+// "Trusted by" strip: client logos (or names) and an optional Google rating line.
+export type ClientLogo = { id: string; name: string; logo: string; url: string };
+export type TrustedBy = {
+  show: boolean; // logo strip on or off
+  title: string;
+  items: ClientLogo[];
+  ratingShow: boolean; // rating line on or off
+  rating: string; // e.g. "4.9"
+  reviewCount: string; // e.g. "25"
+  ratingSource: string; // e.g. "Google"
+  reviewUrl: string; // link to the reviews
 };
 
 export type Signer = { id: string; name: string; title: string; image: string };
@@ -156,6 +178,7 @@ export type SiteContent = {
   products: Product[];
   industries: Industry[];
   testimonials: Testimonial[];
+  trusted: TrustedBy;
   showreel: { title: string; video: string; poster: string };
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
@@ -459,6 +482,16 @@ const baseContent: SiteContent = {
     },
   ],
   testimonials: [],
+  trusted: {
+    show: false, // off until there are enough clients; turn on in Admin → Trusted by
+    title: "Trusted by businesses across India",
+    items: [],
+    ratingShow: false,
+    rating: "",
+    reviewCount: "",
+    ratingSource: "Google",
+    reviewUrl: "",
+  },
   banners: {
     about: img("photo-1556761175-5973dc0f32e7", 1600),
     services: img("photo-1531297484001-80022131f5a1", 1600),

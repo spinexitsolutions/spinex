@@ -73,6 +73,13 @@ export function sanitizeUrls(c: SiteContent): SiteContent {
     projects: c.projects.map((p) => ({ ...p, url: safeUrl(p.url), ...(p.video !== undefined ? { video: safeUrl(p.video) } : {}) })),
     products: c.products.map((p) => ({ ...p, demoUrl: safeUrl(p.demoUrl), videoUrl: safeUrl(p.videoUrl) })),
     showreel: { ...c.showreel, video: safeUrl(c.showreel.video) },
+    trusted: {
+      ...c.trusted,
+      reviewUrl: safeUrl(c.trusted.reviewUrl),
+      items: (Array.isArray(c.trusted.items) ? c.trusted.items : []).map((x) => ({
+        id: String(x?.id ?? ""), name: String(x?.name ?? ""), logo: safeUrl(x?.logo), url: safeUrl(x?.url),
+      })),
+    },
     contact: { ...c.contact, instagram: safeUrl(c.contact.instagram), linkedin: safeUrl(c.contact.linkedin), youtube: safeUrl(c.contact.youtube) },
   };
 }
