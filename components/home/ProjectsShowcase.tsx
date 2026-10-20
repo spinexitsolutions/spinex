@@ -8,6 +8,7 @@ import { useContent } from "../ContentProvider";
 import type { Project } from "@/lib/content";
 import { SplitHeading, ease } from "../Reveal";
 import ProjectStage from "./ProjectFrames";
+import { projectSlug } from "@/lib/project-display";
 
 const AUTO_MS = 6000;
 
@@ -131,7 +132,12 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
                       </span>
                     )}
                   </button>
-                  {url && <VisitLink href={url} className="relative -mt-1 mb-3 ml-5" />}
+                  {on && (url || !p.hidePage) && (
+                    <span className="relative -mt-1 mb-3 ml-5 flex flex-wrap gap-x-4">
+                      {!p.hidePage && <CaseLink project={p} />}
+                      {url && <VisitLink href={url} />}
+                    </span>
+                  )}
                 </li>
               );
             })}
@@ -148,7 +154,10 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
                   <p className="flex items-center gap-2 text-xs text-lav-700">{current.category}{isDemo(current) && <DemoTag />}</p>
                   <h3 className="font-display text-2xl font-semibold tracking-tight">{current.title}</h3>
                   <p className="mt-1 text-sm text-muted">{current.summary}</p>
-                  {liveUrl(current) && <VisitLink href={liveUrl(current)} className="mt-2" />}
+                  <span className="mt-2 flex flex-wrap gap-x-4">
+                    {!current.hidePage && <CaseLink project={current} />}
+                    {liveUrl(current) && <VisitLink href={liveUrl(current)} />}
+                  </span>
                 </motion.div>
               </AnimatePresence>
               <div className="flex shrink-0 gap-2">
@@ -165,6 +174,14 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function CaseLink({ project }: { project: Project }) {
+  return (
+    <Link href={`/work/${projectSlug(project)}`} className="inline-flex min-h-6 items-center gap-1 text-sm font-semibold text-ink underline-offset-4 hover:underline">
+      View case study <span aria-hidden>→</span>
+    </Link>
   );
 }
 

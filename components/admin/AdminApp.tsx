@@ -629,6 +629,20 @@ function AdminShell() {
                   { key: "handle", label: "Account / brand name", hint: "Social: @handle · Ads: advertiser name · E-commerce: store name" },
                   { key: "platforms", label: "Marketplaces", type: "tags", hint: "E-commerce: Amazon, Flipkart, Meesho, Shopify" },
                   { key: "items", label: "Products (e-commerce)", type: "lines", hint: "Name | price | note, e.g. Cotton saree | ₹1,299 | 312 sold" },
+                  { key: "hidePage", label: "Case study page", type: "select", options: [{ value: "", label: "Show a case study page" }, { value: "hide", label: "No page (card only)" }] },
+                  { key: "slug", label: "Page address", hint: "/work/… e.g. sharma-jewellers-website (empty = from the name)" },
+                  { key: "client", label: "Client name", hint: "Leave empty if the client wants to stay private" },
+                  { key: "industry", label: "Industry", hint: "e.g. Jewellery, Healthcare" },
+                  { key: "year", label: "Year", hint: "e.g. 2026" },
+                  { key: "duration", label: "Timeline", hint: "e.g. 6 weeks" },
+                  { key: "services", label: "What we did", type: "tags", hint: "e.g. Website, SEO, Meta ads" },
+                  { key: "challenge", label: "The challenge", type: "textarea", hint: "The client's problem before working with us. ## for headings, - for lists" },
+                  { key: "solution", label: "What we did", type: "textarea", hint: "Our approach and the work, step by step" },
+                  { key: "outcome", label: "The result", type: "textarea", hint: "What changed. Put the big numbers in Results above" },
+                  { key: "quote", label: "Client's words", type: "textarea", hint: "A short real quote from the client (optional)" },
+                  { key: "quoteBy", label: "Quote by", hint: "e.g. Rahul Sharma, Owner" },
+                  { key: "seoTitle", label: "Page title for Google", hint: "under 60 characters (optional)" },
+                  { key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters (optional)" },
                 ]} />
               </>
             )}

@@ -25,3 +25,7 @@ export function projectDisplay(p: { display?: ProjectDisplay | ""; category?: st
   if (/marketing|ads|seo|promotion|campaign|influencer/.test(c)) return "ads";
   return "website";
 }
+
+// Address of a project's case study page: /work/<slug>.
+export const projectSlug = (p: { slug?: string; title?: string; id: string }) =>
+  String(p.slug || p.title || p.id || "").toLowerCase().trim().replace(/^\/?(work\/)?/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || p.id;

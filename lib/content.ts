@@ -19,7 +19,7 @@ export type Service = {
 export type Job = { id: string; title: string; type: string; location: string; experience: string; salary: string; description: string; requirements: string[] };
 
 import type { ProjectDisplay } from "./project-display";
-export { PROJECT_DISPLAYS, projectDisplay, type ProjectDisplay } from "./project-display";
+export { PROJECT_DISPLAYS, projectDisplay, projectSlug, type ProjectDisplay } from "./project-display";
 
 export type Project = {
   id: string;
@@ -40,6 +40,21 @@ export type Project = {
   handle?: string; // @account or brand name
   platforms?: string[]; // marketplaces for e-commerce management
   items?: string[]; // e-commerce products: "Name | price | note"
+  // Case study page at /work/<slug>. Every project gets a page; empty sections are left out.
+  slug?: string;
+  client?: string; // client or brand name (leave empty to keep it private)
+  industry?: string;
+  year?: string;
+  duration?: string; // e.g. "6 weeks"
+  services?: string[]; // what we did, e.g. Website, SEO, Meta ads
+  challenge?: string; // Markdown: the client's problem
+  solution?: string; // Markdown: what we did
+  outcome?: string; // Markdown: the result
+  quote?: string; // client testimonial
+  quoteBy?: string; // e.g. "Rahul Sharma, Owner"
+  hidePage?: boolean | "" | "hide"; // set = no case study page (card only)
+  seoTitle?: string;
+  seoDescription?: string;
 };
 
 

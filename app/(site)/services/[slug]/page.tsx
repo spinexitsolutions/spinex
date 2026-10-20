@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Check, ChevronRight, Plus } from "lucide-react";
 import { getContent } from "@/lib/content-server";
-import { serviceSlug, type Service } from "@/lib/content";
+import { projectSlug, serviceSlug, type Service } from "@/lib/content";
 import { renderMarkdown } from "@/lib/posts";
 import { SITE_URL } from "@/lib/site";
 import ContactForm from "@/components/ContactForm";
@@ -147,12 +147,15 @@ export default async function ServicePage({ params }: Props) {
             <h2 className="h-display text-3xl sm:text-5xl">Recent {s.title.toLowerCase()} work</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {projects.map((p) => (
-                <article key={p.id} className="overflow-hidden rounded-[24px] border border-line">
-                  <img src={p.image} alt={p.title} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                <article key={p.id} className="group relative overflow-hidden rounded-[24px] border border-line transition hover:border-ink">
+                  {p.image && <img src={p.image} alt={p.title} loading="lazy" className="aspect-[4/3] w-full object-cover" />}
                   <div className="p-5">
                     {p.type === "demo" && <span className="mb-2 inline-block rounded-full bg-lav-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-lav-700">Demo</span>}
-                    <h3 className="font-display text-lg font-semibold">{p.title}</h3>
+                    <h3 className="font-display text-lg font-semibold">
+                      {p.hidePage ? p.title : <Link href={`/work/${projectSlug(p)}`} className="after:absolute after:inset-0">{p.title}</Link>}
+                    </h3>
                     <p className="mt-1 text-sm text-muted">{p.summary}</p>
+                    {!p.hidePage && <p className="mt-3 text-sm font-semibold text-lav-700">View case study →</p>}
                   </div>
                 </article>
               ))}
