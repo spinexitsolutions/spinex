@@ -22,6 +22,38 @@ function unlockScroll() {
   root.style.paddingRight = "";
 }
 
+// Dark screen sent in the page HTML, shown by a tiny script before the page is painted, so a first-time
+// visitor never sees the page flash before the intro starts. Hidden by default: returning visitors,
+// people with reduced motion and browsers without JavaScript never see it. The intro below takes over from it.
+const COVER_ID = "intro-cover";
+const coverScript = `(function(){try{if(sessionStorage.getItem("${SEEN_KEY}"))return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;var c=document.getElementById("${COVER_ID}");if(c)c.style.display="flex"}catch(e){}})()`;
+
+export function IntroCover() {
+  return (
+    <>
+      <div
+        id={COVER_ID}
+        suppressHydrationWarning
+        aria-hidden
+        style={{ display: "none" }}
+        className="fixed inset-0 z-[99] flex-col justify-between bg-ink p-6 text-white sm:p-10"
+      >
+        <div className="flex justify-between text-sm text-white/55">
+          <span>Spinex IT Solutions</span>
+          <span>Jaipur</span>
+        </div>
+        <div className="h-[2px] w-full bg-white/10" />
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: coverScript }} />
+    </>
+  );
+}
+
+const hideCover = () => {
+  const c = document.getElementById(COVER_ID);
+  if (c) c.style.display = "none";
+};
+
 // True once the intro loader has finished (or was skipped). Hero waits for this.
 export const useIntroDone = () => useContext(IntroContext);
 
@@ -42,6 +74,7 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       // Storage blocked: skip the intro rather than replay it on every page.
     }
     if (seen || reduced) {
+      hideCover();
       setShow(false);
       setDone(true);
       return;
@@ -64,8 +97,14 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
     return () => {
       c.stop();
       unlockScroll();
+      hideCover();
     };
   }, []);
+
+  // The animated intro is on screen now, so the plain cover under it can go.
+  useEffect(() => {
+    if (show) hideCover();
+  }, [show]);
 
   return (
     <IntroContext.Provider value={done}>

@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, BellRing, CheckCircle2, Copy, DatabaseBackup, Download, Loader2, Play, RefreshCw, Save, TriangleAlert, Workflow } from "lucide-react";
+import { Activity, BellRing, CheckCircle2, Copy, DatabaseBackup, Download, History, Loader2, Play, RefreshCw, Save, TriangleAlert, Upload, Workflow } from "lucide-react";
 
 type Settings = { remindersOn: boolean; reminderHour: number; whatsappSummary: boolean; backupFrequency: string; backupWeekday: number; backupEmail: string };
 type Data = {
   settings: Settings;
-  state: { lastCron?: string; lastReminders?: string; lastRemindersResult?: string; lastBackup?: string; lastBackupOk?: boolean; lastBackupResult?: string };
+  state: { lastCron?: string; lastReminders?: string; lastRemindersResult?: string; lastBackup?: string; lastBackupOk?: boolean; lastBackupResult?: string; lastRestore?: string; lastRestoreResult?: string };
   cronUrl: string;
   healthUrl: string;
   vercelCron: boolean;
@@ -167,6 +167,7 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
           <a href="/api/admin/backup" className="btn-ghost px-4 py-2.5 text-sm"><Download size={15} /> Download backup now</a>
           {note.backup && <Msg {...note.backup} />}
         </div>
+        <RestoreBox lastRestore={data.state.lastRestore ? `${when(data.state.lastRestore)}: ${data.state.lastRestoreResult ?? ""}` : ""} onDone={load} />
       </Card>
 
       <div className="flex items-center gap-3">
@@ -225,4 +226,122 @@ function Status({ label, value, bad }: { label: string; value: string; bad?: boo
 
 function Msg({ ok, text }: { ok: boolean; text: string }) {
   return <span className={`text-sm ${ok ? "text-emerald-700" : "text-red-700"}`}>{text}</span>;
+}
+
+// What each part of a backup is, in plain words.
+const PART_LABEL: Record<string, string> = {
+  settings: "Website content and settings (pages, services, projects, billing details…)",
+  content_versions: "Older versions of website content (History)",
+  leads: "Leads / enquiries",
+  billing: "Quotations and invoices",
+  counters: "Quotation, invoice and certificate numbers",
+  interns: "Interns, applicants and certificates",
+  posts: "Blog posts",
+};
+
+function RestoreBox({ lastRestore, onDone }: { lastRestore: string; onDone: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [info, setInfo] = useState<{ createdAt: string; collections: { name: string; count: number }[] } | null>(null);
+  const [pick, setPick] = useState<string[]>([]);
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [safety, setSafety] = useState<{ id: string; name: string; at: string }[]>([]);
+
+  const loadSafety = () => fetch("/api/admin/backup/safety").then((r) => (r.ok ? r.json() : [])).then(setSafety).catch(() => undefined);
+  useEffect(() => { loadSafety(); }, []);
+
+  const send = async (mode: "inspect" | "restore", f: File) => {
+    const fd = new FormData();
+    fd.append("file", f);
+    fd.append("mode", mode);
+    if (mode === "restore") {
+      fd.append("confirm", confirm);
+      fd.append("collections", JSON.stringify(pick));
+    }
+    const res = await fetch("/api/admin/backup/restore", { method: "POST", body: fd });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Something went wrong.");
+    return d;
+  };
+
+  const choose = async (f: File | undefined) => {
+    setInfo(null); setMsg(null); setConfirm("");
+    if (!f) return;
+    setFile(f);
+    setBusy("inspect");
+    try {
+      const d = await send("inspect", f);
+      setInfo(d);
+      setPick(d.collections.map((c: { name: string }) => c.name));
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Couldn't read the file." });
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const restore = async () => {
+    if (!file) return;
+    setBusy("restore");
+    setMsg(null);
+    try {
+      const d = await send("restore", file);
+      const parts = Object.entries(d.restored as Record<string, number>).map(([k, n]) => `${PART_LABEL[k]?.split(" (")[0] ?? k}: ${n}`).join(", ");
+      setMsg({ ok: true, text: `Restored. ${parts}. A copy of the data from before the restore was saved below, in case you need it.` });
+      setInfo(null); setFile(null); setConfirm("");
+      onDone();
+      loadSafety();
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Restore failed." });
+    } finally {
+      setBusy("");
+    }
+  };
+
+  return (
+    <div className="mt-6 border-t border-line pt-6">
+      <h4 className="flex items-center gap-2 font-semibold"><History size={17} className="text-lav-600" /> Restore from a backup</h4>
+      <p className="mt-1 text-sm text-muted">Puts data back from a backup file (the .json.gz from your email or the download button). Team logins and API keys are never changed. Before restoring, a copy of the current data is saved automatically.</p>
+      <label className="btn-ghost mt-4 w-fit cursor-pointer px-4 py-2.5 text-sm">
+        {busy === "inspect" ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Choose backup file
+        <input type="file" accept=".gz,.json,application/gzip,application/json" className="hidden" onChange={(e) => { choose(e.target.files?.[0]); e.target.value = ""; }} />
+      </label>
+
+      {info && (
+        <div className="mt-4 rounded-2xl border border-line p-4">
+          <p className="text-sm"><b>{file?.name}</b> <span className="text-muted">· made on {info.createdAt ? new Date(info.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "unknown date"}</span></p>
+          <p className="mt-3 text-sm font-semibold">What to put back</p>
+          <div className="mt-2 space-y-2">
+            {info.collections.map((c) => (
+              <label key={c.name} className="flex items-start gap-3 text-sm">
+                <input type="checkbox" className="mt-0.5 h-4 w-4 accent-lav-600" checked={pick.includes(c.name)} onChange={(e) => setPick((p) => (e.target.checked ? [...p, c.name] : p.filter((x) => x !== c.name)))} />
+                <span>{PART_LABEL[c.name] ?? c.name} <span className="text-muted">({c.count})</span></span>
+              </label>
+            ))}
+          </div>
+          <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">The ticked parts will be replaced with the backup. Anything added after the backup date in those parts will be removed (it stays in the safety copy).</p>
+          <label className="mt-4 block max-w-xs">
+            <span className="mb-1.5 block text-[13px] font-semibold">Type RESTORE to confirm</span>
+            <input className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="RESTORE" />
+          </label>
+          <button onClick={restore} disabled={busy === "restore" || confirm.trim().toUpperCase() !== "RESTORE" || !pick.length} className="btn-dark mt-4 px-5 py-2.5 text-sm disabled:bg-line disabled:text-muted">
+            {busy === "restore" ? <><Loader2 size={15} className="animate-spin" /> Restoring…</> : "Restore now"}
+          </button>
+        </div>
+      )}
+      {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>{msg.text}</p>}
+      {lastRestore && <Status label="Last restore" value={lastRestore} />}
+      {safety.length > 0 && (
+        <div className="mt-4 text-sm">
+          <p className="font-semibold">Copies saved before a restore</p>
+          <ul className="mt-1 space-y-1">
+            {safety.map((s) => (
+              <li key={s.id}><a href={`/api/admin/backup/safety?id=${s.id}`} className="inline-flex items-center gap-1.5 text-lav-700 underline"><Download size={13} /> {new Date(s.at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</a> <span className="text-muted">(restore this file the same way to undo)</span></li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }

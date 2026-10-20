@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import Chatbot from "@/components/Chatbot";
 import SmoothScroll from "@/components/SmoothScroll";
 import ScrollProgress from "@/components/ScrollProgress";
-import { IntroProvider } from "@/components/Intro";
+import { IntroProvider, IntroCover } from "@/components/Intro";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import Analytics from "@/components/Analytics";
 import CookieBanner from "@/components/CookieBanner";
@@ -14,6 +14,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const customCode = await getHeadCode();
   return (
     <IntroProvider>
+      <IntroCover />
       <SmoothScroll>
         <ScrollProgress />
         <Navbar />

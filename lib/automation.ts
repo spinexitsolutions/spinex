@@ -1,7 +1,7 @@
 // Server only. Jobs that run on a schedule (see app/api/cron): follow-up reminders and database backups.
-import { gzipSync } from "zlib";
+import { gunzipSync, gzipSync } from "zlib";
 import { randomBytes } from "crypto";
-import { EJSON } from "mongodb";
+import { EJSON, GridFSBucket } from "mongodb";
 import { getDb } from "./db";
 import { readSetting, readState, writeSetting, writeState } from "./settings-db";
 import { leadsCol, toLead } from "./lead-db";
@@ -98,7 +98,11 @@ export async function runReminders(origin: string) {
 // ---------- Database backup ----------
 
 // Image files are left out (they can be large); everything else is included. Passwords and API keys are never included.
-const SKIP = (name: string) => name.startsWith("uploads.") || name === "rate_limits" || name === "secrets" || name.startsWith("system.");
+const SKIP = (name: string) => name.startsWith("uploads.") || name.startsWith("safety_backups.") || name === "rate_limits" || name === "secrets" || name.startsWith("system.");
+
+// Never replaced by a restore: team logins (a backup has no passwords, so restoring them would lock people out),
+// API keys and internal collections.
+const NO_RESTORE = (name: string) => SKIP(name) || name === "admin_users";
 
 export async function createBackup() {
   const db = await getDb();
@@ -151,3 +155,86 @@ export function backupDue(settings: AutomationSettings, lastBackup: string) {
   return now.weekday === settings.backupWeekday || daysSince >= 7.5;
 }
 
+
+// ---------- Restore ----------
+
+type BackupFile = { app?: string; format?: number; createdAt?: string; collections?: Record<string, unknown[]> };
+
+// Reads a backup file made by createBackup (.json.gz, or plain .json). Throws a readable error for anything else.
+export function readBackup(buf: Buffer): { createdAt: string; collections: Record<string, unknown[]> } {
+  let text: string;
+  try {
+    text = (buf[0] === 0x1f && buf[1] === 0x8b ? gunzipSync(buf) : buf).toString("utf8");
+  } catch {
+    throw new Error("This file couldn't be opened. Choose a backup file (.json.gz) from this website.");
+  }
+  let data: BackupFile;
+  try {
+    data = EJSON.parse(text, { relaxed: false }) as BackupFile;
+  } catch {
+    throw new Error("This isn't a backup file from this website.");
+  }
+  if (data?.app !== "spinex-website" || !data.collections || typeof data.collections !== "object") {
+    throw new Error("This isn't a backup file from this website.");
+  }
+  const collections: Record<string, unknown[]> = {};
+  for (const [name, docs] of Object.entries(data.collections)) {
+    if (Array.isArray(docs) && /^[A-Za-z0-9_.-]{1,60}$/.test(name) && !NO_RESTORE(name)) collections[name] = docs;
+  }
+  return { createdAt: String(data.createdAt || ""), collections };
+}
+
+// Keeps a copy of the current database inside the database itself (last 3), taken just before a restore.
+async function safetyCopy() {
+  const b = await createBackup();
+  const bucket = new GridFSBucket(await getDb(), { bucketName: "safety_backups" });
+  await new Promise<void>((res, rej) => {
+    const up = bucket.openUploadStream(b.name, { metadata: { contentType: "application/gzip" } });
+    up.on("error", rej).on("finish", () => res());
+    up.end(b.file);
+  });
+  const old = await bucket.find({}).sort({ uploadDate: -1 }).skip(3).toArray();
+  for (const f of old) await bucket.delete(f._id).catch(() => undefined);
+  return b.name;
+}
+
+export async function listSafetyCopies() {
+  const bucket = new GridFSBucket(await getDb(), { bucketName: "safety_backups" });
+  return (await bucket.find({}).sort({ uploadDate: -1 }).limit(3).toArray()).map((f) => ({ id: String(f._id), name: f.filename, size: f.length, at: f.uploadDate.toISOString() }));
+}
+
+export async function readSafetyCopy(id: string) {
+  const { ObjectId } = await import("mongodb");
+  if (!ObjectId.isValid(id)) return null;
+  const bucket = new GridFSBucket(await getDb(), { bucketName: "safety_backups" });
+  const [f] = await bucket.find({ _id: new ObjectId(id) }).toArray();
+  if (!f) return null;
+  const parts: Buffer[] = [];
+  await new Promise<void>((res, rej) => bucket.openDownloadStream(f._id).on("data", (c: Buffer) => parts.push(c)).on("error", rej).on("end", () => res()));
+  return { name: f.filename, file: Buffer.concat(parts) };
+}
+
+// Replaces the chosen collections with the backup's copy. A safety copy of everything is saved first.
+export async function restoreBackup(buf: Buffer, only: string[]) {
+  const backup = readBackup(buf);
+  const names = Object.keys(backup.collections).filter((n) => only.includes(n));
+  if (!names.length) throw new Error("Choose at least one thing to restore.");
+  const safety = await safetyCopy();
+  const db = await getDb();
+  const restored: Record<string, number> = {};
+  for (const name of names) {
+    const col = db.collection(name);
+    let docs = backup.collections[name] as Record<string, unknown>[];
+    if (name === "settings") {
+      // Keep this website's own job state (scheduler key, last run times).
+      docs = docs.filter((d) => !String(d._id).startsWith("state:"));
+      await col.deleteMany({ _id: { $not: /^state:/ } } as Record<string, unknown>);
+    } else {
+      await col.deleteMany({});
+    }
+    if (docs.length) await col.insertMany(docs, { ordered: false });
+    restored[name] = docs.length;
+  }
+  await writeState("automation", { lastRestore: new Date().toISOString(), lastRestoreResult: `Restored ${names.join(", ")} from the backup of ${backup.createdAt.slice(0, 10)}` });
+  return { restored, safety, backupDate: backup.createdAt };
+}
