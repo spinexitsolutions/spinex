@@ -416,7 +416,7 @@ const baseContent: SiteContent = {
   banners: {
     about: img("photo-1556761175-5973dc0f32e7", 1600),
     services: img("photo-1531297484001-80022131f5a1", 1600),
-    products: img("photo-1551288049-bebda4e38f71", 1600),
+    products: "/images/banners/products.jpg",
     work: img("photo-1519389950473-47ba0277781c", 1600),
     contact: img("photo-1497366216548-37526070297c", 1600),
     internship: img("photo-1522071820081-009f0129c71c", 1600),
