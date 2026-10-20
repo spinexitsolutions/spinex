@@ -15,7 +15,7 @@ const script = Great_Vibes({ subsets: ["latin"], weight: "400", variable: "--fon
 
 export default async function CertificatePage({ params }: { params: { id: string } }) {
   const session = await getSession();
-  if (!can(session?.role, "people")) {
+  if (!can(session, "people", "view")) {
     return <div className="grid min-h-screen place-items-center p-6 text-center text-muted">Your role doesn&apos;t have access to certificates.</div>;
   }
   const [intern, content] = await Promise.all([getIntern(params.id), readContentFromDb()]);

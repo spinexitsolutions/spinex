@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { getIntern } from "@/lib/intern-db";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const deny = await guard("people");
+  const deny = await guard("people", "view");
   if (deny) return deny;
   const intern = await getIntern(params.id);
   if (!intern?.resumeId || !ObjectId.isValid(intern.resumeId)) return new Response("No resume uploaded.", { status: 404 });

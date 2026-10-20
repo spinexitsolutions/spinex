@@ -26,7 +26,7 @@ import BillingManager from "./BillingManager";
 import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
-import { can, roleLabel, type Perm, type Role } from "@/lib/roles";
+import { can, roleLabel, type Access, type Perm, type Role } from "@/lib/roles";
 import type { Lead } from "@/lib/leads";
 
 const sections = [
@@ -34,10 +34,10 @@ const sections = [
   { id: "leads", label: "Leads", Icon: Inbox, group: "Inbox" , perm: "leads" },
   { id: "interns", label: "Interns", Icon: Users, group: "Inbox" , perm: "people" },
   { id: "certificates", label: "Certificates", Icon: Award, group: "Inbox" , perm: "people" },
-  { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "leads" },
+  { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "billing" },
   { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
-  { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "content" },
+  { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "blog" },
   { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Content" , perm: "content" },
   { id: "hero", label: "Brand and hero", Icon: Type, group: "Content" , perm: "content" },
   { id: "pages", label: "Page headers", Icon: PanelTop, group: "Content" , perm: "content" },
@@ -55,18 +55,18 @@ const sections = [
   { id: "showreel", label: "Showreel video", Icon: Film, group: "Content" , perm: "content" },
   { id: "chatbot", label: "Chatbot and FAQ", Icon: Bot, group: "Content" , perm: "content" },
   { id: "theme", label: "Colour theme", Icon: Palette, group: "Files and settings" , perm: "content" },
-  { id: "media", label: "Media", Icon: Images, group: "Files and settings" , perm: "content" },
+  { id: "media", label: "Media", Icon: Images, group: "Files and settings" , perm: "media" },
   { id: "banners", label: "Page banners", Icon: ImageIcon, group: "Files and settings" , perm: "content" },
   { id: "seo", label: "SEO", Icon: Search, group: "Files and settings" , perm: "content" },
   { id: "contact", label: "Contact details", Icon: Phone, group: "Files and settings" , perm: "content" },
   { id: "history", label: "History", Icon: History, group: "Files and settings" , perm: "content" },
-  { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Files and settings" , perm: "content" },
+  { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Files and settings" , perm: "integrations" },
   { id: "backup", label: "Backup and restore", Icon: DatabaseBackup, group: "Files and settings" , perm: "content" },
   { id: "automation", label: "Automation and backups", Icon: Timer, group: "Files and settings" , perm: "users" },
   { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Files and settings" , perm: "users" },
   { id: "team", label: "Team and roles", Icon: UserCog, group: "Files and settings" , perm: "users" },
-  { id: "activity", label: "Activity log", Icon: ScrollText, group: "Files and settings" , perm: "stats" },
-  { id: "account", label: "My account", Icon: UserRound, group: "Files and settings" , perm: "stats" },
+  { id: "activity", label: "Activity log", Icon: ScrollText, group: "Files and settings" , perm: "any" },
+  { id: "account", label: "My account", Icon: UserRound, group: "Files and settings" , perm: "any" },
 ] as const;
 
 type SectionId = (typeof sections)[number]["id"];
@@ -89,7 +89,7 @@ function AdminShell() {
   }, []);
   const [draft, setDraft] = useState<SiteContent>(content);
   const [section, setSection] = useState<SectionId>("overview");
-  const [me, setMe] = useState<{ email: string; name: string; role: Role } | null>(null);
+  const [me, setMe] = useState<{ email: string; name: string; role: Role; uid: string; access?: Partial<Access> | null } | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -102,12 +102,13 @@ function AdminShell() {
         setMe(d);
         // Open the section named in the address (e.g. /admin#billing), else the first one this role can open.
         const wanted = sections.find((x) => x.id === window.location.hash.slice(1));
-        if (wanted && can(d.role, wanted.perm as Perm)) setSection(wanted.id);
-        else if (!can(d.role, "stats")) setSection("leads");
+        const first = sections.find((x) => x.perm === "any" || can(d, x.perm as Perm));
+        if (wanted && (wanted.perm === "any" || can(d, wanted.perm as Perm))) setSection(wanted.id);
+        else if (!can(d, "stats") && first) setSection(first.id);
       })
       .catch(() => undefined);
   }, []);
-  const allowed = sections.filter((x) => !me || can(me.role, x.perm as Perm));
+  const allowed = sections.filter((x) => !me || x.perm === "any" || can(me, x.perm as Perm));
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
   const [conflict, setConflict] = useState("");
@@ -169,7 +170,7 @@ function AdminShell() {
     }
   };
   useEffect(() => {
-    if (me && can(me.role, "content")) loadContent(false);
+    if (me && can(me, "content")) loadContent(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me]);
   const reload = async () => {
@@ -291,19 +292,22 @@ function AdminShell() {
       setCertSaving(false);
     }
   };
-  const canCert = !!me && (can(me.role, "people") || can(me.role, "content"));
+  const canCert = !!me && (can(me, "people", "edit") || can(me, "content", "edit"));
   // The server ignores integration changes from anyone but the owner or an admin.
-  const canIntegrations = !!me && (me.role === "owner" || me.role === "admin");
+  const canIntegrations = !!me && can(me, "integrations", "edit");
+  // Sections this person may look at but not change (set per person in Team and roles).
+  const currentPerm = (sections.find((x) => x.id === section)?.perm ?? "any") as string;
+  const readOnly = !!me && currentPerm !== "any" && currentPerm !== "users" && currentPerm !== "stats" && !can(me, currentPerm as Perm, "edit");
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me.role, "content"));
+  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
   return (
-    <MediaDeleteContext.Provider value={!!me && can(me.role, "content")}>
+    <MediaDeleteContext.Provider value={!!me && can(me, "media", "edit")}>
     <div className="min-h-screen bg-mist lg:flex">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col bg-ink p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between px-2 pb-8 pt-2">
@@ -371,6 +375,11 @@ function AdminShell() {
               <button onClick={() => setConflict("")} aria-label="Dismiss" className="grid h-9 w-9 place-items-center rounded-full hover:bg-amber-100"><X size={16} /></button>
             </div>
           )}
+          {readOnly && (
+            <p className="mb-6 rounded-2xl border border-lav-200 bg-lav-100 px-4 py-3 text-sm text-lav-700" role="status">
+              <b>View only.</b> You can look at this section, but changes can&apos;t be saved. Ask the owner if you need to change something here.
+            </p>
+          )}
           <motion.div key={section} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             {section === "overview" && <Dashboard go={(id) => go(id as SectionId)} name={me?.name ?? "there"} />}
 
@@ -378,19 +387,19 @@ function AdminShell() {
 
             {section === "apikeys" && <ApiKeysManager />}
 
-            {section === "billing" && <BillingManager canEditProfile={!!me && (me.role === "owner" || me.role === "admin")} />}
+            {section === "billing" && <BillingManager canEditProfile={!!me && can(me, "billingDetails", "edit")} readOnly={readOnly} />}
 
             {section === "automation" && <AutomationPanel goApiKeys={() => go("apikeys")} />}
 
             {section === "account" && <AccountPanel />}
 
-            {section === "activity" && <ActivityPanel all={!!me && (me.role === "owner" || me.role === "admin")} />}
+            {section === "activity" && <ActivityPanel all={!!me && can(me, "activity")} />}
 
             {section === "theme" && <ThemeEditor value={draft.theme} onChange={(v) => set("theme", v)} />}
 
-            {section === "leads" && <LeadsManager onNewCount={setNewLeads} />}
+            {section === "leads" && <LeadsManager onNewCount={setNewLeads} readOnly={readOnly} />}
 
-            {section === "interns" && <InternsManager mode="interns" />}
+            {section === "interns" && <InternsManager mode="interns" readOnly={readOnly} />}
 
             {section === "media" && <MediaLibrary />}
 
@@ -409,7 +418,7 @@ function AdminShell() {
                     newItem={() => ({ id: uid(), name: "", title: "", image: "" })}
                     fields={[{ key: "name", label: "Name" }, { key: "title", label: "Designation" }, { key: "image", label: "Signature image", type: "image", hint: "Optional" }]} />
                 </Card>
-                <InternsManager mode="certificates" />
+                <InternsManager mode="certificates" readOnly={readOnly} />
               </div>
             )}
 
@@ -434,7 +443,7 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "blog" && <PostsManager onDirtyChange={setPostDirty} />}
+            {section === "blog" && <PostsManager onDirtyChange={setPostDirty} readOnly={readOnly} />}
 
             {section === "home" && (
               <div className="space-y-6">
@@ -560,7 +569,7 @@ function AdminShell() {
                   ]} />
                 </Card>
                 </fieldset>
-                {me && can(me.role, "users") && <p className="text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>}
+                {me && can(me, "users") && <p className="text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>}
               </div>
             )}
 
@@ -739,7 +748,7 @@ function AdminShell() {
                     <span className="font-medium">Send me a WhatsApp alert for new enquiries</span>
                   </label>
                   <p className="mt-4 rounded-xl bg-mist px-4 py-3 text-sm text-muted">
-                    Your number and the WhatsApp service are set in {me && can(me.role, "users") ? <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys → WhatsApp alerts</button> : <b>API keys → WhatsApp alerts</b>} (owner only). There is a &quot;Send test WhatsApp&quot; button there. Until it is set up, nothing is sent.
+                    Your number and the WhatsApp service are set in {me && can(me, "users") ? <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys → WhatsApp alerts</button> : <b>API keys → WhatsApp alerts</b>} (owner only). There is a &quot;Send test WhatsApp&quot; button there. Until it is set up, nothing is sent.
                   </p>
                 </Card>
               </div>

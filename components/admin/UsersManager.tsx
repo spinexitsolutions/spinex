@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { KeyRound, Loader2, Plus, ShieldCheck, Trash2, UserRound } from "lucide-react";
-import { ROLES, roleHelp, roleLabel, type Role } from "@/lib/roles";
+import { KeyRound, Loader2, Plus, ShieldCheck, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { AREAS, ROLES, ROLE_ACCESS, roleHelp, roleLabel, sameAccess, type Access, type Level, type Role } from "@/lib/roles";
 import type { AdminUser } from "@/lib/users";
 import Modal from "./Modal";
 
@@ -22,6 +22,7 @@ export default function UsersManager() {
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [resetFor, setResetFor] = useState<AdminUser | null>(null);
+  const [accessFor, setAccessFor] = useState<AdminUser | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,9 +73,9 @@ export default function UsersManager() {
                   <span className={`block font-semibold ${u.active ? "" : "text-muted line-through"}`}>{u.name}</span>
                   <span className="text-sm text-muted">{u.email}{u.lastLogin ? ` · last login ${new Date(u.lastLogin).toLocaleDateString("en-IN")}` : " · never logged in"}</span>
                 </span>
-                <select value={u.role} onChange={(e) => patch(u, { role: e.target.value })} aria-label={`Role for ${u.name}`} className="min-h-10 rounded-full border border-line bg-white px-3 text-sm">
-                  {assignable.map((r) => <option key={r} value={r}>{roleLabel[r]}</option>)}
-                </select>
+                <button onClick={() => setAccessFor(u)} title="Choose what this person can see and change" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line bg-white px-3 text-sm hover:border-ink">
+                  <SlidersHorizontal size={15} /> {roleLabel[u.role]}{u.access && !sameAccess(u.access, ROLE_ACCESS[u.role]) ? " (custom)" : ""}
+                </button>
                 <button onClick={() => patch(u, { active: !u.active })} className={`min-h-10 rounded-full px-3 text-sm font-medium ${u.active ? "bg-emerald-50 text-emerald-800" : "bg-mist text-muted"}`}>
                   {u.active ? "Active" : "Blocked"}
                 </button>
@@ -107,7 +108,8 @@ export default function UsersManager() {
       </section>
 
       <section className="rounded-3xl border border-line bg-white p-6 sm:p-8">
-        <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><ShieldCheck size={18} className="text-lav-600" /> What each role can do</h2>
+        <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><ShieldCheck size={18} className="text-lav-600" /> Ready-made roles</h2>
+        <p className="mt-1 text-sm text-muted">Pick one as a starting point, then press the role button next to a person to tick exactly what they can see and change. Team, API keys and backups always stay with you (owner).</p>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {ROLES.map((r) => (
             <li key={r} className="rounded-2xl bg-mist p-4">
@@ -118,13 +120,25 @@ export default function UsersManager() {
         </ul>
       </section>
 
-      <Modal open={adding} title="Add a team member" onClose={() => setAdding(false)}>
+      <Modal open={adding} title="Add a team member" onClose={() => setAdding(false)} wide>
         <UserForm
           onDone={(u) => {
             setUsers((all) => [u, ...all]);
             setAdding(false);
           }}
         />
+      </Modal>
+      <Modal open={!!accessFor} title={`What ${accessFor?.name ?? ""} can do`} onClose={() => setAccessFor(null)} wide>
+        {accessFor && (
+          <AccessForm
+            initialRole={accessFor.role}
+            initialAccess={accessFor.access ?? ROLE_ACCESS[accessFor.role]}
+            onSave={async (role, access) => {
+              await patch(accessFor, { role, access });
+              setAccessFor(null);
+            }}
+          />
+        )}
       </Modal>
       <Modal open={!!resetFor} title={`New password for ${resetFor?.name ?? ""}`} onClose={() => setResetFor(null)}>
         {resetFor && <ResetForm user={resetFor} onDone={() => setResetFor(null)} />}
@@ -135,6 +149,7 @@ export default function UsersManager() {
 
 function UserForm({ onDone }: { onDone: (u: AdminUser) => void }) {
   const [f, setF] = useState({ name: "", email: "", role: "editor" as Role, password: "" });
+  const [access, setAccess] = useState<Access>(ROLE_ACCESS.editor);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   return (
@@ -145,7 +160,7 @@ function UserForm({ onDone }: { onDone: (u: AdminUser) => void }) {
         setBusy(true);
         setError("");
         try {
-          onDone(await api<AdminUser>("/api/admin/users", { method: "POST", body: JSON.stringify(f) }));
+          onDone(await api<AdminUser>("/api/admin/users", { method: "POST", body: JSON.stringify({ ...f, access }) }));
         } catch (err) {
           setError(err instanceof Error ? err.message : "Couldn't add.");
         } finally {
@@ -156,12 +171,7 @@ function UserForm({ onDone }: { onDone: (u: AdminUser) => void }) {
     >
       <label className="block"><span className="mb-1.5 block text-sm font-medium">Name</span><input className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} autoFocus /></label>
       <label className="block"><span className="mb-1.5 block text-sm font-medium">Email</span><input className="input" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Role</span>
-        <select className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Role })}>
-          {assignable.map((r) => <option key={r} value={r}>{roleLabel[r]}: {roleHelp[r]}</option>)}
-        </select>
-      </label>
+      <AccessEditor role={f.role} access={access} onRole={(role) => { setF({ ...f, role }); setAccess(ROLE_ACCESS[role]); }} onAccess={setAccess} />
       <label className="block"><span className="mb-1.5 block text-sm font-medium">Password</span><input className="input" type="text" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} placeholder="At least 8 characters" /></label>
       <p className="text-xs text-muted">Share the email and password with them privately. They can log in at /admin.</p>
       {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
@@ -190,5 +200,74 @@ function ResetForm({ user, onDone }: { user: AdminUser; onDone: () => void }) {
       {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
       <button className="btn-dark w-full">Save password</button>
     </form>
+  );
+}
+
+const LEVELS: { id: Level; label: string }[] = [
+  { id: "none", label: "No access" },
+  { id: "view", label: "Only view" },
+  { id: "edit", label: "View and change" },
+];
+
+// Role (a ready-made set of ticks) plus one row per area: No access / Only view / View and change.
+function AccessEditor({ role, access, onRole, onAccess }: { role: Role; access: Access; onRole: (r: Role) => void; onAccess: (a: Access) => void }) {
+  const custom = !sameAccess(access, ROLE_ACCESS[role]);
+  return (
+    <div>
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Start from a role</span>
+        <select className="input" value={role} onChange={(e) => onRole(e.target.value as Role)}>
+          {assignable.map((r) => <option key={r} value={r}>{roleLabel[r]}: {roleHelp[r]}</option>)}
+        </select>
+      </label>
+      <p className="mt-4 flex items-center justify-between text-sm font-medium">
+        <span>What they can do {custom && <span className="ml-1 rounded-full bg-lav-100 px-2 py-0.5 text-xs font-semibold text-lav-700">Custom</span>}</span>
+        {custom && <button type="button" onClick={() => onAccess(ROLE_ACCESS[role])} className="text-xs font-semibold text-lav-700 underline">Reset to {roleLabel[role]}</button>}
+      </p>
+      <div className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line">
+        {AREAS.map((a) => (
+          <div key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+            <span className="min-w-[200px] flex-1">
+              <span className="block text-sm font-semibold">{a.label}</span>
+              <span className="block text-xs text-muted">{a.help}</span>
+            </span>
+            <span className="flex overflow-hidden rounded-full border border-line text-xs" role="radiogroup" aria-label={a.label}>
+              {LEVELS.filter((l) => !(a.viewOnly && l.id === "edit")).map((l) => (
+                <button
+                  type="button"
+                  key={l.id}
+                  role="radio"
+                  aria-checked={access[a.id] === l.id}
+                  onClick={() => onAccess({ ...access, [a.id]: l.id })}
+                  className={`px-3 py-2 font-medium transition-colors ${access[a.id] === l.id ? (l.id === "none" ? "bg-ink text-white" : l.id === "view" ? "bg-lav-600 text-white" : "bg-emerald-600 text-white") : "bg-white text-muted hover:bg-mist"}`}
+                >
+                  {a.viewOnly && l.id === "view" ? "Yes" : l.label}
+                </button>
+              ))}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-muted">Team members, API keys, automation and backups are always owner-only. People who can change website content, blog posts or certificates can also upload images for them.</p>
+    </div>
+  );
+}
+
+function AccessForm({ initialRole, initialAccess, onSave }: { initialRole: Role; initialAccess: Access; onSave: (role: Role, access: Access) => Promise<void> }) {
+  const [role, setRole] = useState<Role>(initialRole);
+  const [access, setAccess] = useState<Access>(initialAccess);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div>
+      <AccessEditor role={role} access={access} onRole={(r) => { setRole(r); setAccess(ROLE_ACCESS[r]); }} onAccess={setAccess} />
+      <button
+        disabled={busy}
+        onClick={async () => { setBusy(true); await onSave(role, access); setBusy(false); }}
+        className="btn-dark mt-5 w-full disabled:opacity-60"
+      >
+        {busy ? <Loader2 size={16} className="animate-spin" /> : "Save access"}
+      </button>
+      <p className="mt-2 text-center text-xs text-muted">Changes apply on their next click; they don&apos;t need to log in again.</p>
+    </div>
   );
 }

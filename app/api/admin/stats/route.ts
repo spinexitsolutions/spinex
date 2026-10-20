@@ -25,7 +25,7 @@ const countBy = <T,>(rows: T[], key: (r: T) => string) =>
 
 // Numbers for the admin dashboard. Each part is only included if the user's role can see it.
 export async function GET() {
-  const deny = await guard("stats");
+  const deny = await guard("stats", "view");
   if (deny) return deny;
   const s = (await getSession())!;
   const db = await getDb();
@@ -35,7 +35,7 @@ export async function GET() {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   const out: Record<string, unknown> = { months: months.map((m) => m.label) };
 
-  if (can(s.role, "leads")) {
+  if (can(s, "leads", "view")) {
     const leads = await db
       .collection("leads")
       .find({}, { projection: { name: 1, status: 1, source: 1, createdAt: 1, value: 1, followUp: 1, services: 1 } })
@@ -66,7 +66,7 @@ export async function GET() {
     };
   }
 
-  if (can(s.role, "people")) {
+  if (can(s, "people", "view")) {
     const people = await db.collection("interns").find({}, { projection: { status: 1, createdAt: 1, certId: 1, kind: 1 } }).limit(5000).toArray();
     const interns = people.filter((p) => p.kind !== "job");
     out.people = {
@@ -78,7 +78,7 @@ export async function GET() {
     };
   }
 
-  if (can(s.role, "content")) {
+  if (can(s, "content", "view") || can(s, "blog", "view") || can(s, "media", "view")) {
     const posts = db.collection("posts");
     out.content = {
       published: await posts.countDocuments({ status: "published" }),

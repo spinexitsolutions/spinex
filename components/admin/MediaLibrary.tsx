@@ -91,7 +91,7 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
 
   return (
     <div>
-      <div
+      {(onPick || canDelete) && <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); upload(Array.from(e.dataTransfer.files)); }}
@@ -102,7 +102,7 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
         <p className="text-sm text-muted">JPG, PNG, WebP or GIF. Large photos are resized automatically.</p>
         <button type="button" onClick={() => input.current?.click()} disabled={uploading} className="btn-dark px-5 py-2.5 text-sm disabled:opacity-60">Choose images</button>
         <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple className="hidden" onChange={(e) => { upload(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
-      </div>
+      </div>}
 
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
 

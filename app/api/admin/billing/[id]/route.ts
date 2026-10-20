@@ -7,7 +7,7 @@ import { financialYear } from "@/lib/billing";
 type Ctx = { params: { id: string } };
 
 export async function GET(_req: Request, { params }: Ctx) {
-  const deny = await guard("leads");
+  const deny = await guard("billing", "view");
   if (deny) return deny;
   const _id = billOid(params.id);
   const doc = _id && (await (await billingCol()).findOne({ _id }));
@@ -16,7 +16,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 }
 
 export async function PATCH(req: Request, { params }: Ctx) {
-  const deny = await guard("leads");
+  const deny = await guard("billing");
   if (deny) return deny;
   const _id = billOid(params.id);
   const col = await billingCol();
@@ -41,7 +41,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
 // Quotations can be deleted. Invoices keep their number (GST needs an unbroken series), so they are cancelled instead.
 export async function DELETE(_req: Request, { params }: Ctx) {
-  const deny = await guard("leads");
+  const deny = await guard("billing");
   if (deny) return deny;
   const _id = billOid(params.id);
   const col = await billingCol();

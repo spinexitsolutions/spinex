@@ -8,16 +8,15 @@ import { logActivity } from "@/lib/activity";
 
 // Your business details for quotations and invoices. Anyone who makes quotes can read them; owner and admin can change them.
 export async function GET() {
-  const deny = await guard("leads");
+  const deny = (await guard("billing", "view")) && (await guard("billingDetails", "view"));
   if (deny) return deny;
   return NextResponse.json(await getProfile());
 }
 
 export async function PUT(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("billingDetails");
   if (deny) return deny;
   const s = await getSession();
-  if (s?.role !== "owner" && s?.role !== "admin") return NextResponse.json({ error: "Only the owner or an admin can change billing details." }, { status: 403 });
   const b = await jsonBody(req);
   if (typeof b.gstin === "string") b.gstin = b.gstin.trim().toUpperCase();
   if (typeof b.pan === "string") b.pan = b.pan.trim().toUpperCase();

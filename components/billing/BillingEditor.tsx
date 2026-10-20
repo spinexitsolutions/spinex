@@ -27,7 +27,7 @@ const waNumber = (p: string) => {
   return d.length === 10 ? `91${d}` : d;
 };
 
-export default function BillingEditor({ id, logo }: { id: string; logo: string }) {
+export default function BillingEditor({ id, logo, readOnly = false }: { id: string; logo: string; readOnly?: boolean }) {
   const [doc, setDoc] = useState<BillDoc | null>(null);
   const [saved, setSaved] = useState("");
   const [profile, setProfile] = useState<BillingProfile | null>(null);
@@ -156,9 +156,10 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
             {statuses.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
           </select>
           <button onClick={() => setView("pdf")} className="btn-ghost px-4 py-2.5 text-sm"><FileText size={16} /> PDF</button>
+          {readOnly ? <span className="rounded-full bg-lav-100 px-3 py-1.5 text-xs font-semibold text-lav-700">View only</span> : (
           <button onClick={save} disabled={!dirty || busy === "save"} className="btn-dark px-5 py-2.5 text-sm disabled:bg-line disabled:text-muted">
             {busy === "save" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {dirty ? "Save" : "Saved"}
-          </button>
+          </button>)}
         </div>
       </header>
 
@@ -166,10 +167,10 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
         <div className="space-y-5">
           <Box title="Share">
             <div className="flex flex-wrap gap-2">
-              <button onClick={send} disabled={busy === "send"} className="btn-dark px-4 py-2.5 text-sm"><Mail size={15} /> {busy === "send" ? "Sending…" : "Email to client"}</button>
+              {!readOnly && <button onClick={send} disabled={busy === "send"} className="btn-dark px-4 py-2.5 text-sm"><Mail size={15} /> {busy === "send" ? "Sending…" : "Email to client"}</button>}
               {doc.client.phone && <a href={`https://wa.me/${waNumber(doc.client.phone)}?text=${encodeURIComponent(waText)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>}
               <button onClick={() => navigator.clipboard?.writeText(shareLink).then(() => flash("Client link copied"))} className="btn-ghost px-4 py-2.5 text-sm"><Copy size={15} /> Copy client link</button>
-              {doc.type === "quote" && !doc.invoiceId && <button onClick={toInvoice} disabled={busy === "invoice"} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Make invoice</button>}
+              {!readOnly && doc.type === "quote" && !doc.invoiceId && <button onClick={toInvoice} disabled={busy === "invoice"} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Make invoice</button>}
               {doc.type === "quote" && doc.invoiceId && doc.invoiceId !== "pending" && <Link href={`/admin/billing/${doc.invoiceId}`} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Open invoice</Link>}
               {doc.fromQuote && <Link href={`/admin/billing/${doc.fromQuote}`} className="btn-ghost px-4 py-2.5 text-sm">Quote {doc.fromQuoteNumber}</Link>}
             </div>
@@ -278,7 +279,7 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
             </div>
           </Box>
 
-          {doc.type === "quote" && !doc.invoiceId && <button onClick={remove} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete quotation</button>}
+          {!readOnly && doc.type === "quote" && !doc.invoiceId && <button onClick={remove} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete quotation</button>}
         </div>
 
         <div className="xl:sticky xl:top-24 xl:self-start">

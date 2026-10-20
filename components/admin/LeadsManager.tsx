@@ -45,7 +45,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 type Filter = LeadStatus | "all" | "due" | "mine";
 
-export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) => void }) {
+export default function LeadsManager({ onNewCount, readOnly = false }: { onNewCount?: (n: number) => void; readOnly?: boolean }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -227,7 +227,7 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
                 <span className="mt-0.5 block truncate text-sm text-muted">{isDue(l) && l.followUpNote ? `⏰ ${l.followUpNote}` : [l.services, l.budget, l.message].filter(Boolean).join(" · ") || l.phone}</span>
               </button>
               <span className="text-sm text-muted">{ago(l.createdAt)}</span>
-              <select value={l.status} onChange={(e) => update(l, { status: e.target.value as LeadStatus })} aria-label={`Status for ${l.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none ${badge[l.status]}`}>
+              <select value={l.status} disabled={readOnly} onChange={(e) => update(l, { status: e.target.value as LeadStatus })} aria-label={`Status for ${l.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none disabled:opacity-100 ${badge[l.status]}`}>
                 {LEAD_STATUSES.map((s) => <option key={s} value={s}>{leadStatusLabel[s]}</option>)}
               </select>
               <div className="flex items-center gap-1">
@@ -245,6 +245,7 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
             lead={leads.find((x) => x.id === open.id) ?? open}
             team={team}
             myId={myId}
+            readOnly={readOnly}
             onSave={async (patch) => {
               const saved = await update(open, patch, "Lead saved");
               if (saved) setOpen(null);
@@ -275,7 +276,7 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
   );
 }
 
-function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: Member[]; myId: string; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void }) {
+function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete }: { lead: Lead; team: Member[]; myId: string; readOnly: boolean; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void }) {
   const [status, setStatus] = useState(lead.status);
   const [value, setValue] = useState(lead.value);
   const [followUp, setFollowUp] = useState(lead.followUp);
@@ -313,7 +314,7 @@ function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: 
         <a href={`tel:${lead.phone}`} className="btn-dark px-4 py-2.5 text-sm"><Phone size={15} /> Call {lead.phone}</a>
         <a href={`https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(`Hi ${lead.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>
         {lead.email && <a href={`mailto:${lead.email}`} className="btn-ghost px-4 py-2.5 text-sm"><Mail size={15} /> Email</a>}
-        <button onClick={makeQuote} disabled={making} className="btn-ghost px-4 py-2.5 text-sm">{making ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={15} />} Make quotation</button>
+        {!readOnly && <button onClick={makeQuote} disabled={making} className="btn-ghost px-4 py-2.5 text-sm">{making ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={15} />} Make quotation</button>}
       </div>
       {docs.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -364,7 +365,7 @@ function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: 
         </div>
       )}
 
-      <div className="mt-6 grid gap-4 border-t border-line pt-6 sm:grid-cols-3">
+      <fieldset disabled={readOnly} className="mt-6 grid gap-4 border-t border-line pt-6 sm:grid-cols-3">
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-semibold">Status</span>
           <select className="input" value={status} onChange={(e) => setStatus(e.target.value as LeadStatus)}>
@@ -404,9 +405,9 @@ function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: 
           <span className="mb-1.5 block text-[13px] font-semibold">Notes (only you see these)</span>
           <textarea className="input min-h-[100px]" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Called on Monday, wants a quote for 8 pages" />
         </label>
-      </div>
+      </fieldset>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      {!readOnly && <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <button onClick={onDelete} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete</button>
         <button
           disabled={saving}
@@ -419,7 +420,7 @@ function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: 
         >
           {saving ? <><Loader2 size={16} className="animate-spin" /> Saving</> : "Save"}
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

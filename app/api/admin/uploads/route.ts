@@ -7,7 +7,7 @@ import { optimizeImage } from "@/lib/image-optimize";
 // List uploaded images, newest first.
 export async function GET() {
   // Content editors, and HR for certificate signature images.
-  const deny = (await guard("content")) && (await guard("people"));
+  const deny = (await guard("media", "view")) && (await guard("content")) && (await guard("blog")) && (await guard("people")) && (await guard("billingDetails"));
   if (deny) return deny;
   const files = await (await uploadsBucket()).find({}, { sort: { uploadDate: -1 }, limit: 1000 }).toArray();
   const out: UploadInfo[] = files.map((f) => ({
@@ -24,7 +24,7 @@ export async function GET() {
 // Upload one or more images (field name "files").
 export async function POST(req: Request) {
   // Content editors, and HR for certificate signature images.
-  const deny = (await guard("content")) && (await guard("people"));
+  const deny = (await guard("media")) && (await guard("content")) && (await guard("blog")) && (await guard("people")) && (await guard("billingDetails"));
   if (deny) return deny;
   const form = await req.formData().catch(() => null);
   const files = (form?.getAll("files") ?? []).filter((f): f is File => typeof f !== "string");

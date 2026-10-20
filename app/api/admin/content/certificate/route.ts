@@ -7,7 +7,7 @@ import { cleanCertificate } from "@/lib/content-sanitize";
 // Certificate settings (title, text, verify link, signers). HR can change these without access to the
 // rest of the website content. Only the certificate part is replaced; the save goes into version history.
 export async function PUT(req: Request) {
-  const deny = await guard("people");
+  const deny = (await guard("people")) && (await guard("content"));
   if (deny) return deny;
   const body = (await req.json().catch(() => null)) as { certificate?: unknown } | null;
   // The admin panel sends the content version it loaded; we report whether it was still current,

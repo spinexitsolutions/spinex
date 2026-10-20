@@ -3,7 +3,7 @@ import { guard, jsonBody } from "@/lib/admin-guard";
 import { clean, internsCol, toIntern } from "@/lib/intern-db";
 
 export async function GET() {
-  const deny = await guard("people");
+  const deny = await guard("people", "view");
   if (deny) return deny;
   const docs = await (await internsCol()).find().sort({ createdAt: -1 }).limit(2000).toArray();
   return NextResponse.json(docs.map(toIntern));

@@ -10,7 +10,7 @@ type Ctx = { params: { id: string } };
 
 // Emails the client a link to view and download the quotation / invoice.
 export async function POST(req: Request, { params }: Ctx) {
-  const deny = await guard("leads");
+  const deny = await guard("billing");
   if (deny) return deny;
   const _id = billOid(params.id);
   const col = await billingCol();

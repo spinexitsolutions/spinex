@@ -5,7 +5,7 @@ import { logActivity } from "@/lib/activity";
 import { uploadsBucket } from "@/lib/uploads-server";
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const deny = await guard("content");
+  const deny = await guard("media");
   if (deny) return deny;
   if (!ObjectId.isValid(params.id)) return NextResponse.json({ error: "Image not found." }, { status: 404 });
   try {

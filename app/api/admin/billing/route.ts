@@ -7,7 +7,7 @@ import { leadsCol } from "@/lib/lead-db";
 
 // List quotations and invoices (newest first). ?leadId= shows only one lead's documents.
 export async function GET(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("billing", "view");
   if (deny) return deny;
   const leadId = new URL(req.url).searchParams.get("leadId");
   const docs = await (await billingCol()).find(leadId ? { leadId } : {}).sort({ createdAt: -1 }).limit(2000).toArray();
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
 // New quotation or invoice: blank, from a lead ({ type, leadId }) or from a quotation ({ fromQuote }).
 export async function POST(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("billing");
   if (deny) return deny;
   const session = await getSession();
   const b = await jsonBody(req);

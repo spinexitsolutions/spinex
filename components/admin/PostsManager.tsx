@@ -27,7 +27,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void } = {}) {
+export default function PostsManager({ onDirtyChange, readOnly = false }: { onDirtyChange?: (dirty: boolean) => void; readOnly?: boolean } = {}) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,6 +66,7 @@ export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty
   if (editing) {
     return (
       <PostEditor
+        readOnly={readOnly}
         initial={editing}
         onDirtyChange={onDirtyChange}
         onBack={() => {
@@ -92,7 +93,7 @@ export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search posts" className="h-10 w-full bg-transparent text-sm outline-none" aria-label="Search posts" />
         </label>
         <button onClick={load} aria-label="Refresh" className="grid h-10 w-10 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={15} /></button>
-        <button onClick={() => setEditing(blankPost())} className="btn-dark px-4 py-2.5 text-sm"><FilePlus2 size={16} /> New post</button>
+        {!readOnly && <button onClick={() => setEditing(blankPost())} className="btn-dark px-4 py-2.5 text-sm"><FilePlus2 size={16} /> New post</button>}
       </div>
 
       {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
@@ -104,7 +105,7 @@ export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty
           <Newspaper className="mx-auto text-lav-600" size={32} />
           <p className="mt-3 font-semibold">No posts yet</p>
           <p className="mt-1 text-sm text-muted">Articles help people find you on Google. Write your first one.</p>
-          <button onClick={() => setEditing(blankPost())} className="btn-dark mt-5"><FilePlus2 size={16} /> Write a post</button>
+          {!readOnly && <button onClick={() => setEditing(blankPost())} className="btn-dark mt-5"><FilePlus2 size={16} /> Write a post</button>}
         </div>
       ) : (
         <div className="space-y-2">
@@ -127,7 +128,7 @@ export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty
   );
 }
 
-function PostEditor({ initial, onBack, onDirtyChange }: { initial: Post; onBack: () => void; onDirtyChange?: (dirty: boolean) => void }) {
+function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { initial: Post; onBack: () => void; onDirtyChange?: (dirty: boolean) => void; readOnly?: boolean }) {
   const [post, setPost] = useState<Post>(initial);
   const [slugTouched, setSlugTouched] = useState(!!initial.id);
   const [tab, setTab] = useState<"write" | "preview">("write");
@@ -261,8 +262,8 @@ function PostEditor({ initial, onBack, onDirtyChange }: { initial: Post; onBack:
         <AnimatePresence>{msg && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-medium text-emerald-700" role="status">{msg}</motion.span>}</AnimatePresence>
         <div className="ml-auto flex flex-wrap gap-2">
           {post.status === "published" && post.slug && <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer" className="btn-ghost bg-white px-4 py-2 text-sm"><ExternalLink size={15} /> View</a>}
-          <button onClick={() => save()} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm disabled:opacity-60">{saving ? <Loader2 size={15} className="animate-spin" /> : "Save"}</button>
-          {post.status === "published" ? (
+          {!readOnly && <button onClick={() => save()} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm disabled:opacity-60">{saving ? <Loader2 size={15} className="animate-spin" /> : "Save"}</button>}
+          {readOnly ? null : post.status === "published" ? (
             <button onClick={() => save("draft")} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm">Unpublish</button>
           ) : (
             <button onClick={() => save("published")} disabled={saving} className="btn-dark px-4 py-2 text-sm">Publish</button>
@@ -342,7 +343,7 @@ function PostEditor({ initial, onBack, onDirtyChange }: { initial: Post; onBack:
             <Field label="SEO title" hint={`${seoTitle.length}/60`}><input className="input" value={post.seoTitle} onChange={(e) => set("seoTitle", e.target.value)} placeholder="Uses the post title if empty" /></Field>
             <Field label="SEO description" hint={`${seoDesc.length}/160`}><textarea className="input min-h-[80px]" value={post.seoDescription} onChange={(e) => set("seoDescription", e.target.value)} placeholder="Uses the summary if empty" /></Field>
           </Panel>
-          <button onClick={remove} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete post</button>
+          {!readOnly && <button onClick={remove} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete post</button>}
         </aside>
       </div>
 

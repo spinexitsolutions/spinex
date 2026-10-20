@@ -17,7 +17,7 @@ const streamToBuffer = (s: NodeJS.ReadableStream) =>
 // Makes images uploaded earlier smaller (same link, so nothing on the website needs changing).
 // Works in batches of about 40 seconds; the admin screen calls it again until nothing is left.
 export async function POST() {
-  const deny = await guard("content");
+  const deny = await guard("media");
   if (deny) return deny;
   const started = Date.now();
   const bucket = await uploadsBucket();

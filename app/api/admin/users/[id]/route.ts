@@ -4,7 +4,7 @@ import { oid } from "@/lib/intern-db";
 import { hashPassword, toUser, usersCol, validRole } from "@/lib/users";
 import { getSession } from "@/lib/admin-guard";
 import { logActivity } from "@/lib/activity";
-import { roleLabel } from "@/lib/roles";
+import { AREAS, cleanAccess, roleLabel, type Access, type Role } from "@/lib/roles";
 
 type Ctx = { params: { id: string } };
 
@@ -17,6 +17,15 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const set: Record<string, unknown> = {};
   if (b.name !== undefined) set.name = String(b.name).trim().slice(0, 80);
   if (b.role !== undefined) set.role = validRole(b.role);
+  // Access per area. Choosing a role without ticks gives that role's ready-made access.
+  let before: Access | null = null;
+  if (b.access !== undefined || set.role !== undefined) {
+    const cur = await (await usersCol()).findOne({ _id }, { projection: { role: 1, access: 1 } });
+    if (!cur) return NextResponse.json({ error: "Team member not found." }, { status: 404 });
+    const role = (set.role ?? cur.role ?? "editor") as Role;
+    before = cleanAccess(cur.access ?? null, (cur.role ?? "editor") as Role);
+    set.access = cleanAccess(b.access !== undefined ? b.access : null, role);
+  }
   if (b.active !== undefined) set.active = !!b.active;
   if (b.password) {
     if (String(b.password).length < 8) return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
@@ -40,6 +49,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     set.active !== undefined && (set.active ? "unblocked" : "blocked"),
     set.passwordHash !== undefined && "password reset",
     b.reset2fa && "two-step login turned off",
+    before && set.access && `access (${AREAS.filter((a) => before![a.id] !== (set.access as Access)[a.id]).map((a) => `${a.label}: ${(set.access as Access)[a.id]}`).join(", ") || "no change"})`,
   ].filter(Boolean);
   await logActivity(await getSession(), "Team", `Changed team member: ${changes.join(", ")}`, String(doc.name || doc.email), req);
   return NextResponse.json(toUser(doc));

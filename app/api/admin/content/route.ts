@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { contentChanges, logActivity } from "@/lib/activity";
+import { allowed } from "@/lib/roles";
 import { revalidateTag } from "next/cache";
 import { getSession, guard } from "@/lib/admin-guard";
 import { ContentConflictError, readContentDoc, saveContent } from "@/lib/content-server";
@@ -9,7 +10,7 @@ import { cleanContentInput, sanitizeUrls } from "@/lib/content-sanitize";
 // The admin panel sends back the "x-content-updated" value it loaded as "x-base-updated" when saving,
 // so a save never silently overwrites changes someone else made in the meantime.
 export async function GET() {
-  const deny = await guard("content", false);
+  const deny = await guard("content", "view", false);
   if (deny) return deny;
   try {
     const { content, updatedAt } = await readContentDoc();
@@ -32,7 +33,7 @@ export async function PUT(req: Request) {
   const data = sanitizeUrls(mergeContent(defaultContent, cleanContentInput(body as Record<string, unknown>, defaultContent)));
   // Tracking IDs (GA, GTM, pixel…) end up as scripts on every page: only owners and admins may change them.
   const session = await getSession();
-  if (session?.role !== "owner" && session?.role !== "admin") {
+  if (!allowed(session, "integrations", "edit")) {
     try {
       data.integrations = (await readContentDoc()).content.integrations;
     } catch (e) {

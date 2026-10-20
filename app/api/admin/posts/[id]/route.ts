@@ -8,7 +8,7 @@ import { cleanPost, postsCol, toPost, uniqueSlug } from "@/lib/post-db";
 type Ctx = { params: { id: string } };
 
 export async function GET(_req: Request, { params }: Ctx) {
-  const deny = await guard("content");
+  const deny = await guard("blog", "view");
   if (deny) return deny;
   const _id = oid(params.id);
   const doc = _id ? await (await postsCol()).findOne({ _id }) : null;
@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 }
 
 export async function PATCH(req: Request, { params }: Ctx) {
-  const deny = await guard("content");
+  const deny = await guard("blog");
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Post not found." }, { status: 404 });
@@ -35,7 +35,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 }
 
 export async function DELETE(_req: Request, { params }: Ctx) {
-  const deny = await guard("content");
+  const deny = await guard("blog");
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Post not found." }, { status: 404 });

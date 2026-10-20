@@ -3,7 +3,7 @@ import { leadsCol, toLead } from "@/lib/lead-db";
 import { leadsToCSV } from "@/lib/leads";
 
 export async function GET() {
-  const deny = await guard("leads");
+  const deny = await guard("leads", "view");
   if (deny) return deny;
   const docs = await (await leadsCol()).find().sort({ createdAt: -1 }).toArray();
   return new Response(leadsToCSV(docs.map(toLead)), {

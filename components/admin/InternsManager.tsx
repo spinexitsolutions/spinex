@@ -25,7 +25,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export default function InternsManager({ mode }: { mode: "interns" | "certificates" }) {
+export default function InternsManager({ mode, readOnly = false }: { mode: "interns" | "certificates"; readOnly?: boolean }) {
   const { content } = useContent();
   const [interns, setInterns] = useState<Intern[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +189,7 @@ export default function InternsManager({ mode }: { mode: "interns" | "certificat
           <Search size={16} className="text-muted" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, phone, role or certificate no." className="h-11 w-full bg-transparent text-sm outline-none" aria-label="Search interns" />
         </label>
-        <button onClick={() => setEditing({ ...blankIntern(), kind })} className="btn-dark px-4 py-2.5 text-sm"><Plus size={16} /> {kind === "job" ? "Add applicant" : "Add intern"}</button>
+        {!readOnly && <button onClick={() => setEditing({ ...blankIntern(), kind })} className="btn-dark px-4 py-2.5 text-sm"><Plus size={16} /> {kind === "job" ? "Add applicant" : "Add intern"}</button>}
         <button onClick={() => { setPasteText(""); setPasting(true); }} className="btn-ghost px-4 py-2.5 text-sm"><ClipboardPaste size={16} /> Paste application</button>
         <a href="/api/admin/interns/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
         <button onClick={load} aria-label="Refresh list" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
@@ -216,7 +216,7 @@ export default function InternsManager({ mode }: { mode: "interns" | "certificat
                 <span className="block text-sm text-muted">{[i.role, i.phone, i.college].filter(Boolean).join(", ")}</span>
               </button>
               <span className="text-sm text-muted">{i.startDate ? `${formatDate(i.startDate)} to ${i.endDate ? formatDate(i.endDate) : "now"}` : `Applied ${formatDate(i.createdAt.slice(0, 10))}`}</span>
-              <select value={i.status} onChange={(e) => changeStatus(i, e.target.value as Status)} aria-label={`Status for ${i.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none ${badge[i.status]}`}>
+              <select value={i.status} disabled={readOnly} onChange={(e) => changeStatus(i, e.target.value as Status)} aria-label={`Status for ${i.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none ${badge[i.status]}`}>
                 {STATUSES.map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
               </select>
               <div className="flex items-center gap-1">
@@ -225,13 +225,13 @@ export default function InternsManager({ mode }: { mode: "interns" | "certificat
                     <FileText size={16} />
                   </a>
                 )}
-                {(i.kind || "internship") === "internship" && (i.status === "completed" || i.certId) && (
+                {(i.kind || "internship") === "internship" && (readOnly ? !!i.certId : i.status === "completed" || i.certId) && (
                   <button onClick={() => certificate(i)} disabled={busy === i.id} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-lav-600 px-4 text-sm font-semibold text-white hover:bg-lav-700 disabled:opacity-60">
                     {busy === i.id ? <Loader2 size={15} className="animate-spin" /> : <Award size={15} />} {i.certId ? "Certificate" : "Issue certificate"}
                   </button>
                 )}
                 <button onClick={() => setEditing(i)} aria-label={`Edit ${i.name}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><Pencil size={16} /></button>
-                <button onClick={() => del(i)} disabled={busy === i.id} aria-label={`Delete ${i.name}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>
+                {!readOnly && <button onClick={() => del(i)} disabled={busy === i.id} aria-label={`Delete ${i.name}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>}
               </div>
             </motion.div>
           ))}
@@ -263,6 +263,7 @@ export default function InternsManager({ mode }: { mode: "interns" | "certificat
             value={editing}
             roles={[...(content.internship?.roles.map((r) => r.title) ?? []), ...(content.careers?.jobs.map((j) => j.title) ?? []), "General application"]}
             onCancel={() => setEditing(null)}
+            readOnly={readOnly}
             onSaved={(saved) => {
               replace(saved);
               setEditing(null);
@@ -285,7 +286,7 @@ export default function InternsManager({ mode }: { mode: "interns" | "certificat
   );
 }
 
-function InternForm({ value, roles, onSaved, onCancel }: { value: Intern; roles: string[]; onSaved: (v: Intern) => void; onCancel: () => void }) {
+function InternForm({ value, roles, onSaved, onCancel, readOnly = false }: { value: Intern; roles: string[]; onSaved: (v: Intern) => void; onCancel: () => void; readOnly?: boolean }) {
   const [v, setV] = useState<Intern>(value);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -354,7 +355,7 @@ function InternForm({ value, roles, onSaved, onCancel }: { value: Intern; roles:
       {error && <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>}
       <div className="mt-6 flex justify-end gap-2">
         <button type="button" onClick={onCancel} className="btn-ghost">Cancel</button>
-        <button type="submit" disabled={saving} className="btn-dark disabled:opacity-60">{saving ? <><Loader2 size={16} className="animate-spin" /> Saving</> : "Save intern"}</button>
+        <button type="submit" disabled={saving || readOnly} hidden={readOnly} className="btn-dark disabled:opacity-60">{saving ? <><Loader2 size={16} className="animate-spin" /> Saving</> : "Save intern"}</button>
       </div>
     </form>
   );

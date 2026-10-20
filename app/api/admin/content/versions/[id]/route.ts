@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
+import { allowed } from "@/lib/roles";
 import { revalidateTag } from "next/cache";
 import { getSession, guard } from "@/lib/admin-guard";
 import { ContentConflictError, getVersion, readContentDoc, saveContent } from "@/lib/content-server";
@@ -20,7 +21,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     const data = sanitizeUrls(mergeContent(defaultContent, cleanContentInput(saved, defaultContent)));
     // Only owners and admins may change tracking IDs, also by restoring an old version.
     const session = await getSession();
-    if (session?.role !== "owner" && session?.role !== "admin") data.integrations = (await readContentDoc()).content.integrations;
+    if (!allowed(session, "integrations", "edit")) data.integrations = (await readContentDoc()).content.integrations;
     const updatedAt = await saveContent(data, "Before restoring an older version");
     revalidateTag("content");
     await logActivity(session, "Website content", "Restored an older version from History", String(version.savedAt ?? ""), _req);

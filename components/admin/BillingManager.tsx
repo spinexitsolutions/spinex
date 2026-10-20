@@ -23,7 +23,7 @@ const tone: Record<string, string> = {
 
 type Tab = "all" | "quote" | "invoice" | "due";
 
-export default function BillingManager({ canEditProfile }: { canEditProfile: boolean }) {
+export default function BillingManager({ canEditProfile, readOnly = false }: { canEditProfile: boolean; readOnly?: boolean }) {
   const [docs, setDocs] = useState<BillDoc[]>([]);
   const [profile, setProfile] = useState<BillingProfile>(defaultProfile);
   const [loading, setLoading] = useState(true);
@@ -86,8 +86,8 @@ export default function BillingManager({ canEditProfile }: { canEditProfile: boo
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={() => create("quote")} disabled={!!creating} className="btn-dark px-5 py-2.5 text-sm">{creating === "quote" ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={16} />} New quotation</button>
-        <button onClick={() => create("invoice")} disabled={!!creating} className="btn-ghost px-5 py-2.5 text-sm">{creating === "invoice" ? <Loader2 size={15} className="animate-spin" /> : <ReceiptIndianRupee size={16} />} New invoice</button>
+        {!readOnly && <><button onClick={() => create("quote")} disabled={!!creating} className="btn-dark px-5 py-2.5 text-sm">{creating === "quote" ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={16} />} New quotation</button>
+        <button onClick={() => create("invoice")} disabled={!!creating} className="btn-ghost px-5 py-2.5 text-sm">{creating === "invoice" ? <Loader2 size={15} className="animate-spin" /> : <ReceiptIndianRupee size={16} />} New invoice</button></>}
         <button onClick={() => setShowProfile((v) => !v)} className="btn-ghost ml-auto px-5 py-2.5 text-sm">{showProfile ? "Hide" : "Billing details"}</button>
       </div>
       <p className="text-sm text-muted">Tip: open a lead in <b>Leads</b> and press <b>Make quotation</b> to fill in the client automatically.</p>

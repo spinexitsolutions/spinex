@@ -1,8 +1,8 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { getDb } from "./db";
-import { ROLES, type Role } from "./roles";
+import { ROLES, accessOf, type Access, type Role } from "./roles";
 
-export type AdminUser = { id: string; name: string; email: string; role: Role; active: boolean; createdAt: string; lastLogin: string; twoStep: boolean };
+export type AdminUser = { id: string; name: string; email: string; role: Role; active: boolean; createdAt: string; lastLogin: string; twoStep: boolean; access: Access };
 
 // Stored on each admin_users document: tokenVersion (number, default 0). It is copied into the login
 // token as `tv`; bumping it (password reset, deactivation) logs out every older session of that member.
@@ -33,5 +33,6 @@ export function toUser(doc: any): AdminUser {
     createdAt: doc.createdAt ?? "",
     lastLogin: doc.lastLogin ?? "",
     twoStep: !!doc.totpEnabled,
+    access: accessOf({ role: doc.role ?? "editor", uid: String(doc._id), access: doc.access ?? null }),
   };
 }
