@@ -8,6 +8,7 @@ export type Post = {
   slug: string;
   excerpt: string;
   cover: string;
+  coverAlt: string; // describes the cover photo for Google and screen readers
   body: string; // Markdown
   category: string;
   tags: string[];
@@ -21,7 +22,7 @@ export type Post = {
 };
 
 export const blankPost = (): Post => ({
-  id: "", title: "", slug: "", excerpt: "", cover: "", body: "", category: "", tags: [], author: "Spinex Team",
+  id: "", title: "", slug: "", excerpt: "", cover: "", coverAlt: "", body: "", category: "", tags: [], author: "Spinex Team",
   status: "draft", publishedAt: "", seoTitle: "", seoDescription: "", createdAt: "", updatedAt: "",
 });
 

@@ -19,7 +19,7 @@ export default function LatestPosts({ posts, content }: { posts: Post[]; content
           <Link href="/blog" className="btn-ghost w-fit bg-white">All articles <ArrowUpRight size={16} /></Link>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
-          {posts.slice(0, 3).map((p) => <PostCard key={p.id} post={p} />)}
+          {posts.slice(0, 3).map((p) => <PostCard key={p.id} post={p} fallback={content.banners?.blogCover} />)}
         </div>
       </div>
     </section>

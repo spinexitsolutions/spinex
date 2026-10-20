@@ -790,6 +790,7 @@ function AdminShell() {
                   { key: "internship", label: "Internship page", type: "image" },
                   { key: "blog", label: "Blog page", type: "image" },
                   { key: "careers", label: "Careers page", type: "image" },
+                  { key: "blogCover", label: "Blog: photo for posts without their own cover image", type: "image", hint: "Optional. Each post's own cover (Blog posts → Cover image) is used first." },
                 ]} />
               </Card>
             )}

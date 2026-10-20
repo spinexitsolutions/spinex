@@ -67,10 +67,10 @@ export default async function PostPage({ params }: Props) {
         </div>
       </section>
 
-      {post.cover && (
+      {(post.cover || content.banners?.blogCover) && (
         <div className="bg-ink">
           <div className="container-x max-w-5xl translate-y-0 pb-0">
-            <img src={post.cover} alt={post.title} className="aspect-[16/8] w-full rounded-t-[28px] object-cover" />
+            <img src={post.cover || content.banners.blogCover} alt={post.coverAlt || post.title} className="aspect-[16/8] w-full rounded-t-[28px] object-cover" />
           </div>
         </div>
       )}
@@ -110,7 +110,7 @@ export default async function PostPage({ params }: Props) {
         <section className="bg-mist py-16 sm:py-20">
           <div className="container-x">
             <h2 className="h-display mb-8 text-3xl sm:text-4xl">Keep reading</h2>
-            <div className="grid gap-6 md:grid-cols-3">{more.map((p) => <PostCard key={p.id} post={p} />)}</div>
+            <div className="grid gap-6 md:grid-cols-3">{more.map((p) => <PostCard key={p.id} post={p} fallback={content.banners?.blogCover} />)}</div>
           </div>
         </section>
       )}

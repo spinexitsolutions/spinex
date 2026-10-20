@@ -5,8 +5,10 @@ import { motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import type { Post } from "@/lib/posts";
 import PostCard from "./PostCard";
+import { useContent } from "../ContentProvider";
 
 export default function BlogList({ posts }: { posts: Post[] }) {
+  const fallback = useContent().content.banners?.blogCover || "";
   const categories = ["All", ...Array.from(new Set(posts.map((p) => p.category).filter(Boolean)))];
   const [cat, setCat] = useState("All");
   const [q, setQ] = useState("");
@@ -50,8 +52,8 @@ export default function BlogList({ posts }: { posts: Post[] }) {
       )}
       {first && (
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2"><PostCard post={first} large /></div>
-          {rest.map((p) => <PostCard key={p.id} post={p} />)}
+          <div className="lg:col-span-2"><PostCard post={first} large fallback={fallback} /></div>
+          {rest.map((p) => <PostCard key={p.id} post={p} fallback={fallback} />)}
         </div>
       )}
     </>

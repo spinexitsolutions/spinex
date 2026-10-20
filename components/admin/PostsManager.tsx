@@ -318,6 +318,8 @@ function PostEditor({ initial, onBack, onDirtyChange }: { initial: Post; onBack:
         <aside className="space-y-5">
           <Panel title="Cover image">
             <ImageField id="post-cover" value={post.cover} onChange={(v) => set("cover", v)} />
+            <p className="text-xs text-muted">Shown on the blog page, at the top of the article and when the link is shared on WhatsApp or Facebook. Best size: 1600 × 900 (landscape). Big photos are made smaller automatically.</p>
+            <Field label="Describe the photo" hint="for Google"><input className="input" value={post.coverAlt ?? ""} onChange={(e) => set("coverAlt", e.target.value)} placeholder="e.g. Shop owner checking orders on a laptop" /></Field>
           </Panel>
           <Panel title="Details">
             <Field label="Web address">

@@ -3,12 +3,14 @@ import { ArrowUpRight, Clock } from "lucide-react";
 import { readingMinutes, type Post } from "@/lib/posts";
 import { formatDate } from "@/lib/interns";
 
-export default function PostCard({ post, large = false }: { post: Post; large?: boolean }) {
+// fallback = Admin → Page banners → "Blog: photo for posts without their own cover image".
+export default function PostCard({ post, large = false, fallback = "" }: { post: Post; large?: boolean; fallback?: string }) {
+  const cover = post.cover || fallback;
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white transition-shadow hover:shadow-[0_30px_60px_-30px_rgba(18,15,27,0.35)]">
       <Link href={`/blog/${post.slug}`} className={`relative block overflow-hidden bg-mist ${large ? "aspect-[16/9]" : "aspect-[16/10]"}`} tabIndex={-1} aria-hidden>
-        {post.cover ? (
-          <img src={post.cover} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        {cover ? (
+          <img src={cover} alt={post.coverAlt || ""} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
         ) : (
           <div className="grid h-full w-full place-items-center bg-gradient-to-br from-lav-100 to-lav-300 font-display text-5xl font-semibold text-lav-700">{post.title.slice(0, 1)}</div>
         )}

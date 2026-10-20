@@ -191,7 +191,7 @@ export type SiteContent = {
   trusted: TrustedBy;
   leadReplies: LeadReplies;
   showreel: { title: string; video: string; poster: string };
-  banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string };
+  banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
   integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
@@ -518,8 +518,9 @@ const baseContent: SiteContent = {
     work: img("photo-1519389950473-47ba0277781c", 1600),
     contact: img("photo-1497366216548-37526070297c", 1600),
     internship: img("photo-1522071820081-009f0129c71c", 1600),
-    blog: img("photo-1504384308090-c894fdcc538d", 1600),
+    blog: "/images/banners/blog.jpg",
     careers: img("photo-1519389950473-47ba0277781c", 1600),
+    blogCover: "", // shown on blog posts that have no cover image
   },
   certificate: {
     title: "Certificate of Internship",
@@ -715,6 +716,9 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   // Only old links are swapped: an empty value means the admin cleared it on purpose.
   const brand = out.brand as SiteContent["brand"];
   if (brand.logo && /spinexwebsolutions\.in\/img\/d\.png/i.test(brand.logo)) out.brand = { ...brand, logo: base.brand.logo };
+  // Old stock photo as the blog banner → the designed blog banner (only when it was never changed).
+  const bn = out.banners as SiteContent["banners"];
+  if (bn.blog === "/images/stock/photo-1504384308090-c894fdcc538d.jpg") out.banners = { ...bn, blog: base.banners.blog };
   // Old LinkedIn page saved in the admin panel → new company page.
   const ct = out.contact as SiteContent["contact"];
   if (ct.linkedin && /linkedin\.com\/company\/spinex-web-solutions/i.test(ct.linkedin)) out.contact = { ...ct, linkedin: base.contact.linkedin };

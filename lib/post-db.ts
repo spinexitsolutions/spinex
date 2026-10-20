@@ -10,7 +10,7 @@ export function toPost(doc: WithId<Document>): Post {
   return { ...blankPost(), ...(rest as Partial<Post>), id: String(_id) };
 }
 
-const TEXT = ["title", "slug", "excerpt", "cover", "body", "category", "author", "publishedAt", "seoTitle", "seoDescription"] as const;
+const TEXT = ["title", "slug", "excerpt", "cover", "coverAlt", "body", "category", "author", "publishedAt", "seoTitle", "seoDescription"] as const;
 
 export function cleanPost(input: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
