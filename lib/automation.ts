@@ -107,7 +107,11 @@ export async function createBackup() {
   let count = 0;
   for (const name of names) {
     const docs = await db.collection(name).find({}).toArray();
-    collections[name] = name === "admin_users" ? docs.map(({ passwordHash: _p, ...rest }) => rest) : docs;
+    collections[name] =
+      name === "admin_users" ? docs.map(({ passwordHash: _p, ...rest }) => rest)
+      // Job state (holds the scheduler key) is left out, so a backup email can't be used to run the jobs.
+      : name === "settings" ? docs.filter((d) => !String(d._id).startsWith("state:"))
+      : docs;
     count += docs.length;
   }
   const createdAt = new Date().toISOString();

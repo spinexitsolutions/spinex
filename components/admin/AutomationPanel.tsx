@@ -126,6 +126,7 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
               {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
             </select>
             <span className="mt-1 block text-xs text-muted">Sent the first time the scheduler runs after this hour.</span>
+            {data.vercelCron && !cronOk && s.reminderHour > 9 && <span className="mt-1 block text-xs text-amber-700">Vercel runs the scheduler once a day at 9 AM, so pick 9 AM or earlier, or also add cron-job.org (every hour).</span>}
           </label>
           <div className="pt-6"><Toggle checked={s.whatsappSummary} onChange={(v) => setS({ ...s, whatsappSummary: v })} label="Also send me a WhatsApp summary" /></div>
         </div>

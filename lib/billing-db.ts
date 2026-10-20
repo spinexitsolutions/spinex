@@ -29,11 +29,13 @@ export const newToken = () => randomBytes(18).toString("base64url");
 export async function nextNumber(type: DocType, date: string, profile: BillingProfile) {
   const fy = financialYear(date);
   const prefix = (type === "quote" ? profile.quotePrefix : profile.invoicePrefix).trim().replace(/[^A-Za-z0-9-]/g, "") || (type === "quote" ? "QT" : "INV");
-  const res = await (await getDb()).collection<{ _id: string; seq: number }>("counters").findOneAndUpdate(
-    { _id: `${type}:${fy}` },
-    { $inc: { seq: 1 } },
-    { upsert: true, returnDocument: "after" },
-  );
+  const counters = (await getDb()).collection<{ _id: string; seq: number }>("counters");
+  const bump = () => counters.findOneAndUpdate({ _id: `${type}:${fy}` }, { $inc: { seq: 1 } }, { upsert: true, returnDocument: "after" });
+  // Two people starting a new year's series at the same moment: one upsert loses the race, so try once more.
+  const res = await bump().catch((e) => {
+    if ((e as { code?: number }).code === 11000) return bump();
+    throw e;
+  });
   const seq = res?.seq ?? 1;
   return `${prefix}/${fy}/${String(seq).padStart(3, "0")}`;
 }

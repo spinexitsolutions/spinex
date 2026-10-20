@@ -170,7 +170,7 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
               {doc.client.phone && <a href={`https://wa.me/${waNumber(doc.client.phone)}?text=${encodeURIComponent(waText)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>}
               <button onClick={() => navigator.clipboard?.writeText(shareLink).then(() => flash("Client link copied"))} className="btn-ghost px-4 py-2.5 text-sm"><Copy size={15} /> Copy client link</button>
               {doc.type === "quote" && !doc.invoiceId && <button onClick={toInvoice} disabled={busy === "invoice"} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Make invoice</button>}
-              {doc.type === "quote" && doc.invoiceId && <Link href={`/admin/billing/${doc.invoiceId}`} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Open invoice</Link>}
+              {doc.type === "quote" && doc.invoiceId && doc.invoiceId !== "pending" && <Link href={`/admin/billing/${doc.invoiceId}`} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Open invoice</Link>}
               {doc.fromQuote && <Link href={`/admin/billing/${doc.fromQuote}`} className="btn-ghost px-4 py-2.5 text-sm">Quote {doc.fromQuoteNumber}</Link>}
             </div>
             <p className="mt-3 text-xs text-muted">The client link opens a view-only page where they can download the PDF. Save before sharing so they see the latest version.</p>
@@ -196,7 +196,7 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
                   setClient({ gstin: g, ...(st && g.length >= 2 ? { state: st } : {}) });
                 }} />
               </F>
-              <F label="State (place of supply)" hint={totals.gstOn ? (totals.interState ? "Other state: IGST" : doc.client.state ? "Same state: CGST + SGST" : "Pick a state") : undefined}>
+              <F label="State (place of supply)" hint={totals.gstOn ? (totals.exportSupply ? "Outside India: no GST (export under LUT)" : totals.interState ? "Other state: IGST" : doc.client.state ? "Same state: CGST + SGST" : "Pick a state") : undefined}>
                 <select className="input" value={doc.client.state} onChange={(e) => setClient({ state: e.target.value })}>
                   <option value="">Choose</option>
                   {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}

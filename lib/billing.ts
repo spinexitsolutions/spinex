@@ -129,6 +129,7 @@ export type Totals = {
   roundOff: number;
   total: number; // rounded to the rupee
   interState: boolean; // IGST instead of CGST + SGST
+  exportSupply: boolean; // client outside India: zero-rated (export under LUT), no GST charged
   gstOn: boolean; // false when you have no GSTIN: no tax is charged
   byRate: TaxLine[];
   lines: { id: string; amount: number }[]; // qty × rate per item
@@ -140,6 +141,8 @@ export function computeTotals(doc: Pick<BillDoc, "items" | "discount" | "client"
   const gstOn = !!String(profile.gstin || "").trim();
   const ours = String(profile.state || "").trim().toLowerCase();
   const theirs = String(doc.client?.state || stateFromGstin(doc.client?.gstin || "") || "").trim().toLowerCase();
+  // Export of services (client outside India) is zero-rated when you supply under LUT, so no GST is added.
+  const exportSupply = gstOn && theirs === "outside india";
   const interState = gstOn && !!theirs && !!ours && theirs !== ours;
   const lines = (doc.items || []).map((it) => ({ id: it.id, amount: r2(num(it.qty) * num(it.rate)), gst: Math.max(0, num(it.gst)) }));
   const subtotal = r2(lines.reduce((s, l) => s + l.amount, 0));
@@ -148,15 +151,15 @@ export function computeTotals(doc: Pick<BillDoc, "items" | "discount" | "client"
   const groups = new Map<number, number>();
   for (const l of lines) {
     const share = subtotal > 0 ? l.amount - (discount * l.amount) / subtotal : 0;
-    const rate = gstOn ? l.gst : 0;
+    const rate = gstOn && !exportSupply ? l.gst : 0;
     groups.set(rate, (groups.get(rate) ?? 0) + share);
   }
   const byRate: TaxLine[] = [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([rate, taxable]) => {
     const t = r2(taxable);
-    const tax = r2((t * rate) / 100);
-    if (interState) return { rate, taxable: t, cgst: 0, sgst: 0, igst: tax };
-    const half = r2(tax / 2);
-    return { rate, taxable: t, cgst: half, sgst: r2(tax - half), igst: 0 };
+    if (interState) return { rate, taxable: t, cgst: 0, sgst: 0, igst: r2((t * rate) / 100) };
+    // CGST and SGST are each half the rate, so they are always the same amount.
+    const half = r2((t * rate) / 200);
+    return { rate, taxable: t, cgst: half, sgst: half, igst: 0 };
   });
   const taxable = r2(byRate.reduce((s, x) => s + x.taxable, 0));
   const cgst = r2(byRate.reduce((s, x) => s + x.cgst, 0));
@@ -167,7 +170,7 @@ export function computeTotals(doc: Pick<BillDoc, "items" | "discount" | "client"
   const total = Math.round(exact);
   const paid = r2(Math.max(0, num(doc.paid)));
   return {
-    subtotal, discount, taxable, cgst, sgst, igst, tax, roundOff: r2(total - exact), total, interState, gstOn, byRate,
+    subtotal, discount, taxable, cgst, sgst, igst, tax, roundOff: r2(total - exact), total, interState, exportSupply, gstOn, byRate,
     lines: lines.map(({ id, amount }) => ({ id, amount })),
     balance: r2(Math.max(0, total - paid)),
   };

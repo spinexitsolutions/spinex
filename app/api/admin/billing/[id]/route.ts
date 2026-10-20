@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { guard, jsonBody } from "@/lib/admin-guard";
 import { billOid, billingCol, cleanBillInput, toBill } from "@/lib/billing-db";
+import { financialYear } from "@/lib/billing";
 
 type Ctx = { params: { id: string } };
 
@@ -22,6 +23,13 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!_id || !current) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const data = cleanBillInput(await jsonBody(req), current.type === "invoice" ? "invoice" : "quote");
   if (data.date === "") delete data.date;
+  // An invoice number belongs to one financial year (INV/2026-27/005), so its date has to stay in that year.
+  if (current.type === "invoice" && data.date) {
+    const fy = String(current.number ?? "").split("/").find((x) => /^\d{4}-\d{2}$/.test(x));
+    if (fy && financialYear(data.date) !== fy) {
+      return NextResponse.json({ error: `This invoice number is for the ${fy} financial year, so its date must be between 1 April and 31 March of that year.` }, { status: 400 });
+    }
+  }
   const doc = await col.findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   return NextResponse.json(toBill(doc!));
 }

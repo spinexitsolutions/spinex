@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 import { hasDb } from "@/lib/db";
 import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } from "@/lib/automation";
 import { readState, writeState } from "@/lib/settings-db";
@@ -11,7 +11,9 @@ import { SITE_URL } from "@/lib/site";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+// Both sides are hashed first, so any key (any length, any characters) is compared safely.
+const digest = (v: string) => createHash("sha256").update(v).digest();
+const same = (a: string, b: string) => timingSafeEqual(digest(a), digest(b));
 
 async function allowed(req: Request) {
   const url = new URL(req.url);

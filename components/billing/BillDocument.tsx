@@ -56,7 +56,7 @@ export default function BillDocument({ doc, profile, logo }: { doc: BillDoc; pro
           <div className="text-right">
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8a8499]">Place of supply</p>
             <p className="mt-1 font-semibold">{doc.client.state}{placeCode}</p>
-            <p className="text-[#5b566b]">{t.interState ? "IGST applies (other state)" : "CGST + SGST apply (same state)"}</p>
+            <p className="text-[#5b566b]">{t.exportSupply ? "Export of services, zero-rated (supply under LUT, no GST charged)" : t.interState ? "IGST applies (other state)" : "CGST + SGST apply (same state)"}</p>
           </div>
         )}
       </section>

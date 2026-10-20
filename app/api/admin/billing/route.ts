@@ -31,7 +31,10 @@ export async function POST(req: Request) {
     const quote = qid && (await col.findOne({ _id: qid, type: "quote" }));
     if (!quote) return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
     const q = toBill(quote);
-    if (q.invoiceId) return NextResponse.json({ error: "This quotation already has an invoice.", id: q.invoiceId }, { status: 409 });
+    if (q.invoiceId) return NextResponse.json({ error: "This quotation already has an invoice.", id: q.invoiceId === "pending" ? undefined : q.invoiceId }, { status: 409 });
+    // Claim the quotation first, so a double click (or two people) can't make two invoices from it.
+    const claimed = await col.findOneAndUpdate({ _id: qid, type: "quote", invoiceId: { $in: ["", null] } }, { $set: { invoiceId: "pending" } });
+    if (!claimed) return NextResponse.json({ error: "An invoice is already being made from this quotation. Refresh in a moment." }, { status: 409 });
     const doc: Omit<BillDoc, "id"> = {
       type: "invoice",
       number: await nextNumber("invoice", date, profile),
@@ -53,7 +56,13 @@ export async function POST(req: Request) {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    const { insertedId } = await col.insertOne(doc);
+    let insertedId;
+    try {
+      ({ insertedId } = await col.insertOne(doc));
+    } catch (e) {
+      await col.updateOne({ _id: qid, invoiceId: "pending" }, { $set: { invoiceId: "" } }); // let them try again
+      throw e;
+    }
     await col.updateOne({ _id: qid }, { $set: { invoiceId: String(insertedId), status: "accepted", updatedAt: stamp } });
     if (q.leadId) {
       const lid = billOid(q.leadId);
