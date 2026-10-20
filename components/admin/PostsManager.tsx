@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import { blankPost, readingMinutes, renderMarkdown, slugify, type Post } from "@/lib/posts";
 import { formatDate } from "@/lib/interns";
+
+// A published post with a future date stays hidden on the website until that day (same date check as lib/post-db.ts).
+const isScheduled = (p: Post) => p.status === "published" && !!p.publishedAt && p.publishedAt > new Date().toISOString().slice(0, 10);
 import ImageField from "./ImageField";
 import { TagInput } from "./fields";
 import MediaLibrary from "./MediaLibrary";
@@ -110,10 +113,10 @@ export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty
               <div className="h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-mist">{p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover" />}</div>
               <button onClick={() => open(p)} className="min-w-[200px] flex-1 text-left">
                 <span className="block font-semibold">{p.title}</span>
-                <span className="text-sm text-muted">{[p.category, p.status === "published" ? `Published ${formatDate(p.publishedAt)}` : `Edited ${formatDate(p.updatedAt.slice(0, 10))}`].filter(Boolean).join(" · ")}</span>
+                <span className="text-sm text-muted">{[p.category, isScheduled(p) ? `Goes live on ${formatDate(p.publishedAt)}` : p.status === "published" ? `Published ${formatDate(p.publishedAt)}` : `Edited ${formatDate(p.updatedAt.slice(0, 10))}`].filter(Boolean).join(" · ")}</span>
               </button>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.status === "published" ? "bg-emerald-50 text-emerald-800" : "bg-mist text-muted"}`}>{p.status === "published" ? "Published" : "Draft"}</span>
-              {p.status === "published" && <a href={`/blog/${p.slug}`} target="_blank" rel="noreferrer" aria-label="View on website" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><ExternalLink size={16} /></a>}
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isScheduled(p) ? "bg-amber-50 text-amber-800" : p.status === "published" ? "bg-emerald-50 text-emerald-800" : "bg-mist text-muted"}`}>{isScheduled(p) ? `Scheduled · ${formatDate(p.publishedAt)}` : p.status === "published" ? "Published" : "Draft"}</span>
+              {p.status === "published" && !isScheduled(p) && <a href={`/blog/${p.slug}`} target="_blank" rel="noreferrer" aria-label="View on website" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><ExternalLink size={16} /></a>}
               <button onClick={() => open(p)} aria-label={`Edit ${p.title}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink">{opening === p.id ? <Loader2 size={16} className="animate-spin" /> : <Pencil size={16} />}</button>
             </div>
           ))}
