@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, Timer, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -22,6 +22,8 @@ import UsersManager from "./UsersManager";
 import ApiKeysManager from "./ApiKeysManager";
 import ThemeEditor from "./ThemeEditor";
 import ReplyPreview from "./ReplyPreview";
+import BillingManager from "./BillingManager";
+import AutomationPanel from "./AutomationPanel";
 import { can, roleLabel, type Perm, type Role } from "@/lib/roles";
 import type { Lead } from "@/lib/leads";
 
@@ -30,6 +32,7 @@ const sections = [
   { id: "leads", label: "Leads", Icon: Inbox, group: "Inbox" , perm: "leads" },
   { id: "interns", label: "Interns", Icon: Users, group: "Inbox" , perm: "people" },
   { id: "certificates", label: "Certificates", Icon: Award, group: "Inbox" , perm: "people" },
+  { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "leads" },
   { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "content" },
@@ -57,6 +60,7 @@ const sections = [
   { id: "history", label: "History", Icon: History, group: "Files and settings" , perm: "content" },
   { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Files and settings" , perm: "content" },
   { id: "backup", label: "Backup and restore", Icon: DatabaseBackup, group: "Files and settings" , perm: "content" },
+  { id: "automation", label: "Automation and backups", Icon: Timer, group: "Files and settings" , perm: "users" },
   { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Files and settings" , perm: "users" },
   { id: "team", label: "Team and roles", Icon: UserCog, group: "Files and settings" , perm: "users" },
 ] as const;
@@ -92,8 +96,10 @@ function AdminShell() {
           return;
         }
         setMe(d);
-        // Land on the first section this role can open
-        if (!can(d.role, "stats")) setSection("leads");
+        // Open the section named in the address (e.g. /admin#billing), else the first one this role can open.
+        const wanted = sections.find((x) => x.id === window.location.hash.slice(1));
+        if (wanted && can(d.role, wanted.perm as Perm)) setSection(wanted.id);
+        else if (!can(d.role, "stats")) setSection("leads");
       })
       .catch(() => undefined);
   }, []);
@@ -176,6 +182,8 @@ function AdminShell() {
     if (section === "blog" && postDirty && !confirm("You have unsaved changes in this post. Leave without saving?")) return;
     setPostDirty(false);
     setSection(id);
+    // Keep the section in the address, so a refresh or a "Back" link opens the same place.
+    window.history.replaceState(null, "", `#${id}`);
   };
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
@@ -264,7 +272,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys"] as string[]).includes(section) && (!me || can(me.role, "content"));
+  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys", "billing", "automation"] as string[]).includes(section) && (!me || can(me.role, "content"));
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
@@ -342,6 +350,10 @@ function AdminShell() {
             {section === "team" && <UsersManager />}
 
             {section === "apikeys" && <ApiKeysManager />}
+
+            {section === "billing" && <BillingManager canEditProfile={!!me && (me.role === "owner" || me.role === "admin")} />}
+
+            {section === "automation" && <AutomationPanel goApiKeys={() => go("apikeys")} />}
 
             {section === "theme" && <ThemeEditor value={draft.theme} onChange={(v) => set("theme", v)} />}
 

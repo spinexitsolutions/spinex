@@ -20,7 +20,7 @@ export default function Footer() {
       <div className="container-x grid gap-12 pb-10 pt-20 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="max-w-xs">
           <div className="flex items-center gap-2.5">
-            {content.brand.logo && <img src={content.brand.logo} alt="" className="h-14 w-14 object-contain" />}
+            {content.brand.logo && <img loading="lazy" decoding="async" src={content.brand.logo} alt="" className="h-14 w-14 object-contain" />}
             <span className="font-display text-lg font-semibold">{content.brand.name}</span>
           </div>
           <p className="mt-5 leading-relaxed text-white/55">{content.brand.tagline}</p>

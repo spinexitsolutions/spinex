@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { ObjectId } from "mongodb";
 import { guard } from "@/lib/admin-guard";
 import { IMAGE_TYPES, MAX_IMAGE, fileUrl, uploadsBucket, type UploadInfo } from "@/lib/uploads-server";
+import { optimizeImage } from "@/lib/image-optimize";
 
 // List uploaded images, newest first.
 export async function GET() {
@@ -38,14 +39,14 @@ export async function POST(req: Request) {
   const bucket = await uploadsBucket();
   const saved: UploadInfo[] = [];
   for (const file of files) {
-    const name = (file.name || "image").slice(0, 120);
-    const buf = Buffer.from(await file.arrayBuffer());
+    // Photos are resized and saved as WebP so they load fast on phones.
+    const img = await optimizeImage(Buffer.from(await file.arrayBuffer()), file.type, (file.name || "image").slice(0, 120));
     const id = await new Promise<ObjectId>((resolve, reject) => {
-      const up = bucket.openUploadStream(name, { metadata: { contentType: file.type } });
+      const up = bucket.openUploadStream(img.name, { metadata: { contentType: img.type, ...(img.changed ? { originalSize: file.size } : {}) } });
       up.on("error", reject).on("finish", () => resolve(up.id as ObjectId));
-      up.end(buf);
+      up.end(img.buf);
     });
-    saved.push({ id: String(id), url: fileUrl(id), name, size: file.size, contentType: file.type, uploadedAt: new Date().toISOString() });
+    saved.push({ id: String(id), url: fileUrl(id), name: img.name, size: img.buf.length, contentType: img.type, uploadedAt: new Date().toISOString() });
   }
   return NextResponse.json(saved, { status: 201 });
 }

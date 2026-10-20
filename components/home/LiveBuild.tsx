@@ -131,7 +131,7 @@ function WebScene() {
         <div className="flex gap-3"><Bar w="32px" /><Bar w="32px" /><Bar w="32px" /></div>
       </motion.div>
       <motion.div variants={pop} custom={1} className="relative flex-1 overflow-hidden rounded-2xl bg-ink p-5">
-        <img src="/images/stock/photo-1497366216548-37526070297c.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+        <img loading="lazy" decoding="async" src="/images/stock/photo-1497366216548-37526070297c.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
         <div className="relative space-y-2.5">
           <div className="h-4 w-3/5 rounded bg-white" />
           <div className="h-4 w-2/5 rounded bg-white" />
@@ -170,7 +170,7 @@ function StoreScene() {
         {items.map((it, i) => (
           <motion.div key={it.img} variants={pop} custom={1 + i} className="flex flex-col overflow-hidden rounded-xl border border-line">
             <div className="flex-1 bg-mist">
-              <img src={`/images/stock/${it.img}.jpg`} alt="" className="h-full w-full object-cover" />
+              <img loading="lazy" decoding="async" src={`/images/stock/${it.img}.jpg`} alt="" className="h-full w-full object-cover" />
             </div>
             <div className="space-y-1.5 p-2.5">
               <Bar w="80%" />
@@ -206,7 +206,7 @@ function SocialScene() {
       <div className="grid flex-1 grid-cols-3 gap-1.5">
         {tiles.map((t, i) => (
           <motion.div key={t} variants={pop} custom={1 + i} className="overflow-hidden rounded-md bg-mist">
-            <img src={`/images/stock/${t}.jpg`} alt="" className="h-full w-full object-cover" />
+            <img loading="lazy" decoding="async" src={`/images/stock/${t}.jpg`} alt="" className="h-full w-full object-cover" />
           </motion.div>
         ))}
       </div>
@@ -223,7 +223,7 @@ function VideoScene() {
   return (
     <div className="flex h-full flex-col gap-3">
       <motion.div variants={pop} custom={0} className="relative flex-1 overflow-hidden rounded-xl bg-ink">
-        <img src="/images/stock/photo-1574717024653-61fd2cf4d44d.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
+        <img loading="lazy" decoding="async" src="/images/stock/photo-1574717024653-61fd2cf4d44d.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
         <div className="absolute inset-0 grid place-items-center">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-white/90"><Play size={18} className="ml-0.5 fill-ink" /></span>
         </div>

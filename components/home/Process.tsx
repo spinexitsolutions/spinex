@@ -189,7 +189,7 @@ function DesignVisual({ play }: { play: boolean }) {
         <motion.div initial={{ clipPath: "inset(0 100% 0 0)" }} animate={play ? { clipPath: "inset(0 0% 0 0)" } : undefined} transition={{ delay: 0.5, duration: 1.4, ease }} className="absolute inset-0 space-y-3 bg-white p-4">
           <div className="h-3 w-16 rounded bg-ink" />
           <div className="relative h-24 overflow-hidden rounded-xl bg-lav-600">
-            <img src="/images/stock/photo-1497366216548-37526070297c.jpg" alt="" className="h-full w-full object-cover opacity-60" />
+            <img loading="lazy" decoding="async" src="/images/stock/photo-1497366216548-37526070297c.jpg" alt="" className="h-full w-full object-cover opacity-60" />
           </div>
           <div className="grid grid-cols-3 gap-2">{["bg-lav-100", "bg-lav-200", "bg-lav-100"].map((c, i) => <div key={i} className={`h-14 rounded-lg ${c}`} />)}</div>
         </motion.div>

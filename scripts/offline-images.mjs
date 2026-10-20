@@ -24,7 +24,7 @@ const UNSPLASH = /https:\/\/images\.unsplash\.com\/(photo-[0-9]+-[0-9a-f]+)[^"'\
 async function download(id) {
   const file = path.join(DIR, `${id}.jpg`);
   if (fs.existsSync(file) && fs.statSync(file).size > 1000) return "kept";
-  const url = `https://images.unsplash.com/${id}?w=1600&q=80&fm=jpg&fit=max`;
+  const url = `https://images.unsplash.com/${id}?w=1600&q=72&fm=jpg&fit=max`;
   const res = await fetch(url, { signal: AbortSignal.timeout(20000) }); // give up on a stuck download
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));

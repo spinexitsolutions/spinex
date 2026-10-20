@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Copy, ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Check, Copy, ImagePlus, Loader2, RefreshCw, Trash2, Zap } from "lucide-react";
 import { uploadImagesEach, type Uploaded } from "@/lib/upload-client";
 
 // Whether the signed-in user may delete uploads (needs the "content" permission). Set by AdminApp.
@@ -17,6 +17,7 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [optimizing, setOptimizing] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -55,6 +56,26 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
     }
   };
 
+  // Shrinks images uploaded before automatic optimisation existed. Runs in batches until done.
+  const optimizeOld = async () => {
+    setOptimizing("Working…");
+    let savedKb = 0;
+    try {
+      for (let i = 0; i < 50; i++) {
+        const res = await fetch("/api/admin/uploads/optimize", { method: "POST" });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "Couldn't optimise.");
+        savedKb += d.savedKb || 0;
+        setOptimizing(`Working… ${d.left} left`);
+        if (!d.left || !d.done) break;
+      }
+      setOptimizing(savedKb ? `Done. Saved ${(savedKb / 1024).toFixed(1)} MB` : "Done. All images were already small.");
+      load();
+    } catch (e) {
+      setOptimizing(e instanceof Error ? e.message : "Couldn't optimise.");
+    }
+  };
+
   const remove = async (item: Uploaded) => {
     if (!confirm("Delete this image? Anywhere it's used on the website will show a blank space.")) return;
     const res = await fetch(`/api/admin/uploads/${item.id}`, { method: "DELETE" });
@@ -87,6 +108,12 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
 
       <div className="mt-5 flex items-center justify-between">
         <p className="text-sm text-muted">{items.length} image{items.length === 1 ? "" : "s"}{onPick ? ". Click one to use it." : ""}</p>
+        {!onPick && canDelete && (
+          <span className="ml-auto mr-2 flex items-center gap-2">
+            {optimizing && <span className="text-xs text-muted">{optimizing}</span>}
+            <button type="button" onClick={optimizeOld} disabled={optimizing.startsWith("Working")} className="btn-ghost px-3 py-2 text-xs" title="Make images uploaded earlier smaller, so pages load faster"><Zap size={14} /> Make old images smaller</button>
+          </span>
+        )}
         <button type="button" onClick={load} aria-label="Refresh" className="grid h-10 w-10 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={15} /></button>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BellRing, FileSpreadsheet, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2 } from "lucide-react";
+import { BellRing, FilePlus2, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
 import { LEAD_SOURCES, LEAD_STATUSES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
@@ -15,7 +15,10 @@ const badge: Record<LeadStatus, string> = {
   lost: "bg-mist text-muted",
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Today in India (the follow-up dates are Indian dates).
+const today = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+
+type Member = { id: string; name: string; role: string };
 const waNumber = (phone: string) => {
   const d = phone.replace(/\D/g, "");
   return d.length === 10 ? `91${d}` : d;
@@ -40,7 +43,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-type Filter = LeadStatus | "all" | "due";
+type Filter = LeadStatus | "all" | "due" | "mine";
 
 export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) => void }) {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -50,6 +53,13 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Lead | null>(null);
   const [msg, setMsg] = useState("");
+  const [team, setTeam] = useState<Member[]>([]);
+  const [myId, setMyId] = useState("");
+
+  useEffect(() => {
+    api<Member[]>("/api/admin/team").then(setTeam).catch(() => undefined);
+    api<{ uid: string }>("/api/auth/me").then((m) => setMyId(m.uid)).catch(() => undefined);
+  }, []);
 
   const flash = (m: string) => {
     setMsg(m);
@@ -95,16 +105,16 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
   };
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: leads.length, due: leads.filter(isDue).length };
+    const c: Record<string, number> = { all: leads.length, due: leads.filter(isDue).length, mine: leads.filter((l) => myId && l.assignedTo === myId && l.status !== "won" && l.status !== "lost").length };
     LEAD_STATUSES.forEach((s) => (c[s] = leads.filter((l) => l.status === s).length));
     return c;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leads]);
+  }, [leads, myId]);
 
   const wonValue = leads.filter((l) => l.status === "won").reduce((n, l) => n + (Number(l.value) || 0), 0);
 
   const list = leads.filter((l) => {
-    if (filter === "due" ? !isDue(l) : filter !== "all" && l.status !== filter) return false;
+    if (filter === "due" ? !isDue(l) : filter === "mine" ? !(myId && l.assignedTo === myId && l.status !== "won" && l.status !== "lost") : filter !== "all" && l.status !== filter) return false;
     const q = query.trim().toLowerCase();
     return !q || [l.name, l.phone, l.email, l.services, l.message].some((v) => (v || "").toLowerCase().includes(q));
   });
@@ -123,11 +133,12 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
     { id: "all", label: "All" },
     ...LEAD_STATUSES.map((s) => ({ id: s as Filter, label: leadStatusLabel[s] })),
     { id: "due", label: "Follow-up due" },
+    { id: "mine", label: "Given to me" },
   ];
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
         {tiles.map((t) => (
           <button key={t.id} onClick={() => setFilter(t.id)} aria-pressed={filter === t.id} className={`rounded-2xl border p-4 text-left transition-colors ${filter === t.id ? "border-ink bg-ink text-white" : t.id === "due" && counts.due > 0 ? "border-red-200 bg-red-50 hover:border-red-400" : "border-line bg-white hover:border-ink"}`}>
             <p className="font-display text-3xl font-semibold">{counts[t.id]}</p>
@@ -165,9 +176,11 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
                   {l.status === "new" && <span className="h-2 w-2 rounded-full bg-lav-600" aria-label="New" />}
                   {l.name}
                   <span className="rounded-full bg-mist px-2 py-0.5 text-[11px] font-medium text-muted">{LEAD_SOURCES[l.source] ?? l.source}</span>
-                  {isDue(l) && <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"><BellRing size={11} /> Follow up</span>}
+                  {isDue(l) && <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"><BellRing size={11} /> Follow up{l.followUp < today() ? " (late)" : " today"}</span>}
+                  {!isDue(l) && l.followUp && l.status !== "won" && l.status !== "lost" && <span className="rounded-full bg-mist px-2 py-0.5 text-[11px] font-medium text-muted">Follow up {formatDate(l.followUp)}</span>}
+                  {l.assignedName && <span className="flex items-center gap-1 rounded-full bg-lav-100 px-2 py-0.5 text-[11px] font-medium text-lav-700"><UserRound size={11} /> {l.assignedTo === myId ? "You" : l.assignedName}</span>}
                 </span>
-                <span className="mt-0.5 block truncate text-sm text-muted">{[l.services, l.budget, l.message].filter(Boolean).join(" · ") || l.phone}</span>
+                <span className="mt-0.5 block truncate text-sm text-muted">{isDue(l) && l.followUpNote ? `⏰ ${l.followUpNote}` : [l.services, l.budget, l.message].filter(Boolean).join(" · ") || l.phone}</span>
               </button>
               <span className="text-sm text-muted">{ago(l.createdAt)}</span>
               <select value={l.status} onChange={(e) => update(l, { status: e.target.value as LeadStatus })} aria-label={`Status for ${l.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none ${badge[l.status]}`}>
@@ -186,6 +199,8 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
         {open && (
           <LeadDetail
             lead={leads.find((x) => x.id === open.id) ?? open}
+            team={team}
+            myId={myId}
             onSave={async (patch) => {
               const saved = await update(open, patch, "Lead saved");
               if (saved) setOpen(null);
@@ -216,12 +231,37 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
   );
 }
 
-function LeadDetail({ lead, onSave, onDelete }: { lead: Lead; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void }) {
+function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: Member[]; myId: string; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void }) {
   const [status, setStatus] = useState(lead.status);
   const [value, setValue] = useState(lead.value);
   const [followUp, setFollowUp] = useState(lead.followUp);
   const [notes, setNotes] = useState(lead.notes);
+  const [followUpNote, setFollowUpNote] = useState(lead.followUpNote || "");
+  const [assignedTo, setAssignedTo] = useState(lead.assignedTo || "");
   const [saving, setSaving] = useState(false);
+  const [docs, setDocs] = useState<{ id: string; type: string; number: string; status: string }[]>([]);
+  const [making, setMaking] = useState(false);
+
+  useEffect(() => {
+    api<{ id: string; type: string; number: string; status: string }[]>(`/api/admin/billing?leadId=${lead.id}`).then(setDocs).catch(() => undefined);
+  }, [lead.id]);
+
+  const makeQuote = async () => {
+    setMaking(true);
+    try {
+      // Save first so the quotation gets the latest deal value.
+      if (value !== lead.value) await onSave({ value });
+      const d = await api<{ id: string }>("/api/admin/billing", { method: "POST", body: JSON.stringify({ type: "quote", leadId: lead.id }) });
+      window.location.href = `/admin/billing/${d.id}`;
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Couldn't make the quotation.");
+      setMaking(false);
+    }
+  };
+  const quick = (days: number) => {
+    const d = new Date(Date.now() + 5.5 * 3600 * 1000 + days * 86400000).toISOString().slice(0, 10);
+    setFollowUp(d);
+  };
 
   return (
     <div>
@@ -229,7 +269,17 @@ function LeadDetail({ lead, onSave, onDelete }: { lead: Lead; onSave: (patch: Pa
         <a href={`tel:${lead.phone}`} className="btn-dark px-4 py-2.5 text-sm"><Phone size={15} /> Call {lead.phone}</a>
         <a href={`https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(`Hi ${lead.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>
         {lead.email && <a href={`mailto:${lead.email}`} className="btn-ghost px-4 py-2.5 text-sm"><Mail size={15} /> Email</a>}
+        <button onClick={makeQuote} disabled={making} className="btn-ghost px-4 py-2.5 text-sm">{making ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={15} />} Make quotation</button>
       </div>
+      {docs.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {docs.map((d) => (
+            <a key={d.id} href={`/admin/billing/${d.id}`} className="inline-flex items-center gap-1.5 rounded-full bg-lav-100 px-3 py-1.5 text-xs font-semibold text-lav-700 hover:bg-lav-200">
+              <FileText size={13} /> {d.type === "quote" ? "Quote" : "Invoice"} {d.number}
+            </a>
+          ))}
+        </div>
+      )}
 
       <dl className="mt-6 grid gap-4 rounded-2xl bg-mist p-5 sm:grid-cols-2">
         <Info label="Phone" value={lead.phone} />
@@ -265,9 +315,30 @@ function LeadDetail({ lead, onSave, onDelete }: { lead: Lead; onSave: (patch: Pa
           <input className="input" inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value.replace(/[^\d]/g, ""))} placeholder="e.g. 25000" />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-semibold">Follow up on</span>
-          <input className="input" type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+          <span className="mb-1.5 block text-[13px] font-semibold">Given to</span>
+          <select className="input" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+            <option value="">Nobody</option>
+            {team.map((m) => <option key={m.id} value={m.id}>{m.id === myId ? `${m.name} (you)` : m.name}</option>)}
+            {assignedTo && !team.some((m) => m.id === assignedTo) && <option value={assignedTo}>{lead.assignedName || "Removed member"}</option>}
+          </select>
         </label>
+        <div className="sm:col-span-3 grid gap-4 rounded-2xl border border-line p-4 sm:grid-cols-[200px_1fr]">
+          <label className="block">
+            <span className="mb-1.5 block text-[13px] font-semibold">Follow up on</span>
+            <input className="input" type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+            <span className="mt-2 flex flex-wrap gap-1.5">
+              {[["Tomorrow", 1], ["In 3 days", 3], ["Next week", 7]].map(([l, d]) => (
+                <button key={l} type="button" onClick={() => quick(Number(d))} className="rounded-full border border-line px-2.5 py-1 text-xs hover:border-ink">{l}</button>
+              ))}
+              {followUp && <button type="button" onClick={() => setFollowUp("")} className="rounded-full px-2.5 py-1 text-xs text-muted hover:text-ink">Clear</button>}
+            </span>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[13px] font-semibold">What to do</span>
+            <input className="input" value={followUpNote} onChange={(e) => setFollowUpNote(e.target.value)} placeholder="e.g. Call and ask if the quotation is fine" />
+            <span className="mt-1 block text-xs text-muted">On that morning the person this lead is given to (or you) gets a reminder email, if reminders are on in Admin → Automation.</span>
+          </label>
+        </div>
         <label className="block sm:col-span-3">
           <span className="mb-1.5 block text-[13px] font-semibold">Notes (only you see these)</span>
           <textarea className="input min-h-[100px]" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Called on Monday, wants a quote for 8 pages" />
@@ -280,7 +351,7 @@ function LeadDetail({ lead, onSave, onDelete }: { lead: Lead; onSave: (patch: Pa
           disabled={saving}
           onClick={async () => {
             setSaving(true);
-            await onSave({ status, value, followUp, notes });
+            await onSave({ status, value, followUp, followUpNote, notes, ...(assignedTo !== (lead.assignedTo || "") ? { assignedTo } : {}) });
             setSaving(false);
           }}
           className="btn-dark disabled:opacity-60"

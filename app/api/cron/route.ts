@@ -1,0 +1,42 @@
+import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
+import { hasDb } from "@/lib/db";
+import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } from "@/lib/automation";
+import { readState, writeState } from "@/lib/settings-db";
+import { SITE_URL } from "@/lib/site";
+
+// Called by a scheduler (Vercel Cron, cron-job.org or a server crontab), ideally every hour.
+// Each job keeps track of when it last ran, so extra calls do nothing.
+// Link: /api/cron?key=<key from Admin → Automation and backups>  (or header "Authorization: Bearer <CRON_SECRET>")
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+async function allowed(req: Request) {
+  const url = new URL(req.url);
+  const given = url.searchParams.get("key") || (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!given) return false;
+  const env = process.env.CRON_SECRET || "";
+  if (env && same(given, env)) return true;
+  return same(given, await cronKey());
+}
+
+export async function GET(req: Request) {
+  if (!hasDb()) return NextResponse.json({ ok: false, error: "No database." }, { status: 503 });
+  if (!(await allowed(req))) return NextResponse.json({ ok: false, error: "Wrong or missing key." }, { status: 401 });
+
+  const origin = process.env.NODE_ENV === "production" ? SITE_URL : new URL(req.url).origin;
+  const [settings, state] = await Promise.all([getAutomation(), readState("automation")]);
+  const now = nowIST();
+  const done: Record<string, unknown> = {};
+  await writeState("automation", { lastCron: new Date().toISOString() });
+
+  if (settings.remindersOn && state.lastReminders !== now.date && now.hour >= settings.reminderHour) {
+    done.reminders = await runReminders(origin).catch((e) => ({ error: String(e) }));
+  }
+  if (backupDue(settings, String(state.lastBackup || ""))) {
+    done.backup = await runBackup().catch((e) => ({ error: String(e) }));
+  }
+  return NextResponse.json({ ok: true, at: now, done });
+}

@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const repliedToday = data.email
     ? (await col.countDocuments({ email: data.email, createdAt: { $gte: new Date(Date.now() - 864e5).toISOString() } }, { collation: { locale: "en", strength: 2 } }).catch(() => 1)) > 0
     : true;
-  await col.insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", notes: "", createdAt: stamp, updatedAt: stamp });
+  await col.insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", createdAt: stamp, updatedAt: stamp });
 
   const content = await getContent().catch(() => null);
   const adminUrl = `${new URL(req.url).origin}/admin`;

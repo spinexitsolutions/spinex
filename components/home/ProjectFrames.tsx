@@ -111,7 +111,7 @@ function VideoMedia({ url, poster, play, className = "" }: { url: string; poster
 function Poster({ src, className = "" }: { src: string; className?: string }) {
   return (
     <div className={`relative h-full w-full bg-ink ${className}`}>
-      {src && <img src={src} alt="" className="h-full w-full object-cover" />}
+      {src && <img loading="lazy" decoding="async" src={src} alt="" className="h-full w-full object-cover" />}
       <span className="absolute inset-0 grid place-items-center">
         <span className="grid h-[18%] min-h-9 w-auto min-w-9 place-items-center rounded-full bg-white/90 text-ink" style={{ aspectRatio: "1" }}><Play size={18} className="ml-0.5" /></span>
       </span>
@@ -210,7 +210,7 @@ function SiteScreen({ project, play }: { project: Project; play: boolean }) {
           <span className="flex gap-[6px]">{[0, 1, 2].map((i) => <span key={i} className="h-[5px] w-[22px] rounded bg-line" />)}</span>
         </div>
         <div className="relative h-[34%] overflow-hidden bg-ink">
-          {project.image && <img src={project.image} alt={project.title} className="h-full w-full object-cover opacity-70" />}
+          {project.image && <img loading="lazy" decoding="async" src={project.image} alt={project.title} className="h-full w-full object-cover opacity-70" />}
           <div className="absolute inset-0 bg-gradient-to-r from-ink/80 to-transparent" />
           <div className="absolute left-[5%] top-1/2 w-[60%] -translate-y-1/2 text-white">
             <p className="font-display text-[clamp(11px,2.3vw,26px)] font-semibold leading-tight">{project.title}</p>
@@ -228,7 +228,7 @@ function SiteScreen({ project, play }: { project: Project; play: boolean }) {
           ))}
         </div>
         <div className="grid h-[24%] grid-cols-2 gap-[4%] px-[4%] pb-[4%]">
-          <div className="overflow-hidden rounded-lg bg-mist">{project.image && <img src={project.image} alt="" className="h-full w-full object-cover" />}</div>
+          <div className="overflow-hidden rounded-lg bg-mist">{project.image && <img loading="lazy" decoding="async" src={project.image} alt="" className="h-full w-full object-cover" />}</div>
           <div className="flex flex-col justify-center gap-[8%]">
             <div className="h-[8%] w-4/5 rounded bg-ink" />
             <div className="h-[6%] w-full rounded bg-line" />
@@ -258,7 +258,7 @@ function Phone({ project, show, play }: { project: Project; show: boolean; play:
           ) : (
             <>
               <div className="relative h-[46%] bg-ink">
-                {project.image && <img src={project.image} alt="" className="h-full w-full object-cover opacity-75" />}
+                {project.image && <img loading="lazy" decoding="async" src={project.image} alt="" className="h-full w-full object-cover opacity-75" />}
                 <p className="absolute bottom-[8%] left-[8%] right-[8%] font-display text-[clamp(8px,1vw,13px)] font-semibold leading-tight text-white">{project.title}</p>
               </div>
               <div className="flex flex-1 flex-col gap-[5%] p-[9%]">
@@ -293,7 +293,7 @@ function SocialFrame({ project, play }: { project: Project; play: boolean }) {
             <span className="aspect-square w-[16%] rounded-full bg-cover bg-center" style={{ backgroundImage: `url(${project.image || images[0]})` }} />
             <span className="truncate text-[clamp(7px,0.95vw,11px)] font-semibold">{handle}</span>
           </div>
-          <img src={images[0]} alt="" className="aspect-square w-full object-cover" />
+          <img loading="lazy" decoding="async" src={images[0]} alt="" className="aspect-square w-full object-cover" />
           <div className="flex gap-[8%] p-[6%] text-ink"><Heart size={14} /><MessageCircle size={14} /><Send size={14} /></div>
         </motion.div>
       )}
@@ -315,7 +315,7 @@ function SocialFrame({ project, play }: { project: Project; play: boolean }) {
             animate={scroll ? { y: ["0%", "-30%", "0%"] } : { y: "0%" }}
             transition={scroll ? { duration: 16, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }}
           >
-            {cells.map((src, i) => <img key={i} src={src} alt="" className="aspect-square w-full object-cover" />)}
+            {cells.map((src, i) => <img loading="lazy" decoding="async" key={i} src={src} alt="" className="aspect-square w-full object-cover" />)}
           </motion.div>
         </div>
       </PhoneShell>
@@ -393,7 +393,7 @@ function AdsFrame({ project }: { project: Project }) {
           </div>
         </div>
         {project.summary && <p className="line-clamp-2 px-[4%] pb-[3%] text-[clamp(7px,0.95vw,12px)] leading-snug">{project.summary}</p>}
-        <div className="aspect-[4/3] bg-mist">{creative && <img src={creative} alt="" className="h-full w-full object-cover" />}</div>
+        <div className="aspect-[4/3] bg-mist">{creative && <img loading="lazy" decoding="async" src={creative} alt="" className="h-full w-full object-cover" />}</div>
         <div className="flex items-center justify-between bg-mist px-[4%] py-[3%]">
           <span className="truncate text-[clamp(7px,0.9vw,11px)] font-semibold">{project.category}</span>
           <span className="rounded-md bg-ink px-[5%] py-[2%] text-[clamp(7px,0.9vw,11px)] font-semibold text-white">Learn more</span>

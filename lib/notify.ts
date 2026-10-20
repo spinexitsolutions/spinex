@@ -86,3 +86,19 @@ export async function emailPerson(to: string, subject: string, title: string, pa
     return false;
   }
 }
+
+// Email with one file attached (used for database backups). Returns false if email isn't set up or sending failed.
+export async function emailFile(to: string, subject: string, text: string, file: { filename: string; content: Buffer; contentType: string }) {
+  const { SMTP_HOST: host, SMTP_PORT, SMTP_USER: user, SMTP_PASS: pass } = await smtpSettings();
+  if (!host || !user || !pass || !to) return false;
+  try {
+    const port = Number(SMTP_PORT);
+    // A bigger file needs more time to upload than the quick alert emails.
+    const transport = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass }, connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 120000 });
+    await transport.sendMail({ from: `"Spinex website" <${user}>`, to, subject, text, attachments: [file] });
+    return true;
+  } catch (e) {
+    console.error("Email with attachment failed:", e);
+    return false;
+  }
+}

@@ -8,7 +8,7 @@ export function toLead(doc: WithId<Document>): Lead {
   const { _id, ...rest } = doc;
   return {
     name: "", phone: "", email: "", services: "", budget: "", message: "", plan: "", source: "contact",
-    status: "new", value: "", followUp: "", notes: "", createdAt: "", updatedAt: "",
+    status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", createdAt: "", updatedAt: "",
     ...(rest as Partial<Lead>),
     id: String(_id),
   };
