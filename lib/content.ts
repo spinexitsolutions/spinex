@@ -145,7 +145,7 @@ export type SiteContent = {
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
-  integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string; metaPixelId: string; gtmId: string };
+  integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
   internship: { open: boolean; intro: string; modes: string[]; durations: string[]; perks: string[]; roles: InternRole[] };
   contact: {
     email: string;
@@ -480,6 +480,8 @@ const baseContent: SiteContent = {
     clarityId: "",
     metaPixelId: "",
     gtmId: "",
+    cookieBanner: false, // off by default; turn on in Admin → WhatsApp and analytics
+    cookieText: "We use cookies to understand how visitors use our website and to improve our ads. You can accept or reject them.",
   },
   internship: {
     open: true,

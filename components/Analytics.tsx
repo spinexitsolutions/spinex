@@ -1,18 +1,31 @@
 "use client";
 
 import Script from "next/script";
+import { useEffect, useState } from "react";
 import { useContent } from "./ContentProvider";
+import { CONSENT_EVENT, readConsent } from "@/lib/consent";
 
 // Google Analytics 4, Microsoft Clarity, Meta Pixel and Google Tag Manager.
 // Each loads only when its ID is set in Admin > WhatsApp and analytics.
+// When the cookie banner is on, nothing loads until the visitor presses Accept.
 export default function Analytics() {
   const { content } = useContent();
+  const needsConsent = !!content.integrations?.cookieBanner;
+  const [accepted, setAccepted] = useState(false);
+  useEffect(() => {
+    if (!needsConsent) return;
+    setAccepted(readConsent() === "accepted");
+    const onChange = (e: Event) => setAccepted((e as CustomEvent<string>).detail === "accepted");
+    window.addEventListener(CONSENT_EVENT, onChange);
+    return () => window.removeEventListener(CONSENT_EVENT, onChange);
+  }, [needsConsent]);
   const ga = (content.integrations?.gaId || process.env.NEXT_PUBLIC_GA_ID || "").trim();
   const clarity = (content.integrations?.clarityId || process.env.NEXT_PUBLIC_CLARITY_ID || "").trim();
   const pixel = (content.integrations?.metaPixelId || "").trim();
   const gtm = (content.integrations?.gtmId || "").trim();
   const safe = (v: string) => /^[A-Za-z0-9-]+$/.test(v);
 
+  if (needsConsent && !accepted) return null;
   return (
     <>
       {ga && safe(ga) && (

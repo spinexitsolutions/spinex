@@ -145,6 +145,9 @@ export function privacyPolicy(c: SiteContent): LegalDoc {
           ...(ads
             ? [`We use ${ads} to measure visits and form submissions that come from our ads and to show our ads to people who visited this website. These tools set cookies (including advertising cookies) and receive technical data like your IP address, device type and the pages you view. You can block these cookies in your browser settings, and manage ad preferences in your Meta (Facebook, Instagram) and Google account settings.`]
             : []),
+          ...((analytics || ads) && c.integrations?.cookieBanner
+            ? ["When you first visit, a banner asks whether you accept these cookies. The tools above load only if you press Accept, and you can change your choice at any time from \"Cookie settings\" at the bottom of every page."]
+            : []),
         ],
       },
       {

@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Instagram, Linkedin, Youtube } from "lucide-react";
 import { useContent } from "./ContentProvider";
+import { openCookieSettings } from "@/lib/consent";
 import { serviceSlug } from "@/lib/content";
 
 export default function Footer() {
@@ -69,6 +70,7 @@ export default function Footer() {
           <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-white">Terms of Service</Link>
           <Link href="/refund" className="hover:text-white">Refund Policy</Link>
+          {content.integrations?.cookieBanner && <button type="button" onClick={openCookieSettings} className="text-left hover:text-white">Cookie settings</button>}
         </nav>
       </div>
     </footer>

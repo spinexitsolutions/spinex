@@ -6,6 +6,7 @@ import ScrollProgress from "@/components/ScrollProgress";
 import { IntroProvider } from "@/components/Intro";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import Analytics from "@/components/Analytics";
+import CookieBanner from "@/components/CookieBanner";
 import CustomCode from "@/components/CustomCode";
 import { getHeadCode } from "@/lib/secrets";
 
@@ -21,6 +22,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <Chatbot />
         <FloatingWhatsApp />
         <Analytics />
+        <CookieBanner />
         {customCode && <CustomCode code={customCode} />}
       </SmoothScroll>
     </IntroProvider>

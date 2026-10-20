@@ -496,6 +496,15 @@ function AdminShell() {
                   </div>
                   <p className="mt-3 text-sm text-muted">The number comes from Contact details.</p>
                 </Card>
+                <Card title="Cookie banner" note="Asks visitors to accept or reject cookies. While it is on, Google Analytics, Clarity, Meta Pixel and Tag Manager run only for visitors who press Accept. Visitors can change their choice from 'Cookie settings' in the footer.">
+                  <label className="flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.integrations.cookieBanner} onChange={(e) => set("integrations", { ...draft.integrations, cookieBanner: e.target.checked })} />
+                    <span className="font-medium">Show the cookie banner</span>
+                  </label>
+                  <div className="mt-5">
+                    <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[{ key: "cookieText", label: "Banner text", type: "textarea", hint: "A link to the Privacy Policy is added after it" }]} />
+                  </div>
+                </Card>
                 <Card title="Analytics" note="See how many people visit, which pages they open and where they leave. Leave empty to turn off.">
                   <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[
                     { key: "gaId", label: "Google Analytics 4 ID", hint: "looks like G-XXXXXXXXXX" },
