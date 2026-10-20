@@ -154,7 +154,7 @@ function WebScene() {
 function StoreScene() {
   const items = [
     { img: "photo-1523275335684-37898b6baf30", price: "₹2,499" },
-    { img: "photo-1542291026-7eec264c27ff", price: "₹3,199" },
+    { img: "photo-1460925895917-afdab827c52f", price: "₹3,199" },
     { img: "photo-1505740420928-5e560c06d30e", price: "₹1,899" },
   ];
   return (

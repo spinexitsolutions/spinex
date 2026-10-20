@@ -391,7 +391,7 @@ const baseContent: SiteContent = {
       description:
         "Content calendars, posting, community replies and growth for Instagram, LinkedIn and Facebook. Your brand stays active and consistent without taking your time.",
       tags: ["Strategy", "Content", "Community"],
-      image: img("photo-1611162617474-5b21e879e113"),
+      image: img("photo-1512941937669-90a1b58e7e9c"),
       slug: "social-media-marketing",
       seoTitle: "Social Media Marketing in Jaipur | Instagram Management | Spinex",
       seoDescription: "Instagram, Facebook and LinkedIn management in Jaipur: content calendars, posts, reels and replies, handled end to end by Spinex IT Solutions.",
@@ -754,6 +754,10 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
     }
     return next as Service;
   });
+  // Social media's old built-in photo showed another company's logo → a phone with social apps.
+  out.services = (out.services as Service[]).map((sv) =>
+    sv.image === "/images/stock/photo-1611162617474-5b21e879e113.jpg" ? { ...sv, image: "/images/stock/photo-1512941937669-90a1b58e7e9c.jpg" } : sv,
+  );
   // Services added to the defaults later (on-demand, brand promotion) also show up on sites
   // whose service list was already saved in the admin panel.
   if (Array.isArray(saved?.services)) {
