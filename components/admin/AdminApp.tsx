@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, History, GraduationCap, Check, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, History, GraduationCap, Check, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, type SiteContent } from "@/lib/content";
@@ -33,6 +33,7 @@ const sections = [
   { id: "hero", label: "Brand and hero", Icon: Type, group: "Content" , perm: "content" },
   { id: "pages", label: "Page headers", Icon: PanelTop, group: "Content" , perm: "content" },
   { id: "services", label: "Services", Icon: Layers, group: "Content" , perm: "content" },
+  { id: "products", label: "Products", Icon: Package, group: "Content" , perm: "content" },
   { id: "projects", label: "Projects", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "process", label: "Process steps", Icon: ListOrdered, group: "Content" , perm: "content" },
   { id: "industries", label: "Industries", Icon: Building2, group: "Content" , perm: "content" },
@@ -265,7 +266,7 @@ function AdminShell() {
 
             {section === "pages" && (
               <div className="space-y-6">
-                {([["about", "About"], ["services", "Services"], ["work", "Work"], ["contact", "Contact"], ["internship", "Internship"], ["blog", "Blog"], ["careers", "Careers"]] as const).map(([key, label]) => (
+                {([["about", "About"], ["services", "Services"], ["products", "Products"], ["work", "Work"], ["contact", "Contact"], ["internship", "Internship"], ["blog", "Blog"], ["careers", "Careers"]] as const).map(([key, label]) => (
                   <Card key={key} title={`${label} page`}>
                     <ObjectEditor value={draft.pages[key]} onChange={(v) => set("pages", { ...draft.pages, [key]: v })} fields={[
                       { key: "title", label: "Heading" },
@@ -412,13 +413,41 @@ function AdminShell() {
                 ]} />
             )}
 
+            {section === "products" && (
+              <>
+                <p className="mb-4 text-sm text-muted">Your own software and SaaS. Each product gets its own page at /products/… with a &quot;Book a demo&quot; form; requests arrive in Leads as &quot;Product demo request&quot;. The Products link appears in the menu once you add the first product.</p>
+                <ListEditor items={draft.products} titleKey="name" addLabel="Add product" onChange={(v) => set("products", v)}
+                  newItem={() => ({ id: uid(), name: "", slug: "", tagline: "", description: "", category: "", audience: "", status: "Live", image: "", gallery: [], features: [], price: "", demoUrl: "", videoUrl: "", body: "", faqs: "", seoTitle: "", seoDescription: "" })}
+                  fields={[
+                    { key: "name", label: "Product name" },
+                    { key: "slug", label: "Page address", hint: "/products/… e.g. waba-panel (leave empty to use the name)" },
+                    { key: "tagline", label: "One-line pitch", hint: "e.g. Send WhatsApp campaigns to thousands in one click" },
+                    { key: "status", label: "Status", type: "select", options: [{ value: "Live", label: "Live" }, { value: "Beta", label: "Beta" }, { value: "Coming soon", label: "Coming soon" }, { value: "", label: "Don't show" }] },
+                    { key: "description", label: "Short description", type: "textarea", hint: "2–3 lines, shown on the card and to Google" },
+                    { key: "category", label: "Category", hint: "e.g. WhatsApp marketing, CRM, Calling" },
+                    { key: "audience", label: "Made for", hint: "e.g. Marketing agencies, Clinics" },
+                    { key: "price", label: "Price", hint: "e.g. ₹2,999/month — empty shows \"Price on request\"" },
+                    { key: "image", label: "Cover screenshot", type: "image" },
+                    { key: "gallery", label: "More screenshots", type: "images" },
+                    { key: "features", label: "Key features", type: "tags" },
+                    { key: "demoUrl", label: "Live demo link", hint: "Optional" },
+                    { key: "videoUrl", label: "YouTube video link", hint: "Optional, shown on the page" },
+                    { key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
+                    { key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },
+                    { key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
+                    { key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
+                  ]} />
+              </>
+            )}
+
             {section === "projects" && (
               <>
               <p className="mb-4 text-sm text-muted">Projects show on the home page (first 6), the Work page, and on the matching service page. Add a cover image (a screenshot of the website or app works best) and a live link if there is one.</p>
               <ListEditor items={draft.projects} titleKey="title" addLabel="Add project" onChange={(v) => set("projects", v)}
-                newItem={() => ({ id: uid(), title: "", category: "", summary: "", image: "", url: "" })}
+                newItem={() => ({ id: uid(), title: "", type: "client" as const, category: "", summary: "", image: "", url: "" })}
                 fields={[
-                  { key: "title", label: "Project name" }, { key: "category", label: "Category", hint: `Filter tab. Use a service name to show it on that service page too: ${draft.services.map((x) => x.title).join(", ")}` },
+                  { key: "title", label: "Project name" },
+                  { key: "type", label: "Type", type: "select", hint: "Demo = made to show our skills, gets a \"Demo\" label", options: [{ value: "client", label: "Client project" }, { value: "demo", label: "Demo / concept" }] }, { key: "category", label: "Category", hint: `Filter tab. Use a service name to show it on that service page too: ${draft.services.map((x) => x.title).join(", ")}` },
                   { key: "summary", label: "Short description", type: "textarea" }, { key: "url", label: "Live link", hint: "Optional" },
                   { key: "image", label: "Cover image", type: "image" },
                 ]} />
@@ -474,6 +503,7 @@ function AdminShell() {
                 <ObjectEditor value={draft.banners} onChange={(v) => set("banners", v)} fields={[
                   { key: "about", label: "About page", type: "image" },
                   { key: "services", label: "Services page", type: "image" },
+                  { key: "products", label: "Products page", type: "image" },
                   { key: "work", label: "Work page", type: "image" },
                   { key: "contact", label: "Contact page", type: "image" },
                   { key: "internship", label: "Internship page", type: "image" },
@@ -550,6 +580,7 @@ function Card({ title, note, children }: { title: string; note?: string; childre
 function Overview({ draft, go }: { draft: SiteContent; go: (s: SectionId) => void }) {
   const tiles: { id: SectionId; label: string; count: number }[] = [
     { id: "services", label: "Services", count: draft.services.length },
+    { id: "products", label: "Products", count: draft.products.length },
     { id: "projects", label: "Projects", count: draft.projects.length },
     { id: "industries", label: "Industries", count: draft.industries.length },
     { id: "testimonials", label: "Testimonials", count: draft.testimonials.length },

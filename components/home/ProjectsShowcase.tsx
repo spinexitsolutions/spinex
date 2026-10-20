@@ -15,9 +15,21 @@ const AUTO_MS = 6000;
 // `full` (Work page): every project, category filters, no section heading.
 export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
   const { content } = useContent();
-  const categories = ["All", ...Array.from(new Set(content.projects.map((p) => p.category)))];
+  const isDemo = (p: Project) => p.type === "demo";
+  const hasDemo = content.projects.some(isDemo);
+  const hasClient = content.projects.some((p) => !isDemo(p));
+  // Type filters appear only when both kinds exist; category filters follow.
+  const categories = [
+    "All",
+    ...(hasDemo && hasClient ? ["Client work", "Demos"] : []),
+    ...Array.from(new Set(content.projects.map((p) => p.category).filter(Boolean))),
+  ];
   const [filter, setFilter] = useState("All");
-  const projects = full ? content.projects.filter((p) => filter === "All" || p.category === filter) : content.projects.slice(0, 6);
+  const matches = (p: Project) =>
+    filter === "All" || (filter === "Client work" ? !isDemo(p) : filter === "Demos" ? isDemo(p) : p.category === filter);
+  // Home page: client work first, then demos.
+  const ordered = [...content.projects.filter((p) => !isDemo(p)), ...content.projects.filter(isDemo)];
+  const projects = full ? content.projects.filter(matches) : ordered.slice(0, 6);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -94,7 +106,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
                     {on && <motion.span layoutId="project-active" className="absolute inset-0 rounded-2xl bg-white shadow-[0_10px_30px_-18px_rgba(18,15,27,0.35)]" transition={{ type: "spring", stiffness: 380, damping: 34 }} />}
                     <span className="relative flex items-center justify-between gap-4">
                       <span>
-                        <span className={`block text-xs ${on ? "text-lav-700" : "text-muted"}`}>{p.category}</span>
+                        <span className={`flex items-center gap-2 text-xs ${on ? "text-lav-700" : "text-muted"}`}>{p.category}{isDemo(p) && <DemoTag />}</span>
                         <span className={`mt-0.5 block font-display text-xl font-semibold tracking-tight transition-colors ${on ? "text-ink" : "text-muted group-hover:text-ink"}`}>{p.title}</span>
                       </span>
                       <ArrowRight size={18} className={`shrink-0 transition-all duration-300 ${on ? "translate-x-0 text-lav-600 opacity-100" : "-translate-x-2 opacity-0"}`} />
@@ -129,7 +141,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
             <div className="mt-8 flex items-center justify-between gap-4 lg:hidden">
               <AnimatePresence mode="wait">
                 <motion.div key={current.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease }}>
-                  <p className="text-xs text-lav-700">{current.category}</p>
+                  <p className="flex items-center gap-2 text-xs text-lav-700">{current.category}{isDemo(current) && <DemoTag />}</p>
                   <h3 className="font-display text-2xl font-semibold tracking-tight">{current.title}</h3>
                   <p className="mt-1 text-sm text-muted">{current.summary}</p>
                 </motion.div>
@@ -250,4 +262,8 @@ function Phone({ project, show }: { project: Project; show: boolean }) {
       </AnimatePresence>
     </motion.div>
   );
+}
+
+function DemoTag() {
+  return <span className="rounded-full bg-lav-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-lav-700">Demo</span>;
 }

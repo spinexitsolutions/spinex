@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getPublishedPosts } from "@/lib/post-db";
 import { getContent } from "@/lib/content-server";
-import { serviceSlug } from "@/lib/content";
+import { productSlug, serviceSlug } from "@/lib/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -24,6 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...pages.map(([path, priority, changeFrequency]) => ({ url: `${SITE_URL}${path}`, lastModified: now, changeFrequency, priority })),
     ...content.services.map((sv) => ({ url: `${SITE_URL}/services/${serviceSlug(sv)}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.85 })),
+    ...(content.products.length ? [{ url: `${SITE_URL}/products`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.85 }] : []),
+    ...content.products.map((pr) => ({ url: `${SITE_URL}/products/${productSlug(pr)}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 })),
     ...posts.map((p) => ({ url: `${SITE_URL}/blog/${p.slug}`, lastModified: new Date(p.updatedAt || p.publishedAt || now), changeFrequency: "monthly" as const, priority: 0.6 })),
   ];
 }

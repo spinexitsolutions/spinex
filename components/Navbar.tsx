@@ -12,6 +12,7 @@ import { ease } from "./Reveal";
 const links = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services", mega: true },
+  { href: "/products", label: "Products" },
   { href: "/work", label: "Work" },
   { href: "/about", label: "About" },
   { href: "/internship", label: "Internship" },
@@ -39,6 +40,8 @@ function RollText({ text, alt = "text-lav-700" }: { text: string; alt?: string }
 
 export default function Navbar() {
   const { content } = useContent();
+  // "Products" shows only once at least one product is added in the admin panel.
+  const navLinks = links.filter((l) => l.href !== "/products" || content.products.length > 0);
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const [hidden, setHidden] = useState(false);
@@ -115,7 +118,7 @@ export default function Navbar() {
             </Link>
 
             <ul className="hidden items-center lg:flex" onMouseLeave={() => setHovered(null)}>
-              {links.map((l) => {
+              {navLinks.map((l) => {
                 const isActive = active(l.href);
                 return (
                   <li key={l.href} className="relative" onMouseEnter={() => { setHovered(l.href); if (l.mega) showMega(); else hideMega(); }}>
@@ -244,7 +247,7 @@ export default function Navbar() {
             data-lenis-prevent
           >
             <ul className="space-y-1">
-              {links.map((l, i) => (
+              {navLinks.map((l, i) => (
                 <li key={l.href} className="overflow-hidden">
                   <motion.div initial={{ y: "100%" }} animate={{ y: "0%" }} transition={{ delay: 0.2 + i * 0.06, duration: 0.6, ease }}>
                     <Link href={l.href} className={`block py-1 font-display text-5xl font-semibold tracking-tight ${active(l.href) ? "text-lav-300" : ""}`}>

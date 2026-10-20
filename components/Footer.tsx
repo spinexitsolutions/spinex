@@ -29,6 +29,7 @@ export default function Footer() {
           title="Company"
           items={[
             { label: "About", href: "/about" },
+            ...(content.products.length ? [{ label: "Our products", href: "/products" }] : []),
             { label: "Our work", href: "/work" },
             { label: "Blog", href: "/blog" },
             { label: "Careers", href: "/careers" },

@@ -8,9 +8,9 @@ import { ChevronRight } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { SplitHeading, ease } from "./Reveal";
 
-type Page = "about" | "services" | "work" | "contact" | "internship" | "blog" | "careers";
+type Page = "about" | "services" | "products" | "work" | "contact" | "internship" | "blog" | "careers";
 
-const labels: Record<Page, string> = { about: "About", services: "Services", work: "Work", contact: "Contact", internship: "Internship", blog: "Blog", careers: "Careers" };
+const labels: Record<Page, string> = { about: "About", services: "Services", products: "Products", work: "Work", contact: "Contact", internship: "Internship", blog: "Blog", careers: "Careers" };
 const pages = Object.keys(labels) as Page[];
 const fallbackBanner = "/images/stock/photo-1497366216548-37526070297c.jpg";
 
@@ -34,6 +34,7 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
   const badge = {
     about: { value: content.stats?.[0]?.value ?? "", label: content.stats?.[0]?.label ?? "" },
     services: { value: String(content.services.length), label: "Services, one team" },
+    products: { value: content.products.length ? String(content.products.length) : "", label: "Products" },
     work: content.projects.length
       ? { value: String(content.projects.length), label: "Projects shown" }
       : { value: content.stats?.[0]?.value ?? "", label: content.stats?.[0]?.label ?? "" },

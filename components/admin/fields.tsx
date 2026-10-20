@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import ImageField from "./ImageField";
 
-export type FieldDef = { key: string; label: string; type?: "text" | "textarea" | "tags" | "image" | "url"; hint?: string };
+export type FieldDef = { key: string; label: string; type?: "text" | "textarea" | "tags" | "image" | "url" | "select" | "images"; hint?: string; options?: { value: string; label: string }[] };
 type Rec = Record<string, unknown>;
 
 export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: unknown) => void }) {
@@ -29,6 +29,34 @@ export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unk
       </div>
     );
 
+  if (def.type === "select")
+    return (
+      <div>
+        {label}
+        <select id={id} className="input" value={String(value ?? def.options?.[0]?.value ?? "")} onChange={(e) => onChange(e.target.value)}>
+          {def.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
+    );
+
+  if (def.type === "images") {
+    const list = (value as string[] | undefined) ?? [];
+    return (
+      <div>
+        {label}
+        <div className="space-y-3">
+          {list.map((src, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="flex-1"><ImageField id={`${id}-${i}`} value={src} onChange={(v) => onChange(list.map((x, j) => (j === i ? String(v) : x)))} /></div>
+              <button type="button" onClick={() => onChange(list.filter((_, j) => j !== i))} className="mt-1 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-red-600" aria-label="Remove image"><Trash2 size={15} /></button>
+            </div>
+          ))}
+          <button type="button" onClick={() => onChange([...list, ""])} className="inline-flex items-center gap-2 rounded-full border border-dashed border-lav-300 px-4 py-2 text-sm font-semibold text-lav-700 hover:bg-lav-100"><Plus size={15} /> Add screenshot</button>
+        </div>
+      </div>
+    );
+  }
+
   if (def.type === "image")
     return (
       <div>
@@ -45,7 +73,7 @@ export function ObjectEditor<T extends object>({ value, fields, onChange }: { va
   return (
     <div className="grid gap-5 md:grid-cols-2">
       {fields.map((f) => (
-        <div key={f.key} className={f.type === "textarea" || f.type === "image" ? "md:col-span-2" : ""}>
+        <div key={f.key} className={f.type === "textarea" || f.type === "image" || f.type === "images" ? "md:col-span-2" : ""}>
           <FieldInput def={f} value={rec[f.key]} onChange={(v) => onChange({ ...rec, [f.key]: v } as unknown as T)} />
         </div>
       ))}

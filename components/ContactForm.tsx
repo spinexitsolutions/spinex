@@ -13,7 +13,7 @@ type Form = { name: string; phone: string; email: string; services: string; budg
 const empty: Form = { name: "", phone: "", email: "", services: "", budget: "", message: "" };
 
 // Contact page form: saves the enquiry to the admin Leads inbox.
-export default function ContactForm({ defaultService = "" }: { defaultService?: string }) {
+export default function ContactForm({ defaultService = "", source = "contact" }: { defaultService?: string; source?: "contact" | "product" }) {
   const { content } = useContent();
   const [form, setForm] = useState<Form>({ ...empty, services: defaultService });
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
@@ -42,12 +42,12 @@ export default function ContactForm({ defaultService = "" }: { defaultService?: 
 
     setSending(true);
     setError("");
-    const res = await submitLead({ ...form, source: "contact", startedAt: String(startedAt.current), cfToken, website: ((e.currentTarget as HTMLFormElement).elements.namedItem("website") as HTMLInputElement | null)?.value ?? "" });
+    const res = await submitLead({ ...form, source, startedAt: String(startedAt.current), cfToken, website: ((e.currentTarget as HTMLFormElement).elements.namedItem("website") as HTMLInputElement | null)?.value ?? "" });
     setSending(false);
     if (res.ok) {
       setDone(form);
       setHcKey((k) => k + 1);
-      setForm(empty);
+      setForm({ ...empty, services: defaultService });
     } else {
       if (res.errors) setErrors(res.errors);
       setError(res.error ?? "Couldn't send.");
@@ -76,6 +76,7 @@ export default function ContactForm({ defaultService = "" }: { defaultService?: 
               <Field label="What do you need?">
                 <select className="input" value={form.services} onChange={set("services")}>
                   <option value="">Not sure yet</option>
+                  {defaultService && !content.services.some((s) => s.title === defaultService) && <option>{defaultService}</option>}
                   {content.services.map((s) => <option key={s.id}>{s.title}</option>)}
                 </select>
               </Field>

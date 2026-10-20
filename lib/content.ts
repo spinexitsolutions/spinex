@@ -21,6 +21,7 @@ export type Job = { id: string; title: string; type: string; location: string; e
 export type Project = {
   id: string;
   title: string;
+  type?: "client" | "demo"; // demo = made to show our skills, not for a client
   category: string;
   summary: string;
   image: string;
@@ -69,6 +70,31 @@ export type Signer = { id: string; name: string; title: string; image: string };
 
 export type InternRole = { id: string; title: string; description: string; skills: string[] };
 
+// Our own software and SaaS, shown on /products.
+export type Product = {
+  id: string;
+  name: string;
+  slug: string; // /products/<slug>
+  tagline: string; // one line under the name
+  description: string; // short paragraph for cards and Google
+  category: string; // e.g. "WhatsApp marketing", "CRM"
+  audience: string; // who it is for
+  status: string; // "Live", "Beta", "Coming soon"
+  image: string; // cover screenshot
+  gallery: string[]; // more screenshots (image links)
+  features: string[];
+  price: string; // e.g. "₹2,999/month" or "Price on request"
+  demoUrl: string; // live demo link (optional)
+  videoUrl: string; // YouTube link (optional)
+  body: string; // Markdown, page text
+  faqs: string; // Q line, A line, blank line between
+  seoTitle: string;
+  seoDescription: string;
+};
+
+export const productSlug = (p: Pick<Product, "slug" | "name" | "id">) =>
+  (p.slug || p.name || p.id).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || p.id;
+
 export type PlanTime = { id: string; min: number; max: number; monthly: boolean }; // id = service id, days
 export type PlanSize = { id: string; label: string; hint: string; factor: number };
 export type PlanExtra = { id: string; label: string; days: number };
@@ -85,17 +111,18 @@ export type SiteContent = {
   };
   process: ProcessStep[];
   goals: Goal[];
-  pages: { about: PageText; services: PageText; work: PageText; contact: PageText; internship: PageText; blog: PageText; careers: PageText };
+  pages: { about: PageText; services: PageText; products: PageText; work: PageText; contact: PageText; internship: PageText; blog: PageText; careers: PageText };
   homeLayout: HomeBlock[];
   seo: { metaTitle: string; metaDescription: string; keywords: string[]; heading: string; text: string; areas: string[] };
   about: { title: string; body: string; philosophy: string; image: string };
   stats: Stat[];
   services: Service[];
   projects: Project[];
+  products: Product[];
   industries: Industry[];
   testimonials: Testimonial[];
   showreel: { title: string; video: string; poster: string };
-  banners: { about: string; services: string; work: string; contact: string; internship: string; blog: string; careers: string };
+  banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
   integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string };
@@ -187,6 +214,7 @@ const baseContent: SiteContent = {
   pages: {
     about: { title: "A Jaipur studio that builds for results.", intro: "Design, development, marketing and video under one roof, so your brand looks and works the same everywhere." },
     services: { title: "Everything your brand needs online.", intro: "Pick one service or let us handle the whole thing. Either way you get one team and one point of contact." },
+    products: { title: "Software we built and run.", intro: "Ready-made tools and SaaS products from the Spinex team. Ask for a free demo of any of them." },
     work: { title: "Projects we're proud of.", intro: "Websites, online stores, campaigns and films for businesses across India." },
     contact: { title: "Tell us what you're building.", intro: "Share a few details and we'll get back within a day with next steps and a quote." },
     internship: { title: "Start your career with real projects.", intro: "Internships in web development, design, video, social media and marketing. Learn by doing, alongside our team." },
@@ -353,6 +381,7 @@ const baseContent: SiteContent = {
     },
   ],
   projects: [], // Real projects are added in Admin → Projects.
+  products: [], // Our own software, added in Admin → Products.
   industries: [
     {
       id: "local",
@@ -387,6 +416,7 @@ const baseContent: SiteContent = {
   banners: {
     about: img("photo-1556761175-5973dc0f32e7", 1600),
     services: img("photo-1531297484001-80022131f5a1", 1600),
+    products: img("photo-1551288049-bebda4e38f71", 1600),
     work: img("photo-1519389950473-47ba0277781c", 1600),
     contact: img("photo-1497366216548-37526070297c", 1600),
     internship: img("photo-1522071820081-009f0129c71c", 1600),
