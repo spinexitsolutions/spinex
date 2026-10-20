@@ -1,0 +1,34 @@
+import { NextResponse } from "next/server";
+import { guard } from "@/lib/admin-guard";
+import { oid } from "@/lib/intern-db";
+import { hashPassword, toUser, usersCol, validRole } from "@/lib/users";
+
+type Ctx = { params: { id: string } };
+
+export async function PATCH(req: Request, { params }: Ctx) {
+  const deny = await guard("users");
+  if (deny) return deny;
+  const _id = oid(params.id);
+  if (!_id) return NextResponse.json({ error: "Team member not found." }, { status: 404 });
+  const b = await req.json().catch(() => ({}));
+  const set: Record<string, unknown> = {};
+  if (b.name !== undefined) set.name = String(b.name).trim().slice(0, 80);
+  if (b.role !== undefined) set.role = validRole(b.role);
+  if (b.active !== undefined) set.active = !!b.active;
+  if (b.password) {
+    if (String(b.password).length < 8) return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
+    set.passwordHash = hashPassword(String(b.password));
+  }
+  const doc = await (await usersCol()).findOneAndUpdate({ _id }, { $set: set }, { returnDocument: "after", projection: { passwordHash: 0 } });
+  if (!doc) return NextResponse.json({ error: "Team member not found." }, { status: 404 });
+  return NextResponse.json(toUser(doc));
+}
+
+export async function DELETE(_req: Request, { params }: Ctx) {
+  const deny = await guard("users");
+  if (deny) return deny;
+  const _id = oid(params.id);
+  if (!_id) return NextResponse.json({ error: "Team member not found." }, { status: 404 });
+  await (await usersCol()).deleteOne({ _id });
+  return NextResponse.json({ ok: true });
+}
