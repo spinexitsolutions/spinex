@@ -20,7 +20,6 @@ export default function BillDocument({ doc, profile, logo }: { doc: BillDoc; pro
   return (
     <article className="bill-page relative mx-auto w-full max-w-[210mm] bg-white p-[12mm] text-[12.5px] leading-[1.5] text-[#1d1a26] shadow-[0_20px_60px_-30px_rgba(18,15,27,.45)] print:max-w-none print:p-0 print:shadow-none">
       {doc.status === "cancelled" && <div className="pointer-events-none absolute inset-0 grid place-items-center"><span className="rotate-[-24deg] rounded-xl border-4 border-red-500/40 px-6 py-2 text-6xl font-bold uppercase tracking-widest text-red-500/30">Cancelled</span></div>}
-      {doc.status === "paid" && <div className="pointer-events-none absolute right-[14mm] top-[48mm]"><span className="inline-block rotate-[-12deg] rounded-lg border-[3px] border-emerald-600/60 px-4 py-1 text-2xl font-bold uppercase tracking-widest text-emerald-700/70">Paid</span></div>}
 
       <header className="flex items-start justify-between gap-6 border-b-2 border-[#1d1a26] pb-5">
         <div className="max-w-[55%]">
@@ -93,6 +92,7 @@ export default function BillDocument({ doc, profile, logo }: { doc: BillDoc; pro
         <div className="pt-1">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8a8499]">Amount in words</p>
           <p className="mt-1 font-semibold">{amountInWords(t.total)}</p>
+          {doc.type === "invoice" && doc.status === "paid" && <p className="mt-4"><span className="inline-block rotate-[-8deg] rounded-lg border-[3px] border-emerald-600/60 px-4 py-1 text-2xl font-bold uppercase tracking-widest text-emerald-700/70">Paid</span></p>}
           {t.gstOn && t.tax > 0 && (
             <table className="mt-4 text-[11.5px]">
               <thead>
