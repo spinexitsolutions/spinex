@@ -11,14 +11,24 @@ export async function GET(req: Request) {
   const edge = Math.round((size * pad) / 100);
   const inner = size - edge * 2;
   const { brand } = await readContentFromDb();
-  const logo = brand.logo;
+  // The built-in logo has the word "Spinex" under the S; small icons use just the S.
+  const logo = brand.logo === "/brand/logo.png" ? "/brand/mark.png" : brand.logo;
   if (!logo) return new Response("No logo set", { status: 404 });
 
   try {
-    const src = logo.startsWith("http") ? logo : new URL(logo, url.origin).href;
-    const res = await fetch(src, { cache: "force-cache" });
-    if (!res.ok) throw new Error(`Logo download failed (${res.status})`);
-    const input = Buffer.from(await res.arrayBuffer());
+    let input: Buffer | null = null;
+    if (logo.startsWith("/")) {
+      // Files in /public: read from disk when available (no network round trip).
+      const { readFile } = await import("fs/promises");
+      const { join } = await import("path");
+      input = await readFile(join(process.cwd(), "public", logo)).catch(() => null);
+    }
+    if (!input) {
+      const src = logo.startsWith("http") ? logo : new URL(logo, url.origin).href;
+      const res = await fetch(src, { cache: "force-cache" });
+      if (!res.ok) throw new Error(`Logo download failed (${res.status})`);
+      input = Buffer.from(await res.arrayBuffer());
+    }
 
     const png = await sharp(input)
       .trim({ threshold: 10 }) // cut the empty border around the logo

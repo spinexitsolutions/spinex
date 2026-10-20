@@ -145,7 +145,7 @@ const baseContent: SiteContent = {
   removedServices: [],
   brand: {
     name: "Spinex IT Solutions",
-    logo: "https://www.spinexwebsolutions.in/img/d.png",
+    logo: "/brand/logo.png",
     tagline: "Websites, stores and content that help brands grow.",
   },
   hero: {
@@ -225,10 +225,10 @@ const baseContent: SiteContent = {
     image: img("photo-1522071820081-009f0129c71c"),
   },
   stats: [
-    { id: "s1", value: "100+", label: "Projects delivered" },
-    { id: "s2", value: "98%", label: "Client satisfaction" },
-    { id: "s3", value: "24/7", label: "Support" },
-    { id: "s4", value: "250%", label: "Avg. visibility lift" },
+    { id: "s1", value: "8", label: "Services under one roof" },
+    { id: "s2", value: "24 hrs", label: "Usual reply time" },
+    { id: "s3", value: "All India", label: "Clients served online" },
+    { id: "s4", value: "Free", label: "First call and quote" },
   ],
   services: [
     {
@@ -478,7 +478,7 @@ const baseContent: SiteContent = {
       {
         id: "f3",
         q: "Do you provide support after launch?",
-        a: "Yes. We offer 24/7 support and maintenance plans for updates, backups and security.",
+        a: "Yes. We offer support and maintenance plans for updates, backups and security, and you can reach us on WhatsApp.",
         keywords: ["support", "maintenance", "after", "help", "update", "backup"],
       },
       {
@@ -539,6 +539,19 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   if (Array.isArray(seo.areas) && seo.areas.join("|") === OLD_SEO_DEFAULTS.areas.join("|")) seo.areas = base.seo.areas;
   out.seo = seo;
   out.projects = (out.projects as Project[]).filter((pr) => SAMPLE_PROJECTS[pr.id] !== pr.title);
+  // Placeholder numbers from the first version are swapped for honest defaults;
+  // stats the admin has edited are kept as they are.
+  const OLD_STATS: Record<string, string> = { "100+": "Projects delivered", "98%": "Client satisfaction", "24/7": "Support", "250%": "Avg. visibility lift" };
+  out.stats = (out.stats as SiteContent["stats"]).map((st, i) => (OLD_STATS[st.value] === st.label ? base.stats[i] ?? st : st));
+  out.chatbot = {
+    ...(out.chatbot as SiteContent["chatbot"]),
+    faqs: (out.chatbot as SiteContent["chatbot"]).faqs.map((f) =>
+      f.a === "Yes. We offer 24/7 support and maintenance plans for updates, backups and security." ? { ...f, a: base.chatbot.faqs.find((x) => x.id === f.id)?.a ?? f.a } : f,
+    ),
+  };
+  // Logo used to load from the old website; it now ships with this site.
+  const brand = out.brand as SiteContent["brand"];
+  if (!brand.logo || /spinexwebsolutions\.in\/img\/d\.png/i.test(brand.logo)) out.brand = { ...brand, logo: base.brand.logo };
   // Old company email saved in the admin panel → new one.
   const contact = out.contact as SiteContent["contact"];
   if (contact.email?.trim().toLowerCase() === "info.spinexwebsolutions@gmail.com") out.contact = { ...contact, email: base.contact.email };

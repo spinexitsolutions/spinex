@@ -235,7 +235,7 @@ function Support() {
         </span>
       </div>
       <div>
-        <h3 className="font-display text-xl font-semibold tracking-tight">24/7 support</h3>
+        <h3 className="font-display text-xl font-semibold tracking-tight">Quick WhatsApp support</h3>
         <p className="mt-1 text-white/80">A real person replies, not a ticket queue.</p>
         <a href={`https://wa.me/${content.contact.whatsapp}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink">
           <MessageCircle size={15} /> Message us

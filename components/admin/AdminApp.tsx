@@ -388,7 +388,7 @@ function AdminShell() {
                 <Card title="Numbers">
                   <ListEditor items={draft.stats} titleKey="label" addLabel="Add number" onChange={(v) => set("stats", v)}
                     newItem={() => ({ id: uid(), value: "", label: "" })}
-                    fields={[{ key: "value", label: "Value", hint: "e.g. 100+ or 98%" }, { key: "label", label: "Label" }]} />
+                    fields={[{ key: "value", label: "Value", hint: "Only real numbers, e.g. 50+ or 4.9★" }, { key: "label", label: "Label" }]} />
                 </Card>
               </div>
             )}

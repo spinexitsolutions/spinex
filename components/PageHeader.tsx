@@ -32,7 +32,7 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
   const textOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const badge = {
-    about: { value: content.stats?.[0]?.value ?? "100+", label: content.stats?.[0]?.label ?? "Projects delivered" },
+    about: { value: content.stats?.[0]?.value ?? "", label: content.stats?.[0]?.label ?? "" },
     services: { value: String(content.services.length), label: "Services, one team" },
     work: content.projects.length
       ? { value: String(content.projects.length), label: "Projects shown" }
