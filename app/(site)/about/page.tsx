@@ -5,7 +5,11 @@ import Stats from "@/components/home/Stats";
 import Process from "@/components/home/Process";
 import CTA from "@/components/home/CTA";
 
-export const metadata: Metadata = { title: "About", description: "Spinex IT Solutions is a Jaipur studio for websites, e-commerce, marketing and content." };
+export const metadata: Metadata = {
+  title: "About",
+  description: "Spinex IT Solutions is a Jaipur studio for websites, e-commerce, marketing and content.",
+  openGraph: { title: "About | Spinex IT Solutions", description: "Spinex IT Solutions is a Jaipur studio for websites, e-commerce, marketing and content.", url: "/about", type: "website", images: ["/og-image.jpg"] },
+};
 
 export default function AboutPage() {
   return (

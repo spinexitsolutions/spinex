@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { guard } from "@/lib/admin-guard";
 import { saveSecrets, secretsView } from "@/lib/secrets";
 
@@ -21,5 +22,8 @@ export async function PUT(req: Request) {
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Couldn't save." }, { status: 400 });
   }
+  // Pages read the Turnstile site key and custom head code when they are built, so rebuild them now.
+  revalidatePath("/", "layout");
+  revalidateTag("content");
   return NextResponse.json(await secretsView());
 }

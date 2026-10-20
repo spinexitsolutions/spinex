@@ -46,11 +46,14 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
     setSending(false);
     if (res.ok) {
       setDone(form);
+      setCfToken("");
       setHcKey((k) => k + 1);
       setForm({ ...empty, services: defaultService });
     } else {
       if (res.errors) setErrors(res.errors);
       setError(res.error ?? "Couldn't send.");
+      setCfToken("");
+      setHcKey((k) => k + 1);
     }
   };
 

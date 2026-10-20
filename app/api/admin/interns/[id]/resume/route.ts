@@ -13,6 +13,6 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const stream = bucket.openDownloadStream(new ObjectId(intern.resumeId));
   const name = (intern.resumeName || `${intern.name}-resume.pdf`).replace(/[^\w.\- ]/g, "");
   return new Response(Readable.toWeb(stream) as unknown as ReadableStream, {
-    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${name}"` },
+    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${name}"`, "X-Content-Type-Options": "nosniff" },
   });
 }

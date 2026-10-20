@@ -5,7 +5,11 @@ import ServiceNav from "@/components/ServiceNav";
 import Industries from "@/components/home/Industries";
 import CTA from "@/components/home/CTA";
 
-export const metadata: Metadata = { title: "Services", description: "Web development, e-commerce, digital marketing, social media, video editing and graphic design in Jaipur." };
+export const metadata: Metadata = {
+  title: "Services",
+  description: "Web development, e-commerce, digital marketing, social media, video editing and graphic design in Jaipur.",
+  openGraph: { title: "Services | Spinex IT Solutions", description: "Web development, e-commerce, digital marketing, social media, video editing and graphic design in Jaipur.", url: "/services", type: "website", images: ["/og-image.jpg"] },
+};
 
 export default function ServicesPage() {
   return (

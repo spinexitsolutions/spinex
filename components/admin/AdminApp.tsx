@@ -97,11 +97,74 @@ function AdminShell() {
   const allowed = sections.filter((x) => !me || can(me.role, x.perm as Perm));
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
+  const [conflict, setConflict] = useState("");
+  const [certSaving, setCertSaving] = useState(false);
+  const [postDirty, setPostDirty] = useState(false);
+  // Last x-content-updated seen from the server; sent back on save so edits by someone else aren't overwritten.
+  const baseUpdated = useRef<string | null>(null);
   const dirty = JSON.stringify(draft) !== JSON.stringify(content);
+  const certDirty = JSON.stringify(draft.certificate) !== JSON.stringify(content.certificate);
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
 
+  // When content changes, keep unsaved edits in parts that weren't changed by the new content.
+  const prevContent = useRef(content);
   useEffect(() => {
-    setDraft(content);
+    const prev = prevContent.current;
+    prevContent.current = content;
+    if (prev === content) return;
+    setDraft((d) => {
+      const next = { ...content } as Record<string, unknown>;
+      const dr = d as unknown as Record<string, unknown>;
+      const pr = prev as unknown as Record<string, unknown>;
+      for (const k of Object.keys(dr)) if (JSON.stringify(dr[k]) !== JSON.stringify(pr[k])) next[k] = dr[k];
+      return next as unknown as SiteContent;
+    });
   }, [content]);
+
+  // Fetches the latest saved content. Unsaved edits are kept unless `replace` is true.
+  const loadContent = async (replace: boolean) => {
+    try {
+      const res = await fetch("/api/admin/content", { cache: "no-store" });
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return false;
+      }
+      if (!res.ok) return false;
+      const data = (await res.json()) as SiteContent;
+      if (!replace && dirtyRef.current) {
+        // Edits were made before this load finished. Safe only if the saved content is what the edits started from.
+        if (JSON.stringify(data) === JSON.stringify(prevContent.current)) baseUpdated.current = res.headers.get("x-content-updated") ?? "";
+        else setConflict("The saved website content changed after this page opened. Reload to get the latest version before saving.");
+        return false;
+      }
+      baseUpdated.current = res.headers.get("x-content-updated") ?? "";
+      update(data);
+      setDraft(data);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  useEffect(() => {
+    if (me && can(me.role, "content")) loadContent(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me]);
+  const reload = async () => {
+    if (dirty && !confirm("Load the latest saved content? Your unsaved changes will be lost.")) return;
+    if (await loadContent(true)) {
+      setConflict("");
+      flash("Latest content loaded");
+    } else flash("Couldn't load the latest content. Try again.");
+  };
+
+  // Switches sidebar section, asking first if a blog post has unsaved changes.
+  const go = (id: SectionId) => {
+    if (id === section) return;
+    if (section === "blog" && postDirty && !confirm("You have unsaved changes in this post. Leave without saving?")) return;
+    setPostDirty(false);
+    setSection(id);
+  };
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
     window.addEventListener("beforeunload", warn);
@@ -113,13 +176,25 @@ function AdminShell() {
   const saveContent = async (next: SiteContent, done: string) => {
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/content", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(next) });
-      const data = await res.json();
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      // Always send a base so the server can check: "unknown" if we never got one, "none" if nothing was saved yet.
+      headers["x-base-updated"] = baseUpdated.current === null ? "unknown" : baseUpdated.current || "none";
+      const res = await fetch("/api/admin/content", { method: "PUT", headers, body: JSON.stringify(next) });
       if (res.status === 401) {
         window.location.href = "/admin/login";
         return;
       }
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 409 || data.conflict) {
+        // Someone else saved first. Keep this draft; the user decides whether to reload.
+        const msg = data.error || "Someone else saved the content after you opened it. Reload to get their changes.";
+        setConflict(msg);
+        flash("Not saved: content changed elsewhere");
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Couldn't save. Try again.");
+      baseUpdated.current = res.headers.get("x-content-updated") ?? baseUpdated.current;
+      setConflict("");
       update(data);
       setDraft(data);
       flash(done);
@@ -130,6 +205,31 @@ function AdminShell() {
     }
   };
   const save = () => saveContent(draft, "Saved. Changes are live on the website.");
+  // Certificate design and signers save on their own, so HR can save them too.
+  const saveCertificate = async () => {
+    setCertSaving(true);
+    try {
+      const res = await fetch("/api/admin/content/certificate", { method: "PUT", headers: { "content-type": "application/json", ...(baseUpdated.current ? { "x-base-updated": baseUpdated.current } : {}) }, body: JSON.stringify({ certificate: draft.certificate }) });
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.certificate) throw new Error(data.error || "Couldn't save the certificate. Try again.");
+      const certificate = data.certificate as SiteContent["certificate"];
+      // Move our base forward only if nobody else had saved since we loaded; otherwise keep it,
+      // so our next content save still warns about their newer changes.
+      if (res.headers.get("x-base-current") === "1") baseUpdated.current = res.headers.get("x-content-updated") ?? baseUpdated.current;
+      update({ ...content, certificate });
+      setDraft((d) => ({ ...d, certificate }));
+      flash("Certificate saved");
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Couldn't save the certificate. Try again.");
+    } finally {
+      setCertSaving(false);
+    }
+  };
+  const canCert = !!me && (can(me.role, "people") || can(me.role, "content"));
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
@@ -143,7 +243,7 @@ function AdminShell() {
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col bg-ink p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between px-2 pb-8 pt-2">
           <div className="flex items-center gap-2.5">
-            <img src={draft.brand.logo} alt="" className="h-11 w-11 object-contain" />
+            {draft.brand.logo && <img src={draft.brand.logo} alt="" className="h-11 w-11 object-contain" />}
             <div>
               <p className="font-display font-semibold leading-tight">Spinex</p>
               <p className="text-xs text-white/55">Admin panel</p>
@@ -155,7 +255,7 @@ function AdminShell() {
           {allowed.map(({ id, label, Icon, group }, i) => (
             <div key={id}>
             {group && group !== allowed[i - 1]?.group && <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-white/35">{group}</p>}
-            <button onClick={() => { setSection(id); setNav(false); }} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14.5px]">
+            <button onClick={() => { go(id); setNav(false); }} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14.5px]">
               {section === id && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-white/10" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
               <Icon size={17} className={`relative ${section === id ? "text-lav-300" : "text-white/50"}`} />
               <span className={`relative flex-1 ${section === id ? "text-white" : "text-white/70"}`}>{label}</span>
@@ -185,11 +285,22 @@ function AdminShell() {
           {contentSection && <button onClick={save} disabled={!dirty || saving} className="btn-dark px-5 py-2.5 text-sm disabled:cursor-default disabled:bg-line disabled:text-muted">
             {saving ? <><Loader2 size={15} className="animate-spin" /> Saving</> : dirty ? "Save changes" : "All saved"}
           </button>}
+          {section === "certificates" && canCert && certDirty && <button onClick={() => setDraft((d) => ({ ...d, certificate: content.certificate }))} className="btn-ghost px-4 py-2 text-sm">Discard</button>}
+          {section === "certificates" && canCert && <button onClick={saveCertificate} disabled={!certDirty || certSaving} className="btn-dark px-5 py-2.5 text-sm disabled:cursor-default disabled:bg-line disabled:text-muted">
+            {certSaving ? <><Loader2 size={15} className="animate-spin" /> Saving</> : certDirty ? "Save certificate" : "All saved"}
+          </button>}
         </header>
 
         <main className="mx-auto max-w-4xl p-5 sm:p-8">
+          {conflict && (
+            <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+              <p className="min-w-[200px] flex-1"><span className="font-semibold">Not saved.</span> {conflict} Your changes are still here.</p>
+              <button onClick={reload} className="btn-ghost bg-white px-4 py-2 text-sm"><RotateCcw size={15} /> Reload</button>
+              <button onClick={() => setConflict("")} aria-label="Dismiss" className="grid h-9 w-9 place-items-center rounded-full hover:bg-amber-100"><X size={16} /></button>
+            </div>
+          )}
           <motion.div key={section} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            {section === "overview" && <Dashboard go={(id) => setSection(id as SectionId)} name={me?.name ?? "there"} />}
+            {section === "overview" && <Dashboard go={(id) => go(id as SectionId)} name={me?.name ?? "there"} />}
 
             {section === "team" && <UsersManager />}
 
@@ -205,7 +316,7 @@ function AdminShell() {
 
             {section === "certificates" && (
               <div className="space-y-6">
-                <Card title="Certificate design" note="Use {name}, {role}, {company}, {start} and {end} in the text. Save changes to apply them.">
+                <Card title="Certificate design" note="Use {name}, {role}, {company}, {start} and {end} in the text. Press Save certificate to apply them.">
                   <ObjectEditor value={draft.certificate} onChange={(v) => set("certificate", v)} fields={[
                     { key: "title", label: "Title" },
                     { key: "body", label: "Main text", type: "textarea" },
@@ -213,7 +324,7 @@ function AdminShell() {
                   ]} />
                 </Card>
                 <Card title="Signatures" note="Up to 3 people sign each certificate, shown left to right in this order. Signature images look best as transparent PNGs.">
-                  <ListEditor items={draft.certificate.signers ?? []} titleKey="name" addLabel="Add signer"
+                  <ListEditor items={draft.certificate.signers ?? []} titleKey="name" addLabel="Add signer" max={3} maxNote="Up to 3 signers"
                     onChange={(v) => set("certificate", { ...draft.certificate, signers: v.slice(0, 3) })}
                     newItem={() => ({ id: uid(), name: "", title: "", image: "" })}
                     fields={[{ key: "name", label: "Name" }, { key: "title", label: "Designation" }, { key: "image", label: "Signature image", type: "image", hint: "Optional" }]} />
@@ -243,7 +354,7 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "blog" && <PostsManager />}
+            {section === "blog" && <PostsManager onDirtyChange={setPostDirty} />}
 
             {section === "home" && (
               <div className="space-y-6">
@@ -356,12 +467,12 @@ function AdminShell() {
                     { key: "metaPixelId", label: "Meta (Facebook) Pixel ID", hint: "numbers only, from Meta Events Manager" },
                     { key: "gtmId", label: "Google Tag Manager ID", hint: "looks like GTM-XXXXXXX" },
                   ]} />
-                  <p className="mt-4 text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => setSection("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>
+                  <p className="mt-4 text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>
                 </Card>
               </div>
             )}
 
-            {section === "history" && <HistoryPanel onRestored={(c) => { update(c); setDraft(c); flash("Older version restored and live"); }} />}
+            {section === "history" && <HistoryPanel dirty={dirty} onRestored={(c, updated) => { if (updated !== null) baseUpdated.current = updated; setConflict(""); update(c); setDraft(c); flash("Older version restored and live"); }} />}
 
             {section === "seo" && (
               <div className="space-y-6">
@@ -571,7 +682,7 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "backup" && <Backup draft={draft} onImport={(c) => saveContent(c, "Content imported and live")} onReset={() => saveContent(defaultContent, "Default content restored")} />}
+            {section === "backup" && <Backup draft={draft} onImport={(c) => { if (dirty && !confirm("You have unsaved changes. Importing replaces them with the file's content. Continue?")) return; saveContent(c, "Content imported and live"); }} onReset={() => saveContent(defaultContent, "Default content restored")} />}
           </motion.div>
         </main>
       </div>

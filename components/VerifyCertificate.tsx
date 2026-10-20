@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { BadgeCheck, Loader2, SearchX, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Loader2, SearchX } from "lucide-react";
 import { formatDate } from "@/lib/interns";
 import { ease } from "./Reveal";
 
 type Result = { valid: boolean; error?: string; certId?: string; name?: string; role?: string; startDate?: string; endDate?: string; issuedOn?: string };
 
+// The form and result. The page renders the section shell and heading on the server.
 export default function VerifyCertificate() {
   const initial = useSearchParams().get("id") ?? "";
   const [id, setId] = useState(initial);
@@ -36,13 +37,7 @@ export default function VerifyCertificate() {
   }, []);
 
   return (
-    <section className="relative min-h-[85svh] overflow-hidden bg-ink pb-24 pt-36 text-white grain">
-      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-lav-600/25 blur-[130px]" />
-      <div className="container-x relative max-w-3xl">
-        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-lav-600"><ShieldCheck size={26} /></span>
-        <h1 className="h-display mt-6 text-5xl sm:text-6xl">Verify a certificate</h1>
-        <p className="mt-4 max-w-lg text-lg text-white/65">Enter the certificate number printed at the bottom of a Spinex internship certificate.</p>
-
+    <>
         <form onSubmit={(e) => { e.preventDefault(); check(id); }} className="mt-10 flex flex-col gap-3 sm:flex-row">
           <label className="flex-1">
             <span className="sr-only">Certificate number</span>
@@ -87,8 +82,7 @@ export default function VerifyCertificate() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </section>
+    </>
   );
 }
 

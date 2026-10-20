@@ -5,7 +5,8 @@ import { IMAGE_TYPES, MAX_IMAGE, fileUrl, uploadsBucket, type UploadInfo } from 
 
 // List uploaded images, newest first.
 export async function GET() {
-  const deny = await guard("content");
+  // Content editors, and HR for certificate signature images.
+  const deny = (await guard("content")) && (await guard("people"));
   if (deny) return deny;
   const files = await (await uploadsBucket()).find({}, { sort: { uploadDate: -1 }, limit: 1000 }).toArray();
   const out: UploadInfo[] = files.map((f) => ({
@@ -21,17 +22,22 @@ export async function GET() {
 
 // Upload one or more images (field name "files").
 export async function POST(req: Request) {
-  const deny = await guard("content");
+  // Content editors, and HR for certificate signature images.
+  const deny = (await guard("content")) && (await guard("people"));
   if (deny) return deny;
   const form = await req.formData().catch(() => null);
   const files = (form?.getAll("files") ?? []).filter((f): f is File => typeof f !== "string");
   if (!files.length) return NextResponse.json({ error: "Choose an image to upload." }, { status: 400 });
 
-  const bucket = await uploadsBucket();
-  const saved: UploadInfo[] = [];
+  // Check every file first, so one bad file doesn't leave the others half-uploaded.
   for (const file of files) {
     if (!IMAGE_TYPES.includes(file.type)) return NextResponse.json({ error: `${file.name || "This file"} isn't a supported image. Use JPG, PNG, WebP or GIF.` }, { status: 400 });
     if (file.size > MAX_IMAGE) return NextResponse.json({ error: `${file.name || "This image"} is larger than 4 MB.` }, { status: 400 });
+  }
+
+  const bucket = await uploadsBucket();
+  const saved: UploadInfo[] = [];
+  for (const file of files) {
     const name = (file.name || "image").slice(0, 120);
     const buf = Buffer.from(await file.arrayBuffer());
     const id = await new Promise<ObjectId>((resolve, reject) => {

@@ -25,6 +25,7 @@ export default function CareersContent() {
   const [serverError, setServerError] = useState("");
   const startedAt = useRef(Date.now());
   const [cfToken, setCfToken] = useState("");
+  const [hcKey, setHcKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -69,7 +70,11 @@ export default function CareersContent() {
       track("apply", { kind: "job", role: form.role });
       setForm(empty);
       setResume(null);
+      setCfToken("");
+      setHcKey((k) => k + 1);
     } catch (err) {
+      setCfToken("");
+      setHcKey((k) => k + 1);
       setServerError(err instanceof Error ? err.message : "Couldn't send your application.");
     } finally {
       setBusy(false);
@@ -192,7 +197,7 @@ export default function CareersContent() {
                 <F label="Why do you want to join us?" className="sm:col-span-2"><textarea className="input min-h-[110px]" value={form.why} onChange={set("why")} /></F>
                 <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
               </div>
-              <HumanCheck onToken={setCfToken} />
+              <HumanCheck key={hcKey} onToken={setCfToken} />
               {serverError && <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{serverError}</p>}
               <button type="submit" disabled={busy} className="btn-dark mt-8 disabled:opacity-60">{busy ? <><Loader2 size={18} className="animate-spin" /> Sending</> : "Submit application"}</button>
               <p className="mt-4 text-xs text-muted">By applying you agree to our <Link href="/privacy" className="underline hover:text-ink">Privacy Policy</Link>.</p>

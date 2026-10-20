@@ -24,7 +24,7 @@ async function download(id) {
   const file = path.join(DIR, `${id}.jpg`);
   if (fs.existsSync(file) && fs.statSync(file).size > 1000) return "kept";
   const url = `https://images.unsplash.com/${id}?w=1600&q=80&fm=jpg&fit=max`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) }); // give up on a stuck download
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
   return "downloaded";
@@ -44,11 +44,13 @@ function readEnv() {
 async function main() {
   console.log("1) Downloading built-in photos to public/images/stock …");
   let failed = 0;
+  const problems = [];
   for (const id of BUILT_IN) {
     try {
       console.log(`   ${await download(id)}  ${id}.jpg`);
     } catch (e) {
       failed++;
+      problems.push(`${id}.jpg (${e.message})`);
       console.log(`   FAILED  ${id}  (${e.message})`);
     }
   }
@@ -74,6 +76,7 @@ async function main() {
             console.log(`   ${await download(id)}  ${id}.jpg`);
           } catch (e) {
             failed++;
+            problems.push(`${id}.jpg (${e.message})`);
             console.log(`   FAILED  ${id}  (${e.message})`);
           }
         }
@@ -84,13 +87,24 @@ async function main() {
       }
     } catch (e) {
       failed++;
+      problems.push(`database step (${e.message})`);
       console.log(`   Database step failed: ${e.message}`);
     } finally {
       await client.close().catch(() => undefined);
     }
   }
 
-  console.log(failed ? `\nDone with ${failed} problem(s). Check your internet and run it again.` : "\nAll images are now stored with the website. Restart: npm run dev");
+  if (failed) {
+    // Exit normally so a hosting build (e.g. Vercel) isn't stopped, but make the problem easy to spot in the log.
+    console.warn(`\n!!! WARNING: ${failed} problem(s). These images will be MISSING on the website until this runs successfully:`);
+    for (const p of problems) console.warn(`    - ${p}`);
+    console.warn("    Check the internet connection and run: npm run offline-images\n");
+  } else {
+    console.log("\nAll images are now stored with the website. Restart: npm run dev");
+  }
 }
 
-main();
+main().catch((e) => {
+  // Never block the build; just report it.
+  console.warn(`\n!!! WARNING: offline-images stopped early (${e.message}). Some images may be missing on the website.`);
+});

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
-import { uploadImages, type Uploaded } from "@/lib/upload-client";
+import { uploadImagesEach, type Uploaded } from "@/lib/upload-client";
 
 // Grid of uploaded images. In "pick" mode, clicking an image chooses it.
 export default function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
@@ -40,9 +40,10 @@ export default function MediaLibrary({ onPick }: { onPick?: (url: string) => voi
     setUploading(true);
     setError("");
     try {
-      const added = await uploadImages(images);
+      const { uploaded: added, failed } = await uploadImagesEach(images);
       setItems((all) => [...added, ...all]);
-      if (onPick && added.length === 1) onPick(added[0].url);
+      if (failed.length) setError(`${failed.length} of ${images.length} didn't upload: ${failed.map((f) => `${f.name} (${f.error})`).join(", ")}`);
+      else if (onPick && added.length === 1) onPick(added[0].url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed.");
     } finally {

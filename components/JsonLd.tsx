@@ -4,7 +4,8 @@ import { SITE_URL } from "@/lib/site";
 const abs = (u: string) => (u.startsWith("http") ? u : `${SITE_URL}${u.startsWith("/") ? "" : "/"}${u}`);
 
 // Structured data so Google understands the business, its services and the FAQ.
-export default function JsonLd({ content }: { content: SiteContent }) {
+// Pass faq={false} when the FAQ block isn't shown on the page (Google wants FAQ markup to match visible content).
+export default function JsonLd({ content, faq: withFaq = true }: { content: SiteContent; faq?: boolean }) {
   const c = content.contact;
   const business = {
     "@context": "https://schema.org",
@@ -30,7 +31,7 @@ export default function JsonLd({ content }: { content: SiteContent }) {
     },
   };
   const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: content.brand.name, publisher: { "@id": `${SITE_URL}/#business` } };
-  const faq = content.chatbot.faqs.length
+  const faq = withFaq && content.chatbot.faqs.length
     ? {
         "@context": "https://schema.org",
         "@type": "FAQPage",

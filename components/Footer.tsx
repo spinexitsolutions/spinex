@@ -19,7 +19,7 @@ export default function Footer() {
       <div className="container-x grid gap-12 pb-10 pt-20 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="max-w-xs">
           <div className="flex items-center gap-2.5">
-            <img src={content.brand.logo} alt="" className="h-14 w-14 object-contain" />
+            {content.brand.logo && <img src={content.brand.logo} alt="" className="h-14 w-14 object-contain" />}
             <span className="font-display text-lg font-semibold">{content.brand.name}</span>
           </div>
           <p className="mt-5 leading-relaxed text-white/55">{content.brand.tagline}</p>
@@ -48,7 +48,7 @@ export default function Footer() {
               { href: c.instagram, Icon: Instagram, label: "Instagram" },
               { href: c.linkedin, Icon: Linkedin, label: "LinkedIn" },
               { href: c.youtube, Icon: Youtube, label: "YouTube" },
-            ].map(({ href, Icon, label }) => (
+            ].filter((s) => s.href).map(({ href, Icon, label }) => (
               <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} className="grid h-10 w-10 place-items-center rounded-full border border-white/15 text-white/70 transition hover:border-lav-400 hover:bg-lav-600 hover:text-white">
                 <Icon size={17} />
               </a>
@@ -64,7 +64,7 @@ export default function Footer() {
       </div>
 
       <div className="container-x flex flex-col gap-3 border-t border-white/10 py-6 text-sm text-white/55 sm:flex-row sm:justify-between">
-        <p>© {new Date().getFullYear()} {content.brand.name}. All rights reserved.</p>
+        <p suppressHydrationWarning>© {new Date().getFullYear()} {content.brand.name}. All rights reserved.</p>
         <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-white">Terms of Service</Link>

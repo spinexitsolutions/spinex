@@ -18,7 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = post.seoTitle || post.title;
   const description = post.seoDescription || post.excerpt;
   return {
-    title: { absolute: `${title} | Spinex IT Solutions` },
+    // Don't repeat the brand if the SEO title already has it.
+    title: { absolute: /spinex/i.test(title) ? title : `${title} | Spinex IT Solutions` },
     description,
     keywords: post.tags,
     alternates: { canonical: `/blog/${post.slug}` },
@@ -34,6 +35,7 @@ export default async function PostPage({ params }: Props) {
   const related = all.filter((p) => p.id !== post.id && (p.category === post.category || p.tags.some((t) => post.tags.includes(t)))).slice(0, 3);
   const more = related.length ? related : all.filter((p) => p.id !== post.id).slice(0, 3);
   const url = `${SITE_URL}/blog/${post.slug}`;
+  const abs = (src: string) => (/^https?:\/\//.test(src) ? src : `${SITE_URL}${src.startsWith("/") ? "" : "/"}${src}`);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -44,7 +46,7 @@ export default async function PostPage({ params }: Props) {
     datePublished: post.publishedAt,
     dateModified: post.updatedAt || post.publishedAt,
     author: { "@type": "Person", name: post.author || content.brand.name },
-    publisher: { "@type": "Organization", name: content.brand.name, logo: { "@type": "ImageObject", url: content.brand.logo } },
+    publisher: { "@type": "Organization", name: content.brand.name, ...(content.brand.logo ? { logo: { "@type": "ImageObject", url: abs(content.brand.logo) } } : {}) },
     mainEntityOfPage: url,
     keywords: post.tags.join(", "),
   };

@@ -64,12 +64,12 @@ export default function Certificate({ intern, settings, company, logo, qr }: { i
         </div>
 
         {/* Watermark */}
-        <img aria-hidden src={logo} alt="" className="pointer-events-none absolute left-1/2 top-1/2 h-[34cqw] w-[34cqw] -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.04]" />
+        {logo && <img aria-hidden src={logo} alt="" className="pointer-events-none absolute left-1/2 top-1/2 h-[34cqw] w-[34cqw] -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.04]" />}
 
         <div className="absolute inset-[2.9cqw] flex flex-col px-[5cqw] pb-[2.6cqw] pt-[3cqw]">
           {/* Header */}
           <div className="flex items-center gap-[1.3cqw]">
-            <img src={logo} alt="" className="h-[5.2cqw] w-[5.2cqw] object-contain" />
+            {logo && <img src={logo} alt="" className="h-[5.2cqw] w-[5.2cqw] object-contain" />}
             <div>
               <p className="font-display text-[1.9cqw] font-semibold leading-none tracking-tight">{company}</p>
               <p className="mt-[0.45cqw] text-[0.95cqw] tracking-[0.06em] text-muted">Web development, e-commerce and digital solutions, Jaipur</p>

@@ -5,12 +5,26 @@ export type LegalSection = { id: string; title: string; body: Block[] };
 export type LegalDoc = { slug: "privacy" | "terms" | "refund"; title: string; summary: string; updated: string; sections: LegalSection[] };
 
 // Update this date whenever the text below changes.
-export const LEGAL_UPDATED = "5 October 2026";
+export const LEGAL_UPDATED = "20 October 2026";
 
 const who = (c: SiteContent) => `${c.brand.name} ("Spinex", "we", "us"), ${c.contact.location}`;
+// Tracking tools switched on in Admin → Integrations (Google Analytics can also come from NEXT_PUBLIC_GA_ID).
+const trackers = (c: SiteContent) => {
+  const i = c.integrations;
+  return {
+    ga: !!(i?.gaId?.trim() || process.env.NEXT_PUBLIC_GA_ID?.trim()),
+    clarity: !!i?.clarityId?.trim(),
+    pixel: !!i?.metaPixelId?.trim(),
+    gtm: !!i?.gtmId?.trim(),
+  };
+};
+
 const reach = (c: SiteContent) => `email ${c.contact.email} or call/WhatsApp +91 ${c.contact.phone}`;
 
 export function privacyPolicy(c: SiteContent): LegalDoc {
+  const t = trackers(c);
+  const analytics = [t.ga && "Google Analytics", t.clarity && "Microsoft Clarity"].filter(Boolean).join(" and ");
+  const ads = [t.pixel && "the Meta Pixel (Facebook and Instagram)", t.gtm && "Google Tag Manager"].filter(Boolean).join(" and ");
   return {
     slug: "privacy",
     title: "Privacy Policy",
@@ -34,6 +48,7 @@ export function privacyPolicy(c: SiteContent): LegalDoc {
             list: [
               "Enquiry forms (Contact page, home page and project planner): your name, phone number, email if you give it, the services you are interested in, budget range, your message and any project plan you build.",
               "Internship applications: your name, email, phone, city, college and course, the role you apply for, preferred duration and work mode, portfolio link, your answer to why you want to join, and your resume (PDF) if you upload one.",
+              "Job applications (Careers page): your name, email, phone, city, the role you apply for, your experience, portfolio or LinkedIn link, your answer to why you want to join, and your resume (PDF) if you upload one.",
               "Chat assistant: the questions you type. If our AI provider is switched on, your messages are sent to it only to produce a reply.",
               "Interns who join us: start and end dates, the work done and the certificate issued to you.",
             ],
@@ -49,12 +64,14 @@ export function privacyPolicy(c: SiteContent): LegalDoc {
           {
             list: [
               "To reply to your enquiry, prepare a quote and deliver the services you ask for.",
-              "To review internship applications, contact applicants and manage the internship.",
+              "To review internship and job applications, contact applicants and manage internships.",
               "To issue internship certificates and let others check that a certificate is genuine.",
               "To keep records required by law, resolve disputes and protect against fraud or misuse.",
             ],
           },
-          "We process your data on the basis of your consent, which you give when you submit a form, and for legitimate uses permitted by law. We do not sell your personal data and we do not use it for advertising.",
+          `We process your data on the basis of your consent, which you give when you submit a form, and for legitimate uses permitted by law. We do not sell your personal data${
+            t.pixel || t.gtm ? ". We use website visit data to measure and improve our own advertising (see Cookies and similar storage)." : " and we do not use it for advertising."
+          }`,
         ],
       },
       {
@@ -77,10 +94,13 @@ export function privacyPolicy(c: SiteContent): LegalDoc {
               "MongoDB Atlas, where enquiries, applications, resumes and certificate records are stored.",
               "Google (Gmail), which sends us email alerts about new enquiries and applications.",
               "Anthropic, which powers the chat assistant when it is switched on.",
+              ...(analytics ? [`${analytics}, to help us understand how the website is used.`] : []),
+              ...(t.pixel ? ["Meta (Facebook and Instagram), through the Meta Pixel, to measure and improve our ads."] : []),
+              ...(t.gtm ? ["Google, through Google Tag Manager, which loads our measurement and advertising tags."] : []),
               "WhatsApp and your email app, only when you choose to contact us that way.",
             ],
           },
-          "Some pages show images served by Unsplash and a map from Google Maps. Loading these may share your IP address with those services under their own privacy policies.",
+          "Images on this website are stored on our own site. Some pages show a map from Google Maps; loading it may share your IP address with Google under its own privacy policy.",
           "We may disclose data if required by law, a court order or a government authority.",
           "Some providers may store data on servers outside India. Where this happens we rely on their security commitments and on transfers permitted under Indian law.",
         ],
@@ -92,7 +112,7 @@ export function privacyPolicy(c: SiteContent): LegalDoc {
           {
             list: [
               "Enquiries: up to 3 years after our last contact with you, then deleted.",
-              "Internship applications not taken forward: up to 1 year, then deleted along with the resume.",
+              "Internship and job applications not taken forward: up to 1 year, then deleted along with the resume.",
               "Intern records and certificate details: kept for as long as the certificate needs to be verifiable.",
               "Records we must keep under tax or other laws: for the period the law requires.",
             ],
@@ -112,11 +132,18 @@ export function privacyPolicy(c: SiteContent): LegalDoc {
         id: "cookies",
         title: "Cookies and similar storage",
         body: [
-          "The public website does not use advertising cookies. It may store a small setting in your browser so the opening animation shows only once per visit.",
+          t.pixel || t.gtm
+            ? "The public website may store a small setting in your browser so the opening animation shows only once per visit."
+            : "The public website does not use advertising cookies. It may store a small setting in your browser so the opening animation shows only once per visit.",
           "The admin area uses one essential login cookie, only for Spinex staff.",
-          c.integrations?.gaId || c.integrations?.clarityId
-            ? `We use ${[c.integrations.gaId && "Google Analytics", c.integrations.clarityId && "Microsoft Clarity"].filter(Boolean).join(" and ")} to understand how visitors use the website, such as which pages are viewed and how long people stay. These tools set cookies and receive technical data like your IP address and device type. You can block these cookies in your browser settings.`
-            : "If we add analytics tools in the future, we will update this policy first.",
+          ...(analytics
+            ? [`We use ${analytics} to understand how visitors use the website, such as which pages are viewed and how long people stay. These tools set cookies and receive technical data like your IP address and device type. You can block these cookies in your browser settings.`]
+            : t.pixel || t.gtm
+              ? []
+              : ["If we add analytics tools in the future, we will update this policy first."]),
+          ...(ads
+            ? [`We use ${ads} to measure visits and form submissions that come from our ads and to show our ads to people who visited this website. These tools set cookies (including advertising cookies) and receive technical data like your IP address, device type and the pages you view. You can block these cookies in your browser settings, and manage ad preferences in your Meta (Facebook, Instagram) and Google account settings.`]
+            : []),
         ],
       },
       {

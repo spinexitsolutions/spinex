@@ -34,7 +34,7 @@ export default function LoginForm() {
     <div className="grid min-h-screen place-items-center bg-ink px-5">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white p-8" noValidate>
         <div className="flex items-center gap-3">
-          <img src={content.brand.logo} alt="" className="h-12 w-12 object-contain" />
+          {content.brand.logo && <img src={content.brand.logo} alt="" className="h-12 w-12 object-contain" />}
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink text-lav-300"><Lock size={18} /></span>
         </div>
         <h1 className="mt-6 font-display text-2xl font-semibold">Spinex admin</h1>

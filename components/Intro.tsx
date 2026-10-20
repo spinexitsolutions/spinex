@@ -17,7 +17,13 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (sessionStorage.getItem(SEEN_KEY) || reduced) {
+    let seen = true;
+    try {
+      seen = !!sessionStorage.getItem(SEEN_KEY);
+    } catch {
+      // Storage blocked: skip the intro rather than replay it on every page.
+    }
+    if (seen || reduced) {
       setShow(false);
       setDone(true);
       return;
@@ -28,7 +34,11 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
       ease: [0.65, 0, 0.35, 1],
       onUpdate: (v) => setCount(Math.round(v)),
       onComplete: () => {
-        sessionStorage.setItem(SEEN_KEY, "1");
+        try {
+          sessionStorage.setItem(SEEN_KEY, "1");
+        } catch {
+          // ignore: storage unavailable
+        }
         setShow(false);
       },
     });

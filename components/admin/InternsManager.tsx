@@ -249,7 +249,7 @@ export default function InternsManager({ mode }: { mode: "interns" | "certificat
             onClick={() => {
               const parsed = Object.fromEntries(Object.entries(parseApplication(pasteText)).filter(([, v]) => v)) as Partial<Intern>;
               setPasting(false);
-              setEditing({ ...blankIntern(), ...parsed });
+              setEditing({ ...blankIntern(), kind, ...parsed });
             }}
           >
             Fill details

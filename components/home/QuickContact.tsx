@@ -51,6 +51,7 @@ export default function QuickContact() {
     setSending(false);
     if (res.ok) {
       setDone(name.split(" ")[0]);
+      setCfToken("");
       setHcKey((k) => k + 1);
       setName("");
       setPhone("");
@@ -58,6 +59,8 @@ export default function QuickContact() {
       setMessage("");
     } else {
       setError(res.error ?? "Couldn't send.");
+      setCfToken("");
+      setHcKey((k) => k + 1);
     }
   };
 

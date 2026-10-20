@@ -98,9 +98,13 @@ export default function Planner() {
     setSending(false);
     if (res.ok) {
       setSent(true);
+      setCfToken("");
+      setHcKey((k) => k + 1);
+    } else {
+      setSendError(res.error ?? "Couldn't send.");
+      setCfToken("");
       setHcKey((k) => k + 1);
     }
-    else setSendError(res.error ?? "Couldn't send.");
   };
 
   const canNext = step !== 0 || picked.length > 0;

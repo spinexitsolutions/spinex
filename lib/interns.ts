@@ -74,6 +74,7 @@ export function parseApplication(text: string): Partial<Intern> {
 
 export function toCSV(interns: Intern[]) {
   const cols: (keyof Intern)[] = ["kind", "name", "email", "phone", "city", "college", "role", "experience", "mode", "duration", "status", "startDate", "endDate", "mentor", "work", "certId", "issuedOn", "link", "why", "notes", "createdAt"];
-  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  // A leading ' stops Excel / Sheets from running a value like =HYPERLINK(...) as a formula.
+  const esc = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
   return "\uFEFF" + [cols.join(","), ...interns.map((i) => cols.map((c) => esc(c === "status" ? statusLabel[i.status] : i[c])).join(","))].join("\n");
 }

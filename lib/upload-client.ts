@@ -23,15 +23,44 @@ export async function compressImage(file: File): Promise<File> {
   }
 }
 
-export async function uploadImages(files: File[]): Promise<Uploaded[]> {
+class LoggedOut extends Error {}
+
+// One file per request, so each stays under the host's request size limit (4.5 MB on Vercel).
+async function uploadOne(file: File): Promise<Uploaded> {
   const fd = new FormData();
-  for (const f of files) fd.append("files", await compressImage(f));
+  fd.append("files", await compressImage(file));
   const res = await fetch("/api/admin/uploads", { method: "POST", body: fd });
   if (res.status === 401) {
     window.location.href = "/admin/login";
-    throw new Error("Please log in again.");
+    throw new LoggedOut("Please log in again.");
   }
+  if (res.status === 413) throw new Error("File is too large to upload.");
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Upload failed. Try again.");
-  return data as Uploaded[];
+  const list = (Array.isArray(data) ? data : [data]) as Uploaded[];
+  if (!list[0]) throw new Error("Upload failed. Try again.");
+  return list[0];
+}
+
+export type UploadReport = { uploaded: Uploaded[]; failed: { name: string; error: string }[] };
+
+// Uploads files one after another and reports which ones failed.
+export async function uploadImagesEach(files: File[]): Promise<UploadReport> {
+  const report: UploadReport = { uploaded: [], failed: [] };
+  for (const f of files) {
+    try {
+      report.uploaded.push(await uploadOne(f));
+    } catch (e) {
+      if (e instanceof LoggedOut) throw e;
+      report.failed.push({ name: f.name, error: e instanceof Error ? e.message : "Upload failed." });
+    }
+  }
+  return report;
+}
+
+// Returns the uploaded files; throws only when none of them could be uploaded.
+export async function uploadImages(files: File[]): Promise<Uploaded[]> {
+  const { uploaded, failed } = await uploadImagesEach(files);
+  if (!uploaded.length && failed.length) throw new Error(failed.length === 1 ? failed[0].error : `${failed.length} uploads failed: ${failed[0].error}`);
+  return uploaded;
 }

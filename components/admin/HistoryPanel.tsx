@@ -7,7 +7,7 @@ import type { SiteContent } from "@/lib/content";
 type Version = { id: string; savedAt: string; note: string };
 
 // Earlier saves of the website content. Restoring keeps the current version too, so it can be undone.
-export default function HistoryPanel({ onRestored }: { onRestored: (c: SiteContent) => void }) {
+export default function HistoryPanel({ onRestored, dirty = false }: { onRestored: (c: SiteContent, updated: string | null) => void; dirty?: boolean }) {
   const [list, setList] = useState<Version[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
@@ -34,13 +34,14 @@ export default function HistoryPanel({ onRestored }: { onRestored: (c: SiteConte
 
   const restore = async (v: Version) => {
     const when = new Date(v.savedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
-    if (!confirm(`Restore the website content from ${when}? Your current content is kept in history, so you can switch back.`)) return;
+    const unsaved = dirty ? "\n\nYou have unsaved changes. They will be lost." : "";
+    if (!confirm(`Restore the website content from ${when}? Your current content is kept in history, so you can switch back.${unsaved}`)) return;
     setBusy(v.id);
     try {
       const res = await fetch(`/api/admin/content/versions/${v.id}`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't restore.");
-      onRestored(data);
+      onRestored(data, res.headers.get("x-content-updated"));
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't restore.");

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { PlannerSettings, Service } from "@/lib/content";
 import { uid } from "./fields";
@@ -49,7 +50,7 @@ export default function PlannerEditor({ value, services, onChange }: { value: Pl
             <div key={z.id} className="grid gap-3 rounded-2xl border border-line p-4 sm:grid-cols-[1fr_2fr_110px_auto] sm:items-end">
               <Field label="Name"><input className="input" value={z.label} onChange={(e) => onChange({ ...value, sizes: value.sizes.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} /></Field>
               <Field label="Description"><input className="input" value={z.hint} onChange={(e) => onChange({ ...value, sizes: value.sizes.map((x, j) => (j === i ? { ...x, hint: e.target.value } : x)) })} /></Field>
-              <Field label="Multiplier"><input type="number" min={0.1} step={0.1} className="input" value={z.factor} onChange={(e) => onChange({ ...value, sizes: value.sizes.map((x, j) => (j === i ? { ...x, factor: Number(e.target.value) || 1 } : x)) })} /></Field>
+              <Field label="Multiplier"><FactorInput value={z.factor} onChange={(factor) => onChange({ ...value, sizes: value.sizes.map((x, j) => (j === i ? { ...x, factor } : x)) })} /></Field>
               <Remove onClick={() => onChange({ ...value, sizes: value.sizes.filter((_, j) => j !== i) })} />
             </div>
           ))}
@@ -78,6 +79,37 @@ export default function PlannerEditor({ value, services, onChange }: { value: Pl
         </Field>
       </section>
     </div>
+  );
+}
+
+// Keeps what's typed (e.g. "0." on the way to 0.5); checks it when the field loses focus.
+function FactorInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [text, setText] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!focused) setText(String(value));
+  }, [value, focused]);
+  return (
+    <input
+      type="number"
+      min={0.1}
+      step={0.1}
+      className="input"
+      value={focused ? text : String(value)}
+      onFocus={() => { setText(String(value)); setFocused(true); }}
+      onChange={(e) => {
+        setText(e.target.value);
+        const n = Number(e.target.value);
+        if (e.target.value !== "" && Number.isFinite(n) && n >= 0.1) onChange(n);
+      }}
+      onBlur={() => {
+        setFocused(false);
+        const n = Number(text);
+        const next = text.trim() === "" || !Number.isFinite(n) ? 1 : Math.max(0.1, n);
+        setText(String(next));
+        onChange(next);
+      }}
+    />
   );
 }
 

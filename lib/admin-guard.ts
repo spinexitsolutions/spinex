@@ -15,8 +15,10 @@ export async function getSession(): Promise<Session | null> {
     const u = await (await usersCol()).findOne({ _id: new ObjectId(s.uid) }, { projection: { role: 1, active: 1, name: 1 } });
     if (!u || u.active === false) return null;
     return { ...s, role: u.role, name: u.name || s.name };
-  } catch {
-    return s;
+  } catch (e) {
+    // Can't confirm this team member is still active, so don't let them in (the env owner is unaffected).
+    console.error("Could not check the team member's account:", e);
+    return null;
   }
 }
 

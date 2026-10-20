@@ -39,19 +39,25 @@ export async function uniqueSlug(base: string, exceptId?: string) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Throws on a database error so the failure is never cached (see getPublishedPosts).
 async function loadPublished(): Promise<Post[]> {
   if (!hasDb()) return [];
+  const docs = await (await postsCol()).find({ status: "published", publishedAt: { $lte: today() } }).sort({ publishedAt: -1, createdAt: -1 }).limit(500).toArray();
+  return docs.map(toPost);
+}
+
+// Cached for visitors; saving a post in the admin clears the "posts" tag.
+const cachedPublished = unstable_cache(loadPublished, ["published-posts"], { tags: ["posts"], revalidate: 3600 });
+
+// On a database error this request shows no posts, and the next request tries the database again.
+export async function getPublishedPosts(): Promise<Post[]> {
   try {
-    const docs = await (await postsCol()).find({ status: "published", publishedAt: { $lte: today() } }).sort({ publishedAt: -1, createdAt: -1 }).limit(500).toArray();
-    return docs.map(toPost);
+    return await cachedPublished();
   } catch (e) {
     console.error("Could not load blog posts:", e);
     return [];
   }
 }
-
-// Cached for visitors; saving a post in the admin clears the "posts" tag.
-export const getPublishedPosts = unstable_cache(loadPublished, ["published-posts"], { tags: ["posts"], revalidate: 3600 });
 
 export async function getPublishedPost(slug: string) {
   const all = await getPublishedPosts();

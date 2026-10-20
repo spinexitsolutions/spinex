@@ -6,12 +6,12 @@ import { notifyAdmin } from "@/lib/notify";
 import { checkHuman } from "@/lib/antispam";
 import { sendLeadWebhook } from "@/lib/webhook";
 
-
 // Public endpoint used by the contact form, home contact section and project planner.
 export async function POST(req: Request) {
   if (!hasDb()) return NextResponse.json({ error: "Our form is offline right now. Please message us on WhatsApp." }, { status: 503 });
 
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const raw: unknown = await req.json().catch(() => null);
+  const body = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
   const human = await checkHuman(req, body, "lead", 8);
   if (!human.ok) return human.silent ? NextResponse.json({ ok: true }) : NextResponse.json({ error: human.error }, { status: human.status });
 
@@ -28,22 +28,24 @@ export async function POST(req: Request) {
 
   await (await leadsCol()).insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", notes: "", createdAt: stamp, updatedAt: stamp });
 
-  await sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], createdAt: stamp });
-
-  await notifyAdmin(
-    `New enquiry from ${data.name}`,
-    [
-      ["Name", data.name],
-      ["Phone", data.phone],
-      ["Email", data.email ?? ""],
-      ["Needs", data.services ?? ""],
-      ["Budget", data.budget ?? ""],
-      ["Message", data.message ?? ""],
-      ["Plan", plan],
-      ["From", LEAD_SOURCES[source]],
-    ],
-    `${new URL(req.url).origin}/admin`,
-  );
+  // Webhook and alert email run side by side; both give up quickly and never throw.
+  await Promise.allSettled([
+    sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], createdAt: stamp }),
+    notifyAdmin(
+      `New enquiry from ${data.name}`,
+      [
+        ["Name", data.name],
+        ["Phone", data.phone],
+        ["Email", data.email ?? ""],
+        ["Needs", data.services ?? ""],
+        ["Budget", data.budget ?? ""],
+        ["Message", data.message ?? ""],
+        ["Plan", plan],
+        ["From", LEAD_SOURCES[source]],
+      ],
+      `${new URL(req.url).origin}/admin`,
+    ),
+  ]);
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

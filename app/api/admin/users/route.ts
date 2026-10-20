@@ -12,7 +12,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const deny = await guard("users");
   if (deny) return deny;
-  const b = await req.json().catch(() => ({}));
+  const b = ((await req.json().catch(() => null)) ?? {}) as Record<string, unknown>; // a "null" body is treated as empty
   const name = String(b.name ?? "").trim().slice(0, 80);
   const email = String(b.email ?? "").trim().toLowerCase();
   const password = String(b.password ?? "");

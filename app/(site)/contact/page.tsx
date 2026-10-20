@@ -4,7 +4,11 @@ import ContactForm from "@/components/ContactForm";
 import ContactInfo from "@/components/ContactInfo";
 import Planner from "@/components/home/Planner";
 
-export const metadata: Metadata = { title: "Contact", description: "Start a project with Spinex IT Solutions, Jaipur." };
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Start a project with Spinex IT Solutions, Jaipur.",
+  openGraph: { title: "Contact | Spinex IT Solutions", description: "Start a project with Spinex IT Solutions, Jaipur.", url: "/contact", type: "website", images: ["/og-image.jpg"] },
+};
 
 export default function ContactPage() {
   return (

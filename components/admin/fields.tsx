@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import ImageField from "./ImageField";
@@ -24,7 +24,7 @@ export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unk
     return (
       <div>
         {label}
-        <input id={id} className="input" value={(value as string[] | undefined)?.join(", ") ?? ""} onChange={(e) => onChange(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
+        <TagInput id={id} value={(value as string[] | undefined) ?? []} onChange={onChange} />
         <p className="mt-1 text-xs text-muted">Separate with commas</p>
       </div>
     );
@@ -77,6 +77,28 @@ export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unk
   return <div>{label}<input id={id} className="input" value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} /></div>;
 }
 
+const parseTags = (s: string) => s.split(",").map((t) => t.trim()).filter(Boolean);
+
+// Comma separated list. Keeps the typed text while focused so commas and spaces don't vanish.
+export function TagInput({ id, value, onChange, className = "input" }: { id?: string; value: string[]; onChange: (v: string[]) => void; className?: string }) {
+  const joined = (value ?? []).join(", ");
+  const [text, setText] = useState(joined);
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!focused) setText(joined);
+  }, [joined, focused]);
+  return (
+    <input
+      id={id}
+      className={className}
+      value={focused ? text : joined}
+      onFocus={() => { setText(joined); setFocused(true); }}
+      onChange={(e) => { setText(e.target.value); onChange(parseTags(e.target.value)); }}
+      onBlur={() => { setFocused(false); onChange(parseTags(text)); }}
+    />
+  );
+}
+
 export function ObjectEditor<T extends object>({ value, fields, onChange }: { value: T; fields: FieldDef[]; onChange: (v: T) => void }) {
   const rec = value as unknown as Rec;
   return (
@@ -91,8 +113,8 @@ export function ObjectEditor<T extends object>({ value, fields, onChange }: { va
 }
 
 export function ListEditor<T extends { id: string }>({
-  items, fields, onChange, titleKey, newItem, addLabel,
-}: { items: T[]; fields: FieldDef[]; onChange: (v: T[]) => void; titleKey: keyof T; newItem: () => T; addLabel: string }) {
+  items, fields, onChange, titleKey, newItem, addLabel, max, maxNote,
+}: { items: T[]; fields: FieldDef[]; onChange: (v: T[]) => void; titleKey: keyof T; newItem: () => T; addLabel: string; max?: number; maxNote?: string }) {
   const [open, setOpen] = useState<string | null>(null);
 
   const move = (i: number, dir: -1 | 1) => {
@@ -131,12 +153,16 @@ export function ListEditor<T extends { id: string }>({
           </motion.div>
         );
       })}
-      <button
-        onClick={() => { const n = newItem(); onChange([...items, n]); setOpen(n.id); }}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-lav-300 py-4 font-semibold text-lav-700 transition hover:bg-lav-100"
-      >
-        <Plus size={18} /> {addLabel}
-      </button>
+      {max !== undefined && items.length >= max ? (
+        <p className="rounded-2xl border border-dashed border-line py-4 text-center text-sm text-muted">{maxNote ?? `Up to ${max}`}</p>
+      ) : (
+        <button
+          onClick={() => { const n = newItem(); onChange([...items, n]); setOpen(n.id); }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-lav-300 py-4 font-semibold text-lav-700 transition hover:bg-lav-100"
+        >
+          <Plus size={18} /> {addLabel}
+        </button>
+      )}
     </div>
   );
 }

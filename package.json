@@ -8,7 +8,7 @@
     "prebuild": "node scripts/offline-images.mjs",
     "build": "next build",
     "start": "next start",
-    "live": "next build && next start",
+    "live": "npm run build && next start",
     "lint": "next lint",
     "offline-images": "node scripts/offline-images.mjs"
   },

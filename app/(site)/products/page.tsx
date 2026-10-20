@@ -8,10 +8,12 @@ import { productSlug } from "@/lib/content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { pages, brand } = await getContent();
+  const description = pages.products?.intro || `Software and SaaS products built by ${brand.name}.`;
   return {
     title: "Products",
-    description: pages.products?.intro || `Software and SaaS products built by ${brand.name}.`,
+    description,
     alternates: { canonical: "/products" },
+    openGraph: { title: "Products | Spinex IT Solutions", description, url: "/products", type: "website", images: ["/og-image.jpg"] },
   };
 }
 

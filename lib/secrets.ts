@@ -45,7 +45,11 @@ async function readAll(): Promise<Record<string, string>> {
       }
     } catch (e) {
       console.error("Could not read API keys from the database:", e);
-      values = cache?.values ?? {};
+      // Use the last good values and try the database again in 10 seconds (not on every call,
+      // so a database outage doesn't slow down every page and form).
+      const fallback = cache?.values ?? {};
+      cache = { at: Date.now() - TTL + 10_000, values: fallback };
+      return fallback;
     }
   }
   cache = { at: Date.now(), values };

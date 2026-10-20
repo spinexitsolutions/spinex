@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
 import { getSecret } from "./secrets";
 
+// Give up on a slow or unreachable mail server quickly, so forms aren't held up.
+const TIMEOUTS = { connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 8000 };
+
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 // Sends an alert email if SMTP is configured. Never throws, so a mail problem never blocks a form.
@@ -14,7 +17,7 @@ export async function notifyAdmin(subject: string, rows: [string, string][], lin
   }
   try {
     const port = Number(SMTP_PORT);
-    const transport = nodemailer.createTransport({ host: SMTP_HOST, port, secure: port === 465, auth: { user: SMTP_USER, pass: SMTP_PASS } });
+    const transport = nodemailer.createTransport({ host: SMTP_HOST, port, secure: port === 465, auth: { user: SMTP_USER, pass: SMTP_PASS }, ...TIMEOUTS });
     const table = rows
       .filter(([, v]) => v)
       .map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#625C74;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;color:#120F1B;white-space:pre-wrap">${esc(v)}</td></tr>`)
@@ -51,7 +54,7 @@ async function smtp() {
   const { SMTP_HOST: host, SMTP_PORT, SMTP_USER: user, SMTP_PASS: pass, NOTIFY_EMAIL } = await smtpSettings();
   const port = Number(SMTP_PORT);
   if (!host || !user || !pass) return null;
-  return { transport: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } }), from: user, replyTo: NOTIFY_EMAIL || user };
+  return { transport: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass }, ...TIMEOUTS }), from: user, replyTo: NOTIFY_EMAIL || user };
 }
 
 const wrap = (title: string, paragraphs: string[], button?: { label: string; url: string }) => `

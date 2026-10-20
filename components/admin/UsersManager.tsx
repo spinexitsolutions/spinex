@@ -82,8 +82,13 @@ export default function UsersManager() {
                 <button
                   onClick={async () => {
                     if (!confirm(`Remove ${u.name}? They won't be able to log in.`)) return;
-                    await api(`/api/admin/users/${u.id}`, { method: "DELETE" }).catch(() => undefined);
-                    setUsers((all) => all.filter((x) => x.id !== u.id));
+                    try {
+                      await api(`/api/admin/users/${u.id}`, { method: "DELETE" });
+                      setError("");
+                      setUsers((all) => all.filter((x) => x.id !== u.id));
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Couldn't remove.");
+                    }
                   }}
                   aria-label="Remove"
                   className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"

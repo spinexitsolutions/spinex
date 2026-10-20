@@ -1,11 +1,29 @@
 import type { SiteContent } from "./content";
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u0900-\u097f\s]/g, " ");
+const tokens = (s: string) => norm(s).split(/\s+/).filter(Boolean);
+
+// True when the keyword (one word or a phrase) appears as whole words in the question.
+// The last word may take a plural "s"/"es" ("day" matches "days"), but "hi" never matches "high" or "Delhi".
+function makeMatcher(question: string) {
+  const words = tokens(question);
+  return (keyword: string) => {
+    const p = tokens(keyword);
+    if (!p.length) return false;
+    return words.some((_, i) =>
+      p.every((w, j) => {
+        const t = words[i + j];
+        return t === w || (j === p.length - 1 && (t === `${w}s` || t === `${w}es`));
+      }),
+    );
+  };
+}
 
 // Offline answer engine: matches the question against FAQs, services and contact intents.
 export function localAnswer(question: string, c: SiteContent): string {
   const q = ` ${norm(question)} `;
-  const has = (...words: string[]) => words.some((w) => q.includes(` ${w}`) || q.includes(w + " "));
+  const match = makeMatcher(question);
+  const has = (...words: string[]) => words.some(match);
 
   if (has("hi", "hello", "hey", "namaste", "hii"))
     return `Hello! Tell me what you'd like to build: a website, an online store, social media, ads or video. I'll explain how we'd approach it.`;
@@ -15,7 +33,7 @@ export function localAnswer(question: string, c: SiteContent): string {
 
   let best: { score: number; answer: string } = { score: 0, answer: "" };
   for (const f of c.chatbot.faqs) {
-    const score = f.keywords.reduce((n, k) => n + (q.includes(norm(k).trim()) ? 2 : 0), 0);
+    const score = f.keywords.reduce((n, k) => n + (match(k) ? 2 : 0), 0);
     if (score > best.score) best = { score, answer: f.a };
   }
   for (const s of c.services) {

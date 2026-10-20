@@ -9,6 +9,7 @@ import {
 import { blankPost, readingMinutes, renderMarkdown, slugify, type Post } from "@/lib/posts";
 import { formatDate } from "@/lib/interns";
 import ImageField from "./ImageField";
+import { TagInput } from "./fields";
 import MediaLibrary from "./MediaLibrary";
 import Modal from "./Modal";
 
@@ -23,7 +24,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export default function PostsManager() {
+export default function PostsManager({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void } = {}) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,6 +64,7 @@ export default function PostsManager() {
     return (
       <PostEditor
         initial={editing}
+        onDirtyChange={onDirtyChange}
         onBack={() => {
           setEditing(null);
           load();
@@ -122,7 +124,7 @@ export default function PostsManager() {
   );
 }
 
-function PostEditor({ initial, onBack }: { initial: Post; onBack: () => void }) {
+function PostEditor({ initial, onBack, onDirtyChange }: { initial: Post; onBack: () => void; onDirtyChange?: (dirty: boolean) => void }) {
   const [post, setPost] = useState<Post>(initial);
   const [slugTouched, setSlugTouched] = useState(!!initial.id);
   const [tab, setTab] = useState<"write" | "preview">("write");
@@ -146,6 +148,14 @@ function PostEditor({ initial, onBack }: { initial: Post; onBack: () => void }) 
       window.removeEventListener("beforeunload", warn);
     };
   }, [dirty]);
+
+  // Lets the admin shell ask before switching sections with unsaved changes.
+  const reportDirty = useRef(onDirtyChange);
+  reportDirty.current = onDirtyChange;
+  useEffect(() => {
+    reportDirty.current?.(dirty);
+  }, [dirty]);
+  useEffect(() => () => reportDirty.current?.(false), []);
 
   // Wraps the selection (or inserts a template) in the body textarea.
   const insert = (before: string, after = "", placeholder = "text") => {
@@ -194,7 +204,13 @@ function PostEditor({ initial, onBack }: { initial: Post; onBack: () => void }) 
   const remove = async () => {
     if (!post.id) return onBack();
     if (!confirm("Delete this post? This can't be undone.")) return;
-    await api(`/api/admin/posts/${post.id}`, { method: "DELETE" }).catch(() => undefined);
+    setError("");
+    try {
+      await api(`/api/admin/posts/${post.id}`, { method: "DELETE" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't delete the post.");
+      return;
+    }
     onBack();
   };
 
@@ -301,7 +317,7 @@ function PostEditor({ initial, onBack }: { initial: Post; onBack: () => void }) 
               </div>
             </Field>
             <Field label="Category"><input className="input" value={post.category} onChange={(e) => set("category", e.target.value)} placeholder="e.g. Websites" /></Field>
-            <Field label="Tags" hint="comma separated"><input className="input" value={post.tags.join(", ")} onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))} /></Field>
+            <Field label="Tags" hint="comma separated"><TagInput value={post.tags} onChange={(v) => set("tags", v)} /></Field>
             <Field label="Author"><input className="input" value={post.author} onChange={(e) => set("author", e.target.value)} /></Field>
             <Field label="Publish date" hint="future date = scheduled"><input className="input" type="date" value={post.publishedAt} onChange={(e) => set("publishedAt", e.target.value)} /></Field>
           </Panel>

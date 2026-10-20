@@ -11,6 +11,7 @@ const visuals = [DiscoverVisual, DesignVisual, BuildVisual, LaunchVisual];
 const icons = [Compass, PenTool, Code2, Rocket];
 
 // Compact stepper pinned to the screen: scrolling through the section moves through the steps.
+// Below md the section isn't pinned; every step is shown as a plain list instead.
 export default function Process() {
   const { content } = useContent();
   const steps = content.process.map((s, i) => ({ ...s, Icon: icons[i % icons.length], Visual: visuals[i % visuals.length] }));
@@ -38,15 +39,41 @@ export default function Process() {
   if (!step) return null;
 
   return (
-    <section ref={ref} className="relative border-t border-line bg-white" style={{ height: `${Math.max(180, n * 55)}vh` }}>
-      <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden py-20">
+    <section
+      ref={ref}
+      className="relative border-t border-line bg-white md:h-[var(--process-h)]"
+      style={{ "--process-h": `${Math.max(180, n * 55)}vh` } as React.CSSProperties}
+    >
+      <div className="py-20 md:sticky md:top-0 md:flex md:h-[100svh] md:items-center md:overflow-hidden">
       <div className="container-x">
         <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <SplitHeading key={content.sections.process.heading} text={content.sections.process.heading} className="h-display text-4xl sm:text-5xl" />
           <p className="max-w-xs text-muted">{content.sections.process.intro}</p>
         </div>
 
-        <div>
+        {/* Phones: all steps in normal flow */}
+        <ol className="space-y-4 md:hidden">
+          {steps.map((s, i) => (
+            <li key={s.id} className="rounded-[24px] bg-ink p-6 text-white">
+              <div className="flex items-center gap-3">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 text-lav-300"><s.Icon size={18} /></span>
+                <p className="text-sm text-lav-300">Step {i + 1} of {steps.length}, {s.time}</p>
+              </div>
+              <h3 className="mt-4 font-display text-2xl font-semibold tracking-tight">{s.title}</h3>
+              <p className="mt-2 leading-relaxed text-white/65">{s.text}</p>
+              <ul className="mt-5 space-y-2.5">
+                {s.gets.map((g) => (
+                  <li key={g} className="flex items-center gap-3 text-[15px]">
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-lav-600"><Check size={11} /></span>
+                    {g}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+
+        <div className="hidden md:block">
           {/* Step rail */}
           <div className="relative grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }} role="tablist" aria-label="Project stages">
             <div aria-hidden className="absolute top-6 h-px bg-line" style={{ left: `${50 / n}%`, right: `${50 / n}%` }}>

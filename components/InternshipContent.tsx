@@ -32,6 +32,7 @@ export default function InternshipContent() {
   const [serverError, setServerError] = useState("");
   const startedAt = useRef(Date.now());
   const [cfToken, setCfToken] = useState("");
+  const [hcKey, setHcKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -96,7 +97,11 @@ export default function InternshipContent() {
       track("apply", { kind: "internship", role: form.role });
       setForm(empty);
       setResume(null);
+      setCfToken("");
+      setHcKey((k) => k + 1);
     } catch (e) {
+      setCfToken("");
+      setHcKey((k) => k + 1);
       setServerError(e instanceof Error ? e.message : "Couldn't send your application. Try again.");
     } finally {
       setSubmitting(false);
@@ -256,7 +261,7 @@ export default function InternshipContent() {
                   <a href={`https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(whatsappText())}`} target="_blank" rel="noreferrer" className="font-semibold underline">Apply on WhatsApp instead</a>
                 </p>
               )}
-              <HumanCheck onToken={setCfToken} />
+              <HumanCheck key={hcKey} onToken={setCfToken} />
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <button type="submit" disabled={submitting} className="btn-dark disabled:opacity-60">
                   {submitting ? <><Loader2 size={18} className="animate-spin" /> Sending</> : <>Submit application</>}

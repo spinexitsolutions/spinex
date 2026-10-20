@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, Check, MessageCircle } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { ease } from "../Reveal";
 
@@ -13,6 +14,8 @@ export default function Goals() {
   const goals = content.goals;
   const [goalId, setGoalId] = useState(content.goals[0]?.id ?? "");
   const goal = goals.find((g) => g.id === goalId) ?? goals[0];
+  // The planner block can be hidden in Admin > Home page; then send people to the contact page's planner.
+  const plannerShown = (content.homeLayout ?? []).find((b) => b.id === "planner")?.visible ?? true;
   if (!goal) return null;
   const services = goal.services.map((id) => content.services.find((s) => s.id === id)).filter((s): s is NonNullable<typeof s> => !!s);
 
@@ -79,7 +82,11 @@ export default function Goals() {
                 ))}
               </ul>
               <div className="mt-8 flex flex-wrap gap-3">
-                <button onClick={planIt} className="btn-light">Plan this project <ArrowDown size={16} /></button>
+                {plannerShown ? (
+                  <button onClick={planIt} className="btn-light">Plan this project <ArrowDown size={16} /></button>
+                ) : (
+                  <Link href="/contact#planner" className="btn-light">Plan this project <ArrowUpRight size={16} /></Link>
+                )}
                 <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost-dark"><MessageCircle size={16} /> Ask on WhatsApp</a>
               </div>
             </div>

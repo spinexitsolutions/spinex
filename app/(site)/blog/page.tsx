@@ -10,6 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Blog",
     description: pages.blog.intro,
     alternates: { canonical: "/blog" },
+    openGraph: { title: "Blog | Spinex IT Solutions", description: pages.blog.intro, url: "/blog", type: "website", images: ["/og-image.jpg"] },
   };
 }
 

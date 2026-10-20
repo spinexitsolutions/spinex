@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { ArrowUpRight, Building2, Check, Rocket, ShoppingBag, Sparkles, Store, type LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -12,13 +12,21 @@ const icons: Record<string, LucideIcon> = { local: Store, ecom: ShoppingBag, cre
 const tones = ["bg-ink", "bg-[#2A2340]", "bg-lav-700", "bg-ink-3"];
 
 // Stacking cards: each industry pins near the top and the next one slides over it,
-// while the cards underneath shrink and dim. Works by scroll alone, so phones and
-// laptops behave the same.
+// while the cards underneath shrink and dim. Works by scroll alone. Below md the cards
+// aren't pinned (a full-height pin clips their content on small screens); they flow as a list.
 export default function Industries() {
   const { content } = useContent();
   const list = content.industries;
   const stack = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: stack, offset: ["start start", "end end"] });
+  const [pin, setPin] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setPin(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   if (!list.length) return null;
 
   return (
@@ -32,14 +40,14 @@ export default function Industries() {
 
       <div ref={stack} className="container-x relative pb-24">
         {list.map((ind, i) => (
-          <StackCard key={ind.id} ind={ind} i={i} n={list.length} progress={scrollYProgress} />
+          <StackCard key={ind.id} ind={ind} i={i} n={list.length} progress={scrollYProgress} pin={pin} />
         ))}
       </div>
     </section>
   );
 }
 
-function StackCard({ ind, i, n, progress }: { ind: Industry; i: number; n: number; progress: MotionValue<number> }) {
+function StackCard({ ind, i, n, progress, pin }: { ind: Industry; i: number; n: number; progress: MotionValue<number>; pin: boolean }) {
   const Icon = icons[ind.id] ?? Building2;
   const start = i / n;
   const scale = useTransform(progress, [start, 1], [1, 1 - (n - 1 - i) * 0.05]);
@@ -47,9 +55,12 @@ function StackCard({ ind, i, n, progress }: { ind: Industry; i: number; n: numbe
   const imgScale = useTransform(progress, [Math.max(0, start - 1 / n), start], [1.25, 1]);
 
   return (
-    <div className="sticky top-0 flex h-[100svh] items-start" style={{ paddingTop: `calc(5.5rem + ${i * 16}px)` }}>
+    <div
+      className="pt-6 md:sticky md:top-0 md:flex md:h-[100svh] md:items-start md:pt-[var(--stack-pt)]"
+      style={{ "--stack-pt": `calc(5.5rem + ${i * 16}px)` } as React.CSSProperties}
+    >
       <motion.article
-        style={{ scale }}
+        style={pin ? { scale } : undefined}
         className={`relative w-full origin-top overflow-hidden rounded-[28px] text-white shadow-[0_-20px_60px_-30px_rgba(18,15,27,0.6)] ${tones[i % tones.length]}`}
       >
         <div className="grid md:grid-cols-[1.05fr_1fr]">
@@ -71,10 +82,10 @@ function StackCard({ ind, i, n, progress }: { ind: Industry; i: number; n: numbe
             <Link href="/contact" className="btn-light mt-8 w-fit">Talk about your business <ArrowUpRight size={16} /></Link>
           </div>
           <div className="relative order-first h-32 overflow-hidden sm:h-56 md:order-2 md:h-auto md:min-h-[440px]">
-            <motion.img style={{ scale: imgScale }} src={ind.image} alt={ind.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+            <motion.img style={pin ? { scale: imgScale } : undefined} src={ind.image} alt={ind.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           </div>
         </div>
-        <motion.div aria-hidden style={{ opacity: shade }} className="pointer-events-none absolute inset-0 bg-ink" />
+        <motion.div aria-hidden style={{ opacity: pin ? shade : 0 }} className="pointer-events-none absolute inset-0 bg-ink" />
       </motion.article>
     </div>
   );

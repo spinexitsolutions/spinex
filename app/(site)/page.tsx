@@ -62,10 +62,11 @@ export default async function HomePage() {
   // Order and visibility come from Admin > Home page. Sections added later show at the end.
   const saved = (content.homeLayout ?? []).filter((b) => b.id in blocks);
   const order = [...saved, ...Object.keys(blocks).filter((id) => !saved.some((b) => b.id === id)).map((id) => ({ id, visible: true }))];
+  const faqShown = order.some((b) => b.id === "faq" && b.visible);
 
   return (
     <>
-      <JsonLd content={content} />
+      <JsonLd content={content} faq={faqShown} />
       <Hero />
       {order.filter((b) => b.visible).map((b) => (
         <Fragment key={b.id}>{blocks[b.id]}</Fragment>

@@ -36,7 +36,8 @@ export const LEAD_EDITABLE = ["name", "phone", "email", "services", "budget", "m
 
 export function leadsToCSV(leads: Lead[]) {
   const cols: (keyof Lead)[] = ["createdAt", "name", "phone", "email", "services", "budget", "message", "plan", "source", "status", "value", "followUp", "notes"];
-  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  // A leading ' stops Excel / Sheets from running a value like =HYPERLINK(...) as a formula.
+  const esc = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
   const show = (l: Lead, c: keyof Lead) => (c === "status" ? leadStatusLabel[l.status] : c === "source" ? LEAD_SOURCES[l.source] ?? l.source : l[c]);
   return "\uFEFF" + [cols.join(","), ...leads.map((l) => cols.map((c) => esc(show(l, c))).join(","))].join("\n");
 }
