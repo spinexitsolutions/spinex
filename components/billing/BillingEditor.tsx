@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Copy, FileCheck2, FileText, Loader2, Mail, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import {
-  GST_RATES, INDIAN_STATES, INVOICE_STATUSES, QUOTE_STATUSES, blankItem, computeTotals, docTitle, inr, stateFromGstin, statusLabel, validGstin,
+  GST_RATES, INDIAN_STATES, docSigners, INVOICE_STATUSES, QUOTE_STATUSES, blankItem, computeTotals, docTitle, inr, stateFromGstin, statusLabel, validGstin,
   type BillDoc, type BillingProfile,
 } from "@/lib/billing";
 import BillDocument from "./BillDocument";
@@ -70,7 +70,7 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
     try {
       const out = await api<BillDoc>(`/api/admin/billing/${doc.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ date: doc.date, dueDate: doc.dueDate, status: doc.status, client: doc.client, items: doc.items, discount: doc.discount, paid: doc.paid, notes: doc.notes, terms: doc.terms }),
+        body: JSON.stringify({ date: doc.date, dueDate: doc.dueDate, status: doc.status, client: doc.client, items: doc.items, discount: doc.discount, paid: doc.paid, notes: doc.notes, terms: doc.terms, signers: doc.signers ?? null }),
       });
       setDoc(out);
       setSaved(JSON.stringify(out));
@@ -244,6 +244,31 @@ export default function BillingEditor({ id, logo }: { id: string; logo: string }
               {totals.gstOn && <span>GST <b>{inr(totals.tax)}</b></span>}
               <span className="text-base">Total <b>{inr(totals.total)}</b></span>
             </div>
+          </Box>
+
+          <Box title="Signatures on this document">
+            {(profile.signers ?? []).length === 0 ? (
+              <p className="text-sm text-muted">No people added yet. Add them in <Link href="/admin#billing" className="font-semibold text-lav-700 underline">Quotes and invoices → Billing details → Signatures</Link>.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {(profile.signers ?? []).map((sg) => {
+                    const on = docSigners(doc, profile).some((x) => x.id === sg.id);
+                    return (
+                      <label key={sg.id} className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm ${on ? "border-lav-500 bg-lav-100 font-semibold text-lav-700" : "border-line"}`}>
+                        <input type="checkbox" className="h-4 w-4 accent-lav-600" checked={on} onChange={() => {
+                          const current = docSigners(doc, profile).map((x) => x.id);
+                          const next = on ? current.filter((id) => id !== sg.id) : (profile.signers ?? []).map((x) => x.id).filter((id) => id === sg.id || current.includes(id));
+                          set({ signers: next });
+                        }} />
+                        {sg.name || "Unnamed"}{sg.title ? <span className="font-normal text-muted">· {sg.title}</span> : null}
+                      </label>
+                    );
+                  })}
+                </div>
+                {doc.signers !== null && doc.signers !== undefined && <button onClick={() => set({ signers: null })} className="mt-3 text-xs font-semibold text-lav-700 underline">Use the default ticks again</button>}
+              </>
+            )}
           </Box>
 
           <Box title="Notes and terms">

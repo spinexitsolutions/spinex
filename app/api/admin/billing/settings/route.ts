@@ -3,6 +3,7 @@ import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { getProfile } from "@/lib/billing-db";
 import { writeSetting } from "@/lib/settings-db";
 import { defaultProfile } from "@/lib/billing";
+import { safeUrl } from "@/lib/content-sanitize";
 
 // Your business details for quotations and invoices. Anyone who makes quotes can read them; owner and admin can change them.
 export async function GET() {
@@ -19,5 +20,18 @@ export async function PUT(req: Request) {
   const b = await jsonBody(req);
   if (typeof b.gstin === "string") b.gstin = b.gstin.trim().toUpperCase();
   if (typeof b.pan === "string") b.pan = b.pan.trim().toUpperCase();
+  if ("signers" in b) {
+    const list = Array.isArray(b.signers) ? b.signers : [];
+    b.signers = list.filter((x) => x && typeof x === "object").slice(0, 6).map((x, i) => {
+      const r = x as Record<string, unknown>;
+      return {
+        id: String(r.id ?? "").replace(/[^\w-]/g, "").slice(0, 40) || `s${Date.now()}${i}`,
+        name: String(r.name ?? "").trim().slice(0, 80),
+        title: String(r.title ?? "").trim().slice(0, 80),
+        image: safeUrl(r.image),
+        show: !!r.show,
+      };
+    });
+  }
   return NextResponse.json(await writeSetting("billing", defaultProfile, b));
 }

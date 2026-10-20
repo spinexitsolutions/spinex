@@ -1,9 +1,10 @@
-import { amountInWords, computeTotals, docTitle, inr, statusLabel, STATE_CODES, type BillDoc, type BillingProfile } from "@/lib/billing";
+import { amountInWords, computeTotals, docSigners, docTitle, inr, statusLabel, STATE_CODES, type BillDoc, type BillingProfile } from "@/lib/billing";
 
 // One A4 page for a quotation or invoice. Used in the admin editor preview, the print / PDF view
 // and the client's view-only link. Plain markup only, so it prints the same everywhere.
 export default function BillDocument({ doc, profile, logo }: { doc: BillDoc; profile: BillingProfile; logo?: string }) {
   const t = computeTotals(doc, profile);
+  const signers = docSigners(doc, profile);
   const title = docTitle(doc.type, t.gstOn);
   const fmt = (d: string) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
   const lines = (s: string) => String(s || "").split("\n").map((x) => x.trim()).filter(Boolean);
@@ -134,25 +135,33 @@ export default function BillDocument({ doc, profile, logo }: { doc: BillDoc; pro
       )}
 
       <section className="mt-6 grid break-inside-avoid grid-cols-2 gap-6">
-        <div>
+        <div className="col-span-2 grid grid-cols-2 gap-6">
           {doc.type === "invoice" && bank.length > 0 && (
-            <>
+            <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8a8499]">Payment details</p>
               <table className="mt-1 text-[12px]"><tbody>{bank.map(([k, v]) => <tr key={k}><td className="pr-3 text-[#5b566b]">{k}</td><td className="font-semibold">{v}</td></tr>)}</tbody></table>
               {upiLink && <p className="mt-2 text-[11.5px] text-[#5b566b] print:hidden">On a phone? <a href={upiLink} className="font-semibold text-[#5745b5] underline">Pay {inr(t.balance, 0)} by UPI</a></p>}
-            </>
+            </div>
           )}
           {lines(doc.terms).length > 0 && (
-            <div className={doc.type === "invoice" && bank.length ? "mt-4" : ""}>
+            <div className={doc.type === "invoice" && bank.length ? "" : "col-span-2"}>
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8a8499]">Terms</p>
               <ol className="mt-1 list-decimal pl-4 text-[11.5px] text-[#5b566b]">{lines(doc.terms).map((l, i) => <li key={i}>{l}</li>)}</ol>
             </div>
           )}
         </div>
-        <div className="flex flex-col items-end justify-end text-right">
-          {profile.signature && <img src={profile.signature} alt="" className="mb-1 h-14 w-auto object-contain" />}
-          <p className="border-t border-[#1d1a26] pt-1 font-semibold">For {profile.legalName}</p>
-          <p className="text-[11px] text-[#8a8499]">Authorised signatory</p>
+      </section>
+
+      <section className="mt-8 break-inside-avoid">
+        <p className="text-right font-semibold">For {profile.legalName}</p>
+        <div className="mt-2 flex flex-wrap justify-end gap-x-8 gap-y-5">
+          {(signers.length ? signers : [{ id: "blank", name: "", title: "Authorised signatory", image: "", show: true }]).map((sg) => (
+            <div key={sg.id} className="w-[150px] text-center">
+              <div className="flex h-14 items-end justify-center">{sg.image ? <img src={sg.image} alt="" className="max-h-14 w-auto max-w-full object-contain" /> : null}</div>
+              <p className="mt-1 border-t border-[#1d1a26] pt-1 text-[12px] font-semibold">{sg.name || "\u00a0"}</p>
+              <p className="text-[10.5px] text-[#8a8499]">{sg.title || "Authorised signatory"}</p>
+            </div>
+          ))}
         </div>
       </section>
     </article>

@@ -30,6 +30,7 @@ export async function writeSetting<T extends object>(id: string, defaults: T, in
     if (typeof def === "number") clean[k] = Number.isFinite(Number(v)) ? Number(v) : def;
     else if (typeof def === "boolean") clean[k] = !!v;
     else if (typeof def === "string") clean[k] = String(v ?? "").slice(0, 4000);
+    else if (Array.isArray(def) && Array.isArray(v)) clean[k] = v; // lists are checked by the caller
   }
   await (await col()).updateOne({ _id: id }, { $set: { value: clean, updatedAt: new Date().toISOString() } }, { upsert: true });
   return clean as T;

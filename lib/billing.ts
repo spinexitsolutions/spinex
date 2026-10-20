@@ -13,6 +13,9 @@ export const GST_RATES = [0, 5, 12, 18, 28];
 
 export type BillItem = { id: string; description: string; sac: string; qty: number; rate: number; gst: number };
 
+// People who sign quotations and invoices. "show" = ticked by default on new documents.
+export type BillSigner = { id: string; name: string; title: string; image: string; show: boolean };
+
 export type BillClient = { name: string; company: string; phone: string; email: string; address: string; state: string; gstin: string };
 
 export type BillDoc = {
@@ -33,6 +36,7 @@ export type BillDoc = {
   fromQuoteNumber: string;
   invoiceId: string; // set on a quote once it is turned into an invoice
   shareToken: string; // for the client's view-only link
+  signers: string[] | null; // signer ids shown on this document; null = the default ticks from Billing details
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -59,7 +63,8 @@ export type BillingProfile = {
   invoiceDueDays: number;
   defaultGst: number;
   defaultSac: string;
-  signature: string; // image link
+  signature: string; // old single signature image (kept for documents made before signers existed)
+  signers: BillSigner[];
   quotePrefix: string;
   invoicePrefix: string;
 };
@@ -72,7 +77,7 @@ export const defaultProfile: BillingProfile = {
   pan: "",
   phone: "",
   email: "spinexitsolutions@gmail.com",
-  website: "spinexwebsolutions.in",
+  website: "spinexitsolutions.com",
   bankName: "",
   accountName: "",
   accountNumber: "",
@@ -85,6 +90,11 @@ export const defaultProfile: BillingProfile = {
   defaultGst: 18,
   defaultSac: "998314",
   signature: "",
+  signers: [
+    { id: "s1", name: "Palak Pareek", title: "Founder", image: "", show: true },
+    { id: "s2", name: "Supriya Banetiya", title: "E-commerce and Operations", image: "", show: true },
+    { id: "s3", name: "Shiva Pareek", title: "Video and Creative", image: "", show: false },
+  ],
   quotePrefix: "QT",
   invoicePrefix: "INV",
 };
@@ -223,3 +233,10 @@ export const addDays = (date: string, days: number) => {
 export const docTitle = (t: DocType, gstOn: boolean) => (t === "quote" ? "Quotation" : gstOn ? "Tax Invoice" : "Invoice");
 
 export const blankItem = (gst: number, sac: string, id: string): BillItem => ({ id, description: "", sac, qty: 1, rate: 0, gst });
+
+// Who signs this document: its own choice, or the default ticks. Old single-signature setups still work.
+export function docSigners(doc: Pick<BillDoc, "signers">, profile: Pick<BillingProfile, "signers" | "signature">): BillSigner[] {
+  const all = Array.isArray(profile.signers) ? profile.signers.filter((x) => x && x.id) : [];
+  if (!all.length) return profile.signature ? [{ id: "legacy", name: "", title: "Authorised signatory", image: profile.signature, show: true }] : [];
+  return Array.isArray(doc.signers) ? all.filter((x) => doc.signers!.includes(x.id)) : all.filter((x) => x.show);
+}

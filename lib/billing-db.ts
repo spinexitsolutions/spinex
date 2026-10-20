@@ -9,7 +9,12 @@ import {
 } from "./billing";
 
 export const billingCol = async () => (await getDb()).collection("billing");
-export const getProfile = () => readSetting<BillingProfile>("billing", defaultProfile);
+export const getProfile = async () => {
+  const p = await readSetting<BillingProfile>("billing", defaultProfile);
+  // Old built-in website address → the one to print now (only when it was never changed by hand).
+  if (p.website === "spinexwebsolutions.in") p.website = defaultProfile.website;
+  return p;
+};
 
 export function toBill(doc: WithId<Document>): BillDoc {
   const { _id, ...rest } = doc;
@@ -17,7 +22,7 @@ export function toBill(doc: WithId<Document>): BillDoc {
     type: "quote", number: "", date: "", dueDate: "", status: "draft",
     client: { name: "", company: "", phone: "", email: "", address: "", state: "", gstin: "" },
     items: [], discount: 0, notes: "", terms: "", paid: 0, leadId: "", fromQuote: "", fromQuoteNumber: "", invoiceId: "",
-    shareToken: "", createdBy: "", createdAt: "", updatedAt: "",
+    shareToken: "", signers: null, createdBy: "", createdAt: "", updatedAt: "",
     ...(rest as Partial<BillDoc>),
     id: String(_id),
   };
@@ -81,6 +86,7 @@ export function cleanBillInput(input: Record<string, unknown>, type: DocType) {
   if ("paid" in input) out.paid = n(input.paid);
   if ("notes" in input) out.notes = s(input.notes, 2000);
   if ("terms" in input) out.terms = s(input.terms, 3000);
+  if ("signers" in input) out.signers = Array.isArray(input.signers) ? input.signers.map((x) => s(x, 40)).filter(Boolean).slice(0, 6) : null;
   return out;
 }
 

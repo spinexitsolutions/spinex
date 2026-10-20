@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FilePlus2, FileText, Loader2, ReceiptIndianRupee, RefreshCw, Save, Search } from "lucide-react";
-import { INDIAN_STATES, computeTotals, defaultProfile, docTitle, inr, statusLabel, validGstin, type BillDoc, type BillingProfile } from "@/lib/billing";
+import { ArrowDown, ArrowUp, FilePlus2, FileText, Loader2, Plus, ReceiptIndianRupee, RefreshCw, Save, Search, Trash2 } from "lucide-react";
+import { INDIAN_STATES, computeTotals, defaultProfile, docTitle, inr, statusLabel, validGstin, type BillDoc, type BillSigner, type BillingProfile } from "@/lib/billing";
 import ImageField from "./ImageField";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -218,9 +218,10 @@ function ProfileForm({ initial, canEdit, onSaved }: { initial: BillingProfile; c
         {text("invoicePrefix", "Invoice number starts with", "e.g. INV gives INV/2026-27/001")}
         {area("quoteTerms", "Quotation terms", "One per line")}
         {area("invoiceTerms", "Invoice terms", "One per line")}
-        <div className="md:col-span-2">
-          <span className="mb-1.5 block text-[13px] font-semibold">Signature or stamp (optional)</span>
-          <ImageField id="billing-signature" value={p.signature} onChange={(v) => set({ signature: v })} />
+        <div className="md:col-span-2 mt-2 border-t border-line pt-5">
+          <p className="text-sm font-semibold text-lav-700">Signatures</p>
+          <p className="mt-1 text-sm text-muted">Add up to 6 people. Ticked ones are shown on new quotations and invoices; you can change the choice on each document too. No image? A blank line is left for a pen signature.</p>
+          <SignersEditor value={p.signers ?? []} onChange={(signers) => set({ signers })} />
         </div>
       </fieldset>
       {canEdit && (
@@ -230,5 +231,47 @@ function ProfileForm({ initial, canEdit, onSaved }: { initial: BillingProfile; c
         </div>
       )}
     </section>
+  );
+}
+
+function SignersEditor({ value, onChange }: { value: BillSigner[]; onChange: (v: BillSigner[]) => void }) {
+  const upd = (i: number, patch: Partial<BillSigner>) => onChange(value.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const move = (i: number, d: -1 | 1) => {
+    const j = i + d;
+    if (j < 0 || j >= value.length) return;
+    const next = [...value];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  return (
+    <div className="mt-4 space-y-3">
+      {value.map((sg, i) => (
+        <div key={sg.id} className="rounded-2xl border border-line p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={sg.show} onChange={(e) => upd(i, { show: e.target.checked })} />
+              Show by default
+            </label>
+            <span className="ml-auto flex gap-1">
+              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-mist disabled:opacity-30"><ArrowUp size={15} /></button>
+              <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} aria-label="Move down" className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-mist disabled:opacity-30"><ArrowDown size={15} /></button>
+              <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))} aria-label="Remove" className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={15} /></button>
+            </span>
+          </div>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">Name</span><input className="input" value={sg.name} onChange={(e) => upd(i, { name: e.target.value })} /></label>
+            <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">Title</span><input className="input" value={sg.title} onChange={(e) => upd(i, { title: e.target.value })} placeholder="e.g. Founder" /></label>
+            <div className="md:col-span-2">
+              <span className="mb-1.5 block text-[13px] font-semibold">Signature image (optional)</span>
+              <ImageField id={`signer-${sg.id}`} value={sg.image} onChange={(v) => upd(i, { image: v })} />
+              <span className="mt-1 block text-xs text-muted">Sign on white paper, take a photo, and upload it. A PNG with a transparent background looks best.</span>
+            </div>
+          </div>
+        </div>
+      ))}
+      {value.length < 6 && (
+        <button type="button" onClick={() => onChange([...value, { id: `s${Date.now().toString(36)}`, name: "", title: "", image: "", show: true }])} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-lav-300 py-3.5 font-semibold text-lav-700 hover:bg-lav-100"><Plus size={17} /> Add person</button>
+      )}
+    </div>
   );
 }
