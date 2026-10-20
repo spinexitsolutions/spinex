@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { billOid, billingCol, getProfile, newToken, nextNumber, toBill } from "@/lib/billing-db";
 import { addDays, todayIST, type BillDoc, type BillItem } from "@/lib/billing";
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
       throw e;
     }
     await col.updateOne({ _id: qid }, { $set: { invoiceId: String(insertedId), status: "accepted", updatedAt: stamp } });
+    await logActivity(session, "Invoices", `Made invoice ${doc.number} from quotation ${q.number}`, q.client.company || q.client.name, req);
     if (q.leadId) {
       const lid = billOid(q.leadId);
       if (lid) await (await leadsCol()).updateOne({ _id: lid, status: { $ne: "lost" } }, { $set: { status: "won", updatedAt: stamp } });
@@ -111,5 +113,6 @@ export async function POST(req: Request) {
     updatedAt: stamp,
   };
   const { insertedId } = await col.insertOne(doc);
+  await logActivity(session, "Invoices", `Created ${type === "quote" ? "quotation" : "invoice"} ${doc.number}`, client.company || client.name, req);
   return NextResponse.json({ ...doc, id: String(insertedId) }, { status: 201 });
 }

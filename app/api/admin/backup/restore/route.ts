@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { guard } from "@/lib/admin-guard";
+import { getSession, guard } from "@/lib/admin-guard";
+import { logActivity } from "@/lib/activity";
 import { readBackup, restoreBackup } from "@/lib/automation";
 
 export const maxDuration = 60;
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
     const r = await restoreBackup(buf, Array.isArray(only) ? only.map(String) : []);
     revalidateTag("content");
     revalidateTag("posts");
+    await logActivity(await getSession(), "Automation", `Restored from backup: ${Object.keys(r.restored).join(", ")}`, `${file.name} (${r.backupDate.slice(0, 10)})`, req);
     return NextResponse.json({ ok: true, ...r });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Restore failed." }, { status: 400 });

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BellRing, FilePlus2, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
+import { BarChart3, BellRing, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
 import { LEAD_SOURCES, LEAD_STATUSES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
@@ -54,6 +54,8 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
   const [open, setOpen] = useState<Lead | null>(null);
   const [msg, setMsg] = useState("");
   const [team, setTeam] = useState<Member[]>([]);
+  const [channel, setChannel] = useState("all");
+  const [showReport, setShowReport] = useState(false);
   const [myId, setMyId] = useState("");
 
   useEffect(() => {
@@ -113,7 +115,21 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
 
   const wonValue = leads.filter((l) => l.status === "won").reduce((n, l) => n + (Number(l.value) || 0), 0);
 
+  // Leads by where they came from (ad, search, Instagram…), most first.
+  const bySource = Object.values(
+    leads.reduce<Record<string, { name: string; total: number; won: number; value: number; campaigns: Record<string, number> }>>((acc, l) => {
+      const name = l.track?.channel || "Not recorded";
+      const row = (acc[name] ??= { name, total: 0, won: 0, value: 0, campaigns: {} });
+      row.total++;
+      if (l.status === "won") { row.won++; row.value += Number(l.value) || 0; }
+      const camp = l.track?.utmCampaign;
+      if (camp) row.campaigns[camp] = (row.campaigns[camp] ?? 0) + 1;
+      return acc;
+    }, {}),
+  ).sort((a, b) => b.total - a.total);
+
   const list = leads.filter((l) => {
+    if (channel !== "all" && (l.track?.channel || "Not recorded") !== channel) return false;
     if (filter === "due" ? !isDue(l) : filter === "mine" ? !(myId && l.assignedTo === myId && l.status !== "won" && l.status !== "lost") : filter !== "all" && l.status !== filter) return false;
     const q = query.trim().toLowerCase();
     return !q || [l.name, l.phone, l.email, l.services, l.message].some((v) => (v || "").toLowerCase().includes(q));
@@ -154,9 +170,36 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
           <Search size={16} className="text-muted" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, phone or message" className="h-11 w-full bg-transparent text-sm outline-none" aria-label="Search leads" />
         </label>
+        <select value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Filter by source" className="h-11 rounded-full border border-line bg-white px-4 text-sm">
+          <option value="all">All sources</option>
+          {bySource.map((r) => <option key={r.name} value={r.name}>{r.name} ({r.total})</option>)}
+        </select>
+        <button onClick={() => setShowReport((v) => !v)} aria-pressed={showReport} className="btn-ghost px-4 py-2.5 text-sm"><BarChart3 size={16} /> Where leads come from</button>
         <a href="/api/admin/leads/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
         <button onClick={load} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
       </div>
+
+      {showReport && (
+        <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead className="bg-mist text-left text-[13px] text-muted">
+              <tr><th className="px-4 py-3 font-semibold">Came via</th><th className="px-4 py-3 text-right font-semibold">Leads</th><th className="px-4 py-3 text-right font-semibold">Won</th><th className="px-4 py-3 text-right font-semibold">Won value</th><th className="px-4 py-3 font-semibold">Top campaigns</th></tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {bySource.map((r) => (
+                <tr key={r.name} className="cursor-pointer hover:bg-mist/60" onClick={() => setChannel(r.name)}>
+                  <td className="px-4 py-3 font-medium">{r.name}</td>
+                  <td className="px-4 py-3 text-right">{r.total}</td>
+                  <td className="px-4 py-3 text-right">{r.won}{r.total ? <span className="text-muted"> ({Math.round((r.won / r.total) * 100)}%)</span> : null}</td>
+                  <td className="px-4 py-3 text-right">{r.value ? `₹${r.value.toLocaleString("en-IN")}` : "–"}</td>
+                  <td className="px-4 py-3 text-muted">{Object.entries(r.campaigns).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c, n]) => `${c} (${n})`).join(", ") || "–"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="border-t border-line px-4 py-3 text-xs text-muted">Click a row to see only those leads. For ads, add UTM tags to your ad links (e.g. ?utm_source=instagram&amp;utm_medium=paid&amp;utm_campaign=diwali-offer) to see each campaign by name. Google Ads is detected automatically.</p>
+        </div>
+      )}
 
       <div className="space-y-2">
         {leads.length === 0 && (
@@ -176,6 +219,7 @@ export default function LeadsManager({ onNewCount }: { onNewCount?: (n: number) 
                   {l.status === "new" && <span className="h-2 w-2 rounded-full bg-lav-600" aria-label="New" />}
                   {l.name}
                   <span className="rounded-full bg-mist px-2 py-0.5 text-[11px] font-medium text-muted">{LEAD_SOURCES[l.source] ?? l.source}</span>
+                  {l.track?.channel && <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800" title={l.track.utmCampaign ? `Campaign: ${l.track.utmCampaign}` : undefined}><Megaphone size={11} /> {l.track.channel}</span>}
                   {isDue(l) && <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"><BellRing size={11} /> Follow up{l.followUp < today() ? " (late)" : " today"}</span>}
                   {!isDue(l) && l.followUp && l.status !== "won" && l.status !== "lost" && <span className="rounded-full bg-mist px-2 py-0.5 text-[11px] font-medium text-muted">Follow up {formatDate(l.followUp)}</span>}
                   {l.assignedName && <span className="flex items-center gap-1 rounded-full bg-lav-100 px-2 py-0.5 text-[11px] font-medium text-lav-700"><UserRound size={11} /> {l.assignedTo === myId ? "You" : l.assignedName}</span>}
@@ -286,9 +330,26 @@ function LeadDetail({ lead, team, myId, onSave, onDelete }: { lead: Lead; team: 
         <Info label="Email" value={lead.email} />
         <Info label="Needs" value={lead.services} />
         <Info label="Budget" value={lead.budget} />
-        <Info label="Came from" value={LEAD_SOURCES[lead.source] ?? lead.source} />
+        <Info label="Form" value={LEAD_SOURCES[lead.source] ?? lead.source} />
         <Info label="Received" value={`${formatDate(lead.createdAt.slice(0, 10))}, ${new Date(lead.createdAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`} />
       </dl>
+
+      {lead.track && (
+        <div className="mt-4 rounded-2xl border border-line p-5">
+          <p className="flex items-center gap-2 text-sm font-semibold"><Megaphone size={15} className="text-emerald-700" /> Where they came from</p>
+          <dl className="mt-3 grid gap-4 sm:grid-cols-2">
+            <Info label="Came via" value={lead.track.channel} />
+            <Info label="First found you via" value={lead.track.firstChannel && lead.track.firstChannel !== lead.track.channel ? `${lead.track.firstChannel}${lead.track.firstAt ? ` (${formatDate(lead.track.firstAt.slice(0, 10))})` : ""}` : "Same"} />
+            {lead.track.utmCampaign && <Info label="Campaign" value={lead.track.utmCampaign} />}
+            {lead.track.utmTerm && <Info label="Keyword" value={lead.track.utmTerm} />}
+            {lead.track.utmContent && <Info label="Ad / post" value={lead.track.utmContent} />}
+            {(lead.track.utmSource || lead.track.utmMedium) && <Info label="Source / medium" value={[lead.track.utmSource, lead.track.utmMedium].filter(Boolean).join(" / ")} />}
+            {lead.track.referrer && <Info label="Came from website" value={lead.track.referrer} />}
+            <Info label="First page they saw" value={lead.track.landingPage} />
+            <Info label="Sent the form on" value={lead.track.formPage} />
+          </dl>
+        </div>
+      )}
 
       {lead.message && (
         <div className="mt-4">

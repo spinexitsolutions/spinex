@@ -4,6 +4,7 @@ import { getProfile } from "@/lib/billing-db";
 import { writeSetting } from "@/lib/settings-db";
 import { defaultProfile } from "@/lib/billing";
 import { safeUrl } from "@/lib/content-sanitize";
+import { logActivity } from "@/lib/activity";
 
 // Your business details for quotations and invoices. Anyone who makes quotes can read them; owner and admin can change them.
 export async function GET() {
@@ -33,5 +34,7 @@ export async function PUT(req: Request) {
       };
     });
   }
-  return NextResponse.json(await writeSetting("billing", defaultProfile, b));
+  const saved = await writeSetting("billing", defaultProfile, b);
+  await logActivity(s, "Invoices", "Changed billing details (bank, GSTIN, signatures…)", "", req);
+  return NextResponse.json(saved);
 }

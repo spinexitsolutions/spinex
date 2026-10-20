@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { revalidateTag } from "next/cache";
-import { guard, jsonBody } from "@/lib/admin-guard";
+import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { cleanPost, postsCol, toPost, uniqueSlug } from "@/lib/post-db";
 
 export async function GET() {
@@ -28,5 +29,6 @@ export async function POST(req: Request) {
   };
   const { insertedId } = await (await postsCol()).insertOne(doc);
   revalidateTag("posts");
+  await logActivity(await getSession(), "Blog", "Created a post", title, req);
   return NextResponse.json(toPost({ _id: insertedId, ...doc }), { status: 201 });
 }

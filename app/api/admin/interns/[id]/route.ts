@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { GridFSBucket, ObjectId } from "mongodb";
-import { guard, jsonBody } from "@/lib/admin-guard";
+import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { getDb } from "@/lib/db";
 import { clean, internsCol, oid, toIntern } from "@/lib/intern-db";
 import { mailStatus } from "@/lib/intern-mail";
@@ -20,6 +21,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const doc = await (await internsCol()).findOneAndUpdate({ _id }, { $set: data }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Intern not found." }, { status: 404 });
   const intern = toIntern(doc);
+  await logActivity(await getSession(), "Interns", data.status ? `Updated intern (status → ${data.status})` : "Updated intern", intern.name, req);
   let emailed = false;
   if (body.notify && data.status) {
     const content = await readContentFromDb();
@@ -35,6 +37,7 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   if (!_id) return NextResponse.json({ error: "Intern not found." }, { status: 404 });
   const col = await internsCol();
   const doc = await col.findOneAndDelete({ _id });
+  if (doc) await logActivity(await getSession(), "Interns", "Deleted intern / applicant", String(doc.name ?? ""), _req);
   if (doc?.resumeId && ObjectId.isValid(String(doc.resumeId))) {
     const bucket = new GridFSBucket(await getDb(), { bucketName: "resumes" });
     await bucket.delete(new ObjectId(String(doc.resumeId))).catch(() => undefined);

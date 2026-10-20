@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { guard } from "@/lib/admin-guard";
+import { getSession, guard } from "@/lib/admin-guard";
+import { logActivity } from "@/lib/activity";
 import { uploadsBucket } from "@/lib/uploads-server";
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
@@ -12,5 +13,6 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   } catch {
     return NextResponse.json({ error: "Image not found." }, { status: 404 });
   }
+  await logActivity(await getSession(), "Media", "Deleted an image", params.id, _req);
   return NextResponse.json({ ok: true });
 }

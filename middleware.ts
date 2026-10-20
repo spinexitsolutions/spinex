@@ -6,7 +6,8 @@ export const config = { matcher: ["/admin/:path*", "/api/admin/:path*"] };
 // Everything under /admin and /api/admin needs a valid login cookie.
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname === "/admin/login") return NextResponse.next();
+  // Pages for logging in and resetting a forgotten password are open to everyone.
+  if (pathname === "/admin/login" || pathname === "/admin/forgot" || pathname === "/admin/reset") return NextResponse.next();
 
   if (await verifyToken(req.cookies.get(COOKIE)?.value)) return NextResponse.next();
 

@@ -41,7 +41,34 @@ const readSavedContent = unstable_cache(
   { tags: ["content"], revalidate: 300 },
 );
 
+// Preview: an admin pressed "Preview" in the admin panel. Only their browser (which has the preview cookie
+// and their login) sees their unsaved changes; everyone else keeps seeing the live website.
+async function previewContent(): Promise<SiteContent | null> {
+  try {
+    const { draftMode, cookies } = await import("next/headers");
+    if (!draftMode().isEnabled || !hasDb()) return null;
+    const { COOKIE, verifyToken } = await import("./auth");
+    const s = await verifyToken(cookies().get(COOKIE)?.value);
+    if (!s) return null;
+    const doc = await (await getDb()).collection<SettingsDoc>("settings").findOne({ _id: `content_preview:${s.uid}` });
+    return doc?.data ? mergeContent(defaultContent, doc.data) : null;
+  } catch {
+    return null; // not inside a request (e.g. while building), or no preview saved
+  }
+}
+
+export const isPreviewing = async () => {
+  try {
+    const { draftMode } = await import("next/headers");
+    return draftMode().isEnabled;
+  } catch {
+    return false;
+  }
+};
+
 export async function getContent(): Promise<SiteContent> {
+  const preview = await previewContent();
+  if (preview) return preview;
   try {
     const saved = await readSavedContent();
     return saved ? mergeContent(defaultContent, saved) : defaultContent;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { guard, jsonBody } from "@/lib/admin-guard";
+import { getSession, guard, jsonBody } from "@/lib/admin-guard";
+import { logActivity } from "@/lib/activity";
 import { billOid, billingCol, cleanBillInput, toBill } from "@/lib/billing-db";
 import { financialYear } from "@/lib/billing";
 
@@ -31,7 +32,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
     }
   }
   const doc = await col.findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
-  return NextResponse.json(toBill(doc!));
+  const b = toBill(doc!);
+  const statusNote = data.status && data.status !== current.status ? ` (status → ${data.status})` : "";
+  const paidNote = data.paid !== undefined && data.paid !== Number(current.paid ?? 0) ? ` (payment ₹${data.paid})` : "";
+  await logActivity(await getSession(), "Invoices", `Edited ${b.type === "quote" ? "quotation" : "invoice"} ${b.number}${statusNote}${paidNote}`, b.client.company || b.client.name, req);
+  return NextResponse.json(b);
 }
 
 // Quotations can be deleted. Invoices keep their number (GST needs an unbroken series), so they are cancelled instead.
@@ -45,5 +50,6 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   if (doc.type === "invoice") return NextResponse.json({ error: "Invoices can't be deleted, so the invoice numbers stay in order. Mark it as Cancelled instead." }, { status: 400 });
   if (doc.invoiceId) return NextResponse.json({ error: "This quotation already has an invoice, so it is kept." }, { status: 400 });
   await col.deleteOne({ _id });
+  await logActivity(await getSession(), "Invoices", `Deleted quotation ${doc.number}`, String(doc.client?.company || doc.client?.name || ""), _req);
   return NextResponse.json({ ok: true });
 }

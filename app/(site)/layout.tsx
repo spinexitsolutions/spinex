@@ -7,11 +7,14 @@ import { IntroProvider, IntroCover } from "@/components/Intro";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import Analytics from "@/components/Analytics";
 import CookieBanner from "@/components/CookieBanner";
+import AttributionTracker from "@/components/AttributionTracker";
 import CustomCode from "@/components/CustomCode";
 import { getHeadCode } from "@/lib/secrets";
+import { isPreviewing } from "@/lib/content-server";
+import PreviewBar from "@/components/PreviewBar";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const customCode = await getHeadCode();
+  const [customCode, previewing] = await Promise.all([getHeadCode(), isPreviewing()]);
   return (
     <IntroProvider>
       <IntroCover />
@@ -24,6 +27,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <FloatingWhatsApp />
         <Analytics />
         <CookieBanner />
+        <AttributionTracker />
+        {previewing && <PreviewBar />}
         {customCode && <CustomCode code={customCode} />}
       </SmoothScroll>
     </IntroProvider>

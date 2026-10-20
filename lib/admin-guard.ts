@@ -7,7 +7,18 @@ import { hasDb } from "./db";
 // Team members are re-checked against the database, so removing or changing someone takes effect at once.
 export async function getSession(): Promise<Session | null> {
   const s = await verifyToken(cookies().get(COOKIE)?.value);
-  if (!s || s.uid === "env" || !hasDb()) return s;
+  if (!s || !hasDb()) return s;
+  if (s.uid === "env") {
+    // The owner's sessions end when the owner's password changes or two-step login is turned on/off.
+    try {
+      const { getDb } = await import("./db");
+      const doc = await (await getDb()).collection<{ _id: string; tokenVersion?: number }>("settings").findOne({ _id: "owner_account" }, { projection: { tokenVersion: 1 } });
+      return (Number(doc?.tokenVersion) || 0) === (s.tv ?? 0) ? s : null;
+    } catch (e) {
+      console.error("Could not check the owner's session:", e);
+      return s; // database trouble must not lock the owner out
+    }
+  }
   try {
     const { usersCol } = await import("./users");
     const { ObjectId } = await import("mongodb");

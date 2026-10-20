@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
 import { cleanLead, leadsCol, toLead } from "@/lib/lead-db";
@@ -32,6 +33,14 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const doc = await col.findOneAndUpdate({ _id }, { $set: { ...update, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
   const lead = toLead(doc);
+  const what = [
+    data.status !== undefined && data.status !== before.status && `status → ${data.status}`,
+    "assignedTo" in data && data.assignedTo !== String(before.assignedTo ?? "") && (lead.assignedName ? `given to ${lead.assignedName}` : "un-assigned"),
+    data.followUp !== undefined && data.followUp !== String(before.followUp ?? "") && (data.followUp ? `follow-up ${data.followUp}` : "follow-up cleared"),
+    data.value !== undefined && data.value !== String(before.value ?? "") && `value ₹${data.value || 0}`,
+    data.notes !== undefined && data.notes !== String(before.notes ?? "") && "notes",
+  ].filter(Boolean);
+  if (what.length) await logActivity(await getSession(), "Leads", `Updated lead: ${what.join(", ")}`, lead.name, req);
 
   // Tell the new person, unless they gave it to themselves.
   const me = await getSession();
@@ -56,6 +65,7 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
-  await (await leadsCol()).deleteOne({ _id });
+  const gone = await (await leadsCol()).findOneAndDelete({ _id }, { projection: { name: 1, phone: 1 } });
+  if (gone) await logActivity(await getSession(), "Leads", "Deleted a lead", `${gone.name ?? ""} ${gone.phone ?? ""}`.trim(), _req);
   return NextResponse.json({ ok: true });
 }

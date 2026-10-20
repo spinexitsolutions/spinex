@@ -8,6 +8,7 @@ import { sendLeadWebhook } from "@/lib/webhook";
 import { getContent } from "@/lib/content-server";
 import { sendAutoReply } from "@/lib/auto-reply";
 import { leadAlertText, sendWhatsAppAlert } from "@/lib/whatsapp-alert";
+import { cleanTrack } from "@/lib/attribution";
 
 // Public endpoint used by the contact form, home contact section and project planner.
 export async function POST(req: Request) {
@@ -28,13 +29,14 @@ export async function POST(req: Request) {
   const source = (Object.keys(LEAD_SOURCES).includes(String(body.source)) ? body.source : "contact") as LeadSource;
   const plan = String(body.plan ?? "").slice(0, 2000);
   const stamp = new Date().toISOString();
+  const track = cleanTrack(body.track);
 
   const col = await leadsCol();
   // One thank-you email per address per day, so the form can't be used to flood someone's inbox.
   const repliedToday = data.email
     ? (await col.countDocuments({ email: data.email, createdAt: { $gte: new Date(Date.now() - 864e5).toISOString() } }, { collation: { locale: "en", strength: 2 } }).catch(() => 1)) > 0
     : true;
-  await col.insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", createdAt: stamp, updatedAt: stamp });
+  await col.insertOne({ ...data, plan, source, status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", track, createdAt: stamp, updatedAt: stamp });
 
   const content = await getContent().catch(() => null);
   const adminUrl = `${new URL(req.url).origin}/admin`;
@@ -43,12 +45,12 @@ export async function POST(req: Request) {
   await Promise.allSettled([
     content && !repliedToday ? sendAutoReply(content, data) : Promise.resolve(false),
     content?.leadReplies?.whatsappAlert
-      ? sendWhatsAppAlert(leadAlertText({ ...data }, LEAD_SOURCES[source], adminUrl)).then((r) => {
+      ? sendWhatsAppAlert(leadAlertText({ ...data, cameVia: [track.channel, track.utmCampaign].filter(Boolean).join(" · ") }, LEAD_SOURCES[source], adminUrl)).then((r) => {
           if (!r.ok && r.via) console.error("WhatsApp alert failed:", r.error);
           return r;
         })
       : Promise.resolve(null),
-    sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], createdAt: stamp }),
+    sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], track, createdAt: stamp }),
     notifyAdmin(
       `New enquiry from ${data.name}`,
       [
@@ -60,6 +62,10 @@ export async function POST(req: Request) {
         ["Message", data.message ?? ""],
         ["Plan", plan],
         ["From", LEAD_SOURCES[source]],
+        ["Came via", track.channel],
+        ["Campaign", track.utmCampaign],
+        ["Keyword", track.utmTerm],
+        ["Landing page", track.landingPage],
       ],
       adminUrl,
     ),

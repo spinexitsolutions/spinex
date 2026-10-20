@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { revalidateTag } from "next/cache";
-import { guard, jsonBody } from "@/lib/admin-guard";
+import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
 import { cleanPost, postsCol, toPost, uniqueSlug } from "@/lib/post-db";
 
@@ -29,6 +30,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const doc = await (await postsCol()).findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Post not found." }, { status: 404 });
   revalidateTag("posts");
+  await logActivity(await getSession(), "Blog", data.status === "published" ? "Published / updated a post" : "Edited a post", String(doc.title ?? ""), req);
   return NextResponse.json(toPost(doc));
 }
 
@@ -37,7 +39,8 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Post not found." }, { status: 404 });
-  await (await postsCol()).deleteOne({ _id });
+  const gone = await (await postsCol()).findOneAndDelete({ _id }, { projection: { title: 1 } });
+  if (gone) await logActivity(await getSession(), "Blog", "Deleted a post", String(gone.title ?? ""), _req);
   revalidateTag("posts");
   return NextResponse.json({ ok: true });
 }

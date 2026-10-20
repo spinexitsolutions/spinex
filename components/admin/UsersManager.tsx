@@ -78,6 +78,11 @@ export default function UsersManager() {
                 <button onClick={() => patch(u, { active: !u.active })} className={`min-h-10 rounded-full px-3 text-sm font-medium ${u.active ? "bg-emerald-50 text-emerald-800" : "bg-mist text-muted"}`}>
                   {u.active ? "Active" : "Blocked"}
                 </button>
+                {u.twoStep ? (
+                  <button onClick={() => { if (confirm(`Turn off two-step login for ${u.name}? Do this only if they lost their phone and backup codes. They can turn it on again from My account.`)) patch(u, { reset2fa: true }); }} title="Two-step login is on. Click to turn it off (lost phone)." className="min-h-10 rounded-full bg-emerald-50 px-3 text-sm font-medium text-emerald-800">2-step on</button>
+                ) : (
+                  <span title="This member hasn't turned on two-step login yet (My account)" className="min-h-10 rounded-full bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-800">2-step off</span>
+                )}
                 <button onClick={() => setResetFor(u)} aria-label="Reset password" title="Reset password" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><KeyRound size={16} /></button>
                 <button
                   onClick={async () => {

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { guard, jsonBody } from "@/lib/admin-guard";
 import { hashPassword, toUser, usersCol, validRole } from "@/lib/users";
+import { getSession } from "@/lib/admin-guard";
+import { logActivity } from "@/lib/activity";
 
 export async function GET() {
   const deny = await guard("users");
@@ -24,5 +26,6 @@ export async function POST(req: Request) {
   if (await col.findOne({ email })) return NextResponse.json({ error: "A team member with this email already exists." }, { status: 400 });
   const doc = { name, email, role: validRole(b.role), active: true, passwordHash: hashPassword(password), tokenVersion: 0, createdAt: new Date().toISOString(), lastLogin: "" };
   const { insertedId } = await col.insertOne(doc);
+  await logActivity(await getSession(), "Team", `Added team member (${doc.role})`, `${doc.name} (${doc.email})`, req);
   return NextResponse.json(toUser({ _id: insertedId, ...doc }), { status: 201 });
 }

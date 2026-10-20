@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { guard, jsonBody } from "@/lib/admin-guard";
+import { getSession, guard, jsonBody } from "@/lib/admin-guard";
+import { logActivity } from "@/lib/activity";
 import { cronKey, getAutomation, saveAutomation } from "@/lib/automation";
 import { readState } from "@/lib/settings-db";
 import { SITE_URL } from "@/lib/site";
@@ -23,5 +24,7 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   const deny = await guard("users");
   if (deny) return deny;
-  return NextResponse.json(await saveAutomation(await jsonBody(req)));
+  const saved = await saveAutomation(await jsonBody(req));
+  await logActivity(await getSession(), "Automation", `Changed settings (reminders ${saved.remindersOn ? "on" : "off"}, backup ${saved.backupFrequency})`, "", req);
+  return NextResponse.json(saved);
 }

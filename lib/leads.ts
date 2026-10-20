@@ -1,4 +1,5 @@
 // Shared lead (enquiry) types and helpers.
+import type { LeadTrack } from "./attribution";
 
 export const LEAD_STATUSES = ["new", "contacted", "quote", "won", "lost"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
@@ -31,6 +32,7 @@ export type Lead = {
   assignedTo: string; // team member id ("env" = owner), "" = nobody
   assignedName: string;
   notes: string;
+  track?: LeadTrack; // where the visitor came from (ad, search, Instagram…)
   createdAt: string;
   updatedAt: string;
 };
@@ -42,13 +44,16 @@ export function leadsToCSV(leads: Lead[]) {
   // A leading ' stops Excel / Sheets from running a value like =HYPERLINK(...) as a formula.
   const esc = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
   const show = (l: Lead, c: keyof Lead) => (c === "status" ? leadStatusLabel[l.status] : c === "source" ? LEAD_SOURCES[l.source] ?? l.source : l[c]);
-  return "\uFEFF" + [cols.join(","), ...leads.map((l) => cols.map((c) => esc(show(l, c))).join(","))].join("\n");
+  const extra = ["came via", "campaign", "keyword", "ad", "first found you via", "landing page"];
+  const extraVals = (l: Lead) => [l.track?.channel, l.track?.utmCampaign, l.track?.utmTerm, l.track?.utmContent, l.track?.firstChannel, l.track?.landingPage];
+  return "\uFEFF" + [[...cols, ...extra].join(","), ...leads.map((l) => [...cols.map((c) => esc(show(l, c))), ...extraVals(l).map(esc)].join(","))].join("\n");
 }
 
 // Used by the public forms.
 export async function submitLead(data: Record<string, string>): Promise<{ ok: boolean; error?: string; errors?: Record<string, string> }> {
   try {
-    const res = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+    const { attributionForLead } = await import("./attribution");
+    const res = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...data, track: attributionForLead() }) });
     const body = await res.json().catch(() => ({}));
     if (res.ok) {
       const { track } = await import("./track");

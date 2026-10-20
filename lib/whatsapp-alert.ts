@@ -83,6 +83,7 @@ export function leadAlertText(lead: Record<string, string>, from: string, adminU
     lead.budget ? `Budget: ${lead.budget}` : "",
     lead.message ? `Message: ${lead.message.slice(0, 300)}${lead.message.length > 300 ? "…" : ""}` : "",
     `From: ${from}`,
+    lead.cameVia ? `Came via: ${lead.cameVia}` : "",
   ].filter(Boolean);
   const links = [phone ? `Reply on WhatsApp: https://wa.me/${phone}` : "", `Open admin: ${adminUrl}`].filter(Boolean);
   return ["🔔 New enquiry on your website", details.join("\n"), links.join("\n")].join("\n\n");

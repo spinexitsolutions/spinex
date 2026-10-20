@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, Timer, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -24,6 +24,8 @@ import ThemeEditor from "./ThemeEditor";
 import ReplyPreview from "./ReplyPreview";
 import BillingManager from "./BillingManager";
 import AutomationPanel from "./AutomationPanel";
+import AccountPanel from "./AccountPanel";
+import ActivityPanel from "./ActivityPanel";
 import { can, roleLabel, type Perm, type Role } from "@/lib/roles";
 import type { Lead } from "@/lib/leads";
 
@@ -63,6 +65,8 @@ const sections = [
   { id: "automation", label: "Automation and backups", Icon: Timer, group: "Files and settings" , perm: "users" },
   { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Files and settings" , perm: "users" },
   { id: "team", label: "Team and roles", Icon: UserCog, group: "Files and settings" , perm: "users" },
+  { id: "activity", label: "Activity log", Icon: ScrollText, group: "Files and settings" , perm: "stats" },
+  { id: "account", label: "My account", Icon: UserRound, group: "Files and settings" , perm: "stats" },
 ] as const;
 
 type SectionId = (typeof sections)[number]["id"];
@@ -215,6 +219,8 @@ function AdminShell() {
       if (!res.ok) throw new Error(data.error || "Couldn't save. Try again.");
       baseUpdated.current = res.headers.get("x-content-updated") ?? baseUpdated.current;
       setConflict("");
+      // Saved and live: leave preview mode so this browser shows the live website again.
+      fetch("/api/admin/preview", { method: "DELETE" }).catch(() => undefined);
       update(data);
       // Import and reset replace everything. A normal save keeps any part edited while it was in progress.
       if (replace) {
@@ -237,6 +243,26 @@ function AdminShell() {
     }
   };
   const save = () => saveContent(draft, "Saved. Changes are live on the website.");
+  // Opens the website in a new tab with the unsaved changes, visible only to this person.
+  const [previewing, setPreviewing] = useState(false);
+  const preview = async () => {
+    const tab = window.open("about:blank", "_blank");
+    setPreviewing(true);
+    try {
+      const res = await fetch("/api/admin/preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(draft) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Couldn't open the preview.");
+      const page: Record<string, string> = { services: "/services", projects: "/work", products: "/products", about: "/about", internship: "/internship", careers: "/careers", contact: "/contact", banners: "/about" };
+      const url = page[section] ?? "/";
+      if (tab) tab.location.href = url;
+      else window.open(url, "_blank");
+    } catch (e) {
+      tab?.close();
+      flash(e instanceof Error ? e.message : "Couldn't open the preview.");
+    } finally {
+      setPreviewing(false);
+    }
+  };
   // Certificate design and signers save on their own, so HR can save them too.
   const saveCertificate = async () => {
     setCertSaving(true);
@@ -272,7 +298,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys", "billing", "automation"] as string[]).includes(section) && (!me || can(me.role, "content"));
+  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me.role, "content"));
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
@@ -321,8 +347,9 @@ function AdminShell() {
           <h1 className="flex-1 font-display text-xl font-semibold">{current.label}</h1>
           <Link href="/" target="_blank" className="hidden items-center gap-2 text-sm text-muted hover:text-ink sm:flex"><ExternalLink size={15} /> View site</Link>
           {contentSection && dirty && <button onClick={() => setDraft(content)} className="btn-ghost px-4 py-2 text-sm">Discard</button>}
+          {contentSection && dirty && <button onClick={preview} disabled={previewing} title="See the website with these changes before they go live (only you see it)" className="btn-ghost px-4 py-2 text-sm">{previewing ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />} Preview</button>}
           {contentSection && <button onClick={save} disabled={!dirty || saving} className="btn-dark px-5 py-2.5 text-sm disabled:cursor-default disabled:bg-line disabled:text-muted">
-            {saving ? <><Loader2 size={15} className="animate-spin" /> Saving</> : dirty ? "Save changes" : "All saved"}
+            {saving ? <><Loader2 size={15} className="animate-spin" /> Saving</> : dirty ? "Save and publish" : "All saved"}
           </button>}
           {section === "certificates" && canCert && certDirty && <button onClick={() => setDraft((d) => ({ ...d, certificate: content.certificate }))} className="btn-ghost px-4 py-2 text-sm">Discard</button>}
           {section === "certificates" && canCert && <button onClick={saveCertificate} disabled={!certDirty || certSaving} className="btn-dark px-5 py-2.5 text-sm disabled:cursor-default disabled:bg-line disabled:text-muted">
@@ -354,6 +381,10 @@ function AdminShell() {
             {section === "billing" && <BillingManager canEditProfile={!!me && (me.role === "owner" || me.role === "admin")} />}
 
             {section === "automation" && <AutomationPanel goApiKeys={() => go("apikeys")} />}
+
+            {section === "account" && <AccountPanel />}
+
+            {section === "activity" && <ActivityPanel all={!!me && (me.role === "owner" || me.role === "admin")} />}
 
             {section === "theme" && <ThemeEditor value={draft.theme} onChange={(v) => set("theme", v)} />}
 

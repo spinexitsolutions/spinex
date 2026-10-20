@@ -11,14 +11,14 @@ type Doc = { _id: string; values: Record<string, string>; updatedAt?: Date };
 const keyBytes = () => createHash("sha256").update(`spinex-secrets:${process.env.AUTH_SECRET || ""}`).digest();
 export const canEncrypt = () => (process.env.AUTH_SECRET || "").length >= 32;
 
-function encrypt(plain: string) {
+export function encrypt(plain: string) {
   const iv = randomBytes(12);
   const c = createCipheriv("aes-256-gcm", keyBytes(), iv);
   const data = Buffer.concat([c.update(plain, "utf8"), c.final()]);
   return `v1:${iv.toString("base64")}:${c.getAuthTag().toString("base64")}:${data.toString("base64")}`;
 }
 
-function decrypt(stored: string) {
+export function decrypt(stored: string) {
   try {
     const [v, iv, tag, data] = stored.split(":");
     if (v !== "v1") return "";

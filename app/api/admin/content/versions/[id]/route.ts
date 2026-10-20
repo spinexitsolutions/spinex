@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { revalidateTag } from "next/cache";
 import { getSession, guard } from "@/lib/admin-guard";
 import { ContentConflictError, getVersion, readContentDoc, saveContent } from "@/lib/content-server";
@@ -22,6 +23,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     if (session?.role !== "owner" && session?.role !== "admin") data.integrations = (await readContentDoc()).content.integrations;
     const updatedAt = await saveContent(data, "Before restoring an older version");
     revalidateTag("content");
+    await logActivity(session, "Website content", "Restored an older version from History", String(version.savedAt ?? ""), _req);
     return NextResponse.json(data, { headers: { "x-content-updated": updatedAt } });
   } catch (e) {
     if (e instanceof ContentConflictError) return NextResponse.json({ error: e.message, conflict: true }, { status: 409 });

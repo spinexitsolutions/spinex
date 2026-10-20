@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { contentChanges, logActivity } from "@/lib/activity";
 import { revalidateTag } from "next/cache";
 import { getSession, guard } from "@/lib/admin-guard";
 import { ContentConflictError, readContentDoc, saveContent } from "@/lib/content-server";
@@ -42,6 +43,7 @@ export async function PUT(req: Request) {
   // "none" = the panel loaded before any content was saved; "unknown" = it never got the version.
   const raw = req.headers.get("x-base-updated")?.trim() || "";
   const base = raw === "none" ? "" : raw === "unknown" ? "unknown" : raw || undefined;
+  const before = await readContentDoc().then((d) => d.content as unknown as Record<string, unknown>).catch(() => null);
   let updatedAt: string;
   try {
     updatedAt = await saveContent(data, "Saved", base);
@@ -50,5 +52,7 @@ export async function PUT(req: Request) {
     throw e;
   }
   revalidateTag("content");
+  const parts = contentChanges(before, data as unknown as Record<string, unknown>);
+  if (parts.length) await logActivity(session, "Website content", `Changed ${parts.join(", ")}`, "", req);
   return NextResponse.json(data, { headers: { "x-content-updated": updatedAt } });
 }
