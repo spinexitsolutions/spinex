@@ -103,41 +103,45 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
             {projects.map((p, i) => {
               const on = i === index;
               const url = on ? liveUrl(p) : "";
+              // The selected project's card opens its case study; other cards just select that project.
+              const caseHref = on && !p.hidePage ? `/work/${projectSlug(p)}` : "";
+              const inner = (
+                <>
+                  <span className="relative flex items-center justify-between gap-4">
+                    <span>
+                      <span className={`flex items-center gap-2 text-xs ${on ? "text-lav-700" : "text-muted"}`}>{p.category}{isDemo(p) && <DemoTag />}</span>
+                      <span className={`mt-0.5 block font-display text-xl font-semibold tracking-tight transition-colors ${on ? "text-ink" : "text-muted group-hover:text-ink"}`}>{p.title}</span>
+                      {caseHref && <span className="mt-1 block text-xs font-medium text-muted transition-colors group-hover:text-lav-700">Click to see the full case study</span>}
+                    </span>
+                    {caseHref ? (
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lav-100 text-lav-700 transition-colors group-hover:bg-ink group-hover:text-white"><ArrowUpRight size={17} /></span>
+                    ) : (
+                      <ArrowRight size={18} className={`shrink-0 transition-all duration-300 ${on ? "translate-x-0 text-lav-600 opacity-100" : "-translate-x-2 opacity-0"}`} />
+                    )}
+                  </span>
+                  {on && (
+                    <span className="absolute inset-x-5 bottom-2 h-[2px] overflow-hidden rounded-full bg-line">
+                      <motion.span
+                        key={`${index}-${running}`}
+                        className="block h-full origin-left bg-lav-600"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: running ? 1 : 0 }}
+                        transition={{ duration: running ? AUTO_MS / 1000 : 0.2, ease: "linear" }}
+                      />
+                    </span>
+                  )}
+                </>
+              );
+              const cls = `group relative block w-full overflow-hidden rounded-2xl px-5 ${caseHref ? "pb-5 pt-4" : "py-4"} text-left`;
               return (
                 <li key={p.id} className="relative">
                   {on && <motion.span layoutId="project-active" className="absolute inset-0 rounded-2xl bg-white shadow-[0_10px_30px_-18px_rgba(18,15,27,0.35)]" transition={{ type: "spring", stiffness: 380, damping: 34 }} />}
-                  <button
-                    role="tab"
-                    aria-selected={on}
-                    onClick={() => setIndex(i)}
-                    onFocus={() => setPaused(true)}
-                    className="group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-left"
-                  >
-                    <span className="relative flex items-center justify-between gap-4">
-                      <span>
-                        <span className={`flex items-center gap-2 text-xs ${on ? "text-lav-700" : "text-muted"}`}>{p.category}{isDemo(p) && <DemoTag />}</span>
-                        <span className={`mt-0.5 block font-display text-xl font-semibold tracking-tight transition-colors ${on ? "text-ink" : "text-muted group-hover:text-ink"}`}>{p.title}</span>
-                      </span>
-                      <ArrowRight size={18} className={`shrink-0 transition-all duration-300 ${on ? "translate-x-0 text-lav-600 opacity-100" : "-translate-x-2 opacity-0"}`} />
-                    </span>
-                    {on && (
-                      <span className="absolute inset-x-5 bottom-2 h-[2px] overflow-hidden rounded-full bg-line">
-                        <motion.span
-                          key={`${index}-${running}`}
-                          className="block h-full origin-left bg-lav-600"
-                          initial={{ scaleX: 0 }}
-                          animate={{ scaleX: running ? 1 : 0 }}
-                          transition={{ duration: running ? AUTO_MS / 1000 : 0.2, ease: "linear" }}
-                        />
-                      </span>
-                    )}
-                  </button>
-                  {on && (url || !p.hidePage) && (
-                    <span className="relative -mt-1 mb-3 ml-5 flex flex-wrap gap-x-4">
-                      {!p.hidePage && <CaseLink project={p} />}
-                      {url && <VisitLink href={url} />}
-                    </span>
+                  {caseHref ? (
+                    <Link href={caseHref} onFocus={() => setPaused(true)} aria-label={`${p.title}: open the case study`} className={cls}>{inner}</Link>
+                  ) : (
+                    <button role="tab" aria-selected={on} onClick={() => setIndex(i)} onFocus={() => setPaused(true)} className={cls}>{inner}</button>
                   )}
+                  {url && <VisitLink href={url} className="absolute right-16 top-4 z-10 text-xs" />}
                 </li>
               );
             })}
@@ -152,12 +156,20 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
               <AnimatePresence mode="wait">
                 <motion.div key={current.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease }}>
                   <p className="flex items-center gap-2 text-xs text-lav-700">{current.category}{isDemo(current) && <DemoTag />}</p>
-                  <h3 className="font-display text-2xl font-semibold tracking-tight">{current.title}</h3>
-                  <p className="mt-1 text-sm text-muted">{current.summary}</p>
-                  <span className="mt-2 flex flex-wrap gap-x-4">
-                    {!current.hidePage && <CaseLink project={current} />}
-                    {liveUrl(current) && <VisitLink href={liveUrl(current)} />}
-                  </span>
+                  {current.hidePage ? (
+                    <h3 className="font-display text-2xl font-semibold tracking-tight">{current.title}</h3>
+                  ) : (
+                    <Link href={`/work/${projectSlug(current)}`} className="group block">
+                      <h3 className="flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
+                        {current.title}
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-lav-100 text-lav-700 transition-colors group-hover:bg-ink group-hover:text-white"><ArrowUpRight size={15} /></span>
+                      </h3>
+                      <p className="mt-1 text-sm text-muted">{current.summary}</p>
+                      <span className="mt-1 block text-xs font-medium text-lav-700">Tap to see the full case study</span>
+                    </Link>
+                  )}
+                  {current.hidePage && <p className="mt-1 text-sm text-muted">{current.summary}</p>}
+                  {liveUrl(current) && <VisitLink href={liveUrl(current)} className="mt-2" />}
                 </motion.div>
               </AnimatePresence>
               <div className="flex shrink-0 gap-2">
@@ -174,14 +186,6 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
         </div>
       </div>
     </section>
-  );
-}
-
-function CaseLink({ project }: { project: Project }) {
-  return (
-    <Link href={`/work/${projectSlug(project)}`} className="inline-flex min-h-6 items-center gap-1 text-sm font-semibold text-ink underline-offset-4 hover:underline">
-      View case study <span aria-hidden>→</span>
-    </Link>
   );
 }
 
