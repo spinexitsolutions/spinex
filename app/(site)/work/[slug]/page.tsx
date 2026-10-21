@@ -114,7 +114,9 @@ export default async function ProjectPage({ params }: Props) {
                 {url && <a href={url} target="_blank" rel="noreferrer" className="btn-ghost bg-white">Visit site <ArrowUpRight size={16} /></a>}
               </div>
             </div>
-            <ProjectStage project={p} open play />
+            <div className="w-full min-w-0">
+              <ProjectStage project={p} open play />
+            </div>
           </div>
         </div>
       </section>

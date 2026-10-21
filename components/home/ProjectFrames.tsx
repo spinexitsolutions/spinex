@@ -15,7 +15,7 @@ export default function ProjectStage({ project, open, play }: { project: Project
 
   if (display === "website") {
     return (
-      <div className="relative mx-auto max-w-[760px] pb-[4%] [perspective:1800px]">
+      <div className="relative mx-auto w-full max-w-[760px] pb-[4%] [perspective:1800px]">
         <Laptop project={project} open={open} play={play} />
         <div className="absolute -right-[2%] bottom-0 hidden w-[21%] sm:block">
           <Phone project={project} show={open} play={play} />
