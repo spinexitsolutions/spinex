@@ -124,7 +124,10 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
   };
 
   const remove = async () => {
-    if (!confirm(`Delete quotation ${doc.number}? This can't be undone.`)) return;
+    const msg = doc.type === "quote"
+      ? `Delete quotation ${doc.number}? This can't be undone.`
+      : `Delete invoice ${doc.number}? This can't be undone.\n\nIf this is your newest invoice, the next invoice will get this same number.\nIf you already sent it to the client, it's better to mark it as Cancelled instead, so your GST records stay complete.`;
+    if (!confirm(msg)) return;
     try {
       await api(`/api/admin/billing/${doc.id}`, { method: "DELETE" });
       window.location.href = "/admin#billing";
@@ -279,7 +282,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
             </div>
           </Box>
 
-          {!readOnly && doc.type === "quote" && !doc.invoiceId && <button onClick={remove} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete quotation</button>}
+          {!readOnly && !(doc.type === "quote" && doc.invoiceId) && <button onClick={remove} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete {doc.type === "quote" ? "quotation" : "invoice"}</button>}
         </div>
 
         <div className="xl:sticky xl:top-24 xl:self-start">

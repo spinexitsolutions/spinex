@@ -3,6 +3,7 @@ import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { logActivity } from "@/lib/activity";
 import { billOid, billingCol, cleanBillInput, toBill } from "@/lib/billing-db";
 import { financialYear } from "@/lib/billing";
+import { getDb } from "@/lib/db";
 
 type Ctx = { params: { id: string } };
 
@@ -39,7 +40,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
   return NextResponse.json(b);
 }
 
-// Quotations can be deleted. Invoices keep their number (GST needs an unbroken series), so they are cancelled instead.
+// Quotations and invoices can be deleted (not a quotation that already became an invoice).
+// Deleting the newest invoice of a year gives its number back, so the next invoice reuses it and the series has no gap.
 export async function DELETE(_req: Request, { params }: Ctx) {
   const deny = await guard("billing");
   if (deny) return deny;
@@ -47,9 +49,30 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   const col = await billingCol();
   const doc = _id && (await col.findOne({ _id }));
   if (!_id || !doc) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  if (doc.type === "invoice") return NextResponse.json({ error: "Invoices can't be deleted, so the invoice numbers stay in order. Mark it as Cancelled instead." }, { status: 400 });
-  if (doc.invoiceId) return NextResponse.json({ error: "This quotation already has an invoice, so it is kept." }, { status: 400 });
+  const who = String(doc.client?.company || doc.client?.name || "");
+
+  if (doc.type === "quote") {
+    if (doc.invoiceId) return NextResponse.json({ error: "This quotation already has an invoice. Delete the invoice first if it was a mistake." }, { status: 400 });
+    await col.deleteOne({ _id });
+    await logActivity(await getSession(), "Invoices", `Deleted quotation ${doc.number}`, who, _req);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (Number(doc.paid ?? 0) > 0) {
+    return NextResponse.json({ error: "A payment is recorded on this invoice. Set \"Payment received\" to 0 and save first, or mark it as Cancelled instead." }, { status: 400 });
+  }
+  const parts = String(doc.number ?? "").split("/");
+  const fy = parts.find((x) => /^\d{4}-\d{2}$/.test(x));
+  const seq = Number(parts[parts.length - 1]);
   await col.deleteOne({ _id });
-  await logActivity(await getSession(), "Invoices", `Deleted quotation ${doc.number}`, String(doc.client?.company || doc.client?.name || ""), _req);
-  return NextResponse.json({ ok: true });
+  // Give the number back only if no newer invoice took the next one meanwhile.
+  let reused = false;
+  if (fy && Number.isInteger(seq) && seq > 0) {
+    const r = await (await getDb()).collection<{ _id: string; seq: number }>("counters").updateOne({ _id: `invoice:${fy}`, seq }, { $inc: { seq: -1 } });
+    reused = r.modifiedCount === 1;
+  }
+  // The quotation it came from can be turned into an invoice again.
+  await col.updateOne({ type: "quote", invoiceId: String(_id) }, { $set: { invoiceId: "", updatedAt: new Date().toISOString() } });
+  await logActivity(await getSession(), "Invoices", `Deleted invoice ${doc.number}${reused ? " (number will be reused)" : " (gap left in numbering)"}`, who, _req);
+  return NextResponse.json({ ok: true, reused });
 }
