@@ -736,7 +736,7 @@ function AdminShell() {
                   </div>
                   <label className="mt-5 flex items-center gap-3">
                     <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.leadReplies.replyWhatsappButton} onChange={(e) => set("leadReplies", { ...draft.leadReplies, replyWhatsappButton: e.target.checked })} />
-                    <span className="font-medium">Add a "Chat with us on WhatsApp" button</span>
+                    <span className="font-medium">Add a &quot;Chat with us on WhatsApp&quot; button</span>
                   </label>
                   <p className="mt-1 pl-8 text-sm text-muted">Uses the WhatsApp number from Contact details.</p>
                   <p className="mb-3 mt-7 text-sm font-semibold text-lav-700">Preview (with a sample enquiry)</p>
@@ -789,7 +789,7 @@ function AdminShell() {
                     ]} />
                   </div>
                 </Card>
-                <p className="text-sm text-muted">The strip's place on the home page can be changed in <button onClick={() => go("home")} className="font-semibold text-lav-700 underline">Home page</button>. Press Save to make changes live.</p>
+                <p className="text-sm text-muted">The strip&apos;s place on the home page can be changed in <button onClick={() => go("home")} className="font-semibold text-lav-700 underline">Home page</button>. Press Save to make changes live.</p>
               </div>
             )}
 
