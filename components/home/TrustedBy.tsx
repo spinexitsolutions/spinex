@@ -48,9 +48,9 @@ export default function TrustedBy() {
 
 function Logo({ name, logo, url }: { name: string; logo: string; url: string }) {
   const inner = logo ? (
-    <img src={logo} alt={name || "Client logo"} loading="lazy" className="h-9 w-auto max-w-[150px] object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0 sm:h-10" />
+    <img src={logo} alt={name || "Client logo"} loading="lazy" className="h-9 w-auto max-w-[150px] object-contain transition duration-300 group-hover:scale-105 sm:h-10" />
   ) : (
-    <span className="whitespace-nowrap font-display text-xl font-semibold tracking-tight text-ink/45 transition group-hover:text-ink">{name}</span>
+    <span className="whitespace-nowrap font-display text-xl font-semibold tracking-tight text-ink/80 transition group-hover:text-ink">{name}</span>
   );
   return url ? (
     <a href={url} target="_blank" rel="noopener noreferrer nofollow" className="group block" title={name}>{inner}</a>
