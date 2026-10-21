@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { defaultContent, mergeContent, type SiteContent } from "./content";
 import { getDb, hasDb } from "./db";
 
-type SettingsDoc = { _id: string; data: Partial<SiteContent>; updatedAt?: Date };
+type SettingsDoc = { _id: string; data: Partial<SiteContent>; updatedAt?: Date | null };
 
 export async function readContentFromDb(): Promise<SiteContent> {
   if (!hasDb()) return defaultContent;

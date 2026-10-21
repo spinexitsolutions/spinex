@@ -24,6 +24,12 @@ jobs:
           node-version: 20
       - name: Install
         run: npm install --no-audit --no-fund 2>&1 | tail -20
+      - name: Type check (all errors at once)
+        continue-on-error: true
+        run: npx tsc --noEmit -p . 2>&1 | tee tsc.log
+      - name: Lint (all problems at once)
+        continue-on-error: true
+        run: npx next lint 2>&1 | tee lint.log
       - name: Build
         id: build
         continue-on-error: true
@@ -43,6 +49,8 @@ jobs:
         run: |
           mkdir -p /tmp/out
           cp build.log /tmp/out/build.log || echo "no log" > /tmp/out/build.log
+          cp tsc.log /tmp/out/tsc.log || true
+          cp lint.log /tmp/out/lint.log || true
           echo "commit=${GITHUB_SHA}" > /tmp/out/status.txt
           echo "result=${{ steps.build.outcome }}" >> /tmp/out/status.txt
           date -u >> /tmp/out/status.txt
