@@ -1,0 +1,53 @@
+# Runs a real install + production build on GitHub after every push to main, and saves the result
+# to the "build-results" branch (build.log + status.txt), so problems are caught before you build.
+name: Build check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-check
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: npm install --no-audit --no-fund 2>&1 | tail -20
+      - name: Build
+        id: build
+        continue-on-error: true
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          AUTH_SECRET: build-check-only-not-a-real-secret-0123456789
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build.log
+      - name: Save result
+        run: |
+          mkdir -p /tmp/out
+          cp build.log /tmp/out/build.log || echo "no log" > /tmp/out/build.log
+          echo "commit=${GITHUB_SHA}" > /tmp/out/status.txt
+          echo "result=${{ steps.build.outcome }}" >> /tmp/out/status.txt
+          date -u >> /tmp/out/status.txt
+          cd /tmp/out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b build-results
+          git add -A
+          git commit -q -m "Build result for ${GITHUB_SHA}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" build-results
+      - name: Fail if the build failed
+        if: steps.build.outcome != 'success'
+        run: exit 1

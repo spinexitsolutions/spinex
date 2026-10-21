@@ -1,7 +1,10 @@
 // Server only. Jobs that run on a schedule (see app/api/cron): follow-up reminders and database backups.
 import { gunzipSync, gzipSync } from "zlib";
 import { randomBytes } from "crypto";
-import { EJSON, GridFSBucket } from "mongodb";
+import { BSON, GridFSBucket } from "mongodb";
+
+// The mongodb package (v6) offers EJSON inside BSON. EJSON keeps ObjectIds and dates exact in backups.
+const { EJSON } = BSON;
 import { getDb } from "./db";
 import { readSetting, readState, writeSetting, writeState } from "./settings-db";
 import { leadsCol, toLead } from "./lead-db";
