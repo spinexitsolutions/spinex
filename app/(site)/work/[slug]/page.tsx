@@ -105,7 +105,6 @@ export default async function ProjectPage({ params }: Props) {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 {p.category && <span className="rounded-full bg-lav-100 px-3 py-1 text-xs font-semibold text-lav-700">{p.category}</span>}
-                {p.type === "demo" && <span className="rounded-full border border-line bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted">Demo project</span>}
               </div>
               <h1 className="h-display mt-5 text-4xl sm:text-6xl">{p.title}</h1>
               {p.summary && <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted">{p.summary}</p>}
