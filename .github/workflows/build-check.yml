@@ -32,7 +32,13 @@ jobs:
           AUTH_SECRET: build-check-only-not-a-real-secret-0123456789
         run: |
           set -o pipefail
-          npm run build 2>&1 | tee build.log
+          # Google Fonts downloads sometimes fail on GitHub's servers: try up to 3 times for that.
+          for n in 1 2 3; do
+            if npm run build 2>&1 | tee build.log; then exit 0; fi
+            grep -q "next/font" build.log || exit 1
+            echo "Font download failed, trying again ($n)…"; sleep 15
+          done
+          exit 1
       - name: Save result
         run: |
           mkdir -p /tmp/out
