@@ -454,7 +454,7 @@ function AdminShell() {
                   <div className="space-y-6">
                     {([
                       ["services", "Services"], ["why", "Why Spinex"], ["process", "Process"], ["work", "Projects"], ["industries", "Who we work with"],
-                      ["goals", "Goal picker (small line above the sentence)"], ["planner", "Project planner"], ["blog", "Latest articles"], ["faq", "FAQ"], ["contact", "Contact section"],
+                      ["goals", "Goal picker (small line above the sentence)"], ["planner", "Project planner"], ["testimonials", "Testimonials"], ["blog", "Latest articles"], ["faq", "FAQ"], ["contact", "Contact section"],
                     ] as const).map(([key, label]) => (
                       <div key={key} className="rounded-2xl border border-line p-4">
                         <p className="mb-3 text-sm font-semibold text-lav-700">{label}</p>
@@ -714,9 +714,19 @@ function AdminShell() {
             {section === "testimonials" && (
               <>
                 <p className="mb-4 text-sm text-muted">The testimonials section appears on the homepage once you add at least one. Use real client quotes only.</p>
+                <Card title="Section heading" note="Shown above the testimonials on the home page.">
+                  <ObjectEditor value={draft.sections.testimonials} onChange={(v) => set("sections", { ...draft.sections, testimonials: v })} fields={[{ key: "heading", label: "Heading" }, { key: "intro", label: "Short line" }]} />
+                </Card>
+                <div className="mt-6" />
                 <ListEditor items={draft.testimonials} titleKey="name" addLabel="Add testimonial" onChange={(v) => set("testimonials", v)}
-                  newItem={() => ({ id: uid(), name: "", role: "", quote: "" })}
-                  fields={[{ key: "name", label: "Client name" }, { key: "role", label: "Role and company" }, { key: "quote", label: "Quote", type: "textarea" }]} />
+                  newItem={() => ({ id: uid(), name: "", role: "", quote: "", photo: "", rating: "5" })}
+                  fields={[
+                    { key: "name", label: "Client name", hint: "e.g. Rahul Sharma" },
+                    { key: "role", label: "Role and company", hint: "e.g. Owner, Sharma Jewellers" },
+                    { key: "quote", label: "What they said", type: "textarea", hint: "2–4 lines works best. Their real words." },
+                    { key: "rating", label: "Stars", type: "select", options: [{ value: "5", label: "★★★★★ 5" }, { value: "4", label: "★★★★ 4" }, { value: "", label: "No stars" }] },
+                    { key: "photo", label: "Client photo (optional)", type: "image", hint: "A square face photo. Without it, their initials are shown." },
+                  ]} />
               </>
             )}
 

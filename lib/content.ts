@@ -67,7 +67,8 @@ export type Industry = {
   points: string[];
 };
 
-export type Testimonial = { id: string; name: string; role: string; quote: string };
+// photo: client's photo (optional; initials are shown without it). rating: "5", "4" or "" (no stars).
+export type Testimonial = { id: string; name: string; role: string; quote: string; photo?: string; rating?: string };
 
 export type Faq = { id: string; q: string; a: string; keywords: string[] };
 
@@ -174,7 +175,7 @@ export type SiteContent = {
   hero: { kicker: string; title: string; subtitle: string; primaryCta: string; secondaryCta: string };
   sections: {
     services: Heading; why: Heading; process: Heading; work: Heading; industries: Heading; goals: Heading;
-    planner: Heading; blog: Heading; faq: Heading; contact: Heading; tools: string[];
+    planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; tools: string[];
   };
   process: ProcessStep[];
   goals: Goal[];
@@ -270,6 +271,7 @@ const baseContent: SiteContent = {
     work: { heading: "Work we're proud of.", intro: "" },
     industries: { heading: "Who we work with.", intro: "Different businesses need different things. Keep scrolling to see what we build for each." },
     goals: { heading: "Not sure where to start?", intro: "" },
+    testimonials: { heading: "What our clients say.", intro: "Real words from businesses we've worked with." },
     planner: { heading: "Plan your project in a minute.", intro: "Pick what you need and see the scope and a rough timeline. Send it to us and we'll reply with an exact quote." },
     blog: { heading: "Ideas and guides.", intro: "Practical tips on websites, online stores and marketing for growing businesses." },
     faq: { heading: "Questions we get asked.", intro: "Don't see yours? Ask our assistant and get an answer right away." },
