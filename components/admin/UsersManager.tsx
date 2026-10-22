@@ -9,7 +9,7 @@ import Modal from "./Modal";
 const assignable = ROLES.filter((r) => r !== "owner");
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, headers: { "content-type": "application/json" } });
+  const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json" } });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Something went wrong.");
   return data as T;

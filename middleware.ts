@@ -9,7 +9,12 @@ export async function middleware(req: NextRequest) {
   // Pages for logging in and resetting a forgotten password are open to everyone.
   if (pathname === "/admin/login" || pathname === "/admin/forgot" || pathname === "/admin/reset") return NextResponse.next();
 
-  if (await verifyToken(req.cookies.get(COOKIE)?.value)) return NextResponse.next();
+  if (await verifyToken(req.cookies.get(COOKIE)?.value)) {
+    const res = NextResponse.next();
+    // Admin data must never come from a browser or CDN cache (e.g. a post list still showing "Published").
+    if (pathname.startsWith("/api/")) res.headers.set("Cache-Control", "private, no-store");
+    return res;
+  }
 
   if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Please log in again." }, { status: 401 });
   const url = req.nextUrl.clone();

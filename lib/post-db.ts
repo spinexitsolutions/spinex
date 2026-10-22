@@ -28,7 +28,7 @@ export function cleanPost(input: Record<string, unknown>) {
 // Makes the slug unique by adding -2, -3 … when needed.
 export async function uniqueSlug(base: string, exceptId?: string) {
   const col = await postsCol();
-  const root = slugify(base) || "post";
+  const root = slugify(base) === "preview" ? "preview-post" : slugify(base) || "post";
   let slug = root;
   for (let n = 2; ; n++) {
     const hit = await col.findOne({ slug }, { projection: { _id: 1 } });

@@ -15,7 +15,7 @@ const badge: Record<Status, string> = {
 };
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
+  const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   if (res.status === 401) {
     window.location.href = "/admin/login";
     throw new Error("Please log in again.");

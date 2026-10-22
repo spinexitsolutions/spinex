@@ -57,12 +57,15 @@ async function previewContent(): Promise<SiteContent | null> {
   }
 }
 
-export const isPreviewing = async () => {
+// "on": an admin's preview is showing. "stale": the preview cookie is left over (preview data gone or logged out),
+// so the browser should drop it. "off": normal visitor.
+export const isPreviewing = async (): Promise<"on" | "stale" | "off"> => {
   try {
     const { draftMode } = await import("next/headers");
-    return draftMode().isEnabled;
+    if (!draftMode().isEnabled) return "off";
+    return (await previewContent()) ? "on" : "stale";
   } catch {
-    return false;
+    return "off";
   }
 };
 

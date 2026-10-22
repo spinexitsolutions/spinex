@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2, Code2, Eye, EyeOff, Loader2, Plus, Save, S
 import { KEY_GROUPS, validCustomName, type KeyDef, type KeyStatus, type SecretsView } from "@/lib/secret-keys";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, headers: { "content-type": "application/json" } });
+  const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json" } });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Something went wrong.");
   return data as T;

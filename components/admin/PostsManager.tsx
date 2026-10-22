@@ -17,7 +17,7 @@ import MediaLibrary from "./MediaLibrary";
 import Modal from "./Modal";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
+  const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   if (res.status === 401) {
     window.location.href = "/admin/login";
     throw new Error("Please log in again.");
@@ -198,7 +198,7 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
       setPost((cur) => {
         const out = { ...saved } as unknown as Record<string, unknown>;
         const c = cur as unknown as Record<string, unknown>;
-        for (const k of Object.keys(c)) if (JSON.stringify(c[k]) !== JSON.stringify(sent[k])) out[k] = c[k];
+        for (const k of Object.keys(c)) if (k !== "status" && JSON.stringify(c[k]) !== JSON.stringify(sent[k])) out[k] = c[k];
         return out as unknown as Post;
       });
       savedJson.current = JSON.stringify(saved);
@@ -209,6 +209,28 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
       setError(e instanceof Error ? e.message : "Couldn't save.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Opens the post in a new tab with the real website design, without publishing it.
+  const [previewing, setPreviewing] = useState(false);
+  const openPreview = async () => {
+    if (!post.title.trim()) {
+      setError("Add a title first.");
+      return;
+    }
+    const tab = window.open("about:blank", "_blank");
+    setPreviewing(true);
+    setError("");
+    try {
+      const r = await api<{ url: string }>("/api/admin/posts/preview", { method: "POST", body: JSON.stringify(post) });
+      if (tab) tab.location.href = r.url;
+      else window.location.href = r.url;
+    } catch (e) {
+      tab?.close();
+      setError(e instanceof Error ? e.message : "Couldn't open the preview.");
+    } finally {
+      setPreviewing(false);
     }
   };
 
@@ -262,6 +284,7 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
         <AnimatePresence>{msg && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-medium text-emerald-700" role="status">{msg}</motion.span>}</AnimatePresence>
         <div className="ml-auto flex flex-wrap gap-2">
           {post.status === "published" && post.slug && <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer" className="btn-ghost bg-white px-4 py-2 text-sm"><ExternalLink size={15} /> View</a>}
+          <button onClick={openPreview} disabled={previewing} className="btn-ghost bg-white px-4 py-2 text-sm disabled:opacity-60">{previewing ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />} Preview</button>
           {!readOnly && <button onClick={() => save()} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm disabled:opacity-60">{saving ? <Loader2 size={15} className="animate-spin" /> : "Save"}</button>}
           {readOnly ? null : post.status === "published" ? (
             <button onClick={() => save("draft")} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm">Unpublish</button>

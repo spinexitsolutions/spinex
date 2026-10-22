@@ -11,7 +11,7 @@ import AttributionTracker from "@/components/AttributionTracker";
 import CustomCode from "@/components/CustomCode";
 import { getHeadCode } from "@/lib/secrets";
 import { isPreviewing } from "@/lib/content-server";
-import PreviewBar from "@/components/PreviewBar";
+import PreviewBar, { ClearStalePreview } from "@/components/PreviewBar";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [customCode, previewing] = await Promise.all([getHeadCode(), isPreviewing()]);
@@ -28,7 +28,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <Analytics />
         <CookieBanner />
         <AttributionTracker />
-        {previewing && <PreviewBar />}
+        {previewing === "on" && <PreviewBar />}
+        {previewing === "stale" && <ClearStalePreview />}
         {customCode && <CustomCode code={customCode} />}
       </SmoothScroll>
     </IntroProvider>

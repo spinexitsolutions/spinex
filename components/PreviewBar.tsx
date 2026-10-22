@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, Loader2, X } from "lucide-react";
 
 // Shown only to an admin who pressed "Preview": the website here has their unsaved changes.
@@ -21,4 +21,13 @@ export default function PreviewBar() {
       </span>
     </div>
   );
+}
+
+// A preview cookie left behind (the admin closed the tab, saved, or logged out): drop it quietly,
+// so the website stops being rendered as a preview for this browser.
+export function ClearStalePreview() {
+  useEffect(() => {
+    fetch("/api/preview/exit", { method: "POST" }).catch(() => undefined);
+  }, []);
+  return null;
 }

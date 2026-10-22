@@ -23,7 +23,10 @@ export async function POST(req: Request) {
   const errors: Record<string, string> = {};
   if (!data.name) errors.name = "Enter your name.";
   if ((data.phone ?? "").replace(/\D/g, "").length < 10) errors.phone = "Enter a 10-digit phone number.";
-  if (data.email && !/^\S+@\S+\.\S+$/.test(data.email)) errors.email = "Check the email address.";
+  // The contact page and product forms ask for an email (it gets the thank-you reply); the quick home form and planner don't.
+  const needsEmail = body.source === "contact" || body.source === "product" || body.source === undefined;
+  if (needsEmail && !data.email) errors.email = "Enter your email address.";
+  else if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) errors.email = "Check the email address.";
   if (Object.keys(errors).length) return NextResponse.json({ error: "Please fix the highlighted fields.", errors }, { status: 400 });
 
   const source = (Object.keys(LEAD_SOURCES).includes(String(body.source)) ? body.source : "contact") as LeadSource;

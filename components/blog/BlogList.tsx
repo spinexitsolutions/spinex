@@ -37,8 +37,8 @@ export default function BlogList({ posts }: { posts: Post[] }) {
           ))}
         </div>
       ) : <span />}
-        {posts.length > 3 && (
-          <label className="flex h-12 w-full items-center gap-2 rounded-full border border-line bg-white px-4 lg:max-w-xs">
+        {(
+          <label className="flex h-12 w-full items-center gap-2 rounded-full border border-line bg-white px-4 shadow-sm focus-within:border-lav-500 lg:max-w-sm">
             <Search size={17} className="shrink-0 text-muted" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search articles" aria-label="Search articles" className="h-full w-full bg-transparent text-sm outline-none" />
             {q && <button onClick={() => setQ("")} aria-label="Clear search" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><X size={15} /></button>}

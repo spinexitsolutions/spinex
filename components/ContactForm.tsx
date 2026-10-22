@@ -36,7 +36,8 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
     const errs: typeof errors = {};
     if (!form.name.trim()) errs.name = "Enter your name.";
     if (form.phone.replace(/\D/g, "").length < 10) errs.phone = "Enter a 10-digit phone number.";
-    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) errs.email = "Check the email address.";
+    if (!form.email.trim()) errs.email = "Enter your email address.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) errs.email = "Check the email address.";
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
@@ -75,7 +76,7 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Your name *" error={errors.name}><input className="input" value={form.name} onChange={set("name")} autoComplete="name" aria-invalid={!!errors.name} /></Field>
               <Field label="Phone *" error={errors.phone}><input className="input" value={form.phone} onChange={set("phone")} type="tel" inputMode="tel" autoComplete="tel" aria-invalid={!!errors.phone} /></Field>
-              <Field label="Email" error={errors.email}><input className="input" value={form.email} onChange={set("email")} type="email" autoComplete="email" aria-invalid={!!errors.email} /></Field>
+              <Field label="Email *" error={errors.email}><input className="input" value={form.email} onChange={set("email")} type="email" autoComplete="email" aria-invalid={!!errors.email} /></Field>
               <Field label="What do you need?">
                 <select className="input" value={form.services} onChange={set("services")}>
                   <option value="">Not sure yet</option>

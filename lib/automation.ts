@@ -108,7 +108,7 @@ const SKIP = (name: string) =>
 // job state (scheduler key), the owner's login (password, two-step secret) and unsaved previews.
 const PRIVATE_SETTING = (id: unknown) => {
   const s = String(id);
-  return s.startsWith("state:") || s === "owner_account" || s.startsWith("content_preview:");
+  return s.startsWith("state:") || s === "owner_account" || s.startsWith("content_preview:") || s.startsWith("post_preview:");
 };
 // Login secrets removed from team members in a backup.
 const LOGIN_FIELDS = ["passwordHash", "totpSecret", "totpPending", "totpLastStep", "backupCodes"];

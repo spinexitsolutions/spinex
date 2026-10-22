@@ -98,7 +98,7 @@ export default function Navbar() {
   return (
     <>
       <motion.header animate={{ y: hidden ? -120 : 0 }} transition={{ duration: 0.45, ease }} className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-4">
-        <div className="relative w-full" style={{ maxWidth: scrolled ? 940 : 1240, transition: "max-width .6s cubic-bezier(.22,1,.36,1)" }} onMouseLeave={hideMega}>
+        <div className="relative w-full" style={{ maxWidth: scrolled ? 1080 : 1240, transition: "max-width .6s cubic-bezier(.22,1,.36,1)" }} onMouseLeave={hideMega}>
           <motion.nav
             initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -110,7 +110,7 @@ export default function Navbar() {
             }`}
             aria-label="Main"
           >
-            <Link href="/" className="group flex items-center gap-2 rounded-full pl-0.5 pr-3" aria-label={`${content.brand.name} home`}>
+            <Link href="/" className="group flex shrink-0 items-center gap-2 rounded-full pl-0.5 pr-3" aria-label={`${content.brand.name} home`}>
               {content.brand.logo?.trim() ? (
                 <span className="relative grid h-10 w-10 place-items-center">
                   <span className="absolute inset-0 scale-0 rounded-full bg-lav-100 transition-transform duration-500 group-hover:scale-100" />
@@ -134,7 +134,7 @@ export default function Navbar() {
                       <motion.span layoutId="nav-hover" className="absolute inset-0 rounded-full bg-lav-100" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
                     )}
                     <div className="relative flex items-center">
-                      <Link href={l.href} onFocus={() => setHovered(l.href)} aria-current={isActive ? "page" : undefined} className={`group relative z-10 flex min-h-11 items-center px-4 text-[14.5px] ${isActive ? "font-semibold text-white" : "font-medium text-muted hover:text-ink"}`}>
+                      <Link href={l.href} onFocus={() => setHovered(l.href)} aria-current={isActive ? "page" : undefined} className={`group relative z-10 flex min-h-11 items-center whitespace-nowrap px-3.5 text-[14.5px] xl:px-4 ${isActive ? "font-semibold text-white" : "font-medium text-muted hover:text-ink"}`}>
                         <RollText text={l.label} alt={isActive ? "text-lav-200" : "text-lav-700"} />
                       </Link>
                       {l.mega && (
@@ -157,7 +157,7 @@ export default function Navbar() {
             </ul>
 
             <div className="flex items-center gap-2">
-              <Link href="/contact" className="group relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-ink pl-5 pr-1.5 text-sm font-semibold text-white sm:inline-flex">
+              <Link href="/contact" className="group relative hidden h-11 shrink-0 items-center whitespace-nowrap gap-2 overflow-hidden rounded-full bg-ink pl-5 pr-1.5 text-sm font-semibold text-white sm:inline-flex">
                 <span aria-hidden className="absolute inset-0 origin-left scale-x-0 rounded-full bg-lav-600 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
                 <span className="relative">Start a project</span>
                 <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-white text-ink">

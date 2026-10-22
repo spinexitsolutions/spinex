@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Link2, Linkedin, MessageCircle, X } from "lucide-react";
+import { Check, Link2, Linkedin, X } from "lucide-react";
+import WhatsAppIcon from "../WhatsAppIcon";
 
 // Copies text. Uses the modern clipboard where allowed, otherwise the old method
 // (needed on http:// pages and some phones).
@@ -47,8 +48,8 @@ export default function ShareButtons({ url, title }: { url: string; title: strin
     <div className="relative rounded-[20px] border border-line p-5">
       <p className="text-sm font-semibold">Share</p>
       <div className="mt-3 flex gap-2">
-        <a href={`https://wa.me/?text=${enc(`${title} ${url}`)}`} target="_blank" rel="noreferrer" aria-label="Share on WhatsApp" title="Share on WhatsApp" className="grid h-11 w-11 place-items-center rounded-full border border-line transition hover:border-[#25D366] hover:text-[#25D366]"><MessageCircle size={17} /></a>
-        <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`} target="_blank" rel="noreferrer" aria-label="Share on LinkedIn" title="Share on LinkedIn" className="grid h-11 w-11 place-items-center rounded-full border border-line transition hover:border-[#0A66C2] hover:text-[#0A66C2]"><Linkedin size={17} /></a>
+        <a href={`https://wa.me/?text=${enc(`${title} ${url}`)}`} target="_blank" rel="noreferrer" aria-label="Share on WhatsApp" title="Share on WhatsApp" className="grid h-11 w-11 place-items-center rounded-full border border-line transition text-[#25D366] hover:border-[#25D366] hover:bg-[#25D366] hover:text-white"><WhatsAppIcon size={18} /></a>
+        <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`} target="_blank" rel="noreferrer" aria-label="Share on LinkedIn" title="Share on LinkedIn" className="grid h-11 w-11 place-items-center rounded-full border border-line transition text-[#0A66C2] hover:border-[#0A66C2] hover:bg-[#0A66C2] hover:text-white"><Linkedin size={17} /></a>
         <button
           onClick={copy}
           aria-label="Copy link"
