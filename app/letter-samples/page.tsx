@@ -42,7 +42,7 @@ export default async function LetterSamplesPage({ searchParams }: { searchParams
     >
       <div className="space-y-8 print:space-y-0">
         {list.map((l, i) => (
-          <div key={l.id} data-letter={l.type} className="print:break-after-page">
+          <div key={l.id} data-letter={l.type} className={i < list.length - 1 ? "print:break-after-page" : ""}>
             <p className="mx-auto mb-2 max-w-[210mm] text-sm font-semibold text-muted print:hidden">{i + 1}. {templateFor(l.type).label}</p>
             <LetterDocument letter={l} head={SAMPLE_HEAD} logo={content.brand.logo} qr={qrs[i]} verifyUrl={verifyLabel(base)} />
           </div>
