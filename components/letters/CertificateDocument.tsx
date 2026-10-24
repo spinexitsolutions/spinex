@@ -30,7 +30,7 @@ export default function CertificateDocument({ letter, head, logo, qr, verifyUrl 
   return (
     <div
       className={`${letterFontVars} cert-page relative mx-auto aspect-[297/210] w-full max-w-[297mm] overflow-hidden bg-white text-[#1d1a26] shadow-[0_30px_80px_-30px_rgba(18,15,27,0.35)]`}
-      style={{ containerType: "inline-size", fontFamily: LETTER_FONT, fontKerning: "normal", letterSpacing: 0 }}
+      style={{ containerType: "inline-size", fontFamily: LETTER_FONT, fontKerning: "normal", letterSpacing: 0, wordSpacing: "0.04em", textRendering: "geometricPrecision", WebkitFontSmoothing: "antialiased" }}
     >
       <style>{`
         @page cert { size: A4 landscape; margin: 0; }

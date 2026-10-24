@@ -28,7 +28,7 @@ function LetterPage({ letter, head, logo, qr, verifyUrl }: { letter: Letter; hea
   const contact = [head.phone, head.email, head.website].filter(Boolean);
 
   return (
-    <article style={{ fontFamily: LETTER_FONT, fontKerning: "normal", letterSpacing: 0 }} className={`${letterFontVars} letter-page relative mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col overflow-hidden bg-white px-[16mm] pb-[10mm] pt-[12mm] text-[12.5px] leading-[1.55] text-[#1d1a26] shadow-[0_20px_60px_-30px_rgba(18,15,27,.45)] print:min-h-[262mm] print:max-w-none print:overflow-visible print:p-0 print:shadow-none`}>
+    <article style={{ fontFamily: LETTER_FONT, fontKerning: "normal", letterSpacing: 0, wordSpacing: "0.04em", textRendering: "geometricPrecision", WebkitFontSmoothing: "antialiased" }} className={`${letterFontVars} letter-page relative mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col overflow-hidden bg-white px-[16mm] pb-[10mm] pt-[12mm] text-[12.5px] leading-[1.55] text-[#1d1a26] shadow-[0_20px_60px_-30px_rgba(18,15,27,.45)] print:min-h-[262mm] print:max-w-none print:overflow-visible print:p-0 print:shadow-none`}>
       <div aria-hidden className="absolute inset-x-0 top-0 h-[5px] print:hidden" style={{ background: `linear-gradient(90deg, ${ACCENT}, #9d8cf0)` }} />
       {letter.status !== "issued" && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
