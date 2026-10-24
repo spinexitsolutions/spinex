@@ -124,7 +124,8 @@ export default function LettersManager({ readOnly = false }: { readOnly?: boolea
           <h2 className="font-display text-2xl font-semibold">HR letters</h2>
           <p className="text-sm text-muted">Offer letters, appointment, experience, relieving, salary and other company letters, with a verification QR code.</p>
         </div>
-        <a href="/letter-samples" target="_blank" rel="noreferrer" className="btn-ghost ml-auto bg-white px-4 py-2.5 text-sm">See samples</a>
+        <a href="/letter-guide" target="_blank" rel="noreferrer" className="btn-ghost ml-auto bg-white px-4 py-2.5 text-sm">Guide: which letter when</a>
+        <a href="/letter-samples" target="_blank" rel="noreferrer" className="btn-ghost bg-white px-4 py-2.5 text-sm">See samples</a>
         {!readOnly && <button onClick={() => setPicking(true)} className="btn-dark px-5 py-2.5 text-sm"><FilePlus2 size={16} /> New letter</button>}
       </div>
 

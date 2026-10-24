@@ -33,6 +33,17 @@ for (const type of types) {
     report.push(`FAIL ${type} ${String(e).slice(0, 200)}`);
   }
 }
+// The printable guide (any number of pages).
+try {
+  await page.goto(`${base}/letter-guide`, { waitUntil: "networkidle" });
+  await page.evaluate(() => document.fonts.ready);
+  await page.emulateMedia({ media: "print" });
+  const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });
+  writeFileSync(`${out}/guide.pdf`, pdf);
+  report.push(`guide pages=${(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g) || []).length}`);
+} catch (e) {
+  report.push(`guide FAIL ${String(e).slice(0, 200)}`);
+}
 await browser.close();
 report.push(`types=${types.length} not_one_page=${bad}`);
 writeFileSync(`${out}/report.txt`, report.join("\n") + "\n");
