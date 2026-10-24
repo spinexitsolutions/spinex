@@ -7,7 +7,7 @@ import { BadgeCheck, Loader2, SearchX } from "lucide-react";
 import { formatDate } from "@/lib/interns";
 import { ease } from "./Reveal";
 
-type Result = { valid: boolean; error?: string; certId?: string; name?: string; role?: string; startDate?: string; endDate?: string; issuedOn?: string };
+type Result = { valid: boolean; error?: string; kind?: "certificate" | "letter"; letterType?: string; number?: string; certId?: string; name?: string; role?: string; startDate?: string; endDate?: string; issuedOn?: string };
 
 // The form and result. The page renders the section shell and heading on the server.
 export default function VerifyCertificate() {
@@ -40,7 +40,7 @@ export default function VerifyCertificate() {
     <>
         <form onSubmit={(e) => { e.preventDefault(); check(id); }} className="mt-10 flex flex-col gap-3 sm:flex-row">
           <label className="flex-1">
-            <span className="sr-only">Certificate number</span>
+            <span className="sr-only">Certificate or letter number</span>
             <input
               value={id}
               onChange={(e) => setId(e.target.value)}
@@ -60,22 +60,34 @@ export default function VerifyCertificate() {
               {result.valid ? (
                 <div className="overflow-hidden rounded-[24px] bg-white text-ink">
                   <div className="flex items-center gap-3 bg-emerald-50 px-6 py-4 text-emerald-800">
-                    <BadgeCheck size={22} /> <span className="font-semibold">Genuine certificate</span>
+                    <BadgeCheck size={22} /> <span className="font-semibold">{result.kind === "letter" ? `Genuine ${result.letterType?.toLowerCase() ?? "letter"}` : "Genuine certificate"}</span>
                   </div>
                   <dl className="grid gap-5 p-6 sm:grid-cols-2">
                     <Item label="Name" value={result.name} />
-                    <Item label="Role" value={result.role} />
-                    <Item label="Internship" value={[formatDate(result.startDate ?? ""), formatDate(result.endDate ?? "")].filter(Boolean).join(" to ")} />
-                    <Item label="Issued on" value={formatDate(result.issuedOn ?? "")} />
-                    <Item label="Certificate number" value={result.certId} mono />
+                    {result.kind === "letter" ? (
+                      <>
+                        <Item label="Document" value={result.letterType} />
+                        {result.role && <Item label="Role" value={result.role} />}
+                        <Item label="Dated" value={formatDate(result.issuedOn ?? "")} />
+                        <Item label="Reference no." value={result.number} mono />
+                        <Item label="Verification code" value={result.certId} mono />
+                      </>
+                    ) : (
+                      <>
+                        <Item label="Role" value={result.role} />
+                        <Item label="Internship" value={[formatDate(result.startDate ?? ""), formatDate(result.endDate ?? "")].filter(Boolean).join(" to ")} />
+                        <Item label="Issued on" value={formatDate(result.issuedOn ?? "")} />
+                        <Item label="Certificate number" value={result.certId} mono />
+                      </>
+                    )}
                   </dl>
                 </div>
               ) : (
                 <div className="flex items-start gap-3 rounded-[24px] border border-red-300/40 bg-red-500/10 p-6">
                   <SearchX size={22} className="mt-0.5 shrink-0 text-red-300" />
                   <div>
-                    <p className="font-semibold">{result.error ?? "No certificate found with this number."}</p>
-                    {!result.error && <p className="mt-1 text-white/65">Check the number for typos. If it still doesn&apos;t match, the certificate wasn&apos;t issued by Spinex.</p>}
+                    <p className="font-semibold">{result.error ?? "No certificate or letter found with this number."}</p>
+                    {!result.error && <p className="mt-1 text-white/65">Check the number for typos. If it still doesn&apos;t match, it wasn&apos;t issued by Spinex.</p>}
                   </div>
                 </div>
               )}

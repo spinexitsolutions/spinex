@@ -20,7 +20,7 @@ export const roleHelp: Record<Role, string> = {
   admin: "Everything except team members, API keys and backups",
   editor: "Website content, blog, media and SEO",
   sales: "Leads, quotations and invoices",
-  hr: "Interns, job applicants and certificates",
+  hr: "Interns, job applicants, certificates and HR letters",
 };
 
 export type Level = "none" | "view" | "edit";
@@ -33,7 +33,7 @@ const AREA_LIST = [
   { id: "content", label: "Website content", help: "Pages, services, projects, products, home page, SEO, banners, colours, chatbot" },
   { id: "blog", label: "Blog posts", help: "Write, publish and delete articles" },
   { id: "media", label: "Image library", help: "Upload and delete images" },
-  { id: "people", label: "Interns, applicants and certificates", help: "Applications, status emails, certificates" },
+  { id: "people", label: "Interns, applicants, certificates and HR letters", help: "Applications, status emails, certificates, offer and experience letters" },
   { id: "integrations", label: "WhatsApp button, analytics and cookie banner", help: "Tracking codes that run on every page" },
   { id: "activity", label: "Everyone's activity log", help: "Without this they see only their own", viewOnly: true },
 ] as const;

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Award, ClipboardPaste, ExternalLink, FileSpreadsheet, FileText, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, Users, X } from "lucide-react";
+import { Award, ClipboardPaste, ExternalLink, FileSignature, FileSpreadsheet, FileText, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, Users, X } from "lucide-react";
+import { LetterTypePicker } from "./LettersManager";
 import { STATUSES, statusLabel, blankIntern, parseApplication, formatDate, type Intern, type Status } from "@/lib/interns";
 import { useContent } from "../ContentProvider";
 
@@ -38,6 +39,7 @@ export default function InternsManager({ mode, readOnly = false }: { mode: "inte
   const [pasteText, setPasteText] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
+  const [letterFor, setLetterFor] = useState<Intern | null>(null);
 
   const flash = (m: string) => {
     setMsg(m);
@@ -230,6 +232,7 @@ export default function InternsManager({ mode, readOnly = false }: { mode: "inte
                     {busy === i.id ? <Loader2 size={15} className="animate-spin" /> : <Award size={15} />} {i.certId ? "Certificate" : "Issue certificate"}
                   </button>
                 )}
+                {!readOnly && <button onClick={() => setLetterFor(i)} title="Make a letter (offer, experience …)" aria-label={`Make a letter for ${i.name}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><FileSignature size={16} /></button>}
                 <button onClick={() => setEditing(i)} aria-label={`Edit ${i.name}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><Pencil size={16} /></button>
                 {!readOnly && <button onClick={() => del(i)} disabled={busy === i.id} aria-label={`Delete ${i.name}`} className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>}
               </div>
@@ -237,6 +240,10 @@ export default function InternsManager({ mode, readOnly = false }: { mode: "inte
           ))}
         </AnimatePresence>
       </div>
+
+      <Modal open={!!letterFor} title={`Letter for ${letterFor?.name ?? ""}`} onClose={() => setLetterFor(null)} wide>
+        {letterFor && <LetterTypePicker internId={letterFor.id} onError={(m) => { setLetterFor(null); setMsg(m); }} />}
+      </Modal>
 
       <Modal open={pasting} title="Paste an application" onClose={() => setPasting(false)}>
         <p className="text-sm text-muted">For applications that came on WhatsApp or email. Paste the whole message and the details fill in.</p>

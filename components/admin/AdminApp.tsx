@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -23,6 +23,7 @@ import ApiKeysManager from "./ApiKeysManager";
 import ThemeEditor from "./ThemeEditor";
 import ReplyPreview from "./ReplyPreview";
 import BillingManager from "./BillingManager";
+import LettersManager from "./LettersManager";
 import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
@@ -34,6 +35,7 @@ const sections = [
   { id: "leads", label: "Leads", Icon: Inbox, group: "Inbox" , perm: "leads" },
   { id: "interns", label: "Interns", Icon: Users, group: "Inbox" , perm: "people" },
   { id: "certificates", label: "Certificates", Icon: Award, group: "Inbox" , perm: "people" },
+  { id: "letters", label: "HR letters", Icon: FileSignature, group: "Inbox" , perm: "people" },
   { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "billing" },
   { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
@@ -302,7 +304,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
+  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
@@ -400,6 +402,8 @@ function AdminShell() {
             {section === "leads" && <LeadsManager onNewCount={setNewLeads} readOnly={readOnly} />}
 
             {section === "interns" && <InternsManager mode="interns" readOnly={readOnly} />}
+
+            {section === "letters" && <LettersManager readOnly={readOnly} />}
 
             {section === "media" && <MediaLibrary />}
 
