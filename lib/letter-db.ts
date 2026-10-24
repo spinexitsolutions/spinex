@@ -6,7 +6,7 @@ import { readSetting } from "./settings-db";
 import { getProfile } from "./billing-db";
 import { SITE_URL } from "./site";
 import {
-  LETTER_TEMPLATES, SALUTATIONS, blankPerson, defaultLetterSettings, templateFor,
+  LETTER_TEMPLATES, SALUTATIONS, blankPerson, defaultLayout, defaultLetterSettings, templateFor,
   type Letter, type Letterhead, type LetterSettings, type LetterStatus, type SalaryRow,
 } from "./letters";
 
@@ -37,6 +37,7 @@ export function toLetter(doc: WithId<Document>): Letter {
     body: r.body ?? "",
     salary: Array.isArray(r.salary) ? r.salary : [],
     signers: Array.isArray(r.signers) ? r.signers : null,
+    layout: r.layout === "certificate" || r.layout === "letter" ? r.layout : defaultLayout(String(r.type ?? "")),
     internId: r.internId ?? "",
     token: r.token ?? "",
     issuedAt: r.issuedAt ?? "",
@@ -81,6 +82,7 @@ export function cleanLetterInput(input: Record<string, unknown>) {
       monthly: Math.max(0, Math.min(1e9, Math.round(Number(r?.monthly) || 0))),
     }));
   }
+  if (input.layout === "certificate" || input.layout === "letter") out.layout = input.layout;
   if (input.signers === null) out.signers = null;
   else if (Array.isArray(input.signers)) out.signers = input.signers.map((x) => s(x, 40)).filter(Boolean).slice(0, 6);
   return out;

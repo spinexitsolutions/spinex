@@ -1,6 +1,6 @@
 // Made-up people and details for the sample of every letter type (Admin → HR letters → Samples).
 // Nothing here is real. Used to check that every letter looks right and fits on one page.
-import { LETTER_TEMPLATES, blankPerson, initialFields, salaryFromCtc, type Letter, type Letterhead } from "./letters";
+import { LETTER_TEMPLATES, blankPerson, defaultLayout, initialFields, salaryFromCtc, type Letter, type Letterhead } from "./letters";
 
 // Hand-drawn-looking signature lines as small SVG images.
 const sig = (path: string) =>
@@ -57,6 +57,7 @@ export function sampleLetters(): Letter[] {
       body: t.body,
       salary: s.salary ? salaryFromCtc(Number(fields.newCtc || fields.ctc)) : [],
       signers: null,
+      layout: defaultLayout(s.type),
       internId: "",
       token: "",
       issuedAt: "2026-10-24T10:00:00.000Z",

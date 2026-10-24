@@ -19,6 +19,7 @@ export type LetterTemplate = {
   group: LetterGroup;
   help: string;
   toWhom?: boolean; // "To whom it may concern" instead of the person's address
+  certificate?: boolean; // printed as a landscape certificate by default (can be switched to letter form)
   acceptance?: boolean; // signature block for the person to accept
   salary?: boolean; // can carry a salary break-up table
   fields: FieldSpec[];
@@ -145,7 +146,7 @@ This recognises your hard work and contribution. We wish you continued success i
   },
 
   experience: {
-    code: "EX", label: "Experience letter", group: "Leaving", help: "Certifies the period and role of someone who worked here.", toWhom: true,
+    code: "EX", label: "Experience certificate", group: "Leaving", help: "Certifies the period and role of someone who worked here.", toWhom: true, certificate: true,
     fields: [f.designation, f.department, f.joiningDate, f.lastDate, { key: "summary", label: "Work done (optional)", kind: "textarea", wide: true, placeholder: "e.g. built and maintained client websites using React and Next.js" }],
     subject: "Experience certificate",
     body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} was employed with **{{company}}** as **{{designation}}**{{#department}} in the {{department}} team{{/department}} from {{joiningDate}} to {{lastDate}}.
@@ -169,7 +170,7 @@ We thank you for your contribution and wish you success ahead.`,
   },
 
   internship_completion: {
-    code: "IC", label: "Internship completion letter", group: "Internship", help: "Certifies that an internship was completed.", toWhom: true,
+    code: "IC", label: "Internship completion certificate", group: "Internship", help: "Certifies that an internship was completed.", toWhom: true, certificate: true,
     fields: [f.role, f.startDate, f.endDate, { key: "project", label: "Work / projects (optional)", kind: "textarea", wide: true, placeholder: "e.g. a restaurant ordering website and the company's blog" }, { key: "mentor", label: "Mentor (optional)", kind: "text" }],
     subject: "Internship completion certificate",
     body: `This is to certify that **{{fullName}}** has successfully completed an internship at **{{company}}** as **{{role}}** from {{startDate}} to {{endDate}}.
@@ -209,7 +210,7 @@ This letter is issued at the employee's request{{#purpose}} for {{purpose}}{{/pu
   },
 
   noc: {
-    code: "NC", label: "No objection certificate (NOC)", group: "Certificates", help: "For passport, visa, studies or other work.", toWhom: true,
+    code: "NC", label: "No objection certificate (NOC)", group: "Certificates", help: "For passport, visa, studies or other work.", toWhom: true, certificate: true,
     fields: [f.designation, f.joiningDate, { key: "purpose", label: "No objection to …", kind: "text", hint: "Finishes the sentence: “The company has no objection to Priya …”", placeholder: "applying for a passport" }],
     subject: "No objection certificate",
     body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} is working with **{{company}}** as **{{designation}}** since {{joiningDate}}.
@@ -245,6 +246,11 @@ Your full and final settlement will be processed as per company policy. Please r
 export const LETTER_TYPES = Object.keys(LETTER_TEMPLATES);
 export const LETTER_GROUPS: LetterGroup[] = ["Hiring", "Internship", "During employment", "Leaving", "Certificates"];
 
+export type LetterLayout = "letter" | "certificate";
+export const defaultLayout = (type: string): LetterLayout => (templateFor(type).certificate ? "certificate" : "letter");
+// Certificate form is only offered for "to whom it may concern" types.
+export const showsAsCertificate = (l: { type: string; layout?: LetterLayout }) => !!templateFor(l.type).toWhom && (l.layout ?? defaultLayout(l.type)) === "certificate";
+
 export type LetterStatus = "draft" | "issued" | "revoked";
 export const letterStatusLabel: Record<LetterStatus, string> = { draft: "Draft", issued: "Issued", revoked: "Revoked" };
 
@@ -264,6 +270,7 @@ export type Letter = {
   body: string;
   salary: SalaryRow[];
   signers: string[] | null; // ids of billing signers; null = the default ticks
+  layout: LetterLayout; // "certificate" prints a landscape certificate (only for "to whom it may concern" types)
   internId: string;
   token: string; // secret link for the person: /l/<token>
   issuedAt: string;

@@ -134,7 +134,7 @@ export default function Certificate({ intern, settings, company, logo, qr }: { i
 }
 
 // Round seal with the company name around the edge.
-function Seal() {
+export function Seal() {
   return (
     <div className="relative h-full w-full">
       <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden>

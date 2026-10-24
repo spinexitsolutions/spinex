@@ -7,7 +7,7 @@ import {
   ArrowLeft, Ban, BadgeCheck, Copy, FilePlus2, FileText, Loader2, Mail, Plus, RotateCcw, Save, Trash2, Undo2, Wand2,
 } from "lucide-react";
 import {
-  LETTER_GROUPS, LETTER_TEMPLATES, SALUTATIONS, letterSigners, letterStatusLabel, salaryFromCtc, salaryTotal, templateFor, verifyLabel, verifyLink,
+  LETTER_GROUPS, LETTER_TEMPLATES, SALUTATIONS, letterSigners, letterStatusLabel, salaryFromCtc, salaryTotal, showsAsCertificate, templateFor, verifyLabel, verifyLink,
   type Letter, type Letterhead, type LetterSettings,
 } from "@/lib/letters";
 import WhatsAppIcon from "../WhatsAppIcon";
@@ -88,7 +88,7 @@ export default function LetterEditor({ id, logo, verifyBase, readOnly = false }:
     try {
       const out = await api<Letter>(`/api/admin/letters/${letter.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ date: letter.date, person: letter.person, fields: letter.fields, subject: letter.subject, body: letter.body, salary: letter.salary, signers: letter.signers }),
+        body: JSON.stringify({ date: letter.date, person: letter.person, fields: letter.fields, subject: letter.subject, body: letter.body, salary: letter.salary, signers: letter.signers, layout: letter.layout }),
       });
       setLetter(out);
       setSaved(JSON.stringify(out));
@@ -251,6 +251,22 @@ export default function LetterEditor({ id, logo, verifyBase, readOnly = false }:
                 : "Revoked: the verify page says this letter is no longer valid."}
             </p>
           </Box>
+
+          {t.toWhom && (
+            <Box title="Format">
+              <div className="inline-flex rounded-full border border-line bg-mist p-1">
+                {(["certificate", "letter"] as const).map((v) => {
+                  const on = (showsAsCertificate(letter) ? "certificate" : "letter") === v;
+                  return (
+                    <button key={v} type="button" onClick={() => set({ layout: v })} className={`rounded-full px-5 py-2 text-sm font-semibold ${on ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>
+                      {v === "certificate" ? "Certificate (landscape)" : "Letter (A4)"}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-muted">Certificate form has a border, seal and the name in large letters. Letter form is on the letterhead, which banks and embassies often ask for.</p>
+            </Box>
+          )}
 
           <Box title="Person">
             <div className="grid gap-4 sm:grid-cols-[110px_1fr]">

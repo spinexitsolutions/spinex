@@ -11,15 +11,15 @@ const block = src.slice(src.indexOf("export const LETTER_TEMPLATES"), src.indexO
 const types = [...block.matchAll(/^ {2}(\w+): \{$/gm)].map((m) => m[1]);
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1000, height: 1400 }, deviceScaleFactor: 1.5 });
+const page = await browser.newPage({ viewport: { width: 1240, height: 1400 }, deviceScaleFactor: 1.5 });
 const report = [];
 let bad = 0;
 for (const type of types) {
   try {
     await page.goto(`${base}/letter-samples?type=${type}`, { waitUntil: "networkidle" });
-    await page.waitForSelector(".letter-page");
+    await page.waitForSelector(".letter-page, .cert-page");
     await page.evaluate(() => document.fonts.ready);
-    const el = await page.$(".letter-page");
+    const el = await page.$(".letter-page, .cert-page");
     await el.screenshot({ path: `${out}/${type}.png` });
     await page.emulateMedia({ media: "print" });
     const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });

@@ -3,7 +3,7 @@ import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { todayIST } from "@/lib/billing";
 import { getIntern } from "@/lib/intern-db";
-import { LETTER_TEMPLATES, blankPerson, initialFields, salaryFromCtc, templateFor, type Letter } from "@/lib/letters";
+import { LETTER_TEMPLATES, blankPerson, defaultLayout, initialFields, salaryFromCtc, templateFor, type Letter } from "@/lib/letters";
 import { getLetterSettings, letterOid, lettersCol, newLetterToken, newVerifyCode, nextLetterNumber, startingWording, toLetter } from "@/lib/letter-db";
 
 // All letters, newest first (without the long wording). ?internId= shows one person's letters.
@@ -79,6 +79,7 @@ export async function POST(req: Request) {
     body: wording.body,
     salary: templateFor(type).salary && Number(fields.ctc) > 0 ? salaryFromCtc(Number(fields.ctc)) : [],
     signers: null,
+    layout: defaultLayout(type),
     internId,
     token: newLetterToken(),
     issuedAt: "",

@@ -1,12 +1,19 @@
 import { Fragment } from "react";
-import { fillWording, letterSigners, letterValues, longDate, salaryTotal, templateFor, toBlocks, type Letter, type Letterhead } from "@/lib/letters";
+import { fillWording, letterSigners, letterValues, longDate, salaryTotal, showsAsCertificate, templateFor, toBlocks, type Letter, type Letterhead } from "@/lib/letters";
+import CertificateDocument from "./CertificateDocument";
+import { LETTER_FONT, letterFontVars } from "./fonts";
 
 // One A4 letter on the company letterhead. Used in the admin editor preview, the PDF view and the person's link.
 // Built to fit on one page: compact letterhead, short wording, signatures in one row of up to three.
 // Plain markup only, so it prints the same everywhere.
 const ACCENT = "#5b45c9";
 
-export default function LetterDocument({ letter, head, logo, qr, verifyUrl }: { letter: Letter; head: Letterhead; logo?: string; qr?: string; verifyUrl: string }) {
+export default function LetterDocument(props: { letter: Letter; head: Letterhead; logo?: string; qr?: string; verifyUrl: string }) {
+  if (showsAsCertificate(props.letter)) return <CertificateDocument {...props} />;
+  return <LetterPage {...props} />;
+}
+
+function LetterPage({ letter, head, logo, qr, verifyUrl }: { letter: Letter; head: Letterhead; logo?: string; qr?: string; verifyUrl: string }) {
   const t = templateFor(letter.type);
   const values = letterValues(letter, head.legalName);
   const blocks = toBlocks(fillWording(letter.body, values));
@@ -21,7 +28,7 @@ export default function LetterDocument({ letter, head, logo, qr, verifyUrl }: { 
   const contact = [head.phone, head.email, head.website].filter(Boolean);
 
   return (
-    <article className="letter-page relative mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col overflow-hidden bg-white px-[16mm] pb-[10mm] pt-[12mm] text-[12.5px] leading-[1.55] text-[#1d1a26] shadow-[0_20px_60px_-30px_rgba(18,15,27,.45)] print:min-h-[262mm] print:max-w-none print:overflow-visible print:p-0 print:shadow-none">
+    <article style={{ fontFamily: LETTER_FONT, fontKerning: "normal", letterSpacing: 0 }} className={`${letterFontVars} letter-page relative mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col overflow-hidden bg-white px-[16mm] pb-[10mm] pt-[12mm] text-[12.5px] leading-[1.55] text-[#1d1a26] shadow-[0_20px_60px_-30px_rgba(18,15,27,.45)] print:min-h-[262mm] print:max-w-none print:overflow-visible print:p-0 print:shadow-none`}>
       <div aria-hidden className="absolute inset-x-0 top-0 h-[5px] print:hidden" style={{ background: `linear-gradient(90deg, ${ACCENT}, #9d8cf0)` }} />
       {letter.status !== "issued" && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
