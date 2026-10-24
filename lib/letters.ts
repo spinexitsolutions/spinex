@@ -54,26 +54,22 @@ export const LETTER_TEMPLATES: Record<string, LetterTemplate> = {
     subject: "Offer of internship",
     body: `Dear {{firstName}},
 
-We are pleased to offer you an internship with **{{company}}** as **{{role}}**{{#department}} in the {{department}} team{{/department}}. We liked your skills and enthusiasm, and we look forward to working with you.
+We are pleased to offer you an internship at **{{company}}** as **{{role}}**{{#department}} in the {{department}} team{{/department}}.
 
 ## Internship details
-- Start date: {{startDate}}
-- End date: {{endDate}}
+- Duration: {{startDate}} to {{endDate}}
 - Work mode: {{workMode}}{{#location}}, {{location}}{{/location}}
-- Working hours: {{workHours}}
+- Timings: {{workHours}}
 {{#reportingTo}}- Reporting to: {{reportingTo}}
-{{/reportingTo}}- Stipend: {{#stipend}}{{stipend}} per month{{/stipend}}{{^stipend}}This is an unpaid internship{{/stipend}}
+{{/reportingTo}}- Stipend: {{#stipend}}{{stipend}} per month{{/stipend}}{{^stipend}}Unpaid{{/stipend}}
 
 ## Terms
-- You will work on live projects with our team and complete the tasks given to you on time.
-- You will keep all company and client information confidential, during and after the internship.
-- All work you create during the internship belongs to {{company}}.
+- You will keep all company and client information confidential.
+- Work created during the internship belongs to {{company}}.
 - Either side may end the internship with 7 days' written notice.
-- On successful completion, you will receive an internship certificate.
+- A certificate will be issued on successful completion.
 
-Please sign and return a copy of this letter{{#acceptBy}} by {{acceptBy}}{{/acceptBy}} to confirm that you accept this offer.
-
-We wish you a great learning experience with us.`,
+Please confirm your acceptance{{#acceptBy}} by {{acceptBy}}{{/acceptBy}} by signing and returning a copy of this letter. We look forward to having you on the team.`,
   },
 
   job_offer: {
@@ -82,23 +78,18 @@ We wish you a great learning experience with us.`,
     subject: "Offer of employment",
     body: `Dear {{firstName}},
 
-Further to your interview with us, we are pleased to offer you the position of **{{designation}}**{{#department}} in the {{department}} department{{/department}} at **{{company}}**.
+Following your interview, we are pleased to offer you the position of **{{designation}}**{{#department}} ({{department}}){{/department}} at **{{company}}**.
 
 ## Offer details
 - Date of joining: {{joiningDate}}
 - Annual CTC: {{ctc}}
-- Location: {{location}}{{#workMode}} ({{workMode}}){{/workMode}}
+- Location: {{location}}{{#workMode}} · {{workMode}}{{/workMode}}
 {{#reportingTo}}- Reporting to: {{reportingTo}}
-{{/reportingTo}}- Probation: {{probation}} months
-- Notice period: {{noticePeriod}}
+{{/reportingTo}}- Probation: {{probation}} months · Notice period: {{noticePeriod}}
 
-{{#hasSalary}}The salary break-up is given in the annexure. {{/hasSalary}}A detailed appointment letter will be given to you when you join.
+{{#hasSalary}}The salary break-up is given below. {{/hasSalary}}This offer is subject to verification of your documents. Please bring your original certificates, ID proof and PAN card on the day of joining.
 
-This offer is subject to the documents you have shared being correct and a satisfactory background check. On the day of joining, please bring your original educational certificates, ID proof, PAN card, and the relieving letter from your last employer (if any).
-
-Please sign and return a copy of this letter{{#acceptBy}} by {{acceptBy}}{{/acceptBy}} to confirm that you accept this offer. If we don't hear from you by then, this offer will lapse.
-
-We look forward to welcoming you to the team.`,
+Please confirm your acceptance{{#acceptBy}} by {{acceptBy}}{{/acceptBy}} by signing and returning a copy of this letter. We look forward to welcoming you.`,
   },
 
   appointment: {
@@ -107,24 +98,17 @@ We look forward to welcoming you to the team.`,
     subject: "Letter of appointment",
     body: `Dear {{firstName}},
 
-With reference to your application and our discussions, we are pleased to appoint you as **{{designation}}**{{#department}} in the {{department}} department{{/department}} of **{{company}}** with effect from {{joiningDate}}, on the following terms.
+We are pleased to appoint you as **{{designation}}**{{#department}} ({{department}}){{/department}} at **{{company}}** with effect from {{joiningDate}}, on the following terms:
 
-## Terms and conditions
-- **Salary:** Your annual cost to company (CTC) will be {{ctc}}{{#hasSalary}}, as per the break-up in the annexure{{/hasSalary}}. Salary is paid monthly, after deduction of applicable taxes.
-- **Probation:** You will be on probation for {{probation}} months from the date of joining. On good performance, your confirmation will be given in writing. The company may extend the probation if needed.
-- **Place of work:** {{location}}. You may be asked to work from another place or remotely as work needs.
-- **Working hours:** {{workHours}}.
-{{#reportingTo}}- **Reporting:** You will report to {{reportingTo}}, or anyone the company names later.
-{{/reportingTo}}- **Leave:** As per the company's leave policy.
-- **Notice period:** During probation, either side may end the employment with 15 days' notice. After confirmation, the notice period is {{noticePeriod}}, or salary in place of notice.
-- **Confidentiality:** You will not share any confidential information about the company, its clients or projects, during or after your employment.
-- **Ownership of work:** All code, designs, content and documents you create during your employment belong to {{company}}.
-- **Other work:** While working with us, you will not take up any other paid work without written permission.
-- **Conduct:** You will follow the company's policies and code of conduct, as updated from time to time.
+- **Compensation:** Annual CTC of {{ctc}}{{#hasSalary}} as per the break-up below{{/hasSalary}}, paid monthly after applicable deductions.
+- **Probation:** {{probation}} months, after which your confirmation will be given in writing.
+- **Location and hours:** {{location}}; {{workHours}}.
+{{#reportingTo}}- **Reporting to:** {{reportingTo}}.
+{{/reportingTo}}- **Notice period:** 15 days during probation and {{noticePeriod}} after confirmation.
+- **Confidentiality and IP:** Company and client information must be kept confidential. All work created during employment belongs to {{company}}.
+- **Conduct:** You will follow company policies, including the leave policy, and will not take up other paid work without written approval.
 
-Please sign and return a copy of this letter to confirm that you accept these terms.
-
-We welcome you to {{company}} and wish you a rewarding career with us.`,
+Please sign and return a copy of this letter to confirm your acceptance. Welcome to {{company}}.`,
   },
 
   confirmation: {
@@ -133,11 +117,9 @@ We welcome you to {{company}} and wish you a rewarding career with us.`,
     subject: "Confirmation of employment",
     body: `Dear {{firstName}},
 
-We are happy to inform you that, based on your performance during probation, your employment as **{{designation}}** with **{{company}}** is confirmed with effect from {{confirmationDate}}.
+We are pleased to confirm your employment as **{{designation}}** with effect from {{confirmationDate}}, on successful completion of your probation. All other terms of your appointment remain unchanged.
 
-All other terms of your appointment remain the same.
-
-Thank you for your good work. We look forward to your continued growth with us.`,
+Thank you for your contribution. We look forward to your continued growth with {{company}}.`,
   },
 
   increment: {
@@ -146,11 +128,9 @@ Thank you for your good work. We look forward to your continued growth with us.`
     subject: "Revision of salary",
     body: `Dear {{firstName}},
 
-In recognition of your performance and contribution, we are pleased to revise your annual CTC{{#oldCtc}} from {{oldCtc}}{{/oldCtc}} to **{{newCtc}}** with effect from {{effectiveDate}}.
+In recognition of your performance, your annual CTC is revised{{#oldCtc}} from {{oldCtc}}{{/oldCtc}} to **{{newCtc}}** with effect from {{effectiveDate}}.{{#hasSalary}} The revised break-up is given below.{{/hasSalary}}
 
-{{#hasSalary}}The revised salary break-up is given in the annexure. {{/hasSalary}}All other terms of your employment remain the same.
-
-Keep up the good work. We look forward to your continued success with {{company}}.`,
+All other terms of your employment remain unchanged. Thank you for your continued contribution to {{company}}.`,
   },
 
   promotion: {
@@ -159,24 +139,20 @@ Keep up the good work. We look forward to your continued success with {{company}
     subject: "Promotion",
     body: `Dear {{firstName}},
 
-We are delighted to inform you that you have been promoted from {{oldDesignation}} to **{{newDesignation}}** with effect from {{effectiveDate}}.
+Congratulations! You are promoted from {{oldDesignation}} to **{{newDesignation}}** with effect from {{effectiveDate}}.{{#newCtc}} Your revised annual CTC will be {{newCtc}}.{{/newCtc}}{{#reportingTo}} You will report to {{reportingTo}}.{{/reportingTo}}
 
-{{#newCtc}}Your revised annual CTC will be {{newCtc}}. {{/newCtc}}{{#reportingTo}}In your new role, you will report to {{reportingTo}}.{{/reportingTo}}
-
-This promotion recognises your hard work and the value you bring to the team. Congratulations, and we wish you success in your new role.`,
+This recognises your hard work and contribution. We wish you continued success in your new role.`,
   },
 
   experience: {
     code: "EX", label: "Experience letter", group: "Leaving", help: "Certifies the period and role of someone who worked here.", toWhom: true,
     fields: [f.designation, f.department, f.joiningDate, f.lastDate, { key: "summary", label: "Work done (optional)", kind: "textarea", wide: true, placeholder: "e.g. built and maintained client websites using React and Next.js" }],
     subject: "Experience certificate",
-    body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} worked with **{{company}}** as **{{designation}}**{{#department}} in the {{department}} department{{/department}} from {{joiningDate}} to {{lastDate}}.
+    body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} was employed with **{{company}}** as **{{designation}}**{{#department}} in the {{department}} team{{/department}} from {{joiningDate}} to {{lastDate}}.
 
-{{#summary}}During this period, {{firstName}}'s work included {{summary}}.
+{{#summary}}{{firstName}}'s responsibilities included {{summary}}. {{/summary}}During this period, we found {{firstName}} sincere, skilled and professional.
 
-{{/summary}}We found {{firstName}} sincere, hardworking and professional, and {{firstName}}'s conduct during the employment was good.
-
-We wish {{firstName}} every success in the future.`,
+We wish {{firstName}} success in all future endeavours.`,
   },
 
   relieving: {
@@ -185,44 +161,40 @@ We wish {{firstName}} every success in the future.`,
     subject: "Relieving letter",
     body: `Dear {{firstName}},
 
-This is with reference to your resignation dated {{resignationDate}}. We confirm that your resignation has been accepted, and you are relieved from your duties as **{{designation}}** at **{{company}}** at the close of working hours on {{lastDate}}.
+With reference to your resignation dated {{resignationDate}}, we confirm that you are relieved from your duties as **{{designation}}** at **{{company}}** with effect from the close of business on {{lastDate}}.
 
-You worked with us from {{joiningDate}} to {{lastDate}}. You have handed over your work and company property, and your full and final settlement will be done as per company policy.
+Your tenure with us was from {{joiningDate}} to {{lastDate}}. Your full and final settlement will be processed as per company policy, and the confidentiality terms of your appointment continue to apply.
 
-Please note that the confidentiality terms of your appointment continue to apply.
-
-Thank you for your contribution. We wish you success in the future.`,
+We thank you for your contribution and wish you success ahead.`,
   },
 
   internship_completion: {
     code: "IC", label: "Internship completion letter", group: "Internship", help: "Certifies that an internship was completed.", toWhom: true,
     fields: [f.role, f.startDate, f.endDate, { key: "project", label: "Work / projects (optional)", kind: "textarea", wide: true, placeholder: "e.g. a restaurant ordering website and the company's blog" }, { key: "mentor", label: "Mentor (optional)", kind: "text" }],
     subject: "Internship completion certificate",
-    body: `This is to certify that **{{fullName}}** has successfully completed an internship with **{{company}}** as **{{role}}** from {{startDate}} to {{endDate}}.
+    body: `This is to certify that **{{fullName}}** has successfully completed an internship at **{{company}}** as **{{role}}** from {{startDate}} to {{endDate}}.
 
-{{#project}}During the internship, {{firstName}} worked on {{project}}. {{/project}}{{#mentor}}The internship was done under the guidance of {{mentor}}.{{/mentor}}
+{{#project}}During the internship, {{firstName}} worked on {{project}}. {{/project}}{{#mentor}}The internship was completed under the guidance of {{mentor}}. {{/mentor}}{{firstName}} showed dedication, discipline and a strong willingness to learn.
 
-{{firstName}} was punctual, eager to learn and completed the work given with dedication. We wish {{firstName}} all the best for the future.`,
+We wish {{firstName}} all the best for the future.`,
   },
 
   salary_certificate: {
     code: "SC", label: "Salary certificate", group: "Certificates", help: "Salary proof for loans, visas or rent.", toWhom: true, salary: true,
     fields: [f.designation, f.joiningDate, f.ctc, { key: "monthlyGross", label: "Monthly gross salary (₹)", kind: "money" }, f.purpose],
     subject: "Salary certificate",
-    body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} has been working with **{{company}}** as **{{designation}}** since {{joiningDate}}.
+    body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} is employed with **{{company}}** as **{{designation}}** since {{joiningDate}}, with an annual CTC of {{ctc}}{{#monthlyGross}} and a monthly gross salary of {{monthlyGross}}{{/monthlyGross}}.{{#hasSalary}} The break-up is given below.{{/hasSalary}}
 
-{{firstName}}'s current annual CTC is {{ctc}}{{#monthlyGross}}, and the monthly gross salary is {{monthlyGross}}{{/monthlyGross}}.{{#hasSalary}} The salary break-up is given in the annexure.{{/hasSalary}}
-
-This certificate is issued at {{firstName}}'s request{{#purpose}} for {{purpose}}{{/purpose}}.`,
+This certificate is issued at the employee's request{{#purpose}} for {{purpose}}{{/purpose}}.`,
   },
 
   employment_verification: {
     code: "EV", label: "Employment verification letter", group: "Certificates", help: "Confirms someone currently works here.", toWhom: true,
     fields: [f.designation, f.department, f.joiningDate, { key: "employmentType", label: "Type", kind: "select", options: ["full-time", "part-time", "contract"], initial: "full-time" }, f.purpose],
     subject: "Employment verification",
-    body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} is working with **{{company}}** as **{{designation}}**{{#department}} in the {{department}} department{{/department}} on a {{employmentType}} basis since {{joiningDate}}.
+    body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} has been working with **{{company}}** as **{{designation}}**{{#department}} in the {{department}} team{{/department}} on a {{employmentType}} basis since {{joiningDate}}.
 
-This letter is issued at {{firstName}}'s request{{#purpose}} for {{purpose}}{{/purpose}}, and the company takes no financial responsibility through it.`,
+This letter is issued at the employee's request{{#purpose}} for {{purpose}}{{/purpose}} and carries no financial liability for the company.`,
   },
 
   recommendation: {
@@ -233,9 +205,7 @@ This letter is issued at {{firstName}}'s request{{#purpose}} for {{purpose}}{{/p
 
 {{#strengths}}{{strengths}}
 
-{{/strengths}}In my experience, {{firstName}} is reliable, learns quickly and works well with the team. {{firstName}} takes ownership of the work and communicates clearly.
-
-I recommend {{firstName}} without reservation{{#recommendFor}} for {{recommendFor}}{{/recommendFor}}. Please feel free to contact me for any further information.`,
+{{/strengths}}{{firstName}} is reliable, learns quickly and works well in a team. I recommend {{firstName}} without reservation{{#recommendFor}} for {{recommendFor}}{{/recommendFor}} and am happy to share more information if needed.`,
   },
 
   noc: {
@@ -244,9 +214,7 @@ I recommend {{firstName}} without reservation{{#recommendFor}} for {{recommendFo
     subject: "No objection certificate",
     body: `This is to certify that **{{fullName}}**{{#employeeId}} (Employee ID: {{employeeId}}){{/employeeId}} is working with **{{company}}** as **{{designation}}** since {{joiningDate}}.
 
-The company has no objection to {{firstName}} {{purpose}}.
-
-This certificate is issued at {{firstName}}'s request.`,
+The company has no objection to {{firstName}} {{purpose}}. This certificate is issued at the employee's request.`,
   },
 
   warning: {
@@ -255,17 +223,11 @@ This certificate is issued at {{firstName}}'s request.`,
     subject: "Warning letter",
     body: `Dear {{firstName}},
 
-This letter is about the following issue{{#incidentDate}} noticed on {{incidentDate}}{{/incidentDate}}:
+This letter concerns the following issue{{#incidentDate}} observed on {{incidentDate}}{{/incidentDate}}:
 
 {{issue}}
 
-This is not acceptable under the company's policies and code of conduct.{{#expectation}} We expect you to {{expectation}}.{{/expectation}}
-
-Please treat this as a formal warning. If this happens again, the company may take stricter action, which can include termination of employment.
-
-{{#replyBy}}You may give your written explanation by {{replyBy}}.
-
-{{/replyBy}}We hope you will take this seriously and improve.`,
+This is not in line with company policy.{{#expectation}} We expect you to {{expectation}}.{{/expectation}} Please treat this as a formal warning. A repeat may lead to further disciplinary action, up to and including termination.{{#replyBy}} You may submit a written explanation by {{replyBy}}.{{/replyBy}}`,
   },
 
   termination: {
@@ -274,13 +236,9 @@ Please treat this as a formal warning. If this happens again, the company may ta
     subject: "Termination of employment",
     body: `Dear {{firstName}},
 
-We regret to inform you that your employment as **{{designation}}** with **{{company}}** ends with effect from {{lastDate}}.
+We regret to inform you that your employment as **{{designation}}** with **{{company}}** stands terminated with effect from {{lastDate}}.{{#reason}} Reason: {{reason}}{{/reason}}
 
-{{#reason}}This decision has been taken for the following reason: {{reason}}
-
-{{/reason}}Your full and final settlement, including any salary due, will be done as per company policy. Please return all company property, including your ID card, laptop, documents and account access, by {{lastDate}}.
-
-Please note that the confidentiality terms of your appointment continue to apply.`,
+Your full and final settlement will be processed as per company policy. Please return all company property, including ID card, laptop and account access, by {{lastDate}}. The confidentiality terms of your appointment continue to apply.`,
   },
 };
 

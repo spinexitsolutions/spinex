@@ -45,9 +45,24 @@ jobs:
             echo "Font download failed, trying again ($n)…"; sleep 15
           done
           exit 1
+      - name: Letter samples (each must fit on one A4 page)
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          LETTER_SAMPLES: "1"
+          AUTH_SECRET: build-check-only-not-a-real-secret-0123456789
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.47.2 > /dev/null 2>&1
+          npx playwright install --with-deps chromium > /dev/null 2>&1
+          (npx next start -p 3100 > server.log 2>&1 &)
+          for i in $(seq 1 40); do curl -sf "http://localhost:3100/letter-samples?type=noc" > /dev/null && break; sleep 2; done
+          node scripts/letter-check.mjs http://localhost:3100 /tmp/letters || true
+          tail -20 server.log || true
       - name: Save result
         run: |
           mkdir -p /tmp/out
+          cp -r /tmp/letters /tmp/out/letters 2>/dev/null || true
           cp build.log /tmp/out/build.log || echo "no log" > /tmp/out/build.log
           cp tsc.log /tmp/out/tsc.log || true
           cp lint.log /tmp/out/lint.log || true
