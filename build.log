@@ -1,0 +1,144 @@
+
+> spinex-website@1.0.0 prebuild
+> node scripts/offline-images.mjs
+
+1) Downloading built-in photos to public/images/stock …
+   kept  photo-1441986300917-64674bd600d8.jpg
+   kept  photo-1460925895917-afdab827c52f.jpg
+   kept  photo-1497366216548-37526070297c.jpg
+   kept  photo-1498050108023-c5249f4df085.jpg
+   kept  photo-1504384308090-c894fdcc538d.jpg
+   kept  photo-1505740420928-5e560c06d30e.jpg
+   kept  photo-1512941937669-90a1b58e7e9c.jpg
+   kept  photo-1519389950473-47ba0277781c.jpg
+   kept  photo-1522071820081-009f0129c71c.jpg
+   kept  photo-1523275335684-37898b6baf30.jpg
+   kept  photo-1531297484001-80022131f5a1.jpg
+   kept  photo-1542744173-8e7e53415bb0.jpg
+   kept  photo-1551288049-bebda4e38f71.jpg
+   kept  photo-1556742049-0cfed4f6a45d.jpg
+   kept  photo-1556761175-5973dc0f32e7.jpg
+   kept  photo-1559136555-9303baea8ebd.jpg
+   kept  photo-1561070791-2526d30994b5.jpg
+   kept  photo-1574717024653-61fd2cf4d44d.jpg
+
+2) No MONGODB_URI in .env.local, skipping the database step.
+
+All images are now stored with the website. Restart: npm run dev
+
+> spinex-website@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/65) ...
+   Generating static pages (16/65) 
+   Generating static pages (32/65) 
+   Generating static pages (48/65) 
+ ✓ Generating static pages (65/65)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    21 kB           195 kB
+├ ○ /_not-found                          152 B          87.7 kB
+├ ○ /about                               5.78 kB         153 kB
+├ ○ /admin                               66.6 kB         224 kB
+├ ƒ /admin/billing/[id]                  11.9 kB         108 kB
+├ ƒ /admin/certificate/[id]              1.12 kB         101 kB
+├ ○ /admin/forgot                        2.58 kB         129 kB
+├ ƒ /admin/letters/[id]                  22.1 kB         130 kB
+├ ○ /admin/login                         2.75 kB         129 kB
+├ ○ /admin/reset                         2.58 kB         129 kB
+├ ƒ /api/admin/account                   0 B                0 B
+├ ƒ /api/admin/activity                  0 B                0 B
+├ ƒ /api/admin/automation                0 B                0 B
+├ ƒ /api/admin/automation/run            0 B                0 B
+├ ƒ /api/admin/backup                    0 B                0 B
+├ ƒ /api/admin/backup/restore            0 B                0 B
+├ ƒ /api/admin/backup/safety             0 B                0 B
+├ ƒ /api/admin/billing                   0 B                0 B
+├ ƒ /api/admin/billing/[id]              0 B                0 B
+├ ƒ /api/admin/billing/[id]/send         0 B                0 B
+├ ƒ /api/admin/billing/settings          0 B                0 B
+├ ƒ /api/admin/content                   0 B                0 B
+├ ƒ /api/admin/content/certificate       0 B                0 B
+├ ƒ /api/admin/content/versions          0 B                0 B
+├ ƒ /api/admin/content/versions/[id]     0 B                0 B
+├ ƒ /api/admin/interns                   0 B                0 B
+├ ƒ /api/admin/interns/[id]              0 B                0 B
+├ ƒ /api/admin/interns/[id]/certificate  0 B                0 B
+├ ƒ /api/admin/interns/[id]/resume       0 B                0 B
+├ ƒ /api/admin/interns/export            0 B                0 B
+├ ƒ /api/admin/leads                     0 B                0 B
+├ ƒ /api/admin/leads/[id]                0 B                0 B
+├ ƒ /api/admin/leads/export              0 B                0 B
+├ ƒ /api/admin/letters                   0 B                0 B
+├ ƒ /api/admin/letters/[id]              0 B                0 B
+├ ƒ /api/admin/letters/[id]/send         0 B                0 B
+├ ƒ /api/admin/letters/settings          0 B                0 B
+├ ƒ /api/admin/posts                     0 B                0 B
+├ ƒ /api/admin/posts/[id]                0 B                0 B
+├ ƒ /api/admin/posts/preview             0 B                0 B
+├ ƒ /api/admin/preview                   0 B                0 B
+├ ƒ /api/admin/secrets                   0 B                0 B
+├ ƒ /api/admin/secrets/test              0 B                0 B
+├ ƒ /api/admin/stats                     0 B                0 B
+├ ƒ /api/admin/team                      0 B                0 B
+├ ƒ /api/admin/uploads                   0 B                0 B
+├ ƒ /api/admin/uploads/[id]              0 B                0 B
+├ ƒ /api/admin/uploads/optimize          0 B                0 B
+├ ƒ /api/admin/users                     0 B                0 B
+├ ƒ /api/admin/users/[id]                0 B                0 B
+├ ƒ /api/applications                    0 B                0 B
+├ ƒ /api/auth/2fa                        0 B                0 B
+├ ƒ /api/auth/forgot                     0 B                0 B
+├ ƒ /api/auth/login                      0 B                0 B
+├ ƒ /api/auth/logout                     0 B                0 B
+├ ƒ /api/auth/me                         0 B                0 B
+├ ƒ /api/auth/reset                      0 B                0 B
+├ ƒ /api/brand-icon                      0 B                0 B
+├ ƒ /api/chat                            0 B                0 B
+├ ƒ /api/cron                            0 B                0 B
+├ ƒ /api/files/[id]                      0 B                0 B
+├ ƒ /api/health                          0 B                0 B
+├ ƒ /api/leads                           0 B                0 B
+├ ƒ /api/preview/exit                    0 B                0 B
+├ ƒ /api/verify                          0 B                0 B
+├ ○ /blog                                5.91 kB         145 kB
+├ ƒ /blog/[slug]                         148 B           139 kB
+├ ƒ /blog/preview                        148 B           139 kB
+├ ○ /careers                             9.59 kB         148 kB
+├ ○ /contact                             5.61 kB         152 kB
+├ ƒ /d/[token]                           1.37 kB          89 kB
+├ ○ /internship                          9.34 kB         148 kB
+├ ƒ /l/[token]                           1.76 kB         101 kB
+├ ƒ /letter-guide                        1.58 kB        97.9 kB
+├ ƒ /letter-samples                      1.77 kB         101 kB
+├ ○ /privacy                             147 B           145 kB
+├ ○ /products                            3.64 kB         143 kB
+├ ƒ /products/[slug]                     198 B           142 kB
+├ ○ /refund                              147 B           145 kB
+├ ○ /robots.txt                          0 B                0 B
+├ ○ /services                            6.24 kB         160 kB
+├ ƒ /services/[slug]                     198 B           142 kB
+├ ○ /sitemap.xml                         0 B                0 B
+├ ○ /terms                               148 B           145 kB
+├ ○ /verify                              4.69 kB         131 kB
+├ ○ /work                                6.42 kB         154 kB
+└ ƒ /work/[slug]                         4.05 kB         149 kB
++ First Load JS shared by all            87.6 kB
+  ├ chunks/2117-398a171ca0128c5b.js      31.9 kB
+  ├ chunks/fd9d1056-e41ec4e61b8d2347.js  53.6 kB
+  └ other shared chunks (total)          2.05 kB
+
+
+ƒ Middleware                             32.1 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
