@@ -5,11 +5,11 @@ import { getSession } from "@/lib/admin-guard";
 import { can } from "@/lib/roles";
 import { getContent } from "@/lib/content-server";
 import { LETTER_TEMPLATES } from "@/lib/letters";
-import { GUIDE, GUIDE_SITUATIONS, GUIDE_STAGES, GUIDE_STEPS } from "@/lib/letter-guide";
+import { GUIDE, GUIDE_REMINDERS, GUIDE_SITUATIONS, GUIDE_STAGES, GUIDE_STEPS } from "@/lib/letter-guide";
 import { LETTER_FONT, letterFontVars } from "@/components/letters/fonts";
 import PrintShell from "@/components/billing/PrintShell";
 
-// "Kaunsa letter kab dena hai": a printable guide for the team (Admin → HR letters → Guide).
+// "Which letter to issue, and when": a printable guide for the team (Admin → HR letters → Guide).
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "HR letters guide", robots: { index: false, follow: false } };
 
@@ -35,19 +35,19 @@ export default async function LetterGuidePage() {
             {content.brand.logo ? <img src={content.brand.logo} alt="" className="h-10 w-auto object-contain" /> : null}
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: ACCENT }}>{company} · HR guide</p>
-              <h1 className="text-[22px] font-bold leading-tight">Kaunsa letter kab dena hai</h1>
+              <h1 className="text-[22px] font-bold leading-tight">Which letter to issue, and when</h1>
             </div>
           </div>
-          <p className="max-w-[60mm] text-right text-[10.5px] text-[#6b6680]">Admin → HR letters mein bane 15 letters ki aasaan guide: kab, kisko aur kya dhyan rakhna hai.</p>
+          <p className="max-w-[60mm] text-right text-[10.5px] text-[#6b6680]">A quick reference to the 15 letters in Admin → HR letters: when to issue each one, to whom, and what to check.</p>
         </header>
 
         <section className="mt-5 break-inside-avoid">
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: ACCENT }}>Jaldi dekhne ke liye</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: ACCENT }}>Quick reference</h2>
           <table className="mt-2 w-full border-collapse text-[11.5px]">
             <thead>
               <tr className="bg-[#f4f2fb] text-left print:bg-[#f4f2fb]">
                 <th className="w-1/2 border border-[#e1ddef] px-2.5 py-1.5 font-bold">Situation</th>
-                <th className="border border-[#e1ddef] px-2.5 py-1.5 font-bold">Ye letter do</th>
+                <th className="border border-[#e1ddef] px-2.5 py-1.5 font-bold">Letter to issue</th>
               </tr>
             </thead>
             <tbody>
@@ -62,7 +62,7 @@ export default async function LetterGuidePage() {
         </section>
 
         <section className="mt-5 break-inside-avoid">
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: ACCENT }}>Letter kaise banayein</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: ACCENT }}>How to create a letter</h2>
           <ol className="mt-2 space-y-1">
             {GUIDE_STEPS.map((s, i) => (
               <li key={i} className="flex gap-2.5">
@@ -88,15 +88,15 @@ export default async function LetterGuidePage() {
                   <div key={type} className="break-inside-avoid rounded-lg border border-[#e1ddef] px-4 py-3">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <p className="text-[13.5px] font-bold">{t.label}</p>
-                      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#6b6680]">{t.certificate ? "Certificate form" : "A4 letter"}{t.acceptance ? " · Sign karke wapas lena" : ""}</p>
+                      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#6b6680]">{t.certificate ? "Certificate form" : "A4 letter"}{t.acceptance ? " · Collect a signed copy" : ""}</p>
                     </div>
-                    <dl className="mt-1.5 grid grid-cols-[92px_1fr] gap-x-3 gap-y-1 text-[11.5px]">
-                      <dt className="font-semibold text-[#6b6680]">Kab dena hai</dt><dd>{g.when}</dd>
-                      <dt className="font-semibold text-[#6b6680]">Kisko</dt><dd>{g.who}</dd>
-                      <dt className="font-semibold text-[#6b6680]">Kab tak</dt><dd>{g.timing}</dd>
-                      <dt className="font-semibold text-[#6b6680]">Details</dt><dd>{g.need.join(" · ")}</dd>
+                    <dl className="mt-1.5 grid grid-cols-[100px_1fr] gap-x-3 gap-y-1 text-[11.5px]">
+                      <dt className="font-semibold text-[#6b6680]">When</dt><dd>{g.when}</dd>
+                      <dt className="font-semibold text-[#6b6680]">To whom</dt><dd>{g.who}</dd>
+                      <dt className="font-semibold text-[#6b6680]">Timing</dt><dd>{g.timing}</dd>
+                      <dt className="font-semibold text-[#6b6680]">Details needed</dt><dd>{g.need.join(" · ")}</dd>
                     </dl>
-                    <p className="mt-2 rounded-md bg-[#f4f2fb] px-3 py-1.5 text-[11.5px] print:bg-[#f4f2fb]"><span className="font-bold" style={{ color: ACCENT }}>Dhyan rakhein: </span>{g.tip}</p>
+                    <p className="mt-2 rounded-md bg-[#f4f2fb] px-3 py-1.5 text-[11.5px] print:bg-[#f4f2fb]"><span className="font-bold" style={{ color: ACCENT }}>Note: </span>{g.tip}</p>
                   </div>
                 );
               })}
@@ -105,17 +105,13 @@ export default async function LetterGuidePage() {
         ))}
 
         <section className="mt-6 break-inside-avoid rounded-lg border-2 px-4 py-3" style={{ borderColor: ACCENT }}>
-          <h2 className="text-[13px] font-bold">Hamesha yaad rakhein</h2>
+          <h2 className="text-[13px] font-bold">Good practice</h2>
           <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[11.5px]">
-            <li>Har letter ki ek copy (aur signed copy) employee ki file mein rakho. System mein bhi har letter save rehta hai.</li>
-            <li>Salary, dates aur designation wahi likho jo payroll aur appointment letter mein hai.</li>
-            <li>Galat letter delete karne ke bajaye Revoke karo, taaki verify page par saaf dikhe ki wo ab valid nahi hai.</li>
-            <li>Warning aur termination letter dene se pehle kisi lawyer ya HR expert se salah lo.</li>
-            <li>Koi bhi letter ki asliyat website ke verify page par code daal kar ya QR scan karke check ki ja sakti hai.</li>
+            {GUIDE_REMINDERS.map((r) => <li key={r}>{r}</li>)}
           </ul>
         </section>
 
-        <p className="mt-6 border-t border-[#e1ddef] pt-2 text-[10px] text-[#8a8499]">Ye guide aam taur par chalne wale tareeqon par based hai, kanooni salah nahi hai. Apni company policy ke hisaab se badlav kar sakte ho.</p>
+        <p className="mt-6 border-t border-[#e1ddef] pt-2 text-[10px] text-[#8a8499]">This guide reflects common practice in India and is not legal advice. Adapt it to your company policy.</p>
       </article>
     </PrintShell>
   );
