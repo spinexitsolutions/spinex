@@ -156,8 +156,7 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
   return (
     <div className={`${letterFontVars} space-y-8 print:space-y-0`} style={{ fontFamily: LETTER_FONT, fontKerning: "normal", letterSpacing: 0, textRendering: "geometricPrecision" }}>
       <style>{`
-        @page profile { size: A4; margin: 0; }
-        .profile-sheet { page: profile; }
+        @page { size: A4; margin: 0; }
         @media print { .profile-sheet { box-shadow: none !important; margin: 0 !important; break-after: page; } .profile-sheet:last-child { break-after: auto; } }
       `}</style>
       {sheets.map((s, i) => (
