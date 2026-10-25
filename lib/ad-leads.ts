@@ -36,15 +36,21 @@ const titleCase = (k: string) => k.replace(/[_-]+/g, " ").replace(/\s+/g, " ").t
 
 // Turns any form into the lead fields; questions we don't know go into the message, so nothing is lost.
 export function mapFields(fields: AdField[]) {
-  const pick = (keys: string[]) => fields.find((f) => keys.includes(norm(f.key)) && f.value.trim())?.value.trim() ?? "";
+  const pick = (keys: string[], word?: RegExp) => {
+    const f = fields.find((x) => keys.includes(norm(x.key)) && x.value.trim()) ?? (word ? fields.find((x) => word.test(norm(x.key)) && x.value.trim()) : undefined);
+    if (f) taken.add(f);
+    return f?.value.trim() ?? "";
+  };
+  const taken = new Set<AdField>();
   const name = pick(NAME) || [pick(FIRST), pick(LAST)].filter(Boolean).join(" ");
   const phone = pick(PHONE).replace(/[^\d+]/g, "");
   const email = pick(EMAIL).toLowerCase();
-  const services = pick(SERVICE);
-  const budget = pick(BUDGET);
+  // Your own questions often say it in other words: "Which service do you need?", "What is your budget?".
+  const services = pick(SERVICE, /service|requirement/);
+  const budget = pick(BUDGET, /budget/);
   const message = pick(MESSAGE);
   const used = new Set([...NAME, ...PHONE, ...EMAIL, ...SERVICE, ...BUDGET, ...MESSAGE, ...HIDE]);
-  const other = fields.filter((f) => f.value.trim() && !used.has(norm(f.key))).map((f) => `${f.label || titleCase(f.key)}: ${f.value.trim()}`);
+  const other = fields.filter((f) => f.value.trim() && !used.has(norm(f.key)) && !taken.has(f)).map((f) => `${f.label || titleCase(f.key)}: ${f.value.trim()}`);
   return { name: name.slice(0, 120) || "Ad lead", phone: phone.slice(0, 20), email: email.slice(0, 160), services: services.slice(0, 300), budget: budget.slice(0, 100), message: [message, ...other].filter(Boolean).join("\n").slice(0, 4000) };
 }
 
