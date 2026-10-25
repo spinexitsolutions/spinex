@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
-import { monthLabel } from "@/lib/payroll";
+import { monthLabel, recalc, withAttendance } from "@/lib/payroll";
+import { monthAttendance } from "@/lib/leave-db";
 import { cleanSlipInput, payOid, payslipsCol, toPayslip } from "@/lib/payroll-db";
 import { issueSlip } from "@/lib/payslip-issue";
 import { getLetterhead } from "@/lib/letter-db";
@@ -55,6 +56,13 @@ export async function POST(req: Request, { params }: Ctx) {
       const out = await issueSlip(found.slip);
       await logActivity(session, "Payroll", `Issued ${monthLabel(out.month)} payslip ${out.number}`, out.emp.name, req);
       return NextResponse.json(out);
+    }
+    if (action === "attendance" && found.slip.status === "draft") {
+      const { summaries } = await monthAttendance(found.slip.month, [{ id: found.slip.employeeId, joiningDate: found.slip.emp.joiningDate }]);
+      const sm = summaries.get(found.slip.employeeId)!;
+      const { id: _skip, ...next } = recalc(withAttendance(found.slip, sm));
+      const doc = await col.findOneAndUpdate({ _id: found._id, status: "draft" }, { $set: { ...next, updatedAt: stamp } }, { returnDocument: "after" });
+      return NextResponse.json(toPayslip(doc!));
     }
     if (action === "revoke" && found.slip.status === "issued") {
       const doc = await col.findOneAndUpdate({ _id: found._id }, { $set: { status: "revoked", updatedAt: stamp } }, { returnDocument: "after" });

@@ -35,7 +35,7 @@ const AREA_LIST = [
   { id: "blog", label: "Blog posts", help: "Write, publish and delete articles" },
   { id: "media", label: "Image library", help: "Upload and delete images" },
   { id: "people", label: "Interns, applicants, certificates and HR letters", help: "Applications, status emails, certificates, offer and experience letters" },
-  { id: "payroll", label: "Employees and payslips", help: "Salary details of employees and monthly payslips" },
+  { id: "payroll", label: "Employees, payslips, attendance and leave", help: "Salary details, monthly payslips, approving leave and marking attendance" },
   { id: "integrations", label: "WhatsApp button, analytics and cookie banner", help: "Tracking codes that run on every page" },
   { id: "activity", label: "Everyone's activity log", help: "Without this they see only their own", viewOnly: true },
 ] as const;

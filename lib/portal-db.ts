@@ -27,6 +27,8 @@ export async function loginsCol() {
     await col.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch(() => undefined);
     // At most one live code per client, so racing "send code" requests can't add extra guesses.
     await col.createIndex({ kind: 1, clientId: 1 }, { unique: true, partialFilterExpression: { kind: "code" } }).catch(() => undefined);
+    // Staff portal codes live here too (clientId "staff:<employee id>"), one per employee.
+    await col.createIndex({ kind: 1, clientId: 1 }, { name: "one_staff_code", unique: true, partialFilterExpression: { kind: "staff-code" } }).catch(() => undefined);
     loginsReady = true;
   }
   return col;

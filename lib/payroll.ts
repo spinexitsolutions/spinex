@@ -43,6 +43,8 @@ export type Payslip = {
   earnings: SlipEarning[];
   deductions: SlipDeduction[];
   esiOn: boolean;
+  // From Attendance and leave when the payslip was made (or refreshed); null = paid days typed by hand.
+  attendance: { present: number; half: number; absent: number; paidLeave: number; unpaidLeave: number; lop: number } | null;
   paymentDate: string;
   paymentMode: string; // Bank transfer, UPI, Cash, Cheque
   note: string;
@@ -162,6 +164,7 @@ export function draftSlip(e: Employee, month: string): Omit<Payslip, "id" | "num
     deductions,
     // ESI applies when the full monthly gross is ₹21,000 or less.
     esiOn: e.esi && fullGross(e) <= 21000,
+    attendance: null,
     paymentDate: "",
     paymentMode: "Bank transfer",
     note: "",
@@ -174,3 +177,9 @@ export function draftSlip(e: Employee, month: string): Omit<Payslip, "id" | "num
 
 export const isPayslipCode = (v: string) => /^SPX-P-[A-Z0-9]{6}$/.test(v);
 export const maskPan = (pan: string) => (pan.length >= 10 ? `${pan.slice(0, 2)}XXXXX${pan.slice(-3)}` : pan);
+
+// Paid days from the month's attendance: days in the month minus days of pay lost (absent, unpaid leave, half days, before joining).
+export function withAttendance<T extends Pick<Payslip, "daysInMonth" | "paidDays" | "attendance">>(slip: T, a: { present: number; half: number; absent: number; paidLeave: number; unpaidLeave: number; lop: number }): T {
+  const attendance = { present: a.present, half: a.half, absent: a.absent, paidLeave: a.paidLeave, unpaidLeave: a.unpaidLeave, lop: a.lop };
+  return { ...slip, attendance, paidDays: Math.max(0, slip.daysInMonth - a.lop) };
+}

@@ -69,8 +69,8 @@ export default function PayslipDocument({ slip, head, logo, qr, verifyUrl }: { s
         ))}
       </section>
 
-      <section className="mt-3 grid grid-cols-3 gap-3 text-center">
-        {[["Days in month", String(slip.daysInMonth)], ["Paid days", String(slip.paidDays)], ["Leave without pay", String(lop)]].map(([k, v]) => (
+      <section className={`mt-3 grid gap-3 text-center ${slip.attendance ? "grid-cols-4" : "grid-cols-3"}`}>
+        {[["Days in month", String(slip.daysInMonth)], ["Paid days", String(slip.paidDays)], ...(slip.attendance ? [["Paid leave", String(slip.attendance.paidLeave)]] : []), ["Leave without pay", String(lop)]].map(([k, v]) => (
           <div key={k} className="rounded-lg border border-[#e1ddef] px-3 py-2"><p className="text-[10.5px] text-[#8a8499]">{k}</p><p className="text-[15px] font-bold tabular-nums">{v}</p></div>
         ))}
       </section>

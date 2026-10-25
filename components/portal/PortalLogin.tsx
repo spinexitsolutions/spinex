@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 
-// Client login: email → 6-digit code → portal.
-export default function PortalLogin({ initialEmail = "", brand }: { initialEmail?: string; brand: string }) {
+// Email → 6-digit code → portal. Used by the client portal and the staff portal.
+export default function PortalLogin({ initialEmail = "", brand, api = "/api/portal/login", next = "/portal", title = "Client portal", intro = "See your project progress, files, invoices and support requests.", placeholder = "you@company.com" }: {
+  initialEmail?: string; brand: string; api?: string; next?: string; title?: string; intro?: string; placeholder?: string;
+}) {
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
@@ -24,7 +26,7 @@ export default function PortalLogin({ initialEmail = "", brand }: { initialEmail
     setBusy(true);
     setError("");
     try {
-      const d = await post("/api/portal/login/request", { email });
+      const d = await post(`${api}/request`, { email });
       setNote(d.message);
       setStep("code");
     } catch (err) {
@@ -39,8 +41,8 @@ export default function PortalLogin({ initialEmail = "", brand }: { initialEmail
     setBusy(true);
     setError("");
     try {
-      await post("/api/portal/login/verify", { email, code });
-      window.location.href = "/portal";
+      await post(`${api}/verify`, { email, code });
+      window.location.href = next;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setBusy(false);
@@ -50,14 +52,14 @@ export default function PortalLogin({ initialEmail = "", brand }: { initialEmail
   return (
     <div className="w-full max-w-md rounded-[28px] bg-white p-8 shadow-[0_30px_80px_-40px_rgba(18,15,27,.5)] sm:p-10">
       <p className="text-sm font-semibold uppercase tracking-[0.14em] text-lav-700">{brand}</p>
-      <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Client portal</h1>
-      <p className="mt-2 text-muted">See your project progress, files, invoices and support requests.</p>
+      <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">{title}</h1>
+      <p className="mt-2 text-muted">{intro}</p>
 
       {step === "email" ? (
         <form onSubmit={askCode} className="mt-8 space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold">Your email</span>
-            <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
+            <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={placeholder} />
           </label>
           {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
           <button disabled={busy || !email.trim()} className="btn-dark w-full justify-center py-3.5 disabled:opacity-60">{busy ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />} Email me a login code</button>

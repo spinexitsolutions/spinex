@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
-import { daysIn, draftSlip, monthLabel, validMonth } from "@/lib/payroll";
+import { daysIn, draftSlip, monthLabel, recalc, validMonth, withAttendance, type Payslip } from "@/lib/payroll";
+import { monthAttendance } from "@/lib/leave-db";
 import { employeesCol, newSlipToken, payOid, payslipsCol, toEmployee, toPayslip } from "@/lib/payroll-db";
 
 // ?month=2026-10 → that month's payslips. Always includes the list of months that have payslips.
@@ -38,10 +39,15 @@ export async function POST(req: Request) {
   let skipped = 0;
   const noSalary: string[] = [];
   let lastId = "";
+  // Paid days come from Attendance and leave (absent days, unpaid leave, half days, days before joining).
+  const { summaries } = await monthAttendance(month, employees);
   for (const e of employees) {
     if (!e.earnings.some((r) => r.amount > 0)) noSalary.push(e.name);
     try {
-      const { insertedId } = await col.insertOne({ ...draftSlip(e, month), number: "", verifyCode: "", token: newSlipToken(), createdBy: session?.name ?? "", createdAt: now, updatedAt: now });
+      const sm = summaries.get(e.id);
+      const base = draftSlip(e, month);
+      const slip = sm ? recalc(withAttendance(base as Payslip, sm)) : base;
+      const { insertedId } = await col.insertOne({ ...slip, number: "", verifyCode: "", token: newSlipToken(), createdBy: session?.name ?? "", createdAt: now, updatedAt: now });
       lastId = String(insertedId);
       made++;
     } catch (err) {

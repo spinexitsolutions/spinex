@@ -195,6 +195,7 @@ function EmployeeForm({ employee, readOnly, onDone }: { employee: Employee | nul
   const [error, setError] = useState("");
   const [askDelete, setAskDelete] = useState(false);
   const [gross, setGross] = useState("");
+  const [invite, setInvite] = useState("");
   const set = (p: Partial<Employee>) => setE((x) => ({ ...x, ...p }));
 
   const save = async (ev: React.FormEvent) => {
@@ -280,6 +281,8 @@ function EmployeeForm({ employee, readOnly, onDone }: { employee: Employee | nul
       {!readOnly && (
         <div className="flex flex-wrap items-center gap-2">
           <button disabled={!!busy} className="btn-dark px-5 py-2.5 text-sm">{busy === "save" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {employee ? "Save" : "Add employee"}</button>
+          {employee?.active && employee.email && <button type="button" disabled={!!busy} onClick={async () => { setBusy("invite"); setError(""); try { const r = await api<{ message: string }>(`/api/admin/payroll/employees/${employee.id}/invite`, { method: "POST" }); setInvite(r.message); } catch (err) { setError(err instanceof Error ? err.message : "Couldn't send."); } finally { setBusy(""); } }} className="btn-ghost px-4 py-2.5 text-sm">{busy === "invite" ? <Loader2 size={15} className="animate-spin" /> : <Mail size={15} />} Email staff portal invite</button>}
+          {invite && <span className="text-sm text-emerald-700">{invite}</span>}
           {employee && (askDelete ? (
             <span className="flex items-center gap-2 text-sm">Delete for good? <button type="button" onClick={del} className="rounded-full bg-red-600 px-4 py-2 font-semibold text-white">Yes</button><button type="button" onClick={() => setAskDelete(false)} className="btn-ghost px-4 py-2 text-sm">No</button></span>
           ) : <button type="button" onClick={() => setAskDelete(true)} className="ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete</button>)}

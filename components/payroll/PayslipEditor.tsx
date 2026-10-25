@@ -158,7 +158,13 @@ export default function PayslipEditor({ id, logo, verifyBase, readOnly }: { id: 
             </section>
           )}
 
-          <Box title="Days" note="For leave without pay, lower the paid days. Basic, HRA and allowances are paid for the days worked; PF and ESI are worked out again.">
+          <Box title="Days" note="Paid days come from Attendance and leave. You can still change them by hand. Basic, HRA and allowances are paid for the days worked; PF and ESI are worked out again.">
+            {slip.attendance ? (
+              <p className="mb-4 rounded-2xl bg-lav-100/60 px-4 py-3 text-sm text-lav-700">
+                From attendance: <b>{slip.attendance.present}</b> present{slip.attendance.paidLeave ? <>, <b>{slip.attendance.paidLeave}</b> paid leave</> : null}{slip.attendance.half ? <>, <b>{slip.attendance.half}</b> half day{slip.attendance.half > 1 ? "s" : ""}</> : null}{slip.attendance.absent ? <>, <b>{slip.attendance.absent}</b> absent</> : null}{slip.attendance.unpaidLeave ? <>, <b>{slip.attendance.unpaidLeave}</b> unpaid leave</> : null}. Pay cut for <b>{slip.attendance.lop}</b> day{slip.attendance.lop === 1 ? "" : "s"}.
+              </p>
+            ) : <p className="mb-4 rounded-2xl bg-mist px-4 py-3 text-sm text-muted">Paid days were typed by hand.</p>}
+            {!locked && <button type="button" onClick={async () => { if (dirty && !(await save())) return; setBusy("att"); try { take(await api<Payslip>(`/api/admin/payroll/payslips/${id}`, { method: "POST", body: JSON.stringify({ action: "attendance" }) })); flash("Paid days updated from attendance"); } catch (e) { flash(e instanceof Error ? e.message : "Couldn't update."); } finally { setBusy(""); } }} disabled={!!busy} className="btn-ghost mb-4 px-4 py-2 text-sm">{busy === "att" ? <Loader2 size={14} className="animate-spin" /> : null} Update from attendance</button>}
             <fieldset disabled={locked} className="grid gap-4 sm:grid-cols-3">
               <F label="Days in month"><input className="input bg-mist" value={slip.daysInMonth} readOnly /></F>
               <F label="Paid days"><input className="input" type="number" step={0.5} min={0} max={slip.daysInMonth} value={slip.paidDays} onChange={(e) => set({ paidDays: Math.max(0, Math.min(slip.daysInMonth, Number(e.target.value) || 0)) })} /></F>

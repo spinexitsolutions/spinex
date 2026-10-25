@@ -105,6 +105,7 @@ export function toPayslip(doc: WithId<Document>): Payslip {
     earnings: Array.isArray(r.earnings) ? r.earnings : [],
     deductions: Array.isArray(r.deductions) ? r.deductions : [],
     esiOn: !!r.esiOn,
+    attendance: r.attendance && typeof r.attendance === "object" ? r.attendance : null,
     paymentDate: r.paymentDate ?? "",
     paymentMode: r.paymentMode ?? "Bank transfer",
     note: r.note ?? "",
@@ -123,6 +124,7 @@ export function toPayslip(doc: WithId<Document>): Payslip {
 // What the payslip editor may change. Amounts are worked out again on the server.
 export function cleanSlipInput(b: Record<string, unknown>, current: Payslip): Payslip {
   const next: Payslip = { ...current };
+  if (b.paidDays !== undefined && Number(b.paidDays) !== current.paidDays) next.attendance = null;
   if (b.paidDays !== undefined) next.paidDays = Math.max(0, Math.min(current.daysInMonth, Math.round(Number(b.paidDays) * 2) / 2 || 0));
   if (Array.isArray(b.earnings)) {
     next.earnings = (b.earnings as Record<string, unknown>[]).filter((r) => r && typeof r === "object").slice(0, 15).map((r, i): SlipEarning => ({
