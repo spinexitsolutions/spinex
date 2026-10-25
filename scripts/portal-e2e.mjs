@@ -41,7 +41,8 @@ const client = {
   billingIds: billIds ? Object.values(billIds).map(String) : [], notes: "Prefers WhatsApp", lastLoginAt: "", invitedAt: now.toISOString(), createdAt: now.toISOString(), updatedAt: now.toISOString(),
 };
 const { insertedId: cid } = await db.collection("portal_clients").insertOne(client);
-const { insertedId: otherId } = await db.collection("portal_clients").insertOne({ ...client, name: "Other Client", company: "Other Co", email: "other@client.test", projects: [], billingIds: [] });
+const { _id: _skip, ...clientBase } = client;
+const { insertedId: otherId } = await db.collection("portal_clients").insertOne({ ...clientBase, name: "Other Client", company: "Other Co", email: "other@client.test", projects: [], billingIds: [] });
 const bucket = new GridFSBucket(db, { bucketName: "portal_files" });
 const put = (name, meta, body) => new Promise((res, rej) => { const up = bucket.openUploadStream(name, { metadata: meta }); up.on("error", rej).on("finish", () => res(up.id)); up.end(Buffer.from(body)); });
 await put("Homepage design v2.pdf", { clientId: String(cid), projectId: "p1", by: "team", byName: "Pooja Sharma", note: "Final design", contentType: "application/pdf" }, "%PDF-1.4 test");
