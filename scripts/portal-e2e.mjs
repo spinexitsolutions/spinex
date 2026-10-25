@@ -184,7 +184,7 @@ try {
   q = await db.collection("billing").findOne({ _id: openQuoteId });
   ok("accepted quote is locked", q.items.length === 2 && q.items[0].rate === 80000, `status ${r.status()}`);
   // Stale page: a quote edited after the client opened it can't be accepted with the old version.
-  const { insertedId: q2 } = await db.collection("billing").insertOne({ ...openQuote, number: "QT/2026-27/011", shareToken: "e2eStaleQuoteTokenSharma001", acceptance: null, changes: [], updatedAt: new Date().toISOString() });
+  const { insertedId: q2 } = await db.collection("billing").insertOne({ ...Object.fromEntries(Object.entries(openQuote).filter(([k]) => k !== "_id")), number: "QT/2026-27/011", shareToken: "e2eStaleQuoteTokenSharma001", acceptance: null, changes: [], updatedAt: new Date().toISOString() });
   r = await qp.request.post(`${base}/api/d/e2eStaleQuoteTokenSharma001`, { data: { action: "accept", name: "X", agree: true, version: "2020-01-01T00:00:00.000Z" } });
   ok("old version can't be accepted", r.status() === 409, `status ${r.status()}`);
   r = await qp.request.post(`${base}/api/d/e2eStaleQuoteTokenSharma001`, { data: { action: "accept", name: "X", agree: true, version: (await db.collection("billing").findOne({ _id: q2 })).updatedAt }, headers: { "content-type": "text/plain" } });
