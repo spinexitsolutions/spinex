@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "crypto";
 import { hasDb } from "@/lib/db";
 import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } from "@/lib/automation";
+import { runAmcReminders } from "@/lib/amc";
 import { readState, writeState } from "@/lib/settings-db";
 import { SITE_URL } from "@/lib/site";
 
@@ -36,6 +37,9 @@ export async function GET(req: Request) {
 
   if (settings.remindersOn && state.lastReminders !== now.date && now.hour >= settings.reminderHour) {
     done.reminders = await runReminders(origin).catch((e) => ({ error: String(e) }));
+  }
+  if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour) {
+    done.amc = await runAmcReminders(origin, { days: settings.amcRemindDays, emailClient: settings.amcEmailClient, whatsapp: settings.whatsappSummary }).catch((e) => ({ error: String(e) }));
   }
   if (backupDue(settings, String(state.lastBackup || ""))) {
     done.backup = await runBackup().catch((e) => ({ error: String(e) }));

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   const col = await clientsCol();
   if (await col.findOne({ email })) return NextResponse.json({ error: "A client with this email already exists." }, { status: 409 });
   const now = new Date().toISOString();
-  const doc = { name, company, email, phone, active: true, projects: [], billingIds: [], notes: "", tokenVersion: 0, lastLoginAt: "", invitedAt: "", createdAt: now, updatedAt: now };
+  const doc = { name, company, email, phone, active: true, projects: [], billingIds: [], amcs: [], notes: "", tokenVersion: 0, lastLoginAt: "", invitedAt: "", createdAt: now, updatedAt: now };
   let insertedId;
   try {
     ({ insertedId } = await col.insertOne(doc));

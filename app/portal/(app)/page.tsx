@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, Circle, CircleDot, ExternalLink, FileText, LifeBuoy } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Circle, CircleDot, ExternalLink, FileText, LifeBuoy, ShieldCheck } from "lucide-react";
 import { getClientSession } from "@/lib/client-auth";
 import { clientBills } from "@/lib/portal-billing";
 import { listPortalFiles, ticketsCol } from "@/lib/portal-db";
-import { currentStage, projectProgress, projectStatusLabel, shortDate, type PortalProject } from "@/lib/portal";
+import { amcDaysLeft, amcState, amcStateLabel, currentStage, mainAmc, projectProgress, projectStatusLabel, shortDate, type AmcPlan, type PortalProject } from "@/lib/portal";
 import { inr } from "@/lib/billing";
 
 export default async function PortalHome() {
@@ -30,6 +30,8 @@ export default async function PortalHome() {
         <Card label="Amount due" value={inr(due, 0)} sub={due > 0 ? "See invoices to pay" : "Nothing due"} href="/portal/invoices" accent={due > 0} />
         <Card label="Open support requests" value={String(openTickets)} sub="Ask us anything" href="/portal/support" />
       </div>
+
+      {(() => { const a = mainAmc(client.amcs); return a ? <AmcCard a={a} /> : null; })()}
 
       {projects.length === 0 ? (
         <div className="mt-8 rounded-[24px] border border-dashed border-line bg-white p-10 text-center text-muted">Your projects will show here once our team adds them.</div>
@@ -69,6 +71,39 @@ function Card({ label, value, sub, href, accent = false }: { label: string; valu
     </>
   );
   return href ? <Link href={href} className="rounded-[24px] border border-line bg-white p-6 transition hover:border-lav-300">{body}</Link> : <div className="rounded-[24px] border border-line bg-white p-6">{body}</div>;
+}
+
+function AmcCard({ a }: { a: AmcPlan }) {
+  const st = amcState(a);
+  const left = amcDaysLeft(a);
+  const covers = a.covers.split("\n").map((x) => x.trim()).filter(Boolean);
+  const tone = st === "expired" ? "border-red-200" : st === "expiring" ? "border-amber-300" : "border-line";
+  const chip = st === "expired" ? "bg-red-50 text-red-700" : st === "expiring" ? "bg-amber-50 text-amber-800" : st === "upcoming" ? "bg-mist text-muted" : "bg-emerald-50 text-emerald-800";
+  return (
+    <section className={`mt-6 rounded-[28px] border bg-white p-6 sm:p-8 ${tone}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-lav-100 text-lav-700"><ShieldCheck size={20} /></span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Maintenance plan</p>
+            <h2 className="font-display text-xl font-semibold tracking-tight">{a.title}</h2>
+            <p className="text-sm text-muted">{[a.startDate && a.endDate ? `${shortDate(a.startDate)} to ${shortDate(a.endDate)}` : "", a.responseTime && `Reply ${a.responseTime.charAt(0).toLowerCase()}${a.responseTime.slice(1)}`].filter(Boolean).join(" · ")}</p>
+          </div>
+        </div>
+        <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${chip}`}>{amcStateLabel(a)}</span>
+      </div>
+      {covers.length > 0 && (
+        <ul className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
+          {covers.map((c) => <li key={c} className="flex items-start gap-2"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-600" />{c}</li>)}
+        </ul>
+      )}
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <Link href="/portal/support" className="btn-dark px-5 py-2.5 text-sm"><LifeBuoy size={15} /> Report a problem</Link>
+        {(st === "expiring" || st === "expired") && <Link href={`/portal/support?renew=${a.id}`} className="btn-ghost bg-white px-5 py-2.5 text-sm">Renew plan</Link>}
+        {st === "expired" && <span className="text-sm text-red-700">Ended {left === -1 ? "yesterday" : `${-left} days ago`}. New requests may be charged until it&apos;s renewed.</span>}
+      </div>
+    </section>
+  );
 }
 
 function ProjectCard({ p, files }: { p: PortalProject; files: number }) {

@@ -19,6 +19,9 @@ export type AutomationSettings = {
   backupFrequency: string; // "off" | "daily" | "weekly"
   backupWeekday: number; // 0 = Sunday
   backupEmail: string; // empty = the "Send alerts to" email
+  amcRemindersOn: boolean; // AMC renewal reminders (client portal → AMC)
+  amcRemindDays: string; // days before the end, e.g. "30, 7, 1, 0"
+  amcEmailClient: boolean; // also email the client (otherwise only you)
 };
 
 export const defaultAutomation: AutomationSettings = {
@@ -28,6 +31,9 @@ export const defaultAutomation: AutomationSettings = {
   backupFrequency: "weekly",
   backupWeekday: 0,
   backupEmail: "",
+  amcRemindersOn: true,
+  amcRemindDays: "30, 7, 1, 0",
+  amcEmailClient: true,
 };
 
 export const getAutomation = () => readSetting("automation", defaultAutomation);
@@ -36,6 +42,7 @@ export const saveAutomation = (input: Record<string, unknown>) => {
   if ("backupFrequency" in input && !["off", "daily", "weekly"].includes(freq)) input.backupFrequency = "weekly";
   if ("reminderHour" in input) input.reminderHour = Math.min(23, Math.max(0, Math.round(Number(input.reminderHour) || 0)));
   if ("backupWeekday" in input) input.backupWeekday = Math.min(6, Math.max(0, Math.round(Number(input.backupWeekday) || 0)));
+  if ("amcRemindDays" in input) input.amcRemindDays = String(input.amcRemindDays ?? "").replace(/[^\d,\s]/g, "").trim().slice(0, 60) || "30, 7, 1, 0";
   if ("backupEmail" in input) input.backupEmail = String(input.backupEmail ?? "").trim().slice(0, 200);
   return writeSetting("automation", defaultAutomation, input);
 };

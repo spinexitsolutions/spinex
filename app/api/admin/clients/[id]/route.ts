@@ -3,7 +3,7 @@ import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { billingCol, getProfile, toBill } from "@/lib/billing-db";
 import { computeTotals, docTitle } from "@/lib/billing";
-import { cleanClientInput, clientsCol, listPortalFiles, loginsCol, pOid, portalFilesBucket, ticketsCol, toClient, toTicket } from "@/lib/portal-db";
+import { cleanClientInput, clientsCol, keepAmcHistory, listPortalFiles, loginsCol, pOid, portalFilesBucket, ticketsCol, toClient, toTicket } from "@/lib/portal-db";
 import { can } from "@/lib/roles";
 
 type Ctx = { params: { id: string } };
@@ -41,6 +41,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const data = cleanClientInput(await jsonBody(req));
   // Linking quotations and invoices needs billing access too.
   if (data.billingIds && !can(await getSession(), "billing", "view")) delete data.billingIds;
+  if (data.amcs) data.amcs = keepAmcHistory(data.amcs, before.amcs);
   if (data.email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) return NextResponse.json({ error: "Add a valid email. The client logs in with it." }, { status: 400 });
   if (data.email && data.email !== before.email && (await col.findOne({ email: data.email, _id: { $ne: _id } }))) return NextResponse.json({ error: "Another client already uses this email." }, { status: 409 });
   const update: Record<string, unknown> = { $set: { ...data, updatedAt: new Date().toISOString() } };

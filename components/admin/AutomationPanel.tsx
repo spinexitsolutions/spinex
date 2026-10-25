@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, BellRing, CheckCircle2, Copy, DatabaseBackup, Download, History, Loader2, Play, RefreshCw, Save, TriangleAlert, Upload, Workflow } from "lucide-react";
+import { Activity, BellRing, CalendarClock, CheckCircle2, Copy, DatabaseBackup, Download, History, Loader2, Play, RefreshCw, Save, TriangleAlert, Upload, Workflow } from "lucide-react";
 
-type Settings = { remindersOn: boolean; reminderHour: number; whatsappSummary: boolean; backupFrequency: string; backupWeekday: number; backupEmail: string };
+type Settings = { remindersOn: boolean; reminderHour: number; whatsappSummary: boolean; backupFrequency: string; backupWeekday: number; backupEmail: string; amcRemindersOn: boolean; amcRemindDays: string; amcEmailClient: boolean };
 type Data = {
   settings: Settings;
-  state: { lastCron?: string; lastReminders?: string; lastRemindersResult?: string; lastBackup?: string; lastBackupOk?: boolean; lastBackupResult?: string; lastRestore?: string; lastRestoreResult?: string };
+  state: { lastCron?: string; lastReminders?: string; lastRemindersResult?: string; lastAmc?: string; lastAmcResult?: string; lastBackup?: string; lastBackupOk?: boolean; lastBackupResult?: string; lastRestore?: string; lastRestoreResult?: string };
   cronUrl: string;
   healthUrl: string;
   vercelCron: boolean;
@@ -63,7 +63,7 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
       setBusy("");
     }
   };
-  const run = async (job: "reminders" | "backup") => {
+  const run = async (job: "reminders" | "backup" | "amc") => {
     setBusy(job);
     try {
       const r = await api<{ ok: boolean; message: string }>("/api/admin/automation/run", { method: "POST", body: JSON.stringify({ job }) });
@@ -137,7 +137,24 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
         </div>
       </Card>
 
-      <Card icon={<DatabaseBackup size={18} />} title="3. Automatic database backup" note="A full copy of leads, interns, blog posts, quotations, invoices, website content and settings, emailed to you as a .json.gz file. Images and API keys are not included. Passwords are never included.">
+      <Card icon={<CalendarClock size={18} />} title="3. AMC renewal reminders" note="For clients with a maintenance plan (Client portal → client → AMC). Before the plan ends, the client gets a polite renewal email with a “Renew my plan” button, and you get a list of renewals due. Sent at the same time as follow-up reminders.">
+        <Toggle checked={s.amcRemindersOn} onChange={(v) => setS({ ...s, amcRemindersOn: v })} label="Send AMC renewal reminders" />
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-[13px] font-semibold">Days before the end</span>
+            <input className="input" value={s.amcRemindDays} onChange={(e) => setS({ ...s, amcRemindDays: e.target.value })} placeholder="30, 7, 1, 0" />
+            <span className="mt-1 block text-xs text-muted">0 = on the last day. One more email goes 1 day after it ends if it isn&apos;t renewed.</span>
+          </label>
+          <div className="pt-6"><Toggle checked={s.amcEmailClient} onChange={(v) => setS({ ...s, amcEmailClient: v })} label="Email the client too (off = only me)" /></div>
+        </div>
+        <Status label="Last checked" value={data.state.lastAmc ? `${data.state.lastAmc}: ${data.state.lastAmcResult ?? ""}` : "never"} />
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button onClick={() => run("amc")} disabled={!!busy} className="btn-ghost px-4 py-2.5 text-sm">{busy === "amc" ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />} Check renewals now</button>
+          {note.amc && <Msg {...note.amc} />}
+        </div>
+      </Card>
+
+      <Card icon={<DatabaseBackup size={18} />} title="4. Automatic database backup" note="A full copy of leads, interns, blog posts, quotations, invoices, website content and settings, emailed to you as a .json.gz file. Images and API keys are not included. Passwords are never included.">
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-semibold">How often</span>

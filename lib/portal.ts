@@ -19,6 +19,21 @@ export type PortalProject = {
   links: PortalLink[];
 };
 
+// Annual maintenance contract (AMC). Dates are India dates (YYYY-MM-DD), both days included.
+export type AmcPlan = {
+  id: string;
+  title: string; // e.g. Website AMC (Basic)
+  covers: string; // what's included, one point per line
+  startDate: string;
+  endDate: string;
+  amount: number; // yearly price for the renewal, before GST
+  responseTime: string; // e.g. Within 1 working day
+  remind: boolean; // renewal reminders by email
+  sent: string[]; // reminders already sent, like "2027-03-31:30"
+  renewals: { at: string; by: string; from: string; to: string }[];
+};
+export type AmcState = "upcoming" | "active" | "expiring" | "expired";
+
 export type PortalClient = {
   id: string;
   name: string;
@@ -28,6 +43,7 @@ export type PortalClient = {
   active: boolean;
   projects: PortalProject[];
   billingIds: string[]; // quotations and invoices shown in the portal
+  amcs: AmcPlan[];
   notes: string; // private, never shown to the client
   lastLoginAt: string;
   invitedAt: string;
@@ -50,11 +66,17 @@ export type PortalFile = {
 
 export type TicketMessage = { id: string; from: "client" | "team"; name: string; text: string; at: string };
 export type TicketStatus = "open" | "answered" | "closed";
+export type TicketKind = "problem" | "change" | "question" | "renewal";
 export type Ticket = {
   id: string;
   clientId: string;
   clientName: string;
   projectId: string;
+  kind: TicketKind;
+  urgent: boolean;
+  amcId: string; // the AMC that covered the request when it was opened ("" = none)
+  amcTitle: string;
+  amcCovered: boolean;
   subject: string;
   status: TicketStatus;
   messages: TicketMessage[];
@@ -66,6 +88,8 @@ export type Ticket = {
 
 export const projectStatusLabel: Record<ProjectStatus, string> = { active: "In progress", "on-hold": "On hold", completed: "Completed" };
 export const ticketStatusLabel: Record<TicketStatus, string> = { open: "Waiting for team", answered: "Team replied", closed: "Closed" };
+
+export const ticketKindLabel: Record<TicketKind, string> = { problem: "Problem / complaint", change: "Change request", question: "Question", renewal: "AMC renewal" };
 
 export const DEFAULT_STAGES = ["Requirements", "Design", "Development", "Testing", "Go live"];
 
@@ -100,4 +124,61 @@ export const shortDate = (iso: string) => {
   if (!iso) return "";
   const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
   return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+};
+
+// ---------- AMC ----------
+export const todayIndia = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+const dayMs = 86400000;
+export const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / dayMs);
+export const addDaysTo = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) + n * dayMs).toISOString().slice(0, 10);
+// One year later, minus a day: 2026-04-01 → 2027-03-31.
+export const yearEnd = (start: string) => {
+  const d = new Date(`${start}T00:00:00Z`);
+  d.setUTCFullYear(d.getUTCFullYear() + 1);
+  return new Date(d.getTime() - dayMs).toISOString().slice(0, 10);
+};
+export const AMC_SOON_DAYS = 30;
+
+// Days left including today (0 = ends today, negative = expired that many days ago).
+export const amcDaysLeft = (a: Pick<AmcPlan, "endDate">, today = todayIndia()) => (a.endDate ? daysBetween(today, a.endDate) : NaN);
+
+export function amcState(a: Pick<AmcPlan, "startDate" | "endDate">, today = todayIndia()): AmcState {
+  if (!a.endDate) return "active";
+  if (a.startDate && a.startDate > today) return "upcoming";
+  const left = daysBetween(today, a.endDate);
+  if (left < 0) return "expired";
+  return left <= AMC_SOON_DAYS ? "expiring" : "active";
+}
+
+export const amcStateLabel = (a: Pick<AmcPlan, "startDate" | "endDate">, today = todayIndia()) => {
+  const st = amcState(a, today);
+  const left = amcDaysLeft(a, today);
+  if (st === "upcoming") return `Starts ${shortDate(a.startDate)}`;
+  if (st === "expired") return `Expired ${shortDate(a.endDate)}`;
+  if (st === "expiring") return left === 0 ? "Ends today" : `Ends in ${left} day${left === 1 ? "" : "s"}`;
+  return a.endDate ? `Valid till ${shortDate(a.endDate)}` : "Active";
+};
+
+// The AMC that covers today, else the one that ended last (for "renew" messages).
+export function mainAmc(amcs: AmcPlan[], today = todayIndia()) {
+  const live = amcs.filter((a) => ["active", "expiring"].includes(amcState(a, today))).sort((a, b) => a.endDate.localeCompare(b.endDate));
+  if (live.length) return live[live.length - 1];
+  return [...amcs].sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
+}
+export const coveringAmc = (amcs: AmcPlan[], today = todayIndia()) => amcs.find((a) => ["active", "expiring"].includes(amcState(a, today)));
+
+export const blankAmc = (): AmcPlan => {
+  const start = todayIndia();
+  return {
+    id: rid(),
+    title: "Website AMC",
+    covers: "Website kept online and working\nSecurity and plugin updates\nUp to 5 small content changes a month\nMonthly backup",
+    startDate: start,
+    endDate: yearEnd(start),
+    amount: 0,
+    responseTime: "Within 1 working day",
+    remind: true,
+    sent: [],
+    renewals: [],
+  };
 };

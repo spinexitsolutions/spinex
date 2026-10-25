@@ -3,7 +3,7 @@ import { createHash, randomBytes, randomInt, timingSafeEqual } from "crypto";
 import { GridFSBucket, ObjectId, type Document, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { safeUrl } from "./content-sanitize";
-import type { PortalClient, PortalFile, PortalProject, StageStatus, Ticket } from "./portal";
+import type { AmcPlan, PortalClient, PortalFile, PortalProject, StageStatus, Ticket } from "./portal";
 import { SITE_URL } from "./site";
 
 let clientsReady = false;
@@ -49,6 +49,7 @@ export function toClient(doc: WithId<Document>): PortalClient {
     active: r.active !== false,
     projects: Array.isArray(r.projects) ? r.projects : [],
     billingIds: Array.isArray(r.billingIds) ? r.billingIds.map(String) : [],
+    amcs: Array.isArray(r.amcs) ? (r.amcs as AmcPlan[]).map((a) => ({ ...a, sent: Array.isArray(a.sent) ? a.sent : [], renewals: Array.isArray(a.renewals) ? a.renewals : [], remind: a.remind !== false, amount: Number(a.amount) || 0 })) : [],
     notes: r.notes ?? "",
     lastLoginAt: r.lastLoginAt ?? "",
     invitedAt: r.invitedAt ?? "",
@@ -82,6 +83,32 @@ function cleanProject(p: Record<string, unknown>): PortalProject {
   };
 }
 
+function cleanAmc(a: Record<string, unknown>): AmcPlan {
+  return {
+    id: id(a.id),
+    title: s(a.title, 120) || "AMC",
+    covers: s(a.covers, 3000),
+    startDate: date(a.startDate),
+    endDate: date(a.endDate),
+    amount: Math.max(0, Math.round((Number(a.amount) || 0) * 100) / 100),
+    responseTime: s(a.responseTime, 80),
+    remind: a.remind !== false,
+    sent: [], // kept by the server (see keepAmcHistory)
+    renewals: [],
+  };
+}
+
+// Reminders already sent and renewal history come from the saved copy, never from the browser.
+// Changing the end date starts the reminders again.
+export function keepAmcHistory(next: AmcPlan[], before: unknown): AmcPlan[] {
+  const old = new Map((Array.isArray(before) ? (before as AmcPlan[]) : []).map((a) => [a.id, a]));
+  return next.map((a) => {
+    const o = old.get(a.id);
+    if (!o) return a;
+    return { ...a, renewals: Array.isArray(o.renewals) ? o.renewals : [], sent: o.endDate === a.endDate && Array.isArray(o.sent) ? o.sent : [] };
+  });
+}
+
 // Fields the admin screen may change.
 export function cleanClientInput(b: Record<string, unknown>) {
   const out: Partial<PortalClient> = {};
@@ -92,6 +119,7 @@ export function cleanClientInput(b: Record<string, unknown>) {
   if (b.notes !== undefined) out.notes = s(b.notes, 4000);
   if (b.active !== undefined) out.active = !!b.active;
   if (Array.isArray(b.projects)) out.projects = (b.projects as Record<string, unknown>[]).filter((x) => x && typeof x === "object").slice(0, 30).map(cleanProject);
+  if (Array.isArray(b.amcs)) out.amcs = (b.amcs as Record<string, unknown>[]).filter((x) => x && typeof x === "object").slice(0, 20).map(cleanAmc);
   if (Array.isArray(b.billingIds)) out.billingIds = Array.from(new Set((b.billingIds as unknown[]).map((x) => s(x, 24)).filter((x) => ObjectId.isValid(x)))).slice(0, 200);
   return out;
 }
@@ -119,6 +147,11 @@ export function toTicket(doc: WithId<Document>): Ticket {
     clientId: r.clientId ?? "",
     clientName: r.clientName ?? "",
     projectId: r.projectId ?? "",
+    kind: (["problem", "change", "question", "renewal"].includes(String(r.kind)) ? r.kind : "question") as Ticket["kind"],
+    urgent: !!r.urgent,
+    amcId: r.amcId ?? "",
+    amcTitle: r.amcTitle ?? "",
+    amcCovered: !!r.amcCovered,
     subject: r.subject ?? "",
     status: (["open", "answered", "closed"].includes(String(r.status)) ? r.status : "open") as Ticket["status"],
     messages: Array.isArray(r.messages) ? r.messages : [],

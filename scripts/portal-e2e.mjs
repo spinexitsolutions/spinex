@@ -16,6 +16,7 @@ process.on("unhandledRejection", (e) => { report.push(`FAIL crashed (${String(e)
 const mongo = await MongoClient.connect(process.env.MONGODB_URI);
 const db = mongo.db(process.env.MONGODB_DB || undefined);
 const now = new Date();
+const ist = (d) => new Date(Date.now() + 5.5 * 3600e3 + d * 864e5).toISOString().slice(0, 10);
 const iso = (d) => new Date(now.getTime() + d * 864e5).toISOString().slice(0, 10);
 
 // ---- Seed ----
@@ -41,11 +42,12 @@ const client = {
     id: "p2", title: "Google Business Profile", type: "Local SEO", status: "completed", startDate: iso(-60), dueDate: iso(-40), nextStep: "",
     stages: stages.map((s) => ({ ...s, status: "done" })), updates: [], links: [],
   }],
+  amcs: [{ id: "amc1", title: "Website AMC (Basic)", covers: "Website kept online and working\nSecurity and plugin updates\nUp to 5 small content changes a month\nMonthly backup", startDate: ist(-359), endDate: ist(6), amount: 12000, responseTime: "Within 1 working day", remind: true, sent: [], renewals: [] }],
   billingIds: billIds ? Object.values(billIds).map(String) : [], notes: "Prefers WhatsApp", lastLoginAt: "", invitedAt: now.toISOString(), createdAt: now.toISOString(), updatedAt: now.toISOString(),
 };
 const { insertedId: cid } = await db.collection("portal_clients").insertOne(client);
 const { _id: _skip, ...clientBase } = client;
-const { insertedId: otherId } = await db.collection("portal_clients").insertOne({ ...clientBase, name: "Other Client", company: "Other Co", email: "other@client.test", projects: [], billingIds: [] });
+const { insertedId: otherId } = await db.collection("portal_clients").insertOne({ ...clientBase, name: "Other Client", company: "Other Co", email: "other@client.test", projects: [], billingIds: [], amcs: [] });
 const bucket = new GridFSBucket(db, { bucketName: "portal_files" });
 const put = (name, meta, body) => new Promise((res, rej) => { const up = bucket.openUploadStream(name, { metadata: meta }); up.on("error", rej).on("finish", () => res(up.id)); up.end(Buffer.from(body)); });
 await put("Homepage design v2.pdf", { clientId: String(cid), projectId: "p1", by: "team", byName: "Pooja Sharma", note: "Final design", contentType: "application/pdf" }, "%PDF-1.4 test");
@@ -221,6 +223,69 @@ try {
   ok("paid invoice hides Pay now", (await qp.locator("button", { hasText: "now" }).count()) === 0);
   await ap.goto(`${base}/admin/billing/${invId}`); await ap.waitForSelector("text=Paid online", { timeout: 15000 }); await ap.waitForTimeout(500);
   await ap.screenshot({ path: `${out}/16-admin-paid-online.png`, fullPage: true });
+
+  // ---- AMC: complaints and renewal reminders ----
+  await db.collection("portal_logins").insertOne({ kind: "code", clientId: String(cid), hash: hash("112233"), attempts: 0, expiresAt: new Date(Date.now() + 6e5) });
+  const dc = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1.25 });
+  const dp = await dc.newPage();
+  r = await dp.request.post(`${base}/api/portal/login/verify`, { data: { email: "rahul@sharmatraders.test", code: "112233" } });
+  await dp.goto(`${base}/portal`, { waitUntil: "networkidle" }); await dp.waitForTimeout(500);
+  let html = await dp.content();
+  ok("portal shows the AMC with days left", html.includes("Maintenance plan") && html.includes("Ends in 6 days"));
+  await dp.screenshot({ path: `${out}/17-portal-amc.png`, fullPage: true });
+  r = await dp.request.post(`${base}/api/portal/tickets`, { data: { subject: "Website is not opening", message: "Since morning the website shows an error. Customers can't order.", kind: "problem", urgent: true } });
+  const urgentId = r.status() === 201 ? (await r.json()).id : "";
+  let tk = urgentId && (await db.collection("portal_tickets").findOne({ _id: new ObjectId(urgentId) }));
+  ok("urgent complaint is saved as covered by AMC", !!tk && tk.urgent === true && tk.kind === "problem" && tk.amcCovered === true && tk.amcId === "amc1", `status ${r.status()}`);
+  r = await dp.request.post(`${base}/api/portal/tickets`, { data: { subject: "Odd", message: "x", kind: "hack", urgent: true } });
+  tk = await db.collection("portal_tickets").findOne({ _id: new ObjectId((await r.json()).id) });
+  ok("unknown type and urgent on non-problems are ignored", tk.kind === "question" && tk.urgent === false);
+  await dp.goto(`${base}/portal/support?renew=amc1`, { waitUntil: "networkidle" }); await dp.waitForTimeout(400);
+  ok("renew link fills the renewal request", (await dp.inputValue('input[maxlength="140"]')).includes("renew my Website AMC"));
+  await dp.screenshot({ path: `${out}/18-portal-renew.png`, fullPage: true });
+  r = await ap.request.get(`${base}/api/admin/clients/tickets`);
+  const openList = await r.json();
+  ok("admin open requests list puts urgent first", Array.isArray(openList) && openList[0]?.id === urgentId, `first ${openList[0]?.subject}`);
+  // The browser can't fake "already sent" reminders.
+  const cur = await (await ap.request.get(`${base}/api/admin/clients/${cid}`)).json();
+  r = await ap.request.patch(`${base}/api/admin/clients/${cid}`, { data: { amcs: cur.client.amcs.map((a) => ({ ...a, sent: [`${a.endDate}:30`, `${a.endDate}:7`, `${a.endDate}:1`, `${a.endDate}:0`, `${a.endDate}:-1`] })) } });
+  ok("reminder history can't be set from the browser", r.status() === 200 && (await r.json()).amcs[0].sent.length === 0);
+  // Scheduler: reminders due today, only once.
+  await ap.request.put(`${base}/api/admin/automation`, { data: { reminderHour: 0, amcRemindersOn: true, amcEmailClient: false, amcRemindDays: "30, 7, 1, 0" } });
+  const cronUrl = new URL((await (await ap.request.get(`${base}/api/admin/automation`)).json()).cronUrl);
+  r = await dp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  let cj = await r.json();
+  ok("scheduler finds the AMC renewal due", r.status() === 200 && cj.done?.amc?.due === 1, JSON.stringify(cj.done?.amc ?? cj).slice(0, 120));
+  let amcNow = (await db.collection("portal_clients").findOne({ _id: cid })).amcs[0];
+  ok("reminder is marked as sent", amcNow.sent.includes(`${amcNow.endDate}:7`) && amcNow.sent.includes(`${amcNow.endDate}:30`), amcNow.sent.join(","));
+  r = await ap.request.post(`${base}/api/admin/automation/run`, { data: { job: "amc" } });
+  ok("same reminder is not sent twice", /nothing was sent/.test((await r.json()).message || ""));
+  // Renewal invoice and renewal.
+  r = await ap.request.post(`${base}/api/admin/clients/${cid}/amc`, { data: { action: "invoice", amcId: "amc1" } });
+  const renInv = r.status() === 201 ? (await r.json()).id : "";
+  const renDoc = renInv && (await db.collection("billing").findOne({ _id: new ObjectId(renInv) }));
+  const linked = (await db.collection("portal_clients").findOne({ _id: cid })).billingIds.includes(renInv);
+  ok("renewal invoice is made and shown in the portal", !!renDoc && renDoc.items[0].rate === 12000 && /renewal/.test(renDoc.items[0].description) && linked, `status ${r.status()}`);
+  r = await ap.request.post(`${base}/api/admin/clients/${cid}/amc`, { data: { action: "invoice", amcId: "amc1" } });
+  ok("second renewal invoice is refused", r.status() === 409, `status ${r.status()}`);
+  const oldEnd = amcNow.endDate;
+  r = await ap.request.post(`${base}/api/admin/clients/${cid}/amc`, { data: { action: "renew", amcId: "amc1", endDate: oldEnd } });
+  amcNow = (await db.collection("portal_clients").findOne({ _id: cid })).amcs[0];
+  ok("renew moves the plan one year ahead", r.status() === 200 && amcNow.startDate === ist(7) && amcNow.endDate > oldEnd && amcNow.sent.length === 0 && amcNow.renewals.length === 1, `${amcNow.startDate} to ${amcNow.endDate}`);
+  r = await ap.request.post(`${base}/api/admin/clients/${cid}/amc`, { data: { action: "renew", amcId: "amc1", endDate: oldEnd } });
+  ok("double renew is refused", r.status() === 409, `status ${r.status()}`);
+  await ap.goto(`${base}/admin/clients/${cid}?tab=amc`); await ap.waitForSelector("text=Renew for 1 year", { timeout: 15000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/19-admin-amc.png`, fullPage: true });
+  await ap.goto(`${base}/admin/clients/${cid}?tab=support`); await ap.waitForSelector("text=Website is not opening", { timeout: 15000 });
+  await ap.click("text=Website is not opening"); await ap.waitForTimeout(700);
+  await ap.screenshot({ path: `${out}/20-admin-urgent-ticket.png`, fullPage: false });
+  // An expired plan: requests are marked not covered.
+  await db.collection("portal_clients").updateOne({ _id: cid }, { $set: { "amcs.0.endDate": ist(-3), "amcs.0.startDate": ist(-368) } });
+  r = await dp.request.post(`${base}/api/portal/tickets`, { data: { subject: "Add a banner", message: "Please add a Diwali banner.", kind: "change" } });
+  tk = await db.collection("portal_tickets").findOne({ _id: new ObjectId((await r.json()).id) });
+  ok("request after the AMC ended is marked not covered", tk.amcCovered === false && tk.amcTitle === "Website AMC (Basic)");
+  await dp.goto(`${base}/portal`, { waitUntil: "networkidle" }); await dp.waitForTimeout(400);
+  ok("portal asks to renew an expired plan", (await dp.content()).includes("Renew plan"));
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

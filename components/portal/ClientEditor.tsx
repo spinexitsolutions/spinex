@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowLeft, ArrowUp, Ban, CheckCircle2, Download, FileText, Link2, Loader2, LogOut, Mail, MessageSquare, Plus, Save, Send, Trash2, Undo2,
+  AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Ban, CalendarClock, CheckCircle2, Download, FileText, Link2, Loader2, LogOut, Mail, MessageSquare, Plus, ReceiptText, RefreshCw, Save, Send, ShieldCheck, Trash2, Undo2,
 } from "lucide-react";
 import {
-  blankProject, fileSizeText, projectProgress, projectStatusLabel, shortDate, ticketStatusLabel,
-  type PortalClient, type PortalFile, type PortalProject, type StageStatus, type Ticket,
+  amcState, amcStateLabel, blankAmc, blankProject, fileSizeText, projectProgress, projectStatusLabel, shortDate, ticketKindLabel, ticketStatusLabel, yearEnd,
+  type AmcPlan, type AmcState, type PortalClient, type PortalFile, type PortalProject, type StageStatus, type Ticket,
 } from "@/lib/portal";
 import { inr } from "@/lib/billing";
 import PortalUpload from "./PortalUpload";
 
 type BillRow = { id: string; type: string; title: string; number: string; date: string; status: string; name: string; company: string; email: string; total: number; balance: number };
 type Data = { client: PortalClient; files: PortalFile[]; tickets: Ticket[]; billing: BillRow[]; seeBilling: boolean };
-type Tab = "projects" | "files" | "invoices" | "support" | "details";
+type Tab = "projects" | "amc" | "files" | "invoices" | "support" | "details";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -27,13 +27,13 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 const rid = () => Math.random().toString(36).slice(2, 10);
-const editable = (c: PortalClient) => ({ name: c.name, company: c.company, email: c.email, phone: c.phone, notes: c.notes, active: c.active, projects: c.projects, billingIds: c.billingIds });
+const editable = (c: PortalClient) => ({ name: c.name, company: c.company, email: c.email, phone: c.phone, notes: c.notes, active: c.active, projects: c.projects, billingIds: c.billingIds, amcs: c.amcs });
 
 export default function ClientEditor({ id, initialTab = "projects", readOnly = false, me }: { id: string; initialTab?: string; readOnly?: boolean; me: string }) {
   const [data, setData] = useState<Data | null>(null);
   const [client, setClient] = useState<PortalClient | null>(null);
   const [saved, setSaved] = useState("");
-  const [tab, setTab] = useState<Tab>((["projects", "files", "invoices", "support", "details"].includes(initialTab) ? initialTab : "projects") as Tab);
+  const [tab, setTab] = useState<Tab>((["projects", "amc", "files", "invoices", "support", "details"].includes(initialTab) ? initialTab : "projects") as Tab);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState("");
@@ -101,6 +101,7 @@ export default function ClientEditor({ id, initialTab = "projects", readOnly = f
 
   const tabs: [Tab, string, number?][] = [
     ["projects", "Projects", client.projects.length],
+    ["amc", "AMC", client.amcs.length],
     ["files", "Files", data.files.length],
     ["invoices", "Invoices", client.billingIds.length],
     ["support", "Support", data.tickets.filter((t) => t.teamUnread).length || undefined],
@@ -142,6 +143,8 @@ export default function ClientEditor({ id, initialTab = "projects", readOnly = f
         )}
 
         {tab === "projects" && <Projects client={client} readOnly={readOnly} me={me} set={set} setProject={setProject} />}
+        {tab === "amc" && <Amcs id={id} client={client} readOnly={readOnly} seeBilling={data.seeBilling} dirty={dirty} save={save} set={set}
+          onClient={(c) => { setClient(c); setSaved(JSON.stringify(editable(c))); setData((d) => (d ? { ...d, client: c } : d)); }} flash={flash} />}
         {tab === "files" && <Files id={id} client={client} files={data.files} readOnly={readOnly} onFiles={(files) => setData((d) => (d ? { ...d, files } : d))} flash={flash} />}
         {tab === "invoices" && (data.seeBilling ? <Invoices client={client} billing={data.billing} readOnly={readOnly} set={set} /> : <Box title="Quotations and invoices in the portal"><p className="text-sm text-muted">Linking quotations and invoices needs access to Quotes and invoices. Ask the owner, or ask someone from accounts to link them. This client has {client.billingIds.length} linked now.</p></Box>)}
         {tab === "support" && <Support tickets={data.tickets} client={client} readOnly={readOnly} onTicket={(t) => setData((d) => (d ? { ...d, tickets: d.tickets.map((x) => (x.id === t.id ? t : x)) } : d))} flash={flash} />}
@@ -413,7 +416,7 @@ function Support({ tickets, client, readOnly, onTicket, flash }: { tickets: Tick
           <li key={x.id}>
             <button onClick={() => setOpen(x.id)} className={`w-full rounded-2xl border px-4 py-3 text-left ${x.id === open ? "border-ink bg-white" : "border-line bg-white hover:border-lav-300"}`}>
               <span className="flex items-center gap-2 font-semibold"><MessageSquare size={15} className="shrink-0 text-lav-700" /><span className="truncate">{x.subject}</span>{x.teamUnread && <span className="ml-auto rounded-full bg-lav-600 px-2 py-0.5 text-[10px] font-bold text-white">New</span>}</span>
-              <span className="mt-0.5 block text-xs text-muted">{ticketStatusLabel[x.status]} · {shortDate(x.updatedAt)}</span>
+              <span className="mt-0.5 block text-xs text-muted">{x.urgent && <b className="text-red-600">Urgent · </b>}{ticketKindLabel[x.kind]} · {ticketStatusLabel[x.status]} · {shortDate(x.updatedAt)}</span>
             </button>
           </li>
         ))}
@@ -422,6 +425,7 @@ function Support({ tickets, client, readOnly, onTicket, flash }: { tickets: Tick
         <Box title={t.subject} note={`${ticketStatusLabel[t.status]}${t.projectId ? ` · ${client.projects.find((p) => p.id === t.projectId)?.title ?? ""}` : ""}`} right={!readOnly && (t.status === "closed"
           ? <button onClick={() => act({ action: "reopen" }, "reopen")} disabled={!!busy} className="btn-ghost px-4 py-2 text-sm"><Undo2 size={15} /> Reopen</button>
           : <button onClick={() => act({ action: "close" }, "close")} disabled={!!busy} className="btn-ghost px-4 py-2 text-sm"><CheckCircle2 size={15} /> Close</button>)}>
+          <TicketTags t={t} />
           <div className="space-y-3">
             {t.messages.map((m) => (
               <div key={m.id} className={`rounded-2xl p-4 ${m.from === "team" ? "ml-8 bg-lav-100/60" : "mr-8 bg-mist"}`}>
@@ -438,6 +442,96 @@ function Support({ tickets, client, readOnly, onTicket, flash }: { tickets: Tick
           )}
         </Box>
       )}
+    </div>
+  );
+}
+
+export function TicketTags({ t }: { t: Ticket }) {
+  return (
+    <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold">
+      {t.urgent && <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-red-700"><AlertTriangle size={13} /> Urgent</span>}
+      <span className="rounded-full bg-mist px-3 py-1 text-muted">{ticketKindLabel[t.kind]}</span>
+      {t.amcCovered ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-emerald-800"><ShieldCheck size={13} /> Covered by {t.amcTitle || "AMC"}</span>
+        : t.amcTitle ? <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">Not covered: {t.amcTitle} had ended</span>
+        : <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">No AMC: paid work</span>}
+    </div>
+  );
+}
+
+// ---------- AMC ----------
+export const amcTone: Record<AmcState, string> = { upcoming: "bg-mist text-muted", active: "bg-emerald-50 text-emerald-800", expiring: "bg-amber-50 text-amber-800", expired: "bg-red-50 text-red-700" };
+
+function Amcs({ id, client, readOnly, seeBilling, dirty, save, set, onClient, flash }: {
+  id: string; client: PortalClient; readOnly: boolean; seeBilling: boolean; dirty: boolean; save: () => Promise<boolean>;
+  set: (p: Partial<PortalClient>) => void; onClient: (c: PortalClient) => void; flash: (m: string) => void;
+}) {
+  const [busy, setBusy] = useState("");
+  const [askRemove, setAskRemove] = useState("");
+  const setAmc = (aid: string, patch: Partial<AmcPlan>) => set({ amcs: client.amcs.map((a) => (a.id === aid ? { ...a, ...patch } : a)) });
+
+  const act = async (a: AmcPlan, action: "renew" | "invoice") => {
+    if (dirty && !(await save())) return;
+    setBusy(`${action}:${a.id}`);
+    try {
+      const r = await api<{ client?: PortalClient; id?: string; number?: string }>(`/api/admin/clients/${id}/amc`, { method: "POST", body: JSON.stringify({ action, amcId: a.id, endDate: a.endDate }) });
+      if (r.client) {
+        onClient(r.client);
+        flash(`Renewed. New end date ${shortDate(r.client.amcs.find((x) => x.id === a.id)?.endDate ?? "")}.`);
+      } else if (r.id) {
+        flash(`Invoice ${r.number} made and shown in the client's portal. Opening it…`);
+        setTimeout(() => { window.location.href = `/admin/billing/${r.id}`; }, 900);
+      }
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Couldn't do that.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Box title="Maintenance plans (AMC)" note="The client sees the plan, what it covers and its end date in their portal. Support requests show whether they are covered. Renewal reminders go out by themselves (Automation and backups)."
+        right={!readOnly && <button onClick={() => set({ amcs: [blankAmc(), ...client.amcs] })} className="btn-dark px-4 py-2.5 text-sm"><Plus size={15} /> Add AMC plan</button>}>
+        {client.amcs.length === 0 && <p className="text-sm text-muted">No AMC yet. Add one when the client takes a yearly maintenance plan.</p>}
+      </Box>
+      {client.amcs.map((a) => {
+        const st = amcState(a);
+        return (
+          <Box key={a.id} title={a.title || "AMC plan"} note={a.startDate && a.endDate ? `${shortDate(a.startDate)} to ${shortDate(a.endDate)}` : "Add the dates"}
+            right={<span className={`rounded-full px-3 py-1.5 text-sm font-bold ${amcTone[st]}`}>{amcStateLabel(a)}</span>}>
+            <fieldset disabled={readOnly} className="grid gap-4 sm:grid-cols-2">
+              <F label="Plan name"><input className="input" value={a.title} onChange={(e) => setAmc(a.id, { title: e.target.value })} placeholder="e.g. Website AMC (Basic)" /></F>
+              <F label="Yearly price for renewal (₹, before GST)"><input className="input" type="number" min={0} value={a.amount || ""} onChange={(e) => setAmc(a.id, { amount: Number(e.target.value) || 0 })} placeholder="e.g. 12000" /></F>
+              <div className="grid grid-cols-2 gap-3">
+                <F label="Start date"><input className="input" type="date" value={a.startDate} onChange={(e) => setAmc(a.id, { startDate: e.target.value, endDate: e.target.value && (!a.endDate || a.endDate <= e.target.value) ? yearEnd(e.target.value) : a.endDate })} /></F>
+                <F label="End date"><input className="input" type="date" value={a.endDate} onChange={(e) => setAmc(a.id, { endDate: e.target.value })} /></F>
+              </div>
+              <F label="Reply time (shown to the client)"><input className="input" value={a.responseTime} onChange={(e) => setAmc(a.id, { responseTime: e.target.value })} placeholder="e.g. Within 1 working day" /></F>
+              <F label="What's included (one point per line)" wide><textarea className="input min-h-[110px]" value={a.covers} onChange={(e) => setAmc(a.id, { covers: e.target.value })} /></F>
+            </fieldset>
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-line p-4">
+              <input type="checkbox" disabled={readOnly} className="mt-1 h-4 w-4 accent-lav-600" checked={a.remind} onChange={(e) => setAmc(a.id, { remind: e.target.checked })} />
+              <span><span className="block font-semibold">Send renewal reminders</span><span className="block text-sm text-muted">Emails before the end date, as set in Automation and backups. {a.sent.length ? `${a.sent.filter((k) => k.startsWith(`${a.endDate}:`)).length} sent for this term.` : "None sent for this term yet."}</span></span>
+            </label>
+            {!readOnly && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {seeBilling && <button onClick={() => act(a, "invoice")} disabled={!!busy || !a.endDate || !a.amount} className="btn-ghost px-4 py-2.5 text-sm">{busy === `invoice:${a.id}` ? <Loader2 size={15} className="animate-spin" /> : <ReceiptText size={15} />} Make renewal invoice{a.amount ? "" : " (add price first)"}</button>}
+                <button onClick={() => act(a, "renew")} disabled={!!busy || !a.endDate} className="btn-dark px-4 py-2.5 text-sm">{busy === `renew:${a.id}` ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />} Renew for 1 year</button>
+                <span className="text-xs text-muted">Renew after the client pays. The plan moves one year ahead and reminders start again.</span>
+              </div>
+            )}
+            {a.renewals.length > 0 && (
+              <ul className="mt-4 space-y-1 rounded-2xl bg-mist px-4 py-3 text-xs text-muted">
+                {[...a.renewals].reverse().map((r) => <li key={r.at} className="flex items-center gap-2"><CalendarClock size={13} /> Renewed {shortDate(r.at)}{r.by ? ` by ${r.by}` : ""}: {shortDate(r.from)} to {shortDate(r.to)}</li>)}
+              </ul>
+            )}
+            {!readOnly && (askRemove === a.id ? (
+              <p className="mt-4 flex flex-wrap items-center gap-2 text-sm">Remove this plan? <button onClick={() => { set({ amcs: client.amcs.filter((x) => x.id !== a.id) }); setAskRemove(""); }} className="rounded-full bg-red-600 px-4 py-2 font-semibold text-white">Yes, remove</button><button onClick={() => setAskRemove("")} className="btn-ghost px-4 py-2 text-sm">No</button></p>
+            ) : <button onClick={() => setAskRemove(a.id)} className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Remove plan</button>)}
+          </Box>
+        );
+      })}
+      {!readOnly && client.amcs.length > 0 && <p className="text-xs text-muted">Press Save at the top after changing a plan.</p>}
     </div>
   );
 }
