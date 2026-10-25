@@ -42,6 +42,8 @@ export default function AdLeadsSetup({ goApiKeys }: { goApiKeys?: () => void }) 
   const lastName = tab === "meta" ? s.state.lastMetaName : s.state.lastGoogleName;
   const err = tab === "meta" ? s.state.errorMeta : s.state.errorGoogle;
   const errAt = tab === "meta" ? s.state.errorMetaAt : s.state.errorGoogleAt;
+  // A problem that was followed by a good lead is already fixed.
+  const showErr = !!err && (!last || errAt > last);
 
   return (
     <div className="space-y-4 text-sm">
@@ -54,7 +56,7 @@ export default function AdLeadsSetup({ goApiKeys }: { goApiKeys?: () => void }) 
       <div className={`rounded-2xl px-4 py-3 ${last ? "bg-emerald-50 text-emerald-800" : ok ? "bg-lav-100/60 text-lav-700" : "bg-mist text-muted"}`}>
         {last ? <>Working. Last lead: <b>{lastName}</b>, {when(last)}.</> : ok ? "Set up on this side. Send a test lead to check it." : "Not set up yet. Follow the steps below."}
       </div>
-      {err && <p className="flex gap-2 rounded-2xl bg-red-50 px-4 py-3 text-red-700"><TriangleAlert size={16} className="mt-0.5 shrink-0" /><span><b>Last problem ({when(errAt)}):</b> {err}</span></p>}
+      {showErr && <p className="flex gap-2 rounded-2xl bg-red-50 px-4 py-3 text-red-700"><TriangleAlert size={16} className="mt-0.5 shrink-0" /><span><b>Last problem ({when(errAt)}):</b> {err}</span></p>}
       {error && <p className="rounded-xl bg-red-50 px-4 py-2 text-red-700">{error}</p>}
 
       {tab === "meta" ? (

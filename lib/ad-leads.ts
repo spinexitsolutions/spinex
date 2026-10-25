@@ -79,6 +79,7 @@ export async function saveAdLead(a: AdLead) {
   if (existing) {
     if (existing.adIncomplete && !a.incomplete) {
       await c.updateOne({ _id: existing._id }, { $set: { ...d, message, track, adIncomplete: false, adForm: a.formName, updatedAt: stamp } });
+      await writeState("ad_leads", { [`last_${a.source}`]: stamp, [`last_${a.source}_name`]: d.name });
       return { saved: true, updated: true };
     }
     return { saved: false, duplicate: true };
@@ -89,7 +90,8 @@ export async function saveAdLead(a: AdLead) {
     if ((e as { code?: number }).code === 11000) return { saved: false, duplicate: true };
     throw e;
   }
-  await writeState("ad_leads", { [`last_${a.source}`]: stamp, [`last_${a.source}_name`]: d.name });
+  // "Working" on the setup screen means a lead came in with its details.
+  if (!a.incomplete) await writeState("ad_leads", { [`last_${a.source}`]: stamp, [`last_${a.source}_name`]: d.name });
   await announceLead({
     data: { ...d, name: d.name, phone: d.phone },
     source: a.source,

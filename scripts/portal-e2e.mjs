@@ -490,7 +490,7 @@ try {
   const tl = await db.collection("leads").findOne({ adLeadId: "google:test-lead-2" });
   ok("Google test data is marked as a test", /TEST LEAD/.test(tl?.message || ""));
   const st = await (await ap.request.get(`${base}/api/admin/ad-leads`)).json();
-  ok("setup screen shows both working", !!st.state?.lastMeta && !!st.state?.lastGoogle && st.meta.appSecret && st.google.key);
+  ok("setup screen shows both working", !!st.state?.lastMeta && st.state?.lastMetaName === "Rakesh Meena" && !!st.state?.lastGoogle && st.meta.appSecret && st.google.key, st.state?.lastMetaName);
   graphSrv.close();
   await ap.goto("about:blank"); await ap.goto(`${base}/admin#leads`); await ap.waitForSelector("text=Rakesh Meena", { timeout: 15000 }); await ap.waitForTimeout(800);
   await ap.screenshot({ path: `${out}/29-leads-from-ads.png`, fullPage: false });
