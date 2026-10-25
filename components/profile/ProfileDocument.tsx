@@ -57,15 +57,15 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
           <Eyebrow>What we do</Eyebrow>
           <h2 className="mt-3 font-display text-[40px] font-semibold leading-[1.06] tracking-tight">{content.sections.services.heading || "Our services"}</h2>
           {content.sections.services.intro && <p className="mt-4 max-w-[150mm] text-[14px] text-[#6b6680]">{content.sections.services.intro}</p>}
-          <div className="mt-9 grid grid-cols-2 gap-4">
+          <div className="mt-7 grid grid-cols-2 gap-3.5">
             {services.map((s, i) => (
-              <div key={s.id} className="rounded-[18px] border border-[#e6e3ef] p-6">
+              <div key={s.id} className="rounded-[18px] border border-[#e6e3ef] px-5 py-[18px]">
                 <div className="flex items-center gap-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: ACCENT }}>{String(i + 1).padStart(2, "0")}</span>
                   <p className="font-display text-[18px] font-semibold leading-tight">{s.title}</p>
                 </div>
-                <p className="mt-3 line-clamp-4 text-[12.5px] leading-[1.65] text-[#4b465e]">{s.description || s.short}</p>
-                {s.tags.length > 0 && <p className="mt-3 truncate text-[11px] font-semibold" style={{ color: ACCENT }}>{s.tags.slice(0, 4).join(" · ")}</p>}
+                <p className="mt-2.5 line-clamp-3 text-[12.5px] leading-[1.6] text-[#4b465e]">{s.description || s.short}</p>
+                {s.tags.length > 0 && <p className="mt-2 truncate text-[11px] font-semibold" style={{ color: ACCENT }}>{s.tags.slice(0, 4).join(" · ")}</p>}
               </div>
             ))}
           </div>
