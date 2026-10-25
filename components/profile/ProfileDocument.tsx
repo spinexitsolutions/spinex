@@ -64,7 +64,7 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: ACCENT }}>{String(i + 1).padStart(2, "0")}</span>
                   <p className="font-display text-[18px] font-semibold leading-tight">{s.title}</p>
                 </div>
-                <p className="mt-2.5 line-clamp-3 text-[12.5px] leading-[1.6] text-[#4b465e]">{s.description || s.short}</p>
+                <p className="mt-2.5 line-clamp-3 text-[12.5px] leading-[1.6] text-[#4b465e]">{s.description.length > 150 && s.short ? s.short : s.description || s.short}</p>
                 {s.tags.length > 0 && <p className="mt-2 truncate text-[11px] font-semibold" style={{ color: ACCENT }}>{s.tags.slice(0, 4).join(" · ")}</p>}
               </div>
             ))}
