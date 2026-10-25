@@ -27,21 +27,21 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
     node: (
       <Sheet>
         <Eyebrow>About us</Eyebrow>
-        <h2 className="mt-3 font-display text-[34px] font-semibold leading-[1.08] tracking-tight">{p.aboutHeading || content.about.title}</h2>
-        <div className="mt-6 grid grid-cols-[1.25fr_1fr] gap-8">
-          <div className="space-y-3 text-[13px] leading-[1.7] text-[#3b3650]">{about.map((t, i) => <p key={i}>{t}</p>)}</div>
-          {content.about.image ? <img src={content.about.image} alt="" className="h-[62mm] w-full rounded-[18px] object-cover" /> : <div className="h-[62mm] rounded-[18px] bg-[#eeeafd]" />}
+        <h2 className="mt-3 font-display text-[40px] font-semibold leading-[1.06] tracking-tight">{p.aboutHeading || content.about.title}</h2>
+        <div className="mt-8 grid grid-cols-[1.2fr_1fr] gap-8">
+          <div className="space-y-4 text-[14.5px] leading-[1.75] text-[#3b3650]">{about.map((t, i) => <p key={i}>{t}</p>)}</div>
+          {content.about.image ? <img src={content.about.image} alt="" className="h-[88mm] w-full rounded-[20px] object-cover" /> : <div className="h-[88mm] rounded-[20px] bg-[#eeeafd]" />}
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-4">
+        <div className="mt-10 grid grid-cols-2 gap-5">
           {p.mission && <Box title="Our mission" text={p.mission} dark />}
           {p.vision && <Box title="Our vision" text={p.vision} />}
         </div>
         {p.show.stats && stats.length > 0 && (
-          <div className="mt-8 grid grid-cols-4 gap-3">
+          <div className="mt-10 grid grid-cols-4 gap-4">
             {stats.map((s) => (
-              <div key={s.id} className="rounded-[16px] border border-[#e6e3ef] px-4 py-4">
-                <p className="font-display text-[24px] font-semibold leading-none tracking-tight" style={{ color: ACCENT }}>{s.value}</p>
-                <p className="mt-2 text-[11px] leading-snug text-[#6b6680]">{s.label}</p>
+              <div key={s.id} className="rounded-[18px] border border-[#e6e3ef] px-5 py-6">
+                <p className="font-display text-[30px] font-semibold leading-none tracking-tight" style={{ color: ACCENT }}>{s.value}</p>
+                <p className="mt-2.5 text-[12px] leading-snug text-[#6b6680]">{s.label}</p>
               </div>
             ))}
           </div>
@@ -55,17 +55,17 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
       node: (
         <Sheet>
           <Eyebrow>What we do</Eyebrow>
-          <h2 className="mt-3 font-display text-[34px] font-semibold leading-[1.08] tracking-tight">{content.sections.services.heading || "Our services"}</h2>
-          {content.sections.services.intro && <p className="mt-3 max-w-[150mm] text-[13px] text-[#6b6680]">{content.sections.services.intro}</p>}
-          <div className="mt-7 grid grid-cols-2 gap-3.5">
+          <h2 className="mt-3 font-display text-[40px] font-semibold leading-[1.06] tracking-tight">{content.sections.services.heading || "Our services"}</h2>
+          {content.sections.services.intro && <p className="mt-4 max-w-[150mm] text-[14px] text-[#6b6680]">{content.sections.services.intro}</p>}
+          <div className="mt-9 grid grid-cols-2 gap-4">
             {services.map((s, i) => (
-              <div key={s.id} className="rounded-[16px] border border-[#e6e3ef] p-5">
+              <div key={s.id} className="rounded-[18px] border border-[#e6e3ef] p-6">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: ACCENT }}>{String(i + 1).padStart(2, "0")}</span>
-                  <p className="font-display text-[16px] font-semibold leading-tight">{s.title}</p>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white" style={{ background: ACCENT }}>{String(i + 1).padStart(2, "0")}</span>
+                  <p className="font-display text-[18px] font-semibold leading-tight">{s.title}</p>
                 </div>
-                <p className="mt-2.5 line-clamp-3 text-[11.5px] leading-[1.6] text-[#4b465e]">{s.short || s.description}</p>
-                {s.tags.length > 0 && <p className="mt-2.5 truncate text-[10.5px] font-semibold" style={{ color: ACCENT }}>{s.tags.slice(0, 4).join(" · ")}</p>}
+                <p className="mt-3 line-clamp-4 text-[12.5px] leading-[1.65] text-[#4b465e]">{s.description || s.short}</p>
+                {s.tags.length > 0 && <p className="mt-3 truncate text-[11px] font-semibold" style={{ color: ACCENT }}>{s.tags.slice(0, 4).join(" · ")}</p>}
               </div>
             ))}
           </div>
@@ -83,28 +83,30 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
           {showIndustries && (
             <>
               <Eyebrow>Who we work with</Eyebrow>
-              <h2 className="mt-3 font-display text-[30px] font-semibold leading-[1.1] tracking-tight">{content.sections.industries.heading || "Industries we serve"}</h2>
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              <h2 className="mt-3 font-display text-[36px] font-semibold leading-[1.08] tracking-tight">{content.sections.industries.heading || "Industries we serve"}</h2>
+              <div className="mt-7 grid grid-cols-2 gap-4">
                 {industries.map((ind) => (
-                  <div key={ind.id} className="rounded-[14px] bg-[#f5f4fa] px-4 py-3">
-                    <p className="text-[13.5px] font-bold">{ind.title}</p>
-                    <p className="mt-0.5 line-clamp-2 text-[11px] leading-[1.55] text-[#6b6680]">{ind.description}</p>
+                  <div key={ind.id} className="rounded-[16px] bg-[#f5f4fa] px-5 py-5">
+                    <p className="text-[15.5px] font-bold">{ind.title}</p>
+                    <p className="mt-1.5 line-clamp-3 text-[12.5px] leading-[1.6] text-[#6b6680]">{ind.description}</p>
+                    {ind.points.length > 0 && <p className="mt-2 truncate text-[11px] font-semibold" style={{ color: ACCENT }}>{ind.points.slice(0, 3).join(" · ")}</p>}
                   </div>
                 ))}
               </div>
             </>
           )}
           {showProcess && (
-            <div className={showIndustries ? "mt-9" : ""}>
+            <div className={showIndustries ? "mt-12" : ""}>
               <Eyebrow>How we work</Eyebrow>
-              <h2 className="mt-3 font-display text-[30px] font-semibold leading-[1.1] tracking-tight">{content.sections.process.heading || "Our process"}</h2>
-              <div className="relative mt-5 space-y-3 pl-10">
-                <span aria-hidden className="absolute bottom-3 left-[15px] top-3 w-[2px] bg-[#e6e3ef]" />
+              <h2 className="mt-3 font-display text-[36px] font-semibold leading-[1.08] tracking-tight">{content.sections.process.heading || "Our process"}</h2>
+              <div className="relative mt-7 space-y-6 pl-12">
+                <span aria-hidden className="absolute bottom-4 left-[17px] top-4 w-[2px] bg-[#e6e3ef]" />
                 {process.map((st, i) => (
                   <div key={st.id} className="relative">
-                    <span className="absolute -left-10 top-0 grid h-8 w-8 place-items-center rounded-full bg-[#14111f] text-[12px] font-bold text-white">{i + 1}</span>
-                    <p className="text-[14px] font-bold">{st.title}{st.time && <span className="ml-2 text-[11px] font-semibold" style={{ color: ACCENT }}>{st.time}</span>}</p>
-                    <p className="text-[11.5px] leading-[1.55] text-[#4b465e]">{st.text}</p>
+                    <span className="absolute -left-12 top-0 grid h-9 w-9 place-items-center rounded-full bg-[#14111f] text-[13px] font-bold text-white">{i + 1}</span>
+                    <p className="text-[16px] font-bold">{st.title}{st.time && <span className="ml-2 text-[11px] font-semibold" style={{ color: ACCENT }}>{st.time}</span>}</p>
+                    <p className="mt-0.5 text-[13px] leading-[1.6] text-[#4b465e]">{st.text}</p>
+                    {st.gets.length > 0 && <p className="mt-1 text-[11.5px] font-semibold" style={{ color: ACCENT }}>{st.gets.join(" · ")}</p>}
                   </div>
                 ))}
               </div>
@@ -122,7 +124,7 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
       node: (
         <Sheet>
           <Eyebrow>Our work</Eyebrow>
-          <h2 className="mt-3 font-display text-[34px] font-semibold leading-[1.08] tracking-tight">{showWork ? "Selected projects" : "What our clients say"}</h2>
+          <h2 className="mt-3 font-display text-[40px] font-semibold leading-[1.06] tracking-tight">{showWork ? "Selected projects" : "What our clients say"}</h2>
           {showWork && (
             <div className="mt-6 grid grid-cols-2 gap-4">
               {projects.map((x) => (
@@ -179,7 +181,7 @@ export default function ProfileDocument({ content, qr }: { content: SiteContent;
 
 function Sheet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-full px-[16mm] pb-[22mm] pt-[16mm]">
+    <div className="h-full px-[16mm] pb-[22mm] pt-[20mm]">
       <div aria-hidden className="absolute left-0 top-0 h-[5px] w-[60mm]" style={{ background: ACCENT }} />
       {children}
     </div>
@@ -192,9 +194,9 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 function Box({ title, text, dark = false }: { title: string; text: string; dark?: boolean }) {
   return (
-    <div className={`rounded-[18px] p-5 ${dark ? "bg-[#14111f] text-white" : "bg-[#eeeafd]"}`}>
+    <div className={`rounded-[20px] p-7 ${dark ? "bg-[#14111f] text-white" : "bg-[#eeeafd]"}`}>
       <p className={`text-[11px] font-bold uppercase tracking-[0.14em] ${dark ? "text-[#b9adfc]" : ""}`} style={dark ? undefined : { color: ACCENT }}>{title}</p>
-      <p className="mt-2 text-[13px] leading-[1.6]">{text}</p>
+      <p className="mt-3 text-[15px] leading-[1.65]">{text}</p>
     </div>
   );
 }
@@ -235,25 +237,33 @@ function Back({ content, name, website, address, qr }: { content: SiteContent; n
   const social = [["Instagram", c.instagram], ["LinkedIn", c.linkedin], ["YouTube", c.youtube]].filter(([, v]) => v) as [string, string][];
   return (
     <div className="flex h-full flex-col">
-      <div className="px-[16mm] pt-[16mm]">
+      <div className="px-[16mm] pt-[18mm]">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: ACCENT }}>Why choose us</p>
-        <h2 className="mt-3 font-display text-[34px] font-semibold leading-[1.08] tracking-tight">Why businesses work with {name}</h2>
-        <ul className="mt-6 grid grid-cols-2 gap-3">
+        <h2 className="mt-3 font-display text-[40px] font-semibold leading-[1.06] tracking-tight">Why businesses work with {name}</h2>
+        <ul className="mt-8 grid grid-cols-2 gap-4">
           {p.highlights.filter(Boolean).map((h) => (
-            <li key={h} className="flex gap-3 rounded-[14px] border border-[#e6e3ef] px-4 py-3 text-[12.5px] leading-[1.5]">
+            <li key={h} className="flex gap-3 rounded-[16px] border border-[#e6e3ef] px-5 py-4 text-[14px] leading-[1.5]">
               <span className="mt-[2px] grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white" style={{ background: ACCENT }}>✓</span>
               {h}
             </li>
           ))}
         </ul>
+        {content.services.length > 0 && (
+          <div className="mt-10">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: ACCENT }}>Services at a glance</p>
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              {content.services.map((sv) => <span key={sv.id} className="rounded-full bg-[#eeeafd] px-4 py-2 text-[13px] font-semibold text-[#4a3aa8]">{sv.title}</span>)}
+            </div>
+          </div>
+        )}
       </div>
-      <div className="relative mt-auto overflow-hidden bg-[#14111f] px-[16mm] pb-[16mm] pt-[14mm] text-white">
+      <div className="relative mt-auto overflow-hidden bg-[#14111f] px-[16mm] pb-[18mm] pt-[18mm] text-white">
         <div aria-hidden className="absolute -left-[30mm] -bottom-[40mm] h-[110mm] w-[110mm] rounded-full bg-[#6e59d9]/35 blur-[60px]" />
         <div className="relative">
-          <h2 className="max-w-[150mm] font-display text-[32px] font-semibold leading-[1.1] tracking-tight">{p.ctaHeading}</h2>
-          {p.ctaText && <p className="mt-3 max-w-[140mm] text-[13px] leading-[1.6] text-white/70">{p.ctaText}</p>}
+          <h2 className="max-w-[160mm] font-display text-[38px] font-semibold leading-[1.1] tracking-tight">{p.ctaHeading}</h2>
+          {p.ctaText && <p className="mt-4 max-w-[150mm] text-[14.5px] leading-[1.6] text-white/70">{p.ctaText}</p>}
           <div className="mt-8 grid grid-cols-[1fr_auto] items-end gap-8">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-[12.5px]">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-[14px]">
               {c.phone && <p><span className="block text-[11px] text-white/45">Call or WhatsApp</span>+91 {c.phone}</p>}
               {c.email && <p className="break-all"><span className="block text-[11px] text-white/45">Email</span>{c.email}</p>}
               {website && <p><span className="block text-[11px] text-white/45">Website</span>{website}</p>}
@@ -262,7 +272,7 @@ function Back({ content, name, website, address, qr }: { content: SiteContent; n
             </div>
             {qr && (
               <div className="text-center">
-                <img src={qr} alt="" className="h-[30mm] w-[30mm] rounded-[10px] bg-white p-2" />
+                <img src={qr} alt="" className="h-[34mm] w-[34mm] rounded-[12px] bg-white p-2" />
                 <p className="mt-1.5 text-[10px] text-white/55">Scan to visit</p>
               </div>
             )}
