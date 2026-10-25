@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { Instagram, Linkedin, Youtube } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { openCookieSettings } from "@/lib/consent";
-import { serviceSlug } from "@/lib/content";
+import { cityPath, serviceSlug } from "@/lib/content";
 
 export default function Footer() {
   const { content } = useContent();
@@ -36,6 +36,7 @@ export default function Footer() {
             { label: "Careers", href: "/careers" },
             { label: "Internship", href: "/internship" },
             { label: "Verify certificate", href: "/verify" },
+            ...(content.cities ?? []).filter((x) => x.show).map((x) => ({ label: `Website development in ${x.city}`, href: cityPath(x) })),
             { label: "Contact", href: "/contact" },
           ]}
         />

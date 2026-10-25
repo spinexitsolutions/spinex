@@ -58,6 +58,12 @@ jobs:
           (npx next start -p 3100 > server.log 2>&1 &)
           for i in $(seq 1 40); do curl -sf "http://localhost:3100/letter-samples?type=noc" > /dev/null && break; sleep 2; done
           node scripts/letter-check.mjs http://localhost:3100 /tmp/letters || true
+          # City pages: the nice address must open the page, the inner one must redirect to it.
+          for u in /website-development-jaipur /locations/jaipur /website-development-nowhere; do
+            echo "$u $(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://localhost:3100$u")" >> /tmp/letters/report.txt
+          done
+          curl -s http://localhost:3100/website-development-jaipur | grep -o '<title>[^<]*</title>' >> /tmp/letters/report.txt || true
+          curl -s http://localhost:3100/sitemap.xml | grep -o 'website-development-[a-z-]*' >> /tmp/letters/report.txt || true
           tail -20 server.log || true
       - name: Save result
         run: |

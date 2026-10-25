@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getPublishedPosts } from "@/lib/post-db";
 import { getContent } from "@/lib/content-server";
-import { productSlug, projectSlug, serviceSlug } from "@/lib/content";
+import { cityPath, productSlug, projectSlug, serviceSlug } from "@/lib/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -27,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(content.products.length ? [{ url: `${SITE_URL}/products`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.85 }] : []),
     ...content.projects.filter((p) => !p.hidePage).map((p) => ({ url: `${SITE_URL}/work/${projectSlug(p)}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 })),
     ...content.products.map((pr) => ({ url: `${SITE_URL}/products/${productSlug(pr)}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 })),
+    ...(content.cities ?? []).filter((c) => c.show).map((c) => ({ url: `${SITE_URL}${cityPath(c)}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.9 })),
     ...posts.map((p) => ({ url: `${SITE_URL}/blog/${p.slug}`, lastModified: new Date(p.updatedAt || p.publishedAt || now), changeFrequency: "monthly" as const, priority: 0.6 })),
   ];
 }

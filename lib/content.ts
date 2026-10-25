@@ -72,6 +72,28 @@ export type Testimonial = { id: string; name: string; role: string; quote: strin
 
 export type Faq = { id: string; q: string; a: string; keywords: string[] };
 
+// Local SEO page for one city: /website-development-<slug> (e.g. /website-development-jaipur).
+export type CityPage = {
+  id: string;
+  show: boolean;
+  city: string;
+  state: string;
+  slug: string; // jaipur → /website-development-jaipur
+  heading: string;
+  intro: string;
+  metaTitle: string;
+  metaDescription: string;
+  stats: { id: string; value: string; label: string }[];
+  services: { id: string; title: string; text: string }[];
+  why: string[];
+  areas: string[];
+  faqs: { id: string; q: string; a: string }[];
+  nearby: string[];
+};
+export const citySlug = (c: Pick<CityPage, "slug" | "city">) =>
+  (c.slug || c.city).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "city";
+export const cityPath = (c: Pick<CityPage, "slug" | "city">) => `/website-development-${citySlug(c)}`;
+
 export type Stat = { id: string; value: string; label: string };
 
 export type ProcessStep = { id: string; title: string; time: string; text: string; gets: string[] };
@@ -207,6 +229,7 @@ export type SiteContent = {
     youtube: string;
   };
   chatbot: { name: string; greeting: string; faqs: Faq[] };
+  cities: CityPage[];
 };
 
 // Stock photos live in public/images/stock (run `npm run offline-images` once to download them).
@@ -581,6 +604,48 @@ const baseContent: SiteContent = {
     linkedin: "https://in.linkedin.com/company/spinex-it-solutions",
     youtube: "https://www.youtube.com/@SpinexItSolutions1",
   },
+  cities: [
+    {
+      id: "jaipur",
+      show: true,
+      city: "Jaipur",
+      state: "Rajasthan",
+      slug: "jaipur",
+      heading: "Website development company in Jaipur",
+      intro: "We design and build fast, mobile-friendly websites, online stores and apps for Jaipur businesses, from showrooms and clinics to jewellers, exporters and startups. Our team is based in Jaipur, so you can meet us in person.",
+      metaTitle: "Website Development Company in Jaipur | Spinex IT Solutions",
+      metaDescription: "Website design and development in Jaipur: business websites, online stores, apps and local SEO by a Jaipur team you can meet. Free call and written quote.",
+      stats: [
+        { id: "s1", value: "Jaipur", label: "Local team you can meet" },
+        { id: "s2", value: "Free", label: "First call and written quote" },
+        { id: "s3", value: "Hindi & English", label: "Talk in your language" },
+        { id: "s4", value: "All India", label: "Clients outside Jaipur work with us online" },
+      ],
+      services: [
+        { id: "c1", title: "Business websites", text: "For clinics, CA firms, coaching institutes, showrooms and service businesses. Every enquiry reaches your WhatsApp and email." },
+        { id: "c2", title: "Online stores", text: "Shopify and WooCommerce stores for Jaipur's jewellery, gems, handicraft, block-print and textile sellers, with UPI, cards and COD." },
+        { id: "c3", title: "Booking and delivery apps", text: "Customer app, partner app and admin panel for salons, home services, restaurants and delivery businesses." },
+        { id: "c4", title: "Local SEO and Google Maps", text: "Show up when people in Jaipur search “near me”, and get more calls from your Google Business Profile." },
+        { id: "c5", title: "Google and Meta ads", text: "Ads aimed at the Jaipur areas and pin codes you serve, with every lead tracked in one place." },
+        { id: "c6", title: "Social media and reels", text: "Posts, reels and graphic design for Jaipur brands, cafes, showrooms and events." },
+      ],
+      why: [
+        "Meet us in person in Jaipur, or on a video call",
+        "We understand how customers in Jaipur search and buy",
+        "Fixed price in rupees and a GST invoice, with no hidden charges",
+        "One team for your website, Google and social media",
+      ],
+      areas: ["Malviya Nagar", "Vaishali Nagar", "C-Scheme", "Mansarovar", "Jagatpura", "Raja Park", "Tonk Road", "Durgapura", "Sitapura", "Vidhyadhar Nagar", "Johari Bazar", "MI Road", "Bani Park", "Sodala", "Ajmer Road", "Jhotwara"],
+      faqs: [
+        { id: "q1", q: "How much does a website cost in Jaipur?", a: "It depends on the number of pages and features, and whether you need an online store. After a free call we send a clear written quote in rupees, with GST shown separately and no hidden charges." },
+        { id: "q2", q: "Can I meet your team in Jaipur?", a: "Yes. Our team is based in Jaipur. You can meet us at our office or on a video call, whichever suits you." },
+        { id: "q3", q: "How long does a website take?", a: "A business website usually takes 1 to 2 weeks and an online store 2 to 4 weeks, depending on content and features. You get a timeline with the quote." },
+        { id: "q4", q: "Will my business show on Google in Jaipur?", a: "Every website we build is ready for Google: fast pages, proper titles and a link to your Google Business Profile. For higher rankings in Jaipur searches, we also offer monthly local SEO." },
+        { id: "q5", q: "Do you work with businesses outside Jaipur?", a: "Yes. Businesses across India work with us over video calls and WhatsApp, with the same team and the same quality." },
+      ],
+      nearby: ["Ajmer", "Sikar", "Alwar", "Tonk", "Kota", "Udaipur", "Jodhpur"],
+    },
+  ],
   chatbot: {
     name: "Spinex Assistant",
     greeting:

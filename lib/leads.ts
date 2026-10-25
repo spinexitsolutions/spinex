@@ -12,7 +12,7 @@ export const leadStatusLabel: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 
-export const LEAD_SOURCES = { contact: "Contact page", home: "Home page", planner: "Project planner", product: "Product demo request" } as const;
+export const LEAD_SOURCES = { contact: "Contact page", home: "Home page", planner: "Project planner", product: "Product demo request", city: "City page" } as const;
 export type LeadSource = keyof typeof LEAD_SOURCES;
 
 export type Lead = {

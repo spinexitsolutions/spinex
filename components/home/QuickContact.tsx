@@ -10,7 +10,7 @@ import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
 
 // Home page contact: one-tap ways to reach us, plus a short form that opens WhatsApp or email.
-export default function QuickContact() {
+export default function QuickContact({ source = "home", note = "" }: { source?: "home" | "city"; note?: string } = {}) {
   const { content } = useContent();
   const c = content.contact;
   const [name, setName] = useState("");
@@ -47,7 +47,7 @@ export default function QuickContact() {
     }
     setError("");
     setSending(true);
-    const res = await submitLead({ name, phone, services: need.join(", "), message, source: "home", website: honeypot, startedAt: String(startedAt.current), cfToken });
+    const res = await submitLead({ name, phone, services: need.join(", "), message: [note, message].filter(Boolean).join("\n"), source, website: honeypot, startedAt: String(startedAt.current), cfToken });
     setSending(false);
     if (res.ok) {
       setDone(name.split(" ")[0]);
