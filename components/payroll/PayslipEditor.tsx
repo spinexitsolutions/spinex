@@ -143,7 +143,7 @@ export default function PayslipEditor({ id, logo, verifyBase, readOnly }: { id: 
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1400px] gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,820px)]">
+      <div className="mx-auto grid max-w-[1400px] gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,760px)]">
         <div className="space-y-5">
           {slip.status !== "draft" && (
             <section className="rounded-3xl border border-line bg-white p-5">
@@ -169,12 +169,18 @@ export default function PayslipEditor({ id, logo, verifyBase, readOnly }: { id: 
           <Box title="Earnings" note="Monthly rate comes from the employee's salary. Untick “For days worked” for one-time pay like a bonus or overtime.">
             <fieldset disabled={locked} className="space-y-2">
               {slip.earnings.map((r) => (
-                <div key={r.id} className="grid items-center gap-2 rounded-2xl border border-line p-2 sm:grid-cols-[1fr_120px_auto_110px_auto]">
-                  <input className="input" value={r.label} onChange={(e) => setEarning(r.id, { label: e.target.value })} aria-label="Earning name" />
-                  <input className="input" type="number" min={0} value={r.prorate ? r.full : r.amount} onChange={(e) => setEarning(r.id, r.prorate ? { full: Number(e.target.value) || 0 } : { amount: Number(e.target.value) || 0, full: Number(e.target.value) || 0 })} aria-label={r.prorate ? "Monthly rate" : "Amount"} title={r.prorate ? "Full monthly rate" : "Amount"} />
-                  <label className="flex items-center gap-1.5 whitespace-nowrap px-1 text-xs text-muted"><input type="checkbox" className="h-4 w-4 accent-lav-600" checked={r.prorate} onChange={(e) => setEarning(r.id, { prorate: e.target.checked, full: r.prorate ? r.full : r.amount })} /> For days worked</label>
-                  <span className="text-right text-sm font-semibold tabular-nums">{rs(r.amount)}</span>
-                  <button type="button" onClick={() => set({ earnings: slip.earnings.filter((x) => x.id !== r.id) })} aria-label="Remove" className="grid h-9 w-9 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
+                <div key={r.id} className="space-y-2 rounded-2xl border border-line p-2">
+                  <div className="flex gap-2">
+                    <input className="input flex-1" value={r.label} onChange={(e) => setEarning(r.id, { label: e.target.value })} aria-label="Earning name" />
+                    <button type="button" onClick={() => set({ earnings: slip.earnings.filter((x) => x.id !== r.id) })} aria-label="Remove" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <label className="flex items-center gap-2 text-xs text-muted">{r.prorate ? "Monthly rate" : "Amount"}
+                      <input className="input w-[120px]" type="number" min={0} value={r.prorate ? r.full : r.amount} onChange={(e) => setEarning(r.id, r.prorate ? { full: Number(e.target.value) || 0 } : { amount: Number(e.target.value) || 0, full: Number(e.target.value) || 0 })} />
+                    </label>
+                    <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted"><input type="checkbox" className="h-4 w-4 accent-lav-600" checked={r.prorate} onChange={(e) => setEarning(r.id, { prorate: e.target.checked, full: r.prorate ? r.full : r.amount })} /> For days worked</label>
+                    <span className="ml-auto text-sm font-semibold tabular-nums">{rs(r.amount)}</span>
+                  </div>
                 </div>
               ))}
               <button type="button" onClick={() => set({ earnings: [...slip.earnings, { id: rid(), label: "Bonus", full: 0, amount: 0, prorate: false }] })} className="btn-ghost px-4 py-2 text-sm"><Plus size={15} /> Add earning</button>
@@ -184,7 +190,7 @@ export default function PayslipEditor({ id, logo, verifyBase, readOnly }: { id: 
           <Box title="Deductions" note="PF is 12% of basic (basic counted up to ₹15,000). ESI is 0.75% of gross, for full salary of ₹21,000 or less. Add salary advance recovery or other cuts here.">
             <fieldset disabled={locked} className="space-y-2">
               {slip.deductions.map((d) => (
-                <div key={d.id} className="grid items-center gap-2 rounded-2xl border border-line p-2 sm:grid-cols-[1fr_140px_auto]">
+                <div key={d.id} className="grid grid-cols-[minmax(0,1fr)_120px_auto] items-center gap-2 rounded-2xl border border-line p-2">
                   <input className="input" value={d.label} onChange={(e) => setDeduction(d.id, { label: e.target.value })} aria-label="Deduction name" />
                   {d.auto ? <span className="px-3 text-right text-sm font-semibold tabular-nums">{rs(d.amount)} <span className="block text-[11px] font-normal text-muted">auto</span></span>
                     : <input className="input" type="number" min={0} value={d.amount} onChange={(e) => setDeduction(d.id, { amount: Number(e.target.value) || 0 })} aria-label="Amount" />}

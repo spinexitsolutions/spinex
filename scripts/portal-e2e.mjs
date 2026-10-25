@@ -352,9 +352,10 @@ try {
   const v2 = await (await dp.request.get(`${base}/api/verify?id=${am.verifyCode}`)).json();
   ok("corrected payslip gets a new code, old one stops working", !v.valid && v2.valid && am.verifyCode !== oldCode && am.number.endsWith(String(am.number).slice(-3)), `${oldCode} → ${am.verifyCode}`);
   await ap.goto(`${base}/admin/payslips/${ps("Pooja Saini").id}`); await ap.waitForSelector("text=Earnings", { timeout: 15000 }); await ap.waitForTimeout(700);
-  await ap.screenshot({ path: `${out}/22-admin-payslip-editor.png`, fullPage: false });
+  await ap.screenshot({ path: `${out}/22-admin-payslip-editor.png`, fullPage: true });
   await ap.goto(`${base}/admin#payslips`); await ap.waitForSelector("text=Monthly payslips", { timeout: 15000 });
   await ap.fill('input[type="month"]', "2026-09"); await ap.waitForTimeout(1500);
+  ok("late joiner isn't counted as missing", (await ap.locator("button", { hasText: "Make payslips for" }).isDisabled()));
   await ap.screenshot({ path: `${out}/23-admin-payslips-month.png`, fullPage: false });
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));

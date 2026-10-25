@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, FilePlus2, Loader2, Mail, Plus, RefreshCw, Save, Trash2, UserPlus, Wallet } from "lucide-react";
-import { blankEmployee, fullGross, lastMonth, monthLabel, slipStatusLabel, slipTotals, splitGross, type Employee, type Payslip } from "@/lib/payroll";
+import { blankEmployee, daysIn, fullGross, lastMonth, monthLabel, slipStatusLabel, slipTotals, splitGross, type Employee, type Payslip } from "@/lib/payroll";
 import Modal from "./Modal";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -47,7 +47,9 @@ export default function PayrollManager({ readOnly = false }: { readOnly?: boolea
   useEffect(() => { load(); }, [load]);
 
   const working = employees.filter((e) => e.active);
-  const missing = working.filter((e) => !slips.some((s) => s.employeeId === e.id));
+  const monthEnd = `${month}-${String(daysIn(month)).padStart(2, "0")}`;
+  // Same rule as the server: working, and joined by the end of the month.
+  const missing = working.filter((e) => (!e.joiningDate || e.joiningDate <= monthEnd) && !slips.some((s) => s.employeeId === e.id));
   const sum = useMemo(() => slips.filter((s) => s.status !== "revoked").reduce((a, s) => { const t = slipTotals(s); return { gross: a.gross + t.gross, net: a.net + t.net }; }, { gross: 0, net: 0 }), [slips]);
   const drafts = slips.filter((s) => s.status === "draft").length;
   const unsent = slips.filter((s) => s.status !== "revoked" && !s.sentAt).length;
