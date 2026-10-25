@@ -23,7 +23,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const col = await billingCol();
   const current = _id && (await col.findOne({ _id }));
   if (!_id || !current) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  const data = cleanBillInput(await jsonBody(req), current.type === "invoice" ? "invoice" : "quote");
+  const body = await jsonBody(req);
+  // Someone (or an online payment) changed it after this screen loaded: don't overwrite that.
+  if (body.version && String(body.version) !== String(current.updatedAt ?? "")) {
+    return NextResponse.json({ error: "This document changed since you opened it (for example a payment came in). Reload the page, then make your change again." }, { status: 409 });
+  }
+  const data = cleanBillInput(body, current.type === "invoice" ? "invoice" : "quote");
   // A quotation the client accepted online is locked: only its status and signatures can change.
   if (current.type === "quote" && current.acceptance) {
     for (const k of Object.keys(data)) if (k !== "status" && k !== "signers") delete (data as Record<string, unknown>)[k];

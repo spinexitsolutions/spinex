@@ -28,6 +28,9 @@ jobs:
       AUTH_SECRET: e2e-only-not-a-real-secret-0123456789abcdef
       ADMIN_EMAIL: owner@e2e.test
       ADMIN_PASSWORD: e2e-owner-password-123
+      RAZORPAY_KEY_ID: rzp_test_e2eonly
+      RAZORPAY_KEY_SECRET: e2e-only-key-secret
+      RAZORPAY_WEBHOOK_SECRET: e2e-only-webhook-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

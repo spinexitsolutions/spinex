@@ -34,6 +34,16 @@ export const KEY_GROUPS: KeyGroup[] = [
     ],
   },
   {
+    id: "razorpay",
+    title: "Online payments (Razorpay)",
+    note: "Adds a “Pay now” button (UPI, cards, netbanking, wallets) on invoice links. Paid invoices are marked paid on their own. In Razorpay → Account & Settings → API keys, generate keys (test keys start with rzp_test_). Then in Webhooks add the URL https://YOUR-DOMAIN/api/razorpay/webhook with the event payment.captured, choose a webhook secret and paste it here too.",
+    keys: [
+      { name: "RAZORPAY_KEY_ID", label: "Key ID", placeholder: "rzp_live_… or rzp_test_…" },
+      { name: "RAZORPAY_KEY_SECRET", label: "Key secret", secret: true },
+      { name: "RAZORPAY_WEBHOOK_SECRET", label: "Webhook secret", secret: true, hint: "the secret you typed when adding the webhook" },
+    ],
+  },
+  {
     id: "chat",
     title: "AI chatbot (Claude)",
     note: "With a key the chatbot writes its own answers from your site content. Without it, it answers from the FAQ list in Admin → Chatbot.",

@@ -5,6 +5,8 @@ import { billingCol, getProfile, toBill } from "@/lib/billing-db";
 import { computeTotals, docTitle, inr, quoteOpen, todayIST } from "@/lib/billing";
 import { getSession } from "@/lib/admin-guard";
 import QuoteResponse from "@/components/billing/QuoteResponse";
+import PayOnline from "@/components/billing/PayOnline";
+import { razorpayKeys } from "@/lib/razorpay";
 import { getContent } from "@/lib/content-server";
 import BillDocument from "@/components/billing/BillDocument";
 import PrintShell from "@/components/billing/PrintShell";
@@ -31,6 +33,7 @@ export default async function SharedDocPage({ params }: { params: { token: strin
   return (
     <PrintShell fileName={`${docTitle(doc.type, t.gstOn)} ${doc.number.replace(/\//g, "-")} - ${profile.legalName}`}>
       <BillDocument doc={doc} profile={profile} logo={content.brand.logo} />
+      {doc.type === "invoice" && doc.status !== "cancelled" && t.balance >= 1 && (await razorpayKeys()).enabled && <PayOnline token={token} due={inr(t.balance, 0)} />}
       {doc.type === "quote" && (
         <QuoteResponse
           token={token}

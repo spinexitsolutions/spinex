@@ -46,7 +46,10 @@ export type BillDoc = {
   viewCount?: number;
   acceptance?: QuoteAcceptance | null; // set when the client presses Accept
   changes?: QuoteChange[]; // "Request changes" messages
+  onlinePayments?: OnlinePayment[]; // paid on the invoice link (Razorpay)
 };
+
+export type OnlinePayment = { id: string; orderId: string; amount: number; method: string; at: string };
 
 export type QuoteAcceptance = { name: string; note: string; at: string; ip: string; total: number };
 export type QuoteChange = { id: string; name: string; text: string; at: string };

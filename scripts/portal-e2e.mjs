@@ -1,7 +1,7 @@
 // End-to-end check of the client portal on GitHub (real MongoDB, real browser).
 // Seeds made-up data, logs in as a client and as the owner, checks access rules and saves screenshots.
 // Usage: node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { MongoClient, GridFSBucket, ObjectId } from "mongodb";
 import { chromium } from "playwright";
@@ -191,6 +191,36 @@ try {
   ok("form posts from other sites are refused", r.status() === 400, `status ${r.status()}`);
   await ap.goto(`${base}/admin/billing/${openQuoteId}`); await ap.waitForSelector("text=Accepted online by", { timeout: 15000 }); await ap.waitForTimeout(600);
   await ap.screenshot({ path: `${out}/14-admin-quote-accepted.png`, fullPage: false });
+
+  // ---- Online payment (Razorpay webhook, signed like Razorpay does) ----
+  const invId = Object.values(billIds)[0];
+  await qp.goto(`${base}/d/e2eShareTokenSharmaTraders01`, { waitUntil: "networkidle" }); await qp.waitForTimeout(600);
+  ok("invoice link shows Pay now", (await qp.content()).includes("now</button>") || (await qp.locator("button", { hasText: "now" }).count()) > 0);
+  await qp.screenshot({ path: `${out}/15-invoice-pay.png`, fullPage: true });
+  const hook = async (body, sig) => qp.request.post(`${base}/api/razorpay/webhook`, { data: body, headers: { "content-type": "application/json", "x-razorpay-signature": sig ?? createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET).update(body).digest("hex") } });
+  const event = (pid, oid, amount) => JSON.stringify({ event: "payment.captured", payload: { payment: { entity: { id: pid, order_id: oid, amount, currency: "INR", status: "captured", method: "upi" } } } });
+  await db.collection("online_orders").insertMany([{ _id: "order_E2Etest0001", billId: String(invId), amount: 500000, createdAt: new Date() }, { _id: "order_E2Etest0002", billId: String(invId), amount: 730000, createdAt: new Date() }]);
+  const paidNow = async () => (await db.collection("billing").findOne({ _id: invId })).paid;
+  const before = await paidNow();
+  r = await hook(event("pay_E2Etest0001", "order_E2Etest0001", 500000));
+  ok("webhook payment is recorded", r.status() === 200 && (await paidNow()) === before + 5000, `paid ${await paidNow()}`);
+  r = await hook(event("pay_E2Etest0001", "order_E2Etest0001", 500000));
+  ok("same payment twice is counted once", (await paidNow()) === before + 5000);
+  r = await hook(event("pay_E2Ebad00001", "order_E2Etest0001", 500000), "0".repeat(64));
+  ok("unsigned webhook is refused", r.status() === 400 && (await paidNow()) === before + 5000, `status ${r.status()}`);
+  r = await hook(event("pay_E2Eunknown1", "order_NotOurs00001", 999900));
+  ok("payment for an unknown order is ignored", r.status() === 200 && (await paidNow()) === before + 5000);
+  r = await hook(event("pay_E2Etest0002", "order_E2Etest0002", 730000));
+  const invDoc = await db.collection("billing").findOne({ _id: invId });
+  ok("full payment marks the invoice paid", invDoc.status === "paid" && invDoc.paid === 30000, `${invDoc.status} ${invDoc.paid}`);
+  r = await qp.request.post(`${base}/api/pay/e2eShareTokenSharmaTraders01/verify`, { data: { orderId: "order_E2Etest0001", paymentId: "pay_E2Etest0009", signature: "bad" } });
+  ok("checkout with a fake signature is refused", r.status() === 400, `status ${r.status()}`);
+  r = await ap.request.patch(`${base}/api/admin/billing/${invId}`, { data: { version: "2020-01-01T00:00:00.000Z", paid: 0 } });
+  ok("stale admin save can't overwrite a payment", r.status() === 409 && (await paidNow()) === 30000, `status ${r.status()}`);
+  await qp.reload({ waitUntil: "networkidle" }); await qp.waitForTimeout(500);
+  ok("paid invoice hides Pay now", (await qp.locator("button", { hasText: "now" }).count()) === 0);
+  await ap.goto(`${base}/admin/billing/${invId}`); await ap.waitForSelector("text=Paid online", { timeout: 15000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/16-admin-paid-online.png`, fullPage: true });
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

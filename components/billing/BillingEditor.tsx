@@ -70,7 +70,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
     try {
       const out = await api<BillDoc>(`/api/admin/billing/${doc.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ date: doc.date, dueDate: doc.dueDate, status: doc.status, client: doc.client, items: doc.items, discount: doc.discount, paid: doc.paid, notes: doc.notes, terms: doc.terms, signers: doc.signers ?? null }),
+        body: JSON.stringify({ version: doc.updatedAt, date: doc.date, dueDate: doc.dueDate, status: doc.status, client: doc.client, items: doc.items, discount: doc.discount, paid: doc.paid, notes: doc.notes, terms: doc.terms, signers: doc.signers ?? null }),
       });
       setDoc(out);
       setSaved(JSON.stringify(out));
@@ -263,6 +263,15 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
                 set({ paid, ...(doc.status !== "cancelled" ? { status: paid <= 0 ? "unpaid" : paid >= totals.total ? "paid" : "partly-paid" } : {}) });
               }} /></F>}
             </div>
+            {(doc.onlinePayments ?? []).length > 0 && (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-900">
+                <p className="font-semibold">Paid online (Razorpay)</p>
+                <ul className="mt-1 space-y-0.5">
+                  {(doc.onlinePayments ?? []).map((p) => <li key={p.id}>{inr(p.amount)} by {p.method || "online"} · {new Date(p.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })} · <span className="font-mono text-xs">{p.id}</span></li>)}
+                </ul>
+                <p className="mt-1 text-xs opacity-80">Already added to “Payment received”. Refunds are done in the Razorpay dashboard.</p>
+              </div>
+            )}
             <div className="mt-5 flex flex-wrap justify-end gap-x-6 gap-y-1 rounded-2xl bg-mist px-5 py-4 text-sm">
               <span>Subtotal <b>{inr(totals.subtotal)}</b></span>
               {totals.gstOn && <span>GST <b>{inr(totals.tax)}</b></span>}
