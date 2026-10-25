@@ -128,6 +128,9 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
                 <span className="block text-sm text-muted">{d.number} · {d.date}</span>
               </span>
               {overdue && <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">Overdue</span>}
+              {d.type === "quote" && d.acceptance && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">Accepted online</span>}
+              {d.type === "quote" && !d.acceptance && (d.changes ?? []).length > 0 && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">Changes asked</span>}
+              {d.type === "quote" && !d.acceptance && !(d.changes ?? []).length && d.viewedAt && <span className="rounded-full bg-lav-100 px-2.5 py-1 text-xs font-semibold text-lav-700">Viewed</span>}
               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[d.status] ?? "bg-mist"}`}>{statusLabel[d.status]}</span>
               <span className="w-28 text-right font-semibold">{inr(t.total, 0)}</span>
             </a>

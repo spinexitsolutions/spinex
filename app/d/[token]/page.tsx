@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasDb } from "@/lib/db";
 import { billingCol, getProfile, toBill } from "@/lib/billing-db";
-import { computeTotals, docTitle } from "@/lib/billing";
+import { computeTotals, docTitle, inr, quoteOpen, todayIST } from "@/lib/billing";
+import { getSession } from "@/lib/admin-guard";
+import QuoteResponse from "@/components/billing/QuoteResponse";
 import { getContent } from "@/lib/content-server";
 import BillDocument from "@/components/billing/BillDocument";
 import PrintShell from "@/components/billing/PrintShell";
@@ -17,11 +19,31 @@ export default async function SharedDocPage({ params }: { params: { token: strin
   const raw = await (await billingCol()).findOne({ shareToken: token });
   if (!raw) notFound();
   const doc = toBill(raw);
+  // Note when the client opens it (not when the team checks the link). Never touches updatedAt.
+  if (!(await getSession().catch(() => null))) {
+    const at = new Date().toISOString();
+    const col = await billingCol();
+    await col.updateOne({ _id: raw._id }, { $inc: { viewCount: 1 }, $set: { lastViewedAt: at } }).catch(() => undefined);
+    await col.updateOne({ _id: raw._id, viewedAt: { $in: [null, ""] } }, { $set: { viewedAt: at } }).catch(() => undefined);
+  }
   const [profile, content] = await Promise.all([getProfile(), getContent()]);
   const t = computeTotals(doc, profile);
   return (
     <PrintShell fileName={`${docTitle(doc.type, t.gstOn)} ${doc.number.replace(/\//g, "-")} - ${profile.legalName}`}>
       <BillDocument doc={doc} profile={profile} logo={content.brand.logo} />
+      {doc.type === "quote" && (
+        <QuoteResponse
+          token={token}
+          version={doc.updatedAt}
+          open={quoteOpen(doc, todayIST())}
+          expired={!!doc.dueDate && doc.dueDate < todayIST()}
+          closed={doc.status === "rejected"}
+          acceptance={doc.acceptance ?? (doc.status === "accepted" ? { name: doc.client.name || "you", note: "", at: doc.updatedAt, ip: "", total: t.total } : null)}
+          changes={doc.changes ?? []}
+          company={doc.client.company}
+          total={inr(t.total, 0)}
+        />
+      )}
     </PrintShell>
   );
 }

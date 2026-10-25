@@ -24,6 +24,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const current = _id && (await col.findOne({ _id }));
   if (!_id || !current) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const data = cleanBillInput(await jsonBody(req), current.type === "invoice" ? "invoice" : "quote");
+  // A quotation the client accepted online is locked: only its status and signatures can change.
+  if (current.type === "quote" && current.acceptance) {
+    for (const k of Object.keys(data)) if (k !== "status" && k !== "signers") delete (data as Record<string, unknown>)[k];
+  }
   if (data.date === "") delete data.date;
   // An invoice number belongs to one financial year (INV/2026-27/005), so its date has to stay in that year.
   if (current.type === "invoice" && data.date) {

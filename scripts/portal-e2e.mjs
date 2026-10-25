@@ -22,6 +22,9 @@ const iso = (d) => new Date(now.getTime() + d * 864e5).toISOString().slice(0, 10
 const inv = { type: "invoice", number: "INV/2026-27/014", date: iso(-6), dueDate: iso(4), status: "partly-paid", client: { name: "Rahul Sharma", company: "Sharma Traders", phone: "9876543210", email: "rahul@sharmatraders.test", address: "Johari Bazar, Jaipur", state: "Rajasthan", gstin: "" }, items: [{ id: "i1", description: "E-commerce website (50% advance)", sac: "998314", qty: 1, rate: 30000, gst: 18 }], discount: 0, notes: "", terms: "", paid: 17700, leadId: "", fromQuote: "", fromQuoteNumber: "", invoiceId: "", shareToken: "e2eShareTokenSharmaTraders01", signers: null, createdBy: "E2E", createdAt: now.toISOString(), updatedAt: now.toISOString() };
 const quote = { ...inv, type: "quote", number: "QT/2026-27/009", status: "accepted", paid: 0, date: iso(-20), shareToken: "e2eShareTokenSharmaQuote001" };
 const { insertedIds: billIds } = await db.collection("billing").insertMany([inv, quote]);
+const openQuote = { ...inv, type: "quote", number: "QT/2026-27/010", status: "sent", paid: 0, date: iso(-1), dueDate: iso(14), shareToken: "e2eOpenQuoteTokenSharma0001", items: [{ id: "q1", description: "Mobile app (Android + iOS)", sac: "998314", qty: 1, rate: 80000, gst: 18 }, { id: "q2", description: "Admin panel", sac: "998314", qty: 1, rate: 20000, gst: 18 }], updatedAt: new Date(now.getTime() - 3600e3).toISOString() };
+delete openQuote._id;
+const { insertedId: openQuoteId } = await db.collection("billing").insertOne(openQuote);
 const stages = [["Requirements", "done", iso(-20)], ["Design", "done", iso(-10)], ["Development", "current", ""], ["Testing", "todo", iso(8)], ["Go live", "todo", iso(12)]].map(([title, status, date], i) => ({ id: `s${i}`, title, status, date }));
 const client = {
   name: "Rahul Sharma", company: "Sharma Traders", email: "rahul@sharmatraders.test", phone: "9876543210", active: true, tokenVersion: 0,
@@ -149,6 +152,45 @@ try {
   ok("one-time link can't be used twice", m.status() === 400, `status ${m.status()}`);
   r = await ap.request.post(`${base}/api/admin/clients/tickets/${tid}`, { data: { message: "We have added it. Please check." } });
   ok("admin replies to a ticket", r.status() === 200, `status ${r.status()}`);
+
+  // ---- Quotation accept online ----
+  const qc = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1.25 });
+  const qp = await qc.newPage();
+  await qp.goto(`${base}/d/e2eOpenQuoteTokenSharma0001`, { waitUntil: "networkidle" });
+  await qp.waitForTimeout(800);
+  await qp.screenshot({ path: `${out}/11-quote-open.png`, fullPage: true });
+  let q = await db.collection("billing").findOne({ _id: openQuoteId });
+  ok("quote view is recorded", !!q.viewedAt && q.viewCount === 1);
+  await qp.click('button:has-text("Request changes")');
+  await qp.fill('input[autocomplete="name"]', "Rahul Sharma");
+  await qp.fill("textarea", "Please add Hindi language support.");
+  await qp.click('button:has-text("Send to us")');
+  await qp.waitForSelector("text=Changes you asked for");
+  q = await db.collection("billing").findOne({ _id: openQuoteId });
+  ok("change request is saved", (q.changes || []).length === 1);
+  await qp.click('button:has-text("Accept quotation")');
+  await qp.fill('input[autocomplete="name"]', "Rahul Sharma");
+  await qp.fill("textarea", "Advance tomorrow");
+  await qp.check('input[type="checkbox"]');
+  await qp.screenshot({ path: `${out}/12-quote-accept-form.png`, fullPage: true });
+  await qp.click('button:has-text("Confirm and accept")');
+  await qp.waitForSelector("text=Quotation accepted. Thank you!");
+  await qp.screenshot({ path: `${out}/13-quote-accepted.png`, fullPage: true });
+  q = await db.collection("billing").findOne({ _id: openQuoteId });
+  ok("quote is accepted with a record", q.status === "accepted" && q.acceptance?.name === "Rahul Sharma" && q.acceptance?.total > 0, `total ${q.acceptance?.total}`);
+  r = await qp.request.post(`${base}/api/d/e2eOpenQuoteTokenSharma0001`, { data: { action: "accept", name: "X", agree: true, version: q.updatedAt } });
+  ok("second accept is refused", r.status() === 409, `status ${r.status()}`);
+  r = await ap.request.patch(`${base}/api/admin/billing/${openQuoteId}`, { data: { items: [{ id: "z", description: "Cheaper", sac: "", qty: 1, rate: 1, gst: 0 }] } });
+  q = await db.collection("billing").findOne({ _id: openQuoteId });
+  ok("accepted quote is locked", q.items.length === 2 && q.items[0].rate === 80000, `status ${r.status()}`);
+  // Stale page: a quote edited after the client opened it can't be accepted with the old version.
+  const { insertedId: q2 } = await db.collection("billing").insertOne({ ...openQuote, number: "QT/2026-27/011", shareToken: "e2eStaleQuoteTokenSharma001", acceptance: null, changes: [], updatedAt: new Date().toISOString() });
+  r = await qp.request.post(`${base}/api/d/e2eStaleQuoteTokenSharma001`, { data: { action: "accept", name: "X", agree: true, version: "2020-01-01T00:00:00.000Z" } });
+  ok("old version can't be accepted", r.status() === 409, `status ${r.status()}`);
+  r = await qp.request.post(`${base}/api/d/e2eStaleQuoteTokenSharma001`, { data: { action: "accept", name: "X", agree: true, version: (await db.collection("billing").findOne({ _id: q2 })).updatedAt }, headers: { "content-type": "text/plain" } });
+  ok("form posts from other sites are refused", r.status() === 400, `status ${r.status()}`);
+  await ap.goto(`${base}/admin/billing/${openQuoteId}`); await ap.waitForSelector("text=Accepted online by", { timeout: 15000 }); await ap.waitForTimeout(600);
+  await ap.screenshot({ path: `${out}/14-admin-quote-accepted.png`, fullPage: false });
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

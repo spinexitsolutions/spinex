@@ -40,7 +40,22 @@ export type BillDoc = {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  // Client's side of a quotation link (/d/<token>)
+  viewedAt?: string; // first time the client opened it
+  lastViewedAt?: string;
+  viewCount?: number;
+  acceptance?: QuoteAcceptance | null; // set when the client presses Accept
+  changes?: QuoteChange[]; // "Request changes" messages
 };
+
+export type QuoteAcceptance = { name: string; note: string; at: string; ip: string; total: number };
+export type QuoteChange = { id: string; name: string; text: string; at: string };
+
+// A quotation the client can still accept online: not decided yet and not past its "valid till" date.
+export function quoteOpen(d: Pick<BillDoc, "type" | "status" | "dueDate" | "acceptance">, today: string) {
+  if (d.type !== "quote" || d.acceptance || d.status === "accepted" || d.status === "rejected") return false;
+  return !d.dueDate || d.dueDate >= today;
+}
 
 // Your business details printed on every quotation and invoice (Admin → Quotes and invoices → Settings).
 export type BillingProfile = {

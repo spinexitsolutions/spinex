@@ -152,6 +152,18 @@ export default function BillDocument({ doc, profile, logo }: { doc: BillDoc; pro
         </div>
       </section>
 
+      {doc.type === "quote" && doc.acceptance && (
+        <section className="mt-6 break-inside-avoid rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-[12px] text-emerald-900 print:bg-emerald-50">
+          <p className="font-bold">Accepted online by {doc.acceptance.name}</p>
+          <p>
+            {new Date(doc.acceptance.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })} IST
+            {doc.acceptance.ip ? ` · IP ${doc.acceptance.ip}` : ""}
+            {doc.acceptance.total ? ` · ₹${doc.acceptance.total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+          </p>
+          {doc.acceptance.note && <p className="mt-1">Note: {doc.acceptance.note}</p>}
+        </section>
+      )}
+
       <section className="mt-8 break-inside-avoid">
         <p className="text-right font-semibold">For {profile.legalName}</p>
         <div className="mt-2 flex flex-wrap justify-end gap-x-8 gap-y-5">
