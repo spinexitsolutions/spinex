@@ -429,7 +429,7 @@ try {
   const spp = await sph.newPage();
   await spp.goto(`${base}/staff`, { waitUntil: "networkidle" }); await spp.waitForTimeout(500);
   await spp.screenshot({ path: `${out}/25-staff-phone.png`, fullPage: false });
-  await ap.goto(`${base}/admin#attendance`); await ap.waitForSelector("text=Leave requests", { timeout: 15000 }); await ap.waitForTimeout(1200);
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#attendance`); await ap.waitForSelector("text=Leave requests", { timeout: 15000 }); await ap.waitForTimeout(1200);
   await ap.screenshot({ path: `${out}/26-admin-leave.png`, fullPage: false });
   await ap.click("text=Monthly attendance"); await ap.waitForTimeout(500);
   await ap.fill('input[type="month"]', "2026-08"); await ap.waitForTimeout(1500);
