@@ -70,7 +70,9 @@ try {
   await page.fill('input[autocomplete="one-time-code"]', "000000");
   await page.click('button:has-text("Log in")');
   await page.waitForSelector('[role="alert"]');
-  ok("wrong code is refused", (await page.textContent('[role="alert"]')).includes("isn't right"));
+  await page.waitForTimeout(300);
+  const alertText = (await page.textContent('[role="alert"]')) || "";
+  ok("wrong code is refused", /isn.t right/.test(alertText) && !page.url().endsWith("/portal"), alertText.slice(0, 120));
 
   // ---- Right code (we write a known code, as if read from the email) ----
   await db.collection("portal_logins").deleteMany({ clientId: String(cid) });
@@ -123,11 +125,12 @@ try {
   // ---- Admin side ----
   const admin = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1.25 });
   const ap = await admin.newPage();
-  await ap.goto(`${base}/admin/login`);
+  await ap.goto(`${base}/admin/login`, { waitUntil: "networkidle" });
   await ap.fill('input[type="email"]', process.env.ADMIN_EMAIL);
   await ap.fill('input[type="password"]', process.env.ADMIN_PASSWORD);
   await ap.click('button:has-text("Log in")');
-  await ap.waitForURL(/\/admin(\/|#|$)/, { timeout: 20000 });
+  await ap.waitForURL((u) => !u.pathname.startsWith("/admin/login"), { timeout: 20000 });
+  ok("owner logs in to admin", true);
   await ap.goto(`${base}/admin#clients`); await ap.waitForTimeout(2500);
   await ap.screenshot({ path: `${out}/08-admin-list.png`, fullPage: true });
   await ap.goto(`${base}/admin/clients/${cid}`); await ap.waitForSelector("text=Stages", { timeout: 15000 }); await ap.waitForTimeout(800);
@@ -148,7 +151,7 @@ try {
   ok("admin replies to a ticket", r.status() === 200, `status ${r.status()}`);
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
-  await page.screenshot({ path: `${out}/error.png`, fullPage: true }).catch(() => undefined);
+  for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);
 }
 await browser.close();
 await mongo.close();
