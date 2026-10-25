@@ -44,6 +44,23 @@ try {
 } catch (e) {
   report.push(`guide FAIL ${String(e).slice(0, 200)}`);
 }
+// Full-page picture of the Jaipur city page, to check the design.
+try {
+  await page.emulateMedia({ media: "screen" });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${base}/website-development-jaipur`, { waitUntil: "networkidle" });
+  await page.evaluate(() => { try { localStorage.setItem("spinex-intro-seen", "1"); sessionStorage.setItem("spinex-intro-seen", "1"); } catch {} });
+  await page.waitForTimeout(3500);
+  await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)); } window.scrollTo(0, 0); });
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${out}/city-jaipur.png`, fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(3500);
+  await page.screenshot({ path: `${out}/city-jaipur-mobile.png`, fullPage: false });
+} catch (e) {
+  report.push(`city FAIL ${String(e).slice(0, 200)}`);
+}
 await browser.close();
 report.push(`types=${types.length} not_one_page=${bad}`);
 writeFileSync(`${out}/report.txt`, report.join("\n") + "\n");
