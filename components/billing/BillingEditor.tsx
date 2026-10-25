@@ -171,7 +171,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
           {doc.type === "quote" && doc.acceptance && (
             <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
               <p className="font-display text-lg font-semibold">Accepted online by {doc.acceptance.name}</p>
-              <p className="mt-1 text-sm">{new Date(doc.acceptance.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}{doc.acceptance.ip ? ` · IP ${doc.acceptance.ip}` : ""}{doc.acceptance.note ? ` · “${doc.acceptance.note}”` : ""}</p>
+              <p className="mt-1 text-sm">{new Date(doc.acceptance.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}{doc.acceptance.ip ? ` · IP ${doc.acceptance.ip}` : ""}{doc.acceptance.note ? ` · “${doc.acceptance.note}”` : ""}</p>
               <p className="mt-2 text-sm">This quotation is now locked, so the accepted amount stays as it is. To change anything, make a new quotation. Press <b>Make invoice</b> when you&apos;re ready to bill.</p>
             </section>
           )}
@@ -179,7 +179,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
               <p className="font-display text-lg font-semibold">The client asked for changes</p>
               <ul className="mt-2 space-y-2">
-                {(doc.changes ?? []).map((c) => <li key={c.id} className="rounded-xl bg-white/70 px-4 py-2.5 text-sm"><span className="block text-xs opacity-70">{c.name} · {new Date(c.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span><span className="whitespace-pre-line">{c.text}</span></li>)}
+                {(doc.changes ?? []).map((c) => <li key={c.id} className="rounded-xl bg-white/70 px-4 py-2.5 text-sm"><span className="block text-xs opacity-70">{c.name} · {new Date(c.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}</span><span className="whitespace-pre-line">{c.text}</span></li>)}
               </ul>
               <p className="mt-2 text-sm">Update the items below, save, and send the link again. The client can then accept the new version.</p>
             </section>
@@ -196,7 +196,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
             </div>
             <p className="mt-3 text-xs text-muted">
               {doc.type === "quote" ? "The client link opens the quotation with Accept and Request changes buttons, and a PDF download." : "The client link opens a view-only page where they can download the PDF."} Save before sharing so they see the latest version.
-              {doc.viewedAt ? ` Opened by the client ${doc.viewCount ?? 1} time${(doc.viewCount ?? 1) > 1 ? "s" : ""}, last on ${new Date(doc.lastViewedAt || doc.viewedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}.` : " Not opened by the client yet."}
+              {doc.viewedAt ? ` Opened by the client ${doc.viewCount ?? 1} time${(doc.viewCount ?? 1) > 1 ? "s" : ""}, last on ${new Date(doc.lastViewedAt || doc.viewedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}.` : " Not opened by the client yet."}
             </p>
           </Box>
 
