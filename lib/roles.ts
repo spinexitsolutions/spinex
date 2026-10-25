@@ -19,7 +19,7 @@ export const roleHelp: Record<Role, string> = {
   owner: "Everything, including team members",
   admin: "Everything except team members, API keys and backups",
   editor: "Website content, blog, media and SEO",
-  sales: "Leads, quotations and invoices",
+  sales: "Leads, quotations, invoices and the client portal",
   hr: "Interns, job applicants, certificates and HR letters",
 };
 
@@ -30,6 +30,7 @@ const AREA_LIST = [
   { id: "leads", label: "Leads", help: "Enquiries, follow-ups and giving leads to people" },
   { id: "billing", label: "Quotations and invoices", help: "Make, edit, send and mark invoices as paid" },
   { id: "billingDetails", label: "Billing details", help: "Bank account, GSTIN, signatures on invoices" },
+  { id: "clients", label: "Client portal", help: "Client logins, project status, shared files and support requests" },
   { id: "content", label: "Website content", help: "Pages, services, projects, products, home page, SEO, banners, colours, chatbot" },
   { id: "blog", label: "Blog posts", help: "Write, publish and delete articles" },
   { id: "media", label: "Image library", help: "Upload and delete images" },
@@ -49,7 +50,7 @@ export const ROLE_ACCESS: Record<Role, Access> = {
   owner: all("edit"),
   admin: all("edit"),
   editor: { ...all("none"), dashboard: "view", content: "edit", blog: "edit", media: "edit" },
-  sales: { ...all("none"), dashboard: "view", leads: "edit", billing: "edit", billingDetails: "view" },
+  sales: { ...all("none"), dashboard: "view", leads: "edit", billing: "edit", billingDetails: "view", clients: "edit" },
   hr: { ...all("none"), dashboard: "view", people: "edit", media: "view" },
 };
 

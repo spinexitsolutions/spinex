@@ -39,6 +39,7 @@ export default function Footer() {
             { label: "Verify certificate", href: "/verify" },
             ...(content.cities ?? []).filter((x) => x.show).map((x) => ({ label: `Website development in ${x.city}`, href: cityPath(x) })),
             { label: "Contact", href: "/contact" },
+            { label: "Client login", href: "/portal/login" },
           ]}
         />
         <div>
