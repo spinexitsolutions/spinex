@@ -12,6 +12,7 @@ const report = [];
 const ok = (name, pass, extra = "") => report.push(`${pass ? "PASS" : "FAIL"} ${name}${extra ? ` (${extra})` : ""}`);
 const hash = (v) => createHash("sha256").update(`${process.env.AUTH_SECRET}:${v}`).digest("hex");
 
+process.on("unhandledRejection", (e) => { report.push(`FAIL crashed (${String(e).slice(0, 400)})`); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(1); });
 const mongo = await MongoClient.connect(process.env.MONGODB_URI);
 const db = mongo.db(process.env.MONGODB_DB || undefined);
 const now = new Date();

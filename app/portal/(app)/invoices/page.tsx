@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { getClientSession } from "@/lib/client-auth";
 import { clientBills } from "@/lib/portal-billing";
@@ -5,7 +6,8 @@ import { inr, statusLabel } from "@/lib/billing";
 import { shortDate } from "@/lib/portal";
 
 export default async function PortalInvoices() {
-  const client = (await getClientSession())!;
+  const client = await getClientSession();
+  if (!client) redirect("/portal/login");
   const bills = await clientBills(client);
   const due = bills.reduce((s, b) => s + b.balance, 0);
   const paid = bills.filter((b) => b.type === "invoice").reduce((s, b) => s + Math.min(b.paid, b.total), 0);
@@ -40,7 +42,7 @@ export default async function PortalInvoices() {
                   <td className="px-5 py-3.5 text-right font-medium tabular-nums">{inr(b.total, 0)}</td>
                   <td className="px-5 py-3.5 text-right tabular-nums">{b.type === "invoice" ? <span className={b.balance > 0 ? "font-semibold text-lav-700" : "text-muted"}>{inr(b.balance, 0)}</span> : <span className="text-muted">-</span>}</td>
                   <td className="px-5 py-3.5"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${b.status === "paid" || b.status === "accepted" ? "bg-emerald-50 text-emerald-800" : b.status === "cancelled" || b.status === "rejected" ? "bg-mist text-muted" : "bg-amber-50 text-amber-800"}`}>{statusLabel[b.status]}</span></td>
-                  <td className="px-5 py-3.5 text-right"><a href={b.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-lav-700 hover:underline">{b.balance > 0 ? "View and pay" : "View"} <ArrowUpRight size={14} /></a></td>
+                  <td className="px-5 py-3.5 text-right">{b.link && <a href={b.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-lav-700 hover:underline">{b.balance > 0 ? "View and pay" : "View"} <ArrowUpRight size={14} /></a>}</td>
                 </tr>
               ))}
             </tbody>

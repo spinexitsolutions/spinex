@@ -13,7 +13,7 @@ import { inr } from "@/lib/billing";
 import PortalUpload from "./PortalUpload";
 
 type BillRow = { id: string; type: string; title: string; number: string; date: string; status: string; name: string; company: string; email: string; total: number; balance: number };
-type Data = { client: PortalClient; files: PortalFile[]; tickets: Ticket[]; billing: BillRow[] };
+type Data = { client: PortalClient; files: PortalFile[]; tickets: Ticket[]; billing: BillRow[]; seeBilling: boolean };
 type Tab = "projects" | "files" | "invoices" | "support" | "details";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -143,7 +143,7 @@ export default function ClientEditor({ id, initialTab = "projects", readOnly = f
 
         {tab === "projects" && <Projects client={client} readOnly={readOnly} me={me} set={set} setProject={setProject} />}
         {tab === "files" && <Files id={id} client={client} files={data.files} readOnly={readOnly} onFiles={(files) => setData((d) => (d ? { ...d, files } : d))} flash={flash} />}
-        {tab === "invoices" && <Invoices client={client} billing={data.billing} readOnly={readOnly} set={set} />}
+        {tab === "invoices" && (data.seeBilling ? <Invoices client={client} billing={data.billing} readOnly={readOnly} set={set} /> : <Box title="Quotations and invoices in the portal"><p className="text-sm text-muted">Linking quotations and invoices needs access to Quotes and invoices. Ask the owner, or ask someone from accounts to link them. This client has {client.billingIds.length} linked now.</p></Box>)}
         {tab === "support" && <Support tickets={data.tickets} client={client} readOnly={readOnly} onTicket={(t) => setData((d) => (d ? { ...d, tickets: d.tickets.map((x) => (x.id === t.id ? t : x)) } : d))} flash={flash} />}
         {tab === "details" && <Details id={id} client={client} readOnly={readOnly} set={set} />}
       </div>

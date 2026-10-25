@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Download, FileText } from "lucide-react";
 import { getClientSession } from "@/lib/client-auth";
 import { listPortalFiles } from "@/lib/portal-db";
@@ -5,7 +6,8 @@ import { fileSizeText, shortDate, type PortalFile } from "@/lib/portal";
 import PortalUpload from "@/components/portal/PortalUpload";
 
 export default async function PortalFiles() {
-  const client = (await getClientSession())!;
+  const client = await getClientSession();
+  if (!client) redirect("/portal/login");
   const files = await listPortalFiles(client.id);
   const projectName = (id: string) => client.projects.find((p) => p.id === id)?.title ?? "";
   const fromTeam = files.filter((f) => f.by === "team");

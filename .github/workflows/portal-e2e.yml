@@ -41,11 +41,13 @@ jobs:
       - name: Run portal check
         continue-on-error: true
         run: |
-          npm i --no-save --no-audit --no-fund playwright@1.47.2 > /dev/null 2>&1
-          npx playwright install --with-deps chromium > /dev/null 2>&1
+          mkdir -p /tmp/portal
+          npm i --no-save --no-audit --no-fund playwright@1.47.2 > /tmp/portal/install.log 2>&1 || true
+          npx playwright install --with-deps chromium >> /tmp/portal/install.log 2>&1 || true
           (npx next start -p 3200 > server.log 2>&1 &)
           for i in $(seq 1 40); do curl -sf http://localhost:3200/portal/login > /dev/null && break; sleep 2; done
-          node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal || true
+          node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal > /tmp/portal/run.log 2>&1 || true
+          tail -5 /tmp/portal/install.log > /tmp/portal/install-tail.log || true
           tail -40 server.log > /tmp/portal/server.log || true
       - name: Save result
         run: |

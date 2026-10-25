@@ -3,12 +3,13 @@ import { jsonBody } from "@/lib/admin-guard";
 import { clientIp, rateLimited } from "@/lib/antispam";
 import { getClientSession } from "@/lib/client-auth";
 import { notifyAdmin } from "@/lib/notify";
-import { originOf, ticketsCol } from "@/lib/portal-db";
+import { isJsonRequest, originOf, ticketsCol } from "@/lib/portal-db";
 
 // The client opens a support request.
 export async function POST(req: Request) {
   const client = await getClientSession();
   if (!client) return NextResponse.json({ error: "Please log in again." }, { status: 401 });
+  if (!isJsonRequest(req)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   if (await rateLimited(`portal-ticket:${client.id}:${clientIp(req)}`, 15, 60 * 60 * 1000)) return NextResponse.json({ error: "Too many requests. Please wait a while." }, { status: 429 });
   const b = await jsonBody(req);
   const subject = String(b.subject ?? "").trim().slice(0, 140);

@@ -38,12 +38,26 @@ export async function recordHit(key: string) {
 }
 
 // Persistent rate limit (works across server restarts and multiple servers).
-// Returns true when `key` has already been used `max` times in the last `windowMs`; otherwise records this use.
+// Returns true when `key` has already been used `max` times in the current `windowMs` window; otherwise counts this use.
+// One atomic counter per window, so a burst of parallel requests can't slip past the limit.
+let countersReady = false;
 export async function rateLimited(key: string, max: number, windowMs: number) {
   if (!hasDb()) return false;
-  if ((await recentHits(key, windowMs)) >= max) return true;
-  await recordHit(key);
-  return false;
+  const col = (await getDb()).collection<{ _id: string; n: number; at: Date }>("rate_counters");
+  if (!countersReady) {
+    await col.createIndex({ at: 1 }, { expireAfterSeconds: 60 * 60 * 48 }).catch(() => undefined);
+    countersReady = true;
+  }
+  const bucket = Math.floor(Date.now() / windowMs);
+  const doc = await col.findOneAndUpdate(
+    { _id: `${key}|${windowMs}|${bucket}` },
+    { $inc: { n: 1 }, $setOnInsert: { at: new Date() } },
+    { upsert: true, returnDocument: "after" },
+  ).catch(async (e) => {
+    if ((e as { code?: number }).code === 11000) return col.findOneAndUpdate({ _id: `${key}|${windowMs}|${bucket}` }, { $inc: { n: 1 } }, { returnDocument: "after" });
+    throw e;
+  });
+  return (doc?.n ?? 1) > max;
 }
 
 async function turnstileOk(token: string, ip: string) {

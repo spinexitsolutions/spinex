@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { getClientSession } from "@/lib/client-auth";
@@ -8,7 +9,8 @@ import { NewTicket, TicketReply } from "@/components/portal/TicketForms";
 const tone: Record<Ticket["status"], string> = { open: "bg-amber-50 text-amber-800", answered: "bg-lav-100 text-lav-700", closed: "bg-mist text-muted" };
 
 export default async function PortalSupport({ searchParams }: { searchParams: { t?: string; new?: string; project?: string } }) {
-  const client = (await getClientSession())!;
+  const client = await getClientSession();
+  if (!client) redirect("/portal/login");
   const col = await ticketsCol();
   const projects = client.projects.map((p) => ({ id: p.id, title: p.title }));
 

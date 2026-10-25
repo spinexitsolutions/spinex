@@ -45,7 +45,13 @@ export async function POST(req: Request) {
   if (await col.findOne({ email })) return NextResponse.json({ error: "A client with this email already exists." }, { status: 409 });
   const now = new Date().toISOString();
   const doc = { name, company, email, phone, active: true, projects: [], billingIds: [], notes: "", tokenVersion: 0, lastLoginAt: "", invitedAt: "", createdAt: now, updatedAt: now };
-  const { insertedId } = await col.insertOne(doc);
+  let insertedId;
+  try {
+    ({ insertedId } = await col.insertOne(doc));
+  } catch (e) {
+    if ((e as { code?: number }).code === 11000) return NextResponse.json({ error: "A client with this email already exists." }, { status: 409 });
+    throw e;
+  }
   await logActivity(await getSession(), "Client portal", "Added a client", company || name, req);
   return NextResponse.json({ ...doc, id: String(insertedId) }, { status: 201 });
 }

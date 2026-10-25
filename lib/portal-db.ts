@@ -6,7 +6,15 @@ import { safeUrl } from "./content-sanitize";
 import type { PortalClient, PortalFile, PortalProject, StageStatus, Ticket } from "./portal";
 import { SITE_URL } from "./site";
 
-export const clientsCol = async () => (await getDb()).collection("portal_clients");
+let clientsReady = false;
+export async function clientsCol() {
+  const col = (await getDb()).collection("portal_clients");
+  if (!clientsReady) {
+    await col.createIndex({ email: 1 }, { unique: true }).catch(() => undefined); // one login per email
+    clientsReady = true;
+  }
+  return col;
+}
 export const ticketsCol = async () => (await getDb()).collection("portal_tickets");
 export const portalFilesBucket = async () => new GridFSBucket(await getDb(), { bucketName: "portal_files" });
 export const pOid = (id: string) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
@@ -17,6 +25,8 @@ export async function loginsCol() {
   const col = (await getDb()).collection("portal_logins");
   if (!loginsReady) {
     await col.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch(() => undefined);
+    // At most one live code per client, so racing "send code" requests can't add extra guesses.
+    await col.createIndex({ kind: 1, clientId: 1 }, { unique: true, partialFilterExpression: { kind: "code" } }).catch(() => undefined);
     loginsReady = true;
   }
   return col;
@@ -167,4 +177,25 @@ export async function savePortalFile(file: File, meta: { clientId: string; proje
 export async function listPortalFiles(clientId: string) {
   const files = await (await portalFilesBucket()).find({ "metadata.clientId": clientId }, { sort: { uploadDate: -1 }, limit: 500 }).toArray();
   return files.map(toPortalFile);
+}
+
+// Portal POST routes accept JSON only, so a form on another site can't post to them (login CSRF).
+export const isJsonRequest = (req: Request) => (req.headers.get("content-type") || "").toLowerCase().includes("application/json");
+export const tooBig = (req: Request) => Number(req.headers.get("content-length") || 0) > 11 * 1024 * 1024;
+
+// Failed code tries per client: after 10 in a day the email login is locked for the rest of that day.
+export const MAX_DAILY_FAILS = 10;
+export async function loginLocked(clientId: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  const doc = await (await getDb()).collection<{ _id: string; n: number }>("rate_counters").findOne({ _id: `portal-fail:${clientId}|${day}` });
+  return (doc?.n ?? 0) >= MAX_DAILY_FAILS;
+}
+export async function countLoginFail(clientId: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  const doc = await (await getDb()).collection<{ _id: string; n: number; at: Date }>("rate_counters").findOneAndUpdate(
+    { _id: `portal-fail:${clientId}|${day}` },
+    { $inc: { n: 1 }, $setOnInsert: { at: new Date() } },
+    { upsert: true, returnDocument: "after" },
+  ).catch(() => null);
+  return doc?.n ?? 0;
 }

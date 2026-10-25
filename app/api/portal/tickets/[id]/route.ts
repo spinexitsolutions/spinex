@@ -3,12 +3,13 @@ import { jsonBody } from "@/lib/admin-guard";
 import { clientIp, rateLimited } from "@/lib/antispam";
 import { getClientSession } from "@/lib/client-auth";
 import { notifyAdmin } from "@/lib/notify";
-import { originOf, pOid, ticketsCol } from "@/lib/portal-db";
+import { isJsonRequest, originOf, pOid, ticketsCol } from "@/lib/portal-db";
 
 // The client replies to a support request ({ message }), or marks it solved ({ action: "close" }).
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const client = await getClientSession();
   if (!client) return NextResponse.json({ error: "Please log in again." }, { status: 401 });
+  if (!isJsonRequest(req)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const _id = pOid(params.id);
   const col = await ticketsCol();
   const t = _id && (await col.findOne({ _id, clientId: client.id }));

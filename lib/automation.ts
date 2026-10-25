@@ -102,7 +102,7 @@ export async function runReminders(origin: string) {
 
 // Image files are left out (they can be large); everything else is included. Passwords and API keys are never included.
 const SKIP = (name: string) =>
-  name.startsWith("uploads.") || name.startsWith("portal_files.") || name.startsWith("safety_backups.") || name === "rate_limits" || name === "secrets" || name === "password_resets" || name === "portal_logins" || name.startsWith("system.");
+  name.startsWith("uploads.") || name.startsWith("portal_files.") || name.startsWith("safety_backups.") || name === "rate_limits" || name === "rate_counters" || name === "secrets" || name === "password_resets" || name === "portal_logins" || name.startsWith("system.");
 
 // Settings documents that stay out of backups and are never replaced by a restore:
 // job state (scheduler key), the owner's login (password, two-step secret) and unsaved previews.

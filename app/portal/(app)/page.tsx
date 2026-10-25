@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpRight, CheckCircle2, Circle, CircleDot, ExternalLink, FileText, LifeBuoy } from "lucide-react";
 import { getClientSession } from "@/lib/client-auth";
@@ -7,7 +8,8 @@ import { currentStage, projectProgress, projectStatusLabel, shortDate, type Port
 import { inr } from "@/lib/billing";
 
 export default async function PortalHome() {
-  const client = (await getClientSession())!;
+  const client = await getClientSession();
+  if (!client) redirect("/portal/login");
   const [bills, files, openTickets] = await Promise.all([
     clientBills(client),
     listPortalFiles(client.id),
