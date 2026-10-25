@@ -12,8 +12,10 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const deny = await guard("payroll");
   if (deny) return deny;
-  const { month, action } = await jsonBody(req);
-  if (!validMonth(month) || !["issue", "send"].includes(String(action))) return NextResponse.json({ error: "Bad request." }, { status: 400 });
+  const b = await jsonBody(req);
+  const month = String(b.month ?? "");
+  const action = String(b.action ?? "");
+  if (!validMonth(month) || !["issue", "send"].includes(action)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const col = await payslipsCol();
   const slips = (await col.find({ month, status: { $in: ["draft", "issued"] } }).toArray()).map(toPayslip);
   const origin = process.env.NODE_ENV === "production" ? SITE_URL : new URL(req.url).origin;
