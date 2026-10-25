@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -25,6 +25,7 @@ import ReplyPreview from "./ReplyPreview";
 import BillingManager from "./BillingManager";
 import LettersManager from "./LettersManager";
 import CitiesEditor from "./CitiesEditor";
+import ProfileEditor from "./ProfileEditor";
 import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
@@ -50,6 +51,7 @@ const sections = [
   { id: "process", label: "Process steps", Icon: ListOrdered, group: "Content" , perm: "content" },
   { id: "industries", label: "Industries", Icon: Building2, group: "Content" , perm: "content" },
   { id: "cities", label: "City pages (local SEO)", Icon: MapPin, group: "Content" , perm: "content" },
+  { id: "profile", label: "Company profile (PDF)", Icon: BookOpen, group: "Content" , perm: "content" },
   { id: "goals", label: "Goal picker", Icon: Target, group: "Content" , perm: "content" },
   { id: "planner", label: "Project planner", Icon: CalendarClock, group: "Content" , perm: "content" },
   { id: "about", label: "About and stats", Icon: Info, group: "Content" , perm: "content" },
@@ -707,6 +709,8 @@ function AdminShell() {
                 ]} />
               </>
             )}
+
+            {section === "profile" && <ProfileEditor value={draft.profile} onChange={(v) => set("profile", v)} />}
 
             {section === "cities" && <CitiesEditor cities={draft.cities ?? []} onChange={(v) => set("cities", v)} />}
 

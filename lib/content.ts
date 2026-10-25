@@ -90,6 +90,26 @@ export type CityPage = {
   faqs: { id: string; q: string; a: string }[];
   nearby: string[];
 };
+// Company profile brochure (PDF) at /company-profile. Services, projects, testimonials and the rest come from
+// the rest of the site content; these are the brochure's own words and switches.
+export type CompanyProfile = {
+  public: boolean; // anyone with the link can open it, and the footer shows a download link
+  title: string;
+  year: string;
+  tagline: string;
+  cover: string;
+  aboutHeading: string;
+  about: string; // empty: uses About → body
+  mission: string;
+  vision: string;
+  highlights: string[];
+  ctaHeading: string;
+  ctaText: string;
+  address: string; // empty: uses Contact details → location
+  website: string;
+  show: { stats: boolean; services: boolean; industries: boolean; process: boolean; work: boolean; testimonials: boolean };
+};
+
 export const citySlug = (c: Pick<CityPage, "slug" | "city">) =>
   (c.slug || c.city).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "city";
 export const cityPath = (c: Pick<CityPage, "slug" | "city">) => `/website-development-${citySlug(c)}`;
@@ -230,6 +250,7 @@ export type SiteContent = {
   };
   chatbot: { name: string; greeting: string; faqs: Faq[] };
   cities: CityPage[];
+  profile: CompanyProfile;
 };
 
 // Stock photos live in public/images/stock (run `npm run offline-images` once to download them).
@@ -603,6 +624,29 @@ const baseContent: SiteContent = {
     instagram: "https://www.instagram.com/spinex_it_solutions/",
     linkedin: "https://in.linkedin.com/company/spinex-it-solutions",
     youtube: "https://www.youtube.com/@SpinexItSolutions1",
+  },
+  profile: {
+    public: true,
+    title: "Company Profile",
+    year: "2026",
+    tagline: "Websites, online stores, apps and marketing for businesses across India.",
+    cover: img("photo-1497366216548-37526070297c"),
+    aboutHeading: "Who we are",
+    about: "",
+    mission: "To help businesses across India grow online with websites, stores and marketing that bring real enquiries and sales.",
+    vision: "To be the digital partner small and growing businesses trust for everything online, under one roof.",
+    highlights: [
+      "One team for website, store, apps and marketing",
+      "Clear written quote in rupees, with no hidden charges",
+      "Fast, mobile-friendly work that is ready for Google",
+      "Updates on WhatsApp at every step",
+      "Support and improvements after launch",
+    ],
+    ctaHeading: "Let's build something that grows your business.",
+    ctaText: "Tell us what you need. We'll reply within a day with ideas, a timeline and a clear quote.",
+    address: "",
+    website: "spinexitsolutions.com",
+    show: { stats: true, services: true, industries: true, process: true, work: true, testimonials: true },
   },
   cities: [
     {

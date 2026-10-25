@@ -35,6 +35,7 @@ export default function Footer() {
             { label: "Blog", href: "/blog" },
             { label: "Careers", href: "/careers" },
             { label: "Internship", href: "/internship" },
+            ...(content.profile?.public ? [{ label: "Company profile (PDF)", href: "/company-profile" }] : []),
             { label: "Verify certificate", href: "/verify" },
             ...(content.cities ?? []).filter((x) => x.show).map((x) => ({ label: `Website development in ${x.city}`, href: cityPath(x) })),
             { label: "Contact", href: "/contact" },

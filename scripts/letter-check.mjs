@@ -44,6 +44,20 @@ try {
 } catch (e) {
   report.push(`guide FAIL ${String(e).slice(0, 200)}`);
 }
+// Company profile brochure.
+try {
+  await page.emulateMedia({ media: "screen" });
+  await page.goto(`${base}/company-profile`, { waitUntil: "networkidle" });
+  await page.evaluate(() => document.fonts.ready);
+  await page.emulateMedia({ media: "print" });
+  const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });
+  writeFileSync(`${out}/profile.pdf`, pdf);
+  const sheets = await page.$$eval(".profile-sheet", (els) => els.length);
+  report.push(`profile pages=${(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g) || []).length} sheets=${sheets}`);
+} catch (e) {
+  report.push(`profile FAIL ${String(e).slice(0, 200)}`);
+}
+
 // Full-page picture of the Jaipur city page, to check the design.
 try {
   await page.emulateMedia({ media: "screen" });

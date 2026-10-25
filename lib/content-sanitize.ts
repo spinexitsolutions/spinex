@@ -74,6 +74,7 @@ export function sanitizeUrls(c: SiteContent): SiteContent {
     products: c.products.map((p) => ({ ...p, demoUrl: safeUrl(p.demoUrl), videoUrl: safeUrl(p.videoUrl) })),
     showreel: { ...c.showreel, video: safeUrl(c.showreel.video) },
     testimonials: c.testimonials.map((t) => ({ ...t, photo: safeUrl(t.photo) })),
+    profile: { ...c.profile, cover: safeUrl(c.profile.cover) },
     trusted: {
       ...c.trusted,
       reviewUrl: safeUrl(c.trusted.reviewUrl),
