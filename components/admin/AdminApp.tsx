@@ -409,7 +409,7 @@ function AdminShell() {
 
             {section === "theme" && <ThemeEditor value={draft.theme} onChange={(v) => set("theme", v)} />}
 
-            {section === "leads" && <LeadsManager onNewCount={setNewLeads} readOnly={readOnly} />}
+            {section === "leads" && <LeadsManager onNewCount={setNewLeads} readOnly={readOnly} goApiKeys={() => go("apikeys")} />}
 
             {section === "interns" && <InternsManager mode="interns" readOnly={readOnly} />}
 

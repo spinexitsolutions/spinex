@@ -6,6 +6,7 @@ import { BarChart3, BellRing, FilePlus2, Megaphone, FileSpreadsheet, FileText, I
 import { LEAD_SOURCES, LEAD_STATUSES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
+import AdLeadsSetup from "./AdLeadsSetup";
 
 const badge: Record<LeadStatus, string> = {
   new: "bg-lav-600 text-white",
@@ -45,7 +46,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 type Filter = LeadStatus | "all" | "due" | "mine";
 
-export default function LeadsManager({ onNewCount, readOnly = false }: { onNewCount?: (n: number) => void; readOnly?: boolean }) {
+export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }: { onNewCount?: (n: number) => void; readOnly?: boolean; goApiKeys?: () => void }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -56,6 +57,7 @@ export default function LeadsManager({ onNewCount, readOnly = false }: { onNewCo
   const [team, setTeam] = useState<Member[]>([]);
   const [channel, setChannel] = useState("all");
   const [showReport, setShowReport] = useState(false);
+  const [showAds, setShowAds] = useState(false);
   const [myId, setMyId] = useState("");
 
   useEffect(() => {
@@ -175,6 +177,7 @@ export default function LeadsManager({ onNewCount, readOnly = false }: { onNewCo
           {bySource.map((r) => <option key={r.name} value={r.name}>{r.name} ({r.total})</option>)}
         </select>
         <button onClick={() => setShowReport((v) => !v)} aria-pressed={showReport} className="btn-ghost px-4 py-2.5 text-sm"><BarChart3 size={16} /> Where leads come from</button>
+        <button onClick={() => setShowAds(true)} className="btn-ghost px-4 py-2.5 text-sm"><Megaphone size={16} /> Get leads from ads</button>
         <a href="/api/admin/leads/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
         <button onClick={load} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
       </div>
@@ -272,6 +275,9 @@ export default function LeadsManager({ onNewCount, readOnly = false }: { onNewCo
           </div>
         )}
       </AnimatePresence>
+      <Modal open={showAds} title="Get leads from ads" onClose={() => setShowAds(false)}>
+        {showAds && <AdLeadsSetup goApiKeys={goApiKeys} />}
+      </Modal>
     </div>
   );
 }

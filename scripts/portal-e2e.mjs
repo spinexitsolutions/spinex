@@ -3,6 +3,7 @@
 // Usage: node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal
 import { createHash, createHmac } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { MongoClient, GridFSBucket, ObjectId } from "mongodb";
 import { chromium } from "playwright";
 
@@ -440,6 +441,61 @@ try {
   await ap.request.patch(`${base}/api/admin/payroll/employees/${poojaE.id}`, { data: { active: false } });
   await sp.goto(`${base}/staff`); await sp.waitForTimeout(300);
   ok("employee marked as left is logged out", sp.url().includes("/staff/login"));
+
+  // ---- Leads from ads ----
+  // A stand-in for Meta's Graph API (the app is pointed at it with META_GRAPH_URL).
+  let tokenBroken = true;
+  const graphHits = [];
+  const graphSrv = createServer((rq, rs) => {
+    const u = new URL(rq.url, "http://x");
+    graphHits.push(u.pathname + "?" + u.searchParams.get("access_token"));
+    rs.setHeader("content-type", "application/json");
+    if (u.searchParams.get("access_token") !== "e2e-meta-page-token") { rs.statusCode = 400; return rs.end(JSON.stringify({ error: { message: "Invalid OAuth access token" } })); }
+    if (u.pathname.endsWith("/555")) return rs.end(JSON.stringify({ name: "Website enquiry form" }));
+    if (u.pathname.endsWith("/700000002") && tokenBroken) { rs.statusCode = 400; return rs.end(JSON.stringify({ error: { message: "Error validating access token: Session has expired" } })); }
+    if (/\/7000000\d\d$/.test(u.pathname)) return rs.end(JSON.stringify({ id: u.pathname.split("/").pop(), form_id: "555", campaign_name: "Diwali Website Offer", ad_name: "Reel - Rs 9999 website", platform: "ig", field_data: [{ name: "full_name", values: ["Rakesh Meena"] }, { name: "phone_number", values: ["+919828012345"] }, { name: "email", values: ["rakesh@meenahandicrafts.test"] }, { name: "which_service_do_you_need?", values: ["E-commerce website"] }, { name: "city", values: ["Jaipur"] }] }));
+    rs.statusCode = 404; rs.end("{}");
+  }).listen(3299);
+  const metaPost = (body, sig) => qp.request.post(`${base}/api/ads/meta`, { data: body, headers: { "content-type": "application/json", "x-hub-signature-256": sig ?? `sha256=${createHmac("sha256", process.env.META_APP_SECRET).update(body).digest("hex")}` } });
+  const metaEvent = (id) => JSON.stringify({ object: "page", entry: [{ id: "123", time: 1, changes: [{ field: "leadgen", value: { leadgen_id: id, page_id: "123", form_id: "555", ad_id: "9" } }] }] });
+  r = await qp.request.get(`${base}/api/ads/meta?hub.mode=subscribe&hub.verify_token=${process.env.META_VERIFY_TOKEN}&hub.challenge=abc123`);
+  ok("Meta webhook verification answers the challenge", r.status() === 200 && (await r.text()) === "abc123");
+  r = await qp.request.get(`${base}/api/ads/meta?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=abc123`);
+  ok("wrong verify token is refused", r.status() === 403);
+  r = await metaPost(metaEvent("700000001"), "sha256=" + "0".repeat(64));
+  ok("unsigned Meta webhook is refused", r.status() === 401, `status ${r.status()}`);
+  r = await metaPost(metaEvent("700000001"));
+  let ml = await db.collection("leads").findOne({ adLeadId: "meta:700000001" });
+  ok("Meta lead lands in Leads", r.status() === 200 && ml?.name === "Rakesh Meena" && ml?.phone === "+919828012345" && ml?.email === "rakesh@meenahandicrafts.test" && ml?.services === "E-commerce website" && ml?.source === "meta", JSON.stringify({ s: r.status(), n: ml?.name, p: ml?.phone }));
+  ok("Meta lead keeps campaign, ad and extra answers", ml?.track?.channel === "Meta Ads (Facebook / Instagram)" && ml?.track?.utmCampaign === "Diwali Website Offer" && ml?.track?.utmContent === "Reel - Rs 9999 website" && /City: Jaipur/.test(ml?.message || "") && ml?.adForm === "Website enquiry form", `${ml?.track?.channel} | ${ml?.message}`);
+  await metaPost(metaEvent("700000001"));
+  ok("same Meta lead twice is saved once", (await db.collection("leads").countDocuments({ adLeadId: "meta:700000001" })) === 1);
+  r = await metaPost(metaEvent("700000002"));
+  ml = await db.collection("leads").findOne({ adLeadId: "meta:700000002" });
+  ok("lead is kept even when the token fails", r.status() === 200 && ml?.adIncomplete === true && /700000002/.test(ml?.message || ""));
+  tokenBroken = false;
+  await metaPost(metaEvent("700000002"));
+  ml = await db.collection("leads").findOne({ adLeadId: "meta:700000002" });
+  ok("Meta's retry fills in the details", ml?.adIncomplete === false && ml?.name === "Rakesh Meena" && (await db.collection("leads").countDocuments({ adLeadId: "meta:700000002" })) === 1);
+  // Google Ads lead form webhook.
+  const gLead = (o = {}) => ({ lead_id: "TeSter-123-ABCDEFGHIJKLMNOPQRSTUVWXYZ", api_version: "1.0", form_id: 40000000, campaign_id: 12345678901, adgroup_id: 9876, gcl_id: "EAIaIQobChMI-test", google_key: process.env.GOOGLE_LEADS_KEY, is_test: false, user_column_data: [{ column_name: "Full Name", string_value: "Neha Agarwal", column_id: "FULL_NAME" }, { column_name: "User Phone", string_value: "+91 94140 55555", column_id: "PHONE_NUMBER" }, { column_name: "User Email", string_value: "Neha@AgarwalJewels.test", column_id: "EMAIL" }, { column_name: "What is your budget?", string_value: "50,000 - 1 lakh", column_id: "BUDGET" }, { column_name: "Business type", string_value: "Jewellery shop", column_id: "QUESTION_1" }], ...o });
+  r = await qp.request.post(`${base}/api/ads/google`, { data: gLead({ google_key: "wrong" }) });
+  ok("Google webhook with the wrong key is refused", r.status() === 401);
+  r = await qp.request.post(`${base}/api/ads/google`, { data: gLead() });
+  const gl = await db.collection("leads").findOne({ adLeadId: "google:TeSter-123-ABCDEFGHIJKLMNOPQRSTUVWXYZ" });
+  ok("Google Ads lead lands in Leads", r.status() === 200 && gl?.name === "Neha Agarwal" && gl?.phone === "+919414055555" && gl?.email === "neha@agarwaljewels.test" && gl?.budget === "50,000 - 1 lakh" && gl?.track?.channel === "Google Ads" && /Business type: Jewellery shop/.test(gl?.message || ""), JSON.stringify({ n: gl?.name, ch: gl?.track?.channel, m: gl?.message }));
+  await qp.request.post(`${base}/api/ads/google`, { data: gLead() });
+  ok("same Google lead twice is saved once", (await db.collection("leads").countDocuments({ adLeadId: { $regex: "^google:TeSter" } })) === 1);
+  r = await qp.request.post(`${base}/api/ads/google`, { data: gLead({ lead_id: "test-lead-2", is_test: true }) });
+  const tl = await db.collection("leads").findOne({ adLeadId: "google:test-lead-2" });
+  ok("Google test data is marked as a test", /TEST LEAD/.test(tl?.message || ""));
+  const st = await (await ap.request.get(`${base}/api/admin/ad-leads`)).json();
+  ok("setup screen shows both working", !!st.state?.lastMeta && !!st.state?.lastGoogle && st.meta.appSecret && st.google.key);
+  graphSrv.close();
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#leads`); await ap.waitForSelector("text=Rakesh Meena", { timeout: 15000 }); await ap.waitForTimeout(800);
+  await ap.screenshot({ path: `${out}/29-leads-from-ads.png`, fullPage: false });
+  await ap.click("text=Get leads from ads"); await ap.waitForSelector("text=Callback URL for Meta", { timeout: 10000 }); await ap.waitForTimeout(600);
+  await ap.screenshot({ path: `${out}/30-ads-setup.png`, fullPage: false });
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

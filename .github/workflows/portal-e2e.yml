@@ -31,6 +31,11 @@ jobs:
       RAZORPAY_KEY_ID: rzp_test_e2eonly
       RAZORPAY_KEY_SECRET: e2e-only-key-secret
       RAZORPAY_WEBHOOK_SECRET: e2e-only-webhook-secret
+      META_GRAPH_URL: http://localhost:3299
+      META_APP_SECRET: e2e-meta-app-secret
+      META_VERIFY_TOKEN: e2e-meta-verify-token
+      META_PAGE_TOKEN: e2e-meta-page-token
+      GOOGLE_LEADS_KEY: e2e-google-leads-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

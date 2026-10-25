@@ -44,6 +44,18 @@ export const KEY_GROUPS: KeyGroup[] = [
     ],
   },
   {
+    id: "adleads",
+    title: "Leads from ads (Meta and Google)",
+    note: "Leads from Facebook / Instagram instant forms and Google Ads lead forms go straight into Admin → Leads. The step-by-step setup and the webhook links are in Admin → Leads → Get leads from ads.",
+    keys: [
+      { name: "META_APP_SECRET", label: "Meta · App secret", secret: true, hint: "developers.facebook.com → your app → App settings → Basic" },
+      { name: "META_VERIFY_TOKEN", label: "Meta · Verify token", secret: true, hint: "any long text; type the same in the Meta webhook setup" },
+      { name: "META_PAGE_TOKEN", label: "Meta · Page access token", secret: true, hint: "a long-lived Page token with leads_retrieval permission" },
+      { name: "META_GRAPH_VERSION", label: "Meta · Graph API version", placeholder: "v23.0", hint: "leave empty for the default" },
+      { name: "GOOGLE_LEADS_KEY", label: "Google Ads · Webhook key", secret: true, hint: "any long text; type the same in the lead form's webhook settings" },
+    ],
+  },
+  {
     id: "chat",
     title: "AI chatbot (Claude)",
     note: "With a key the chatbot writes its own answers from your site content. Without it, it answers from the FAQ list in Admin → Chatbot.",
