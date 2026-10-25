@@ -131,7 +131,7 @@ export default function StaffHome(props: {
                 <div key={b.id} className="rounded-2xl bg-mist p-4">
                   <p className="text-sm font-semibold">{b.label}</p>
                   <p className="mt-1 font-display text-2xl font-semibold">{b.left === null ? b.used : b.left}<span className="text-sm font-normal text-muted">{b.left === null ? " taken" : ` of ${b.perYear} left`}</span></p>
-                  <p className="text-xs text-muted">{b.used} taken{b.pending ? ` · ${b.pending} waiting` : ""}{b.paid ? "" : " · unpaid"}</p>
+                  <p className="text-xs text-muted">{[b.left === null ? "" : `${b.used} taken`, b.pending ? `${b.pending} waiting` : "", b.paid ? "" : "no pay for these days"].filter(Boolean).join(" · ") || "No limit"}</p>
                 </div>
               ))}
             </div>
