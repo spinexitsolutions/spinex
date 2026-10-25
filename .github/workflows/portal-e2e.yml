@@ -1,0 +1,62 @@
+# Runs the client portal end to end with a real MongoDB and a real browser after every push to main,
+# and saves the result and screenshots to the "portal-e2e" branch.
+name: Portal check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: portal-e2e
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      MONGODB_URI: mongodb://localhost:27017/spinex_e2e
+      MONGODB_DB: spinex_e2e
+      AUTH_SECRET: e2e-only-not-a-real-secret-0123456789abcdef
+      ADMIN_EMAIL: owner@e2e.test
+      ADMIN_PASSWORD: e2e-owner-password-123
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: npm install --no-audit --no-fund 2>&1 | tail -5
+      - name: Build
+        run: |
+          for n in 1 2 3; do npm run build > build.log 2>&1 && break; grep -q "next/font" build.log || { tail -40 build.log; exit 1; }; sleep 15; done
+      - name: Run portal check
+        continue-on-error: true
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.47.2 > /dev/null 2>&1
+          npx playwright install --with-deps chromium > /dev/null 2>&1
+          (npx next start -p 3200 > server.log 2>&1 &)
+          for i in $(seq 1 40); do curl -sf http://localhost:3200/portal/login > /dev/null && break; sleep 2; done
+          node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal || true
+          tail -40 server.log > /tmp/portal/server.log || true
+      - name: Save result
+        run: |
+          mkdir -p /tmp/portal
+          echo "commit=${GITHUB_SHA}" > /tmp/portal/status.txt
+          date -u >> /tmp/portal/status.txt
+          cd /tmp/portal
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b portal-e2e
+          git add -A
+          git commit -q -m "Portal check for ${GITHUB_SHA}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" portal-e2e
