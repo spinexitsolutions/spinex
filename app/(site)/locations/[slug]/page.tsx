@@ -16,7 +16,7 @@ const findCity = (content: SiteContent, slug: string) => (content.cities ?? []).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const content = await getContent();
   const c = findCity(content, params.slug);
-  if (!c) return { title: "Page not found" };
+  if (!c) notFound(); // here too, so the 404 status is set before the page starts streaming
   const title = c.metaTitle || `${c.heading} | ${content.brand.name}`;
   const description = c.metaDescription || c.intro.slice(0, 160);
   return {
