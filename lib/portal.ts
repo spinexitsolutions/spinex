@@ -142,15 +142,16 @@ export const AMC_SOON_DAYS = 30;
 // Days left including today (0 = ends today, negative = expired that many days ago).
 export const amcDaysLeft = (a: Pick<AmcPlan, "endDate">, today = todayIndia()) => (a.endDate ? daysBetween(today, a.endDate) : NaN);
 
-export function amcState(a: Pick<AmcPlan, "startDate" | "endDate">, today = todayIndia()): AmcState {
+export function amcState(a: Pick<AmcPlan, "startDate" | "endDate"> & { renewals?: AmcPlan["renewals"] }, today = todayIndia()): AmcState {
   if (!a.endDate) return "active";
-  if (a.startDate && a.startDate > today) return "upcoming";
+  // Renewed early: the new year starts after the old one ends, so it is still covered in between.
+  if (a.startDate && a.startDate > today) return a.renewals?.some((r) => r.from === a.startDate) ? "active" : "upcoming";
   const left = daysBetween(today, a.endDate);
   if (left < 0) return "expired";
   return left <= AMC_SOON_DAYS ? "expiring" : "active";
 }
 
-export const amcStateLabel = (a: Pick<AmcPlan, "startDate" | "endDate">, today = todayIndia()) => {
+export const amcStateLabel = (a: Pick<AmcPlan, "startDate" | "endDate"> & { renewals?: AmcPlan["renewals"] }, today = todayIndia()) => {
   const st = amcState(a, today);
   const left = amcDaysLeft(a, today);
   if (st === "upcoming") return `Starts ${shortDate(a.startDate)}`;

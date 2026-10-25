@@ -272,6 +272,9 @@ try {
   r = await ap.request.post(`${base}/api/admin/clients/${cid}/amc`, { data: { action: "renew", amcId: "amc1", endDate: oldEnd } });
   amcNow = (await db.collection("portal_clients").findOne({ _id: cid })).amcs[0];
   ok("renew moves the plan one year ahead", r.status() === 200 && amcNow.startDate === ist(7) && amcNow.endDate > oldEnd && amcNow.sent.length === 0 && amcNow.renewals.length === 1, `${amcNow.startDate} to ${amcNow.endDate}`);
+  r = await dp.request.post(`${base}/api/portal/tickets`, { data: { subject: "Early renewed check", message: "Still covered?", kind: "question" } });
+  tk = await db.collection("portal_tickets").findOne({ _id: new ObjectId((await r.json()).id) });
+  ok("early renewal keeps the client covered until the new year starts", tk.amcCovered === true);
   r = await ap.request.post(`${base}/api/admin/clients/${cid}/amc`, { data: { action: "renew", amcId: "amc1", endDate: oldEnd } });
   ok("double renew is refused", r.status() === 409, `status ${r.status()}`);
   await ap.goto(`${base}/admin/clients/${cid}?tab=amc`); await ap.waitForSelector("text=Renew for 1 year", { timeout: 15000 }); await ap.waitForTimeout(500);
@@ -280,7 +283,7 @@ try {
   await ap.click("text=Website is not opening"); await ap.waitForTimeout(700);
   await ap.screenshot({ path: `${out}/20-admin-urgent-ticket.png`, fullPage: false });
   // An expired plan: requests are marked not covered.
-  await db.collection("portal_clients").updateOne({ _id: cid }, { $set: { "amcs.0.endDate": ist(-3), "amcs.0.startDate": ist(-368) } });
+  await db.collection("portal_clients").updateOne({ _id: cid }, { $set: { "amcs.0.endDate": ist(-3), "amcs.0.startDate": ist(-368), "amcs.0.renewals": [] } });
   r = await dp.request.post(`${base}/api/portal/tickets`, { data: { subject: "Add a banner", message: "Please add a Diwali banner.", kind: "change" } });
   tk = await db.collection("portal_tickets").findOne({ _id: new ObjectId((await r.json()).id) });
   ok("request after the AMC ended is marked not covered", tk.amcCovered === false && tk.amcTitle === "Website AMC (Basic)");
