@@ -3,14 +3,39 @@ import { hasDb } from "@/lib/db";
 import { internsCol } from "@/lib/intern-db";
 import { isLetterCode, templateFor } from "@/lib/letters";
 import { lettersCol } from "@/lib/letter-db";
+import { isPayslipCode, monthLabel } from "@/lib/payroll";
+import { payslipsCol } from "@/lib/payroll-db";
 
 // Public check for internship certificates (SPX-2026-0001) and HR letters (SPX-L-7KQ2X9).
 // Returns only what's printed on the document.
 export async function GET(req: Request) {
   const id = new URL(req.url).searchParams.get("id")?.trim().toUpperCase() ?? "";
   const letter = isLetterCode(id);
-  if (!letter && !/^SPX-\d{4}-\d{4,}$/.test(id)) return NextResponse.json({ valid: false, error: "Enter a number like SPX-2026-0001 or SPX-L-7KQ2X9." }, { status: 400 });
+  const payslip = isPayslipCode(id);
+  if (!letter && !payslip && !/^SPX-\d{4}-\d{4,}$/.test(id)) return NextResponse.json({ valid: false, error: "Enter a number like SPX-2026-0001, SPX-L-7KQ2X9 or SPX-P-4MW8RT." }, { status: 400 });
   if (!hasDb()) return NextResponse.json({ valid: false, error: "Verification is offline right now." }, { status: 503 });
+
+  if (payslip) {
+    const doc = await (await payslipsCol()).findOne({ verifyCode: id, status: { $in: ["issued", "revoked"] } }, { projection: { month: 1, number: 1, status: 1, emp: 1, earnings: 1, deductions: 1, issuedAt: 1 } });
+    if (!doc) return NextResponse.json({ valid: false });
+    if (doc.status === "revoked") return NextResponse.json({ valid: false, error: "This payslip was withdrawn by the company and is no longer valid." });
+    const add = (rows: unknown) => (Array.isArray(rows) ? rows.reduce((s: number, r: { amount?: number }) => s + (Number(r?.amount) || 0), 0) : 0);
+    const gross = add(doc.earnings);
+    // Banks and landlords check the employee, month and pay; nothing else from the payslip is shown.
+    return NextResponse.json({
+      valid: true,
+      kind: "payslip",
+      certId: id,
+      letterType: "Payslip",
+      number: doc.number,
+      name: doc.emp?.name ?? "",
+      role: doc.emp?.designation ?? "",
+      month: monthLabel(String(doc.month)),
+      gross,
+      net: Math.max(0, gross - add(doc.deductions)),
+      issuedOn: String(doc.issuedAt ?? "").slice(0, 10),
+    });
+  }
 
   if (letter) {
     const doc = await (await lettersCol()).findOne({ verifyCode: id, status: { $in: ["issued", "revoked"] } }, { projection: { type: 1, number: 1, status: 1, date: 1, person: 1, fields: 1 } });

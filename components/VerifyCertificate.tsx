@@ -7,7 +7,7 @@ import { BadgeCheck, Loader2, SearchX } from "lucide-react";
 import { formatDate } from "@/lib/interns";
 import { ease } from "./Reveal";
 
-type Result = { valid: boolean; error?: string; kind?: "certificate" | "letter"; letterType?: string; number?: string; certId?: string; name?: string; role?: string; startDate?: string; endDate?: string; issuedOn?: string };
+type Result = { valid: boolean; error?: string; kind?: "certificate" | "letter" | "payslip"; month?: string; gross?: number; net?: number; letterType?: string; number?: string; certId?: string; name?: string; role?: string; startDate?: string; endDate?: string; issuedOn?: string };
 
 // The form and result. The page renders the section shell and heading on the server.
 export default function VerifyCertificate() {
@@ -60,11 +60,20 @@ export default function VerifyCertificate() {
               {result.valid ? (
                 <div className="overflow-hidden rounded-[24px] bg-white text-ink">
                   <div className="flex items-center gap-3 bg-emerald-50 px-6 py-4 text-emerald-800">
-                    <BadgeCheck size={22} /> <span className="font-semibold">{result.kind === "letter" ? `Genuine ${result.letterType?.toLowerCase() ?? "letter"}` : "Genuine certificate"}</span>
+                    <BadgeCheck size={22} /> <span className="font-semibold">{result.kind === "payslip" ? "Genuine payslip" : result.kind === "letter" ? `Genuine ${result.letterType?.toLowerCase() ?? "letter"}` : "Genuine certificate"}</span>
                   </div>
                   <dl className="grid gap-5 p-6 sm:grid-cols-2">
                     <Item label="Name" value={result.name} />
-                    {result.kind === "letter" ? (
+                    {result.kind === "payslip" ? (
+                      <>
+                        <Item label="Month" value={result.month} />
+                        {result.role && <Item label="Designation" value={result.role} />}
+                        <Item label="Gross pay" value={`₹${Math.round(result.gross ?? 0).toLocaleString("en-IN")}`} />
+                        <Item label="Net pay" value={`₹${Math.round(result.net ?? 0).toLocaleString("en-IN")}`} />
+                        <Item label="Payslip no." value={result.number} mono />
+                        <Item label="Verification code" value={result.certId} mono />
+                      </>
+                    ) : result.kind === "letter" ? (
                       <>
                         <Item label="Document" value={result.letterType} />
                         {result.role && <Item label="Role" value={result.role} />}

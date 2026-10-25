@@ -20,7 +20,7 @@ export const roleHelp: Record<Role, string> = {
   admin: "Everything except team members, API keys and backups",
   editor: "Website content, blog, media and SEO",
   sales: "Leads, quotations, invoices and the client portal",
-  hr: "Interns, job applicants, certificates and HR letters",
+  hr: "Interns, job applicants, certificates, HR letters and payslips",
 };
 
 export type Level = "none" | "view" | "edit";
@@ -35,6 +35,7 @@ const AREA_LIST = [
   { id: "blog", label: "Blog posts", help: "Write, publish and delete articles" },
   { id: "media", label: "Image library", help: "Upload and delete images" },
   { id: "people", label: "Interns, applicants, certificates and HR letters", help: "Applications, status emails, certificates, offer and experience letters" },
+  { id: "payroll", label: "Employees and payslips", help: "Salary details of employees and monthly payslips" },
   { id: "integrations", label: "WhatsApp button, analytics and cookie banner", help: "Tracking codes that run on every page" },
   { id: "activity", label: "Everyone's activity log", help: "Without this they see only their own", viewOnly: true },
 ] as const;
@@ -51,7 +52,7 @@ export const ROLE_ACCESS: Record<Role, Access> = {
   admin: all("edit"),
   editor: { ...all("none"), dashboard: "view", content: "edit", blog: "edit", media: "edit" },
   sales: { ...all("none"), dashboard: "view", leads: "edit", billing: "edit", billingDetails: "view", clients: "edit" },
-  hr: { ...all("none"), dashboard: "view", people: "edit", media: "view" },
+  hr: { ...all("none"), dashboard: "view", people: "edit", payroll: "edit", media: "view" },
 };
 
 // Keeps only known areas and levels ("edit" on a look-only area becomes "view"). Missing areas: from the role.
