@@ -5,12 +5,12 @@ import { logActivity } from "@/lib/activity";
 import { calendarEmail, exchangeCode } from "@/lib/google-cal";
 import { saveSecrets } from "@/lib/secrets";
 import { writeState } from "@/lib/settings-db";
-import { SITE_URL } from "@/lib/site";
+import { requestOrigin } from "@/lib/site";
 import { safeEqual } from "@/lib/ad-leads";
 
 // Google sends the owner back here after they allow access. The refresh token is saved (encrypted) with the API keys.
 export async function GET(req: Request) {
-  const origin = process.env.NODE_ENV === "production" ? SITE_URL : new URL(req.url).origin;
+  const origin = requestOrigin(req);
   const back = (q: string) => NextResponse.redirect(`${origin}/admin?google=${q}#bookings`);
   const deny = await guard("users");
   if (deny) return deny;

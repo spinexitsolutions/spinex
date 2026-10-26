@@ -4,7 +4,7 @@ import { bookingsCol, getBookingSettings, toBooking } from "@/lib/booking-db";
 import { googleKeys } from "@/lib/google-cal";
 import { readState } from "@/lib/settings-db";
 import { can } from "@/lib/roles";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, requestOrigin } from "@/lib/site";
 
 // ?when=upcoming (default) or past. Also the settings and whether Google Calendar is connected.
 export async function GET(req: Request) {
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     bookings: docs.map(toBooking),
     upcoming,
     settings,
-    google: { ready: g.ready, connected: g.connected, email: String(state.email ?? ""), redirectUri: `${origin}/api/admin/google/callback`, error: String(state.error ?? "") },
+    google: { ready: g.ready, connected: g.connected, email: String(state.email ?? ""), redirectUri: `${requestOrigin(req)}/api/admin/google/callback`, error: String(state.error ?? "") },
     bookUrl: `${origin}/book`,
     canEdit: can(await getSession(), "leads", "edit"),
     isOwner: can(await getSession(), "users"),
