@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "dev:fast": "next dev --turbo",
-    "prebuild": "node -e \"const f='scripts/offline-images.mjs';if(require('fs').existsSync(f))require('child_process').execSync('node '+f,{stdio:'inherit'});else console.log('Skipping stock photo download: '+f+' not found')\"",
     "build": "next build",
     "start": "next start",
     "live": "npm run build && next start",
