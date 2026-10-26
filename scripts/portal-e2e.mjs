@@ -1005,6 +1005,13 @@ try {
       pg.on("pageerror", (e) => errs.push(`js: ${String(e.message || e).slice(0, 160)}`));
       pg.on("console", (m) => { if (m.type() === "error" && !/favicon|Download the React DevTools/.test(m.text())) errs.push(`console: ${m.text().slice(0, 160)}`); });
       pg.on("response", (res) => { if (res.status() >= 500) errs.push(`${res.status()} ${new URL(res.url()).pathname}`); });
+      const reqs = {};
+      const pending = new Set();
+      pg.on("request", (q) => { const k = `${q.method()} ${new URL(q.url()).pathname}`; reqs[k] = (reqs[k] ?? 0) + 1; pending.add(q); });
+      pg.on("requestfinished", (q) => pending.delete(q));
+      pg.on("requestfailed", (q) => pending.delete(q));
+      pg.once("close", () => undefined);
+      errs.why = () => `requests: ${Object.entries(reqs).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k}×${v}`).join(", ")}; still open: ${[...pending].slice(0, 3).map((q) => new URL(q.url()).pathname).join(", ")}`;
       try {
         const resp = await pg.goto(`${base}${url}`, { waitUntil: "networkidle", timeout: 30000 });
         if (resp && resp.status() >= 400) errs.push(`page ${resp.status()}`);
@@ -1012,7 +1019,7 @@ try {
         const over = await pg.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         if (over > 4) errs.push(`wider than the screen by ${over}px`);
         if (shotName) await pg.screenshot({ path: `${out}/sweep/${shotName}.png`, fullPage: false });
-      } catch (e) { errs.push(`load: ${String(e).slice(0, 120)}`); }
+      } catch (e) { errs.push(`load: ${String(e).slice(0, 80)} (${errs.why?.() ?? ""})`); }
       await pg.close();
       ok(`sweep ${label} ${url}`, errs.length === 0, [...new Set(errs)].slice(0, 4).join(" | "));
     };
