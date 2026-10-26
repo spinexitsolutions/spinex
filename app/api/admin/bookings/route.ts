@@ -8,7 +8,7 @@ import { SITE_URL, requestOrigin } from "@/lib/site";
 
 // ?when=upcoming (default) or past. Also the settings and whether Google Calendar is connected.
 export async function GET(req: Request) {
-  const deny = await guard("leads", "view");
+  const deny = await guard("bookings", "view");
   if (deny) return deny;
   const when = new URL(req.url).searchParams.get("when") === "past" ? "past" : "upcoming";
   const now = new Date().toISOString();

@@ -7,7 +7,7 @@ import { fbOid, feedbackCol, publishTestimonial, sendFeedbackRequest, toFeedback
 // { action: "approve", quote } puts it in Testimonials; "unpublish" takes it off; "hide" keeps it private;
 // "send" sends a waiting request now; "cancel" stops it.
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const deny = await guard("leads");
+  const deny = await guard("reviews");
   if (deny) return deny;
   const _id = fbOid(params.id);
   const col = await feedbackCol();

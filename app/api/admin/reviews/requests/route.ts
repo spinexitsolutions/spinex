@@ -5,7 +5,7 @@ import { queueReviewRequest, requestsCol, reviewOid, toRequest } from "@/lib/rev
 
 // Ask someone for a review now: { name, email, phone, project }.
 export async function POST(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("reviews");
   if (deny) return deny;
   const b = await jsonBody(req);
   const name = String(b.name ?? "").trim();

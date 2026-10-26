@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
 import AdLeadsSetup from "./AdLeadsSetup";
 import LeadFollowupsSetup from "./LeadFollowupsSetup";
+import { useLive } from "./live";
 
 const badge: Record<LeadStatus, string> = {
   new: "bg-lav-600 text-white",
@@ -72,17 +73,19 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
     setTimeout(() => setMsg(""), 2600);
   };
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const quiet = opts?.silent === true;
+    if (!quiet) setLoading(true);
     setLoadError("");
     try {
       setLeads(await api<Lead[]>("/api/admin/leads"));
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : "Couldn't load leads.");
+      if (!quiet) setLoadError(e instanceof Error ? e.message : "Couldn't load leads.");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
+  useLive("leads", load);
 
   useEffect(() => {
     load();
@@ -144,7 +147,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
     return (
       <div className="rounded-3xl border border-red-200 bg-white p-8 text-center">
         <p className="font-semibold text-red-700">{loadError}</p>
-        <button onClick={load} className="btn-ghost mt-4"><RefreshCw size={16} /> Try again</button>
+        <button onClick={() => load()} className="btn-ghost mt-4"><RefreshCw size={16} /> Try again</button>
       </div>
     );
   }
@@ -182,7 +185,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
         <button onClick={() => setShowAds(true)} className="btn-ghost px-4 py-2.5 text-sm"><Megaphone size={16} /> Get leads from ads</button>
         <button onClick={() => setShowFollowups(true)} className="btn-ghost px-4 py-2.5 text-sm"><MailPlus size={16} /> Follow-up emails</button>
         <a href="/api/admin/leads/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
-        <button onClick={load} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
+        <button onClick={() => load()} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
       </div>
 
       {showReport && (

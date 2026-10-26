@@ -4,7 +4,7 @@ import { requestsCol, reviewOid, sendRequest, toRequest } from "@/lib/reviews-db
 
 // { action: "send" } sends a scheduled or failed request now; { action: "cancel" } stops it.
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const deny = await guard("leads");
+  const deny = await guard("reviews");
   if (deny) return deny;
   const _id = reviewOid(params.id);
   const col = await requestsCol();

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarClock, Loader2, MessageSquare, Plus, RefreshCw, Search, ShieldCheck, UsersRound } from "lucide-react";
 import { amcState, amcStateLabel, mainAmc, projectProgress, shortDate, ticketKindLabel, ticketStatusLabel, type PortalClient, type Ticket } from "@/lib/portal";
 import Modal from "./Modal";
+import { useLive } from "./live";
 
 type Row = PortalClient & { openTickets: number; unreadTickets: number };
 type OpenTicket = Omit<Ticket, "messages"> & { messages: number; last: string; lastFrom: string };
@@ -41,20 +42,22 @@ export default function ClientsManager({ readOnly = false }: { readOnly?: boolea
   const [view, setView] = useState<View>("all");
   const [tickets, setTickets] = useState<OpenTicket[] | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const quiet = opts?.silent === true;
+    if (!quiet) setLoading(true);
+    if (!quiet) setError("");
     try {
       const [r, t] = await Promise.all([api<Row[]>("/api/admin/clients"), api<OpenTicket[]>("/api/admin/clients/tickets")]);
       setRows(r);
       setTickets(t);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't load clients.");
+      if (!quiet) setError(e instanceof Error ? e.message : "Couldn't load clients.");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
   useEffect(() => { load(); }, [load]);
+  useLive("clients", load);
 
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -109,7 +112,7 @@ export default function ClientsManager({ readOnly = false }: { readOnly?: boolea
           <Search size={15} className="text-muted" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, company, email or phone" aria-label="Search clients" className="h-full w-full bg-transparent text-sm outline-none" />
         </label>
-        <button onClick={load} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line bg-white hover:border-ink"><RefreshCw size={15} /></button>
+        <button onClick={() => load()} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line bg-white hover:border-ink"><RefreshCw size={15} /></button>
       </div>
 
       {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}

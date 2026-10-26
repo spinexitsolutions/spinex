@@ -37,12 +37,12 @@ import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
 import { can, roleLabel, type Access, type Perm, type Role } from "@/lib/roles";
-import type { Lead } from "@/lib/leads";
+import { LiveProvider, useBadges } from "./live";
 
 const sections = [
   { id: "overview", label: "Overview", Icon: LayoutDashboard, group: "" , perm: "stats" },
   { id: "leads", label: "Leads", Icon: Inbox, group: "Inbox" , perm: "leads" },
-  { id: "bookings", label: "Call bookings", Icon: Video, group: "Inbox" , perm: "leads" },
+  { id: "bookings", label: "Call bookings", Icon: Video, group: "Inbox" , perm: "bookings" },
   { id: "interns", label: "Interns", Icon: Users, group: "Inbox" , perm: "people" },
   { id: "certificates", label: "Certificates", Icon: Award, group: "Inbox" , perm: "people" },
   { id: "letters", label: "HR letters", Icon: FileSignature, group: "Inbox" , perm: "people" },
@@ -51,8 +51,8 @@ const sections = [
   { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "billing" },
   { id: "accounts", label: "Expenses and profit", Icon: PiggyBank, group: "Inbox" , perm: "accounts" },
   { id: "clients", label: "Client portal", Icon: UsersRound, group: "Inbox" , perm: "clients" },
-  { id: "feedback", label: "Client feedback", Icon: MessageSquareHeart, group: "Inbox" , perm: "leads" },
-  { id: "reviews", label: "Google reviews", Icon: Star, group: "Inbox" , perm: "leads" },
+  { id: "feedback", label: "Client feedback", Icon: MessageSquareHeart, group: "Inbox" , perm: "reviews" },
+  { id: "reviews", label: "Google reviews", Icon: Star, group: "Inbox" , perm: "reviews" },
   { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "blog" },
@@ -98,15 +98,7 @@ export default function AdminApp() {
 function AdminShell() {
   const { content, update } = useContent();
   const [saving, setSaving] = useState(false);
-  const [newLeads, setNewLeads] = useState(0);
-
-  // Unread enquiries count for the sidebar badge
-  useEffect(() => {
-    fetch("/api/admin/leads")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((all: Lead[]) => setNewLeads(Array.isArray(all) ? all.filter((l) => l.status === "new").length : 0))
-      .catch(() => undefined);
-  }, []);
+  const [newLeads, setNewLeads] = useState(-1);
   const [draft, setDraft] = useState<SiteContent>(content);
   const [section, setSection] = useState<SectionId>("overview");
   const [me, setMe] = useState<{ email: string; name: string; role: Role; uid: string; access?: Partial<Access> | null } | null>(null);
@@ -129,6 +121,10 @@ function AdminShell() {
       .catch(() => undefined);
   }, []);
   const allowed = sections.filter((x) => !me || x.perm === "any" || can(me, x.perm as Perm));
+  // What waits in each section (sidebar numbers), refreshed every 20 seconds; open screens reload on changes.
+  const badges = useBadges(!!me);
+  const badgeOf = (id: string) => (id === "leads" && section === "leads" && newLeads >= 0 ? newLeads : badges[id]?.count ?? 0);
+  const badgeTitle: Record<string, string> = { leads: "new leads", bookings: "calls coming up", clients: "unread client messages", attendance: "leave requests waiting", billing: "overdue invoices", feedback: "good feedback to approve", interns: "new applications" };
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
   const [conflict, setConflict] = useState("");
@@ -327,6 +323,7 @@ function AdminShell() {
   const current = sections.find((s) => s.id === section)!;
 
   return (
+    <LiveProvider value={badges}>
     <MediaDeleteContext.Provider value={!!me && can(me, "media", "edit")}>
     <div className="min-h-screen bg-mist lg:flex">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col bg-ink p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
@@ -348,7 +345,7 @@ function AdminShell() {
               {section === id && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-white/10" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
               <Icon size={17} className={`relative ${section === id ? "text-lav-300" : "text-white/50"}`} />
               <span className={`relative flex-1 ${section === id ? "text-white" : "text-white/70"}`}>{label}</span>
-              {id === "leads" && newLeads > 0 && <span className="relative rounded-full bg-lav-500 px-2 py-0.5 text-xs font-bold text-white">{newLeads}</span>}
+              {badgeOf(id) > 0 && <span title={`${badgeOf(id)} ${badgeTitle[id] ?? ""}`} className={`relative rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${id === "billing" ? "bg-red-500/90 text-white" : "bg-lav-500 text-white"}`}>{badgeOf(id)}</span>}
             </button>
             </div>
           ))}
@@ -936,6 +933,7 @@ function AdminShell() {
       </AnimatePresence>
     </div>
     </MediaDeleteContext.Provider>
+    </LiveProvider>
   );
 }
 

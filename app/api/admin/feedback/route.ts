@@ -6,7 +6,7 @@ import { feedbackCol, getFeedbackSettings, saveFeedbackSettings, toFeedback } fr
 import { can } from "@/lib/roles";
 
 export async function GET() {
-  const deny = await guard("leads", "view");
+  const deny = await guard("reviews", "view");
   if (deny) return deny;
   const [settings, docs] = await Promise.all([getFeedbackSettings(), (await feedbackCol()).find({}).sort({ createdAt: -1 }).limit(500).toArray()]);
   const list = docs.map(toFeedback);
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const deny = await guard("leadSettings");
+  const deny = await guard("reviews");
   if (deny) return deny;
   const next = cleanFeedbackSettings(await jsonBody(req));
   await saveFeedbackSettings(next);

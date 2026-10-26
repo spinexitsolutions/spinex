@@ -8,7 +8,7 @@ import Modal from "./Modal";
 
 const SHORT: Partial<Record<(typeof AREAS)[number]["id"], string>> = {
   leads: "Leads", billing: "Invoices", billingDetails: "Bank and GST details", clients: "Client portal", content: "Website", blog: "Blog", media: "Images",
-  people: "Interns and HR letters", payroll: "Payslips and leave", accounts: "Expenses and profit", integrations: "Tracking codes", activity: "Activity log",
+  bookings: "Call bookings", reviews: "Feedback and reviews", leadSettings: "Follow-up emails", people: "Interns and HR letters", payroll: "Payslips and leave", accounts: "Expenses and profit", integrations: "Tracking codes", activity: "Activity log",
 };
 const assignable = ROLES.filter((r) => r !== "owner");
 

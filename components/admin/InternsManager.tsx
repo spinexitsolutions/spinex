@@ -6,6 +6,7 @@ import { Award, ClipboardPaste, ExternalLink, FileSignature, FileSpreadsheet, Fi
 import { LetterTypePicker } from "./LettersManager";
 import { STATUSES, statusLabel, blankIntern, parseApplication, formatDate, type Intern, type Status } from "@/lib/interns";
 import { useContent } from "../ContentProvider";
+import { useLive } from "./live";
 
 const badge: Record<Status, string> = {
   applied: "bg-mist text-ink",
@@ -46,17 +47,19 @@ export default function InternsManager({ mode, readOnly = false }: { mode: "inte
     setTimeout(() => setMsg(""), 2800);
   };
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const quiet = opts?.silent === true;
+    if (!quiet) setLoading(true);
     setLoadError("");
     try {
       setInterns(await api<Intern[]>("/api/admin/interns"));
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : "Couldn't load interns.");
+      if (!quiet) setLoadError(e instanceof Error ? e.message : "Couldn't load interns.");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
+  useLive("interns", load);
 
   useEffect(() => {
     load();
@@ -137,7 +140,7 @@ export default function InternsManager({ mode, readOnly = false }: { mode: "inte
     return (
       <div className="rounded-3xl border border-red-200 bg-white p-8 text-center">
         <p className="font-semibold text-red-700">{loadError}</p>
-        <button onClick={load} className="btn-ghost mt-4"><RefreshCw size={16} /> Try again</button>
+        <button onClick={() => load()} className="btn-ghost mt-4"><RefreshCw size={16} /> Try again</button>
       </div>
     );
   }
@@ -194,7 +197,7 @@ export default function InternsManager({ mode, readOnly = false }: { mode: "inte
         {!readOnly && <button onClick={() => setEditing({ ...blankIntern(), kind })} className="btn-dark px-4 py-2.5 text-sm"><Plus size={16} /> {kind === "job" ? "Add applicant" : "Add intern"}</button>}
         <button onClick={() => { setPasteText(""); setPasting(true); }} className="btn-ghost px-4 py-2.5 text-sm"><ClipboardPaste size={16} /> Paste application</button>
         <a href="/api/admin/interns/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
-        <button onClick={load} aria-label="Refresh list" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
+        <button onClick={() => load()} aria-label="Refresh list" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
       </div>
 
       <div className="space-y-2">

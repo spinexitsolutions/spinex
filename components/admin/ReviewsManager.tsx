@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ExternalLink, Loader2, Plus, RefreshCw, Save, Send, Star, Trash2, X } from "lucide-react";
 import { requestStatusLabel, type ReviewRequest, type ReviewSettings, type SiteReview } from "@/lib/reviews";
+import { useLive } from "./live";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -40,6 +41,7 @@ export default function ReviewsManager({ goApiKeys }: { goApiKeys?: () => void }
     }
   }, []);
   useEffect(() => { load(); }, [load]);
+  useLive("reviews", load);
   if (!data || !s) return <div className="grid place-items-center py-16 text-muted"><Loader2 className="animate-spin" /></div>;
   const ro = !data.canEdit;
   const dirty = JSON.stringify(s) !== saved;

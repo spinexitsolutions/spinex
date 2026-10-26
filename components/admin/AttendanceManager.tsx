@@ -9,6 +9,7 @@ import {
 import { monthLabel } from "@/lib/payroll";
 import { dayTone } from "@/components/staff/StaffHome";
 import Modal from "./Modal";
+import { useLive } from "./live";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -69,6 +70,7 @@ function LeaveRequests({ readOnly, onPending }: { readOnly: boolean; onPending: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
   useEffect(() => { load(); }, [load]);
+  useLive("attendance", load);
 
   const act = async (l: LeaveRequest, action: "approve" | "approve-unpaid" | "reject" | "cancel") => {
     setBusy(`${action}:${l.id}`);

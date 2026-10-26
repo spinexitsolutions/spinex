@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, FilePlus2, FileText, Loader2, Plus, ReceiptIndianRu
 import { INDIAN_STATES, computeTotals, defaultProfile, docTitle, inr, statusLabel, validGstin, type BillDoc, type BillSigner, type BillingProfile } from "@/lib/billing";
 import ImageField from "./ImageField";
 import { MonthlyBills, PaymentRemindersCard } from "./RecurringBills";
+import { useLive } from "./live";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -36,22 +37,24 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
   const [showReminders, setShowReminders] = useState(false);
   const [monthlyCount, setMonthlyCount] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const quiet = opts?.silent === true;
+    if (!quiet) setLoading(true);
+    if (!quiet) setError("");
     try {
       const [d, p] = await Promise.all([api<BillDoc[]>("/api/admin/billing"), api<BillingProfile>("/api/admin/billing/settings")]);
       setDocs(d);
       setProfile(p);
       api<{ active: boolean }[]>("/api/admin/recurring").then((r) => setMonthlyCount(r.filter((x) => x.active).length)).catch(() => undefined);
-      if (!p.legalName || (!p.gstin && !p.bankName && !p.upi)) setShowProfile(canEditProfile);
+      if (!quiet && (!p.legalName || (!p.gstin && !p.bankName && !p.upi))) setShowProfile(canEditProfile);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't load.");
+      if (!quiet) setError(e instanceof Error ? e.message : "Couldn't load.");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [canEditProfile]);
   useEffect(() => { load(); }, [load]);
+  useLive("billing", load);
 
   const rows = useMemo(() => docs.map((d) => ({ d, t: computeTotals(d, profile) })), [docs, profile]);
   const unpaid = rows.filter(({ d }) => d.type === "invoice" && (d.status === "unpaid" || d.status === "partly-paid"));
@@ -78,7 +81,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
   };
 
   if (loading) return <div className="grid place-items-center rounded-3xl border border-line bg-white p-16 text-muted"><Loader2 className="animate-spin" /></div>;
-  if (error) return <div className="rounded-3xl border border-red-200 bg-white p-8 text-center"><p className="font-semibold text-red-700">{error}</p><button onClick={load} className="btn-ghost mt-4"><RefreshCw size={16} /> Try again</button></div>;
+  if (error) return <div className="rounded-3xl border border-red-200 bg-white p-8 text-center"><p className="font-semibold text-red-700">{error}</p><button onClick={() => load()} className="btn-ghost mt-4"><RefreshCw size={16} /> Try again</button></div>;
 
   const tabs: { id: Tab; label: string; n: number }[] = [
     { id: "all", label: "All", n: docs.length },

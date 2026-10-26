@@ -6,7 +6,7 @@ import { bookingOid, bookingsCol, cancelMeeting, emailBooking, toBooking } from 
 
 // { action: "cancel" (emails the client) | "done" | "noshow" | "reopen" | "note", note }
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const deny = await guard("leads");
+  const deny = await guard("bookings");
   if (deny) return deny;
   const _id = bookingOid(params.id);
   const col = await bookingsCol();

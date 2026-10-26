@@ -9,14 +9,14 @@ import { readState } from "@/lib/settings-db";
 import { can } from "@/lib/roles";
 
 export async function GET() {
-  const deny = await guard("leads", "view");
+  const deny = await guard("reviews", "view");
   if (deny) return deny;
   const [settings, cache, key, reqs] = await Promise.all([getReviewSettings(), readState("reviews_cache"), getSecret("GOOGLE_PLACES_API_KEY"), (await requestsCol()).find({}).sort({ createdAt: -1 }).limit(300).toArray()]);
   return NextResponse.json({ settings, google: cache, hasKey: !!key, writeUrl: writeReviewUrl(settings), requests: reqs.map(toRequest), canEdit: can(await getSession(), "leads", "edit") });
 }
 
 export async function PUT(req: Request) {
-  const deny = await guard("leadSettings");
+  const deny = await guard("reviews");
   if (deny) return deny;
   const next = cleanReviewSettings(await jsonBody(req));
   await saveReviewSettings(next);
@@ -27,7 +27,7 @@ export async function PUT(req: Request) {
 
 // { action: "refresh" } loads the rating and reviews from Google now.
 export async function POST(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("reviews");
   if (deny) return deny;
   const { action } = await jsonBody(req);
   if (action !== "refresh") return NextResponse.json({ error: "Bad request." }, { status: 400 });

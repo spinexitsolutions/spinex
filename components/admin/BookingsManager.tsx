@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarCheck, Check, Copy, ExternalLink, Link2, Loader2, Phone, Plus, Save, Trash2, Video, X } from "lucide-react";
 import { bookingStatusLabel, dateLabel, timeLabel, type Booking, type BookingSettings } from "@/lib/booking";
+import { useLive } from "./live";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -29,6 +30,7 @@ export default function BookingsManager({ goApiKeys }: { goApiKeys?: () => void 
     try { setData(await api<Data>(`/api/admin/bookings?when=${tab === "past" ? "past" : "upcoming"}`)); } catch (e) { setError(e instanceof Error ? e.message : "Couldn't load."); }
   }, [tab]);
   useEffect(() => { load(); }, [load]);
+  useLive("bookings", load);
   useEffect(() => {
     const g = new URLSearchParams(window.location.search).get("google");
     if (g) {

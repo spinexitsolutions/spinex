@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, EyeOff, Loader2, MessageSquareHeart, Save, Send, Star, Undo2, X } from "lucide-react";
 import { feedbackStatusLabel, type Feedback, type FeedbackSettings } from "@/lib/feedback";
+import { useLive } from "./live";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -39,6 +40,7 @@ export default function FeedbackManager() {
     }
   }, []);
   useEffect(() => { load(); }, [load]);
+  useLive("feedback", load);
   if (!data || !s) return <div className="grid place-items-center py-16 text-muted"><Loader2 className="animate-spin" /></div>;
   const ro = !data.canEdit;
   const act = async (fb: Feedback, action: string) => {

@@ -951,6 +951,16 @@ try {
   const tcBook = await tc.p.request.put(`${base}/api/admin/bookings/settings`, { data: { enabled: false } });
   const tcFu = await tc.p.request.put(`${base}/api/admin/lead-followups`, { data: { enabled: false } });
   ok("telecaller can't switch off call booking or change automatic emails", tcBook.status() === 403 && tcFu.status() === 403, `${tcBook.status()} ${tcFu.status()}`);
+  const tcB = await (await tc.p.request.get(`${base}/api/admin/badges`)).json();
+  ok("telecaller doesn't see call bookings, feedback or reviews", (await stOf(tc.p, "/api/admin/bookings")) === 403 && (await stOf(tc.p, "/api/admin/feedback")) === 403 && (await stOf(tc.p, "/api/admin/reviews")) === 403 && Object.keys(tcB).join(",") === "leads", JSON.stringify(Object.keys(tcB)));
+  const ownerB = await (await ap.request.get(`${base}/api/admin/badges`)).json();
+  ok("sidebar numbers: new leads, overdue invoices, leave requests", ownerB.leads?.count > 0 && typeof ownerB.billing?.count === "number" && typeof ownerB.attendance?.count === "number" && !!ownerB.clients?.stamp, JSON.stringify(Object.fromEntries(Object.entries(ownerB).map(([k, v]) => [k, v.count]))));
+  // A new lead shows on an open Leads screen without reloading the page.
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#leads`); await ap.waitForSelector("text=Follow-up emails", { timeout: 15000 });
+  await db.collection("leads").insertOne({ name: "Live Update Lead", phone: "9811111111", email: "live@lead.test", services: "Website", budget: "", message: "", plan: "", source: "contact", status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  const liveSeen = await ap.waitForSelector("text=Live Update Lead", { timeout: 45000 }).then(() => true).catch(() => false);
+  ok("new lead appears on the open screen without a reload", liveSeen);
+  await ap.screenshot({ path: `${out}/56-sidebar-numbers.png`, fullPage: false });
   const ac = await roleUser("accountant", "accountant@e2e.test");
   ok("accountant can work on invoices and expenses, not leads or website", ac.login === 200 && (await stOf(ac.p, "/api/admin/billing")) === 200 && (await stOf(ac.p, "/api/admin/accounts/report")) === 200 && (await stOf(ac.p, "/api/admin/leads")) === 403);
   const vw = await roleUser("viewer", "viewer@e2e.test");
