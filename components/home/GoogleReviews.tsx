@@ -43,7 +43,7 @@ export default async function GoogleReviews() {
             {d.rating > 0 && (
               <p className="mt-4 flex flex-wrap items-center gap-3">
                 <span className="font-display text-5xl font-semibold tabular-nums">{d.rating.toFixed(1)}</span>
-                <span><Stars n={d.rating} size={22} />{d.count > 0 && <span className="block text-sm text-muted">Based on {d.count.toLocaleString("en-IN")} Google review{d.count === 1 ? "" : "s"}</span>}</span>
+                <span><Stars n={d.rating} size={22} />{d.count > 0 && <span className="block text-sm text-muted">{`Based on ${d.count.toLocaleString("en-IN")} Google review${d.count === 1 ? "" : "s"}`}</span>}</span>
               </p>
             )}
           </div>
