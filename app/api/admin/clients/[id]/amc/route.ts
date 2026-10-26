@@ -63,7 +63,7 @@ export async function POST(req: Request, { params }: Ctx) {
     const date = todayIST();
     const stamp = new Date().toISOString();
     // Address, state and GSTIN from this client's latest invoice, so GST is split right (CGST+SGST or IGST).
-    const ids = (c.billingIds ?? []).map((x: string) => billOid(x)).filter(Boolean);
+    const ids = (c.billingIds ?? []).map((x: string) => billOid(x)).filter((x): x is NonNullable<ReturnType<typeof billOid>> => !!x);
     const last = ids.length ? await bills.findOne({ _id: { $in: ids }, type: "invoice" }, { sort: { date: -1 } }) : null;
     const lastClient = (last?.client ?? {}) as Partial<BillDoc["client"]>;
     const inv: Omit<BillDoc, "id"> & { amcRenewal: string } = {
