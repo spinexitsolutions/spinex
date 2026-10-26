@@ -10,7 +10,12 @@ import { chromium } from "playwright";
 const [base, out] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const report = [];
-const ok = (name, pass, extra = "") => report.push(`${pass ? "PASS" : "FAIL"} ${name}${extra ? ` (${extra})` : ""}`);
+const ok = (name, pass, extra = "") => {
+  report.push(`${pass ? "PASS" : "FAIL"} ${name}${extra ? ` (${extra})` : ""}`);
+  try { writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); } catch {}
+};
+// Never hang the CI job: save what we have and stop after 12 minutes.
+setTimeout(() => { report.push("FAIL run (stopped after 12 minutes)"); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(0); }, 12 * 60e3).unref();
 const hash = (v) => createHash("sha256").update(`${process.env.AUTH_SECRET}:${v}`).digest("hex");
 
 process.on("unhandledRejection", (e) => { report.push(`FAIL crashed (${String(e).slice(0, 400)})`); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(1); });
@@ -491,7 +496,7 @@ try {
   ok("Google test data is marked as a test", /TEST LEAD/.test(tl?.message || ""));
   const st = await (await ap.request.get(`${base}/api/admin/ad-leads`)).json();
   ok("setup screen shows both working", !!st.state?.lastMeta && st.state?.lastMetaName === "Rakesh Meena" && !!st.state?.lastGoogle && st.meta.appSecret && st.google.key, st.state?.lastMetaName);
-  graphSrv.close();
+  graphSrv.closeAllConnections?.(); graphSrv.close();
   await ap.goto("about:blank"); await ap.goto(`${base}/admin#leads`); await ap.waitForSelector("text=Rakesh Meena", { timeout: 15000 }); await ap.waitForTimeout(800);
   await ap.screenshot({ path: `${out}/29-leads-from-ads.png`, fullPage: false });
   await ap.click("text=Get leads from ads"); await ap.waitForSelector("text=Callback URL for Meta", { timeout: 10000 }); await ap.waitForTimeout(600);
@@ -587,7 +592,7 @@ try {
   await ap.request.put(`${base}/api/admin/bookings/settings`, { data: { ...cur2, enabled: false } });
   await bp.goto(`${base}/book`, { waitUntil: "networkidle" });
   ok("switched off: booking page says closed", (await bp.content()).includes("Online booking is closed"));
-  gSrv.close();
+  gSrv.closeAllConnections?.(); gSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);
@@ -596,3 +601,4 @@ await browser.close();
 await mongo.close();
 writeFileSync(`${out}/report.txt`, report.join("\n") + "\n");
 console.log(report.join("\n"));
+process.exit(0);
