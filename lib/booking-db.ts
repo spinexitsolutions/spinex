@@ -90,7 +90,7 @@ export async function meetingFor(b: Pick<Booking, "name" | "company" | "email" |
       const e = await createCallEvent({
         requestId: b.token.slice(0, 30),
         title: await callTitle(b),
-        description: [`Name: ${b.name}`, b.company && `Company: ${b.company}`, `Phone: ${b.phone}`, `Email: ${b.email}`, b.topic && `Topic: ${b.topic}`, b.message && `Notes: ${b.message}`, "", `Booked on ${SITE_URL}/book`].filter((x) => x !== false && x !== undefined).join("\n"),
+        description: [`Name: ${b.name}`, b.company && `Company: ${b.company}`, `Phone: ${b.phone}`, `Email: ${b.email}`, b.topic && `Topic: ${b.topic}`, b.message && `Notes: ${b.message}`, "", `Booked on ${SITE_URL}/book`].filter((x) => typeof x === "string").join("\n"),
         start: b.start, end: b.end, email: b.email, name: b.name,
       });
       return { meetMode: "google" as const, meetLink: e.meetLink || s.meetLink, calendarEventId: e.id, problem: e.meetLink ? "" : "Google made the event but no Meet link." };
