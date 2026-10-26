@@ -44,14 +44,15 @@ export default function BookingWidget({ topics, duration, moveToken, onMoved }: 
     await load();
   };
 
-  const book = async (e: React.FormEvent) => {
+  const book = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Read the form before any await: React clears currentTarget afterwards.
+    const website = (e.currentTarget.elements.namedItem("website") as HTMLInputElement | null)?.value ?? "";
     setBusy(true);
     setError("");
     setErrors({});
     try {
       const { attributionForLead } = await import("@/lib/attribution");
-      const website = ((e.currentTarget as HTMLFormElement).elements.namedItem("website") as HTMLInputElement | null)?.value ?? "";
       const r = await fetch("/api/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, date, time, startedAt: String(startedAt.current), cfToken, website, track: attributionForLead() }) });
       const d = await r.json().catch(() => ({}));
       if (r.status === 409 && d.taken) return taken(d.error);
