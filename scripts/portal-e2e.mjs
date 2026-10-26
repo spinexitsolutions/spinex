@@ -736,6 +736,55 @@ try {
   await ap.screenshot({ path: `${out}/41-monthly-bills.png`, fullPage: false });
   await ap.goto(`${base}/admin/billing/${invIds[1]}`); await ap.waitForSelector("text=Payment follow-up", { timeout: 15000 }); await ap.locator("text=Payment follow-up").scrollIntoViewIfNeeded(); await ap.waitForTimeout(500);
   await ap.screenshot({ path: `${out}/42-invoice-follow-up.png`, fullPage: false });
+  // ---- Client feedback ----
+  r = await ap.request.post(`${base}/api/admin/clients`, { data: { name: "Kavita Mehta", company: "Mehta Sweets", email: "kavita@mehtasweets.test", phone: "9829011122" } });
+  const kc = await r.json();
+  const proj = { id: "k1", title: "Restaurant website", type: "Website", status: "active", startDate: ist(-30), dueDate: ist(-2), nextStep: "", stages: [], updates: [], links: [] };
+  await ap.request.patch(`${base}/api/admin/clients/${kc.id}`, { data: { projects: [proj] } });
+  await ap.request.patch(`${base}/api/admin/clients/${kc.id}`, { data: { projects: [{ ...proj, status: "completed" }] } });
+  let fbDoc = await db.collection("feedback").findOne({ email: "kavita@mehtasweets.test" });
+  ok("completed project asks for feedback (instead of a direct Google request)", fbDoc?.source === "project" && fbDoc?.project === "Restaurant website" && !(await db.collection("review_requests").findOne({ email: "kavita@mehtasweets.test" })));
+  await db.collection("feedback").updateOne({ _id: fbDoc._id }, { $set: { sendAt: new Date(Date.now() - 60e3).toISOString() } });
+  mails.length = 0;
+  await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  fbDoc = await db.collection("feedback").findOne({ _id: fbDoc._id });
+  ok("feedback email goes out", fbDoc.status === "sent" && mails.some((m) => m.to.includes("kavita@mehtasweets.test") && m.data.includes(`/f/${fbDoc.token}`)));
+  const fc = await browser.newContext({ viewport: { width: 900, height: 1000 }, deviceScaleFactor: 1.25 });
+  const fpg = await fc.newPage();
+  await fpg.goto(`${base}/f/${fbDoc.token}`, { waitUntil: "networkidle" });
+  await fpg.click('[data-star="5"]');
+  await fpg.fill("textarea >> nth=0", "Mehta ji ki team ne humari restaurant website 2 hafte mein bana di. Online orders shuru ho gaye aur Google pe bhi dikhne lage. Bahut achha kaam!");
+  await fpg.fill("textarea >> nth=1", "Thoda pehle update dete to aur achha hota.");
+  await fpg.fill('input[aria-label="Role"]', "Owner");
+  await fpg.waitForTimeout(300);
+  await fpg.screenshot({ path: `${out}/43-feedback-form.png`, fullPage: true });
+  await fpg.click("text=Send feedback"); await fpg.waitForSelector("text=Thank you", { timeout: 15000 }); await fpg.waitForTimeout(400);
+  ok("thank-you page invites a Google review", (await fpg.content()).includes("Write a Google review"));
+  await fpg.screenshot({ path: `${out}/44-feedback-thanks.png`, fullPage: false });
+  r = await qp.request.post(`${base}/api/feedback/${fbDoc.token}`, { data: { rating: 1 } });
+  ok("feedback can be sent only once", r.status() === 409);
+  fbDoc = await db.collection("feedback").findOne({ _id: fbDoc._id });
+  ok("answer is saved", fbDoc.response?.rating === 5 && fbDoc.response?.publish === true && fbDoc.response?.company === "Mehta Sweets" && fbDoc.approval === "pending");
+  // Low rating alerts the team.
+  r = await ap.request.post(`${base}/api/admin/feedback/requests`, { data: { name: "Unhappy Client", email: "unhappy@client.test", project: "Logo design" } });
+  const low = await r.json();
+  mails.length = 0;
+  r = await qp.request.post(`${base}/api/feedback/${low.token}`, { data: { rating: 2, liked: "", better: "Delivery was late and nobody replied.", publish: false } });
+  ok("low rating alerts you", r.status() === 200 && mails.some((m) => m.to.includes("owner@e2e.test") && /Low[ _]rating/.test(m.data)));
+  r = await ap.request.post(`${base}/api/admin/feedback/${low.id}`, { data: { action: "approve", quote: "anything here" } });
+  ok("feedback the client didn't allow can't go on the website", r.status() === 400);
+  // Approve → Testimonials.
+  r = await ap.request.post(`${base}/api/admin/feedback/${fbDoc._id}`, { data: { action: "approve", quote: "Mehta ji ki team ne humari restaurant website 2 hafte mein bana di. Online orders shuru ho gaye. Bahut achha kaam!" } });
+  const content1 = (await db.collection("settings").findOne({ _id: "content" }))?.data;
+  const tst = (content1?.testimonials ?? []).find((t) => t.id?.startsWith("fb-"));
+  ok("approved feedback goes to Testimonials", r.status() === 200 && tst?.name === "Kavita Mehta" && tst?.role === "Owner, Mehta Sweets" && tst?.rating === "5", JSON.stringify(tst));
+  await bp.goto(`${base}/`, { waitUntil: "networkidle" });
+  ok("it shows on the home page", (await bp.content()).includes("Online orders shuru ho gaye"));
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#feedback`); await ap.waitForSelector("text=Average rating", { timeout: 15000 }); await ap.waitForTimeout(600);
+  await ap.screenshot({ path: `${out}/45-admin-feedback.png`, fullPage: true });
+  r = await ap.request.post(`${base}/api/admin/feedback/${fbDoc._id}`, { data: { action: "unpublish" } });
+  const content2 = (await db.collection("settings").findOne({ _id: "content" }))?.data;
+  ok("it can be taken off again", r.status() === 200 && !(content2?.testimonials ?? []).some((t) => t.id?.startsWith("fb-")));
   smtpSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));

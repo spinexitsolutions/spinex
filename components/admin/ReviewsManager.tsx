@@ -212,7 +212,7 @@ function Ask({ data, s, setS, dirty, save, reload, ro }: { data: Data; s: Review
       <section className="rounded-3xl border border-line bg-white p-6">
         <h3 className="font-display text-lg font-semibold">Ask automatically</h3>
         <fieldset disabled={ro} className="mt-3 space-y-3 text-sm">
-          <label className="flex items-start gap-3"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-lav-600" checked={s.askOnProjectDone} onChange={(e) => setS({ ...s, askOnProjectDone: e.target.checked })} /><span><b>When a project is marked Completed</b> in the client portal</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-lav-600" checked={s.askOnProjectDone} onChange={(e) => setS({ ...s, askOnProjectDone: e.target.checked })} /><span><b>When a project is marked Completed</b> in the client portal <span className="text-muted">(only if Client feedback isn&apos;t asking already: then its thank-you page links to Google instead)</span></span></label>
           <label className="flex items-start gap-3"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-lav-600" checked={s.askOnLeadWon} onChange={(e) => setS({ ...s, askOnLeadWon: e.target.checked })} /><span><b>When a lead is marked Won</b> (only if it has an email)</span></label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">Send after</span><select className="input" value={s.delayDays} onChange={(e) => setS({ ...s, delayDays: Number(e.target.value) })}>{[0, 1, 2, 3, 7, 14].map((d) => <option key={d} value={d}>{d ? `${d} day${d > 1 ? "s" : ""}` : "Right away"}</option>)}</select></label>

@@ -5,6 +5,7 @@ import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } fr
 import { runAmcReminders } from "@/lib/amc";
 import { runBookingReminders } from "@/lib/booking-db";
 import { runReviewRequests } from "@/lib/reviews-db";
+import { runFeedbackRequests } from "@/lib/feedback-db";
 import { runPaymentReminders } from "@/lib/payment-reminders";
 import { runRecurring } from "@/lib/recurring-db";
 import { readState, writeState } from "@/lib/settings-db";
@@ -54,6 +55,7 @@ export async function GET(req: Request) {
   // Call reminders are checked on every run (the scheduler should run every hour).
   done.calls = await runBookingReminders().catch((e) => ({ error: String(e) }));
   done.reviews = await runReviewRequests().catch((e) => ({ error: String(e) }));
+  done.feedback = await runFeedbackRequests().catch((e) => ({ error: String(e) }));
   if (backupDue(settings, String(state.lastBackup || ""))) {
     done.backup = await runBackup().catch((e) => ({ error: String(e) }));
   }
