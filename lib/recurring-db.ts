@@ -133,7 +133,7 @@ export async function runRecurring() {
     if (out.made) {
       made++;
       await col.updateOne({ _id: raw._id }, { $inc: { count: 1 }, $set: { lastInvoiceId: out.id, lastNumber: out.number, lastDate: today } });
-      lines.push(`• ${r.client.company || r.client.name}: ${out.number}, ${inr(out.total, 0)}${r.autoSend ? (out.emailed || out.whatsapp ? " · sent to client" : " · couldn't send to client") : " · not sent (send it yourself)"}`);
+      lines.push(`• ${r.client.company || r.client.name}: ${out.number}, ${inr(out.total ?? 0, 0)}${r.autoSend ? (out.emailed || out.whatsapp ? " · sent to client" : " · couldn't send to client") : " · not sent (send it yourself)"}`);
     } else if (out.reason !== "already made") lines.push(`• ${r.client.company || r.client.name}: FAILED (${out.reason})`);
   }
   if (lines.length) await notifyAdmin(`${made} monthly invoice${made === 1 ? "" : "s"} made`, [["Invoices", lines.join("\n")]], `${SITE_URL}/admin#billing`).catch(() => undefined);
