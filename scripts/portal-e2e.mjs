@@ -680,7 +680,8 @@ try {
   }).listen(2526);
   r = await ap.request.put(`${base}/api/admin/secrets`, { data: { keys: { SMTP_HOST: "127.0.0.1", SMTP_PORT: "2526", SMTP_USER: "bot@e2e.test", SMTP_PASS: "e2e-pass", NOTIFY_EMAIL: "owner@e2e.test" } } });
   ok("email settings saved for the test", r.status() === 200, `status ${r.status()}`);
-  const mkInv = (n, due, extra = {}) => ({ ...inv, number: `INV/2026-27/0${n}`, date: ist(-20), dueDate: due, status: "unpaid", paid: 0, shareToken: `e2eReminderToken${n}abcdefgh`, client: { ...inv.client, name: `Client ${n}`, company: `Company ${n}`, email: `client${n}@pay.test`, phone: "" }, items: [{ id: "i1", description: "Website work", sac: "998314", qty: 1, rate: 10000, gst: 0 }], payReminders: [], ...extra });
+  const { _id: _invId, ...invBase } = inv;
+  const mkInv = (n, due, extra = {}) => ({ ...invBase, number: `INV/2026-27/0${n}`, date: ist(-20), dueDate: due, status: "unpaid", paid: 0, shareToken: `e2eReminderToken${n}abcdefgh`, client: { ...inv.client, name: `Client ${n}`, company: `Company ${n}`, email: `client${n}@pay.test`, phone: "" }, items: [{ id: "i1", description: "Website work", sac: "998314", qty: 1, rate: 10000, gst: 0 }], payReminders: [], ...extra });
   const { insertedIds: invIds } = await db.collection("billing").insertMany([mkInv(51, ist(3)), mkInv(52, ist(-4)), mkInv(53, ist(10)), mkInv(54, ist(-4), { status: "paid", paid: 10000 }), mkInv(55, ist(-4), { noReminders: true })]);
   const rmCur = (await (await ap.request.get(`${base}/api/admin/billing/reminders`)).json()).settings;
   r = await ap.request.put(`${base}/api/admin/billing/reminders`, { data: { ...rmCur, enabled: true, steps: "-3, 0, 3, 7, 15", email: true, whatsapp: true, summary: true } });
