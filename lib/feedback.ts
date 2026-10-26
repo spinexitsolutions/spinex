@@ -35,7 +35,7 @@ export type FeedbackResponse = {
 };
 
 export type Feedback = {
-  id: string; name: string; email: string; phone: string; project: string; clientId: string;
+  id: string; name: string; company: string; email: string; phone: string; project: string; clientId: string;
   source: "project" | "lead" | "manual"; token: string; status: FeedbackStatus;
   sendAt: string; sentAt: string; reminded: boolean; error: string; by: string; createdAt: string;
   response: FeedbackResponse | null;

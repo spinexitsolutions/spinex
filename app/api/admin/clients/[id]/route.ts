@@ -65,7 +65,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     const done = c.projects.filter((p) => p.status === "completed" && was.get(p.id) !== "completed");
     // Feedback form first (its thank-you page links to Google); a direct Google request only when feedback is off.
     if (done.length && (await getFeedbackSettings()).autoOnProjectDone) {
-      await queueFeedback({ name: c.name, email: c.email, phone: c.phone, project: done[0].title, clientId: c.id, source: "project", by: (await getSession())?.name ?? "" }).catch(() => undefined);
+      await queueFeedback({ name: c.name, company: c.company, email: c.email, phone: c.phone, project: done[0].title, clientId: c.id, source: "project", by: (await getSession())?.name ?? "" }).catch(() => undefined);
     } else if (done.length && (await getReviewSettings()).askOnProjectDone) {
       await queueReviewRequest({ name: c.name, email: c.email, phone: c.phone, project: done[0].title, source: "project", refId: c.id, by: (await getSession())?.name ?? "" }).catch(() => undefined);
     }

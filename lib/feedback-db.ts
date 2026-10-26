@@ -33,7 +33,7 @@ export async function feedbackCol() {
 export function toFeedback(doc: WithId<Document>): Feedback {
   const r = doc as WithId<Document> & Partial<Feedback>;
   return {
-    id: String(doc._id), name: r.name ?? "", email: r.email ?? "", phone: r.phone ?? "", project: r.project ?? "", clientId: r.clientId ?? "",
+    id: String(doc._id), name: r.name ?? "", company: r.company ?? "", email: r.email ?? "", phone: r.phone ?? "", project: r.project ?? "", clientId: r.clientId ?? "",
     source: r.source === "project" || r.source === "lead" ? r.source : "manual", token: r.token ?? "",
     status: (["scheduled", "sent", "answered", "cancelled", "failed"].includes(String(r.status)) ? r.status : "scheduled") as Feedback["status"],
     sendAt: r.sendAt ?? "", sentAt: r.sentAt ?? "", reminded: !!r.reminded, error: r.error ?? "", by: r.by ?? "", createdAt: r.createdAt ?? "",
@@ -43,14 +43,14 @@ export function toFeedback(doc: WithId<Document>): Feedback {
 }
 
 // One feedback request per project (and per email for 6 months), so nobody gets asked twice.
-export async function queueFeedback(p: { name: string; email: string; phone?: string; project?: string; clientId?: string; source: Feedback["source"]; by?: string; now?: boolean }) {
+export async function queueFeedback(p: { name: string; company?: string; email: string; phone?: string; project?: string; clientId?: string; source: Feedback["source"]; by?: string; now?: boolean }) {
   const email = p.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { queued: false, reason: "no email" };
   const s = await getFeedbackSettings();
   const col = await feedbackCol();
   if (!p.now && (await col.findOne({ email, status: { $ne: "cancelled" }, createdAt: { $gte: new Date(Date.now() - 180 * 864e5).toISOString() } }))) return { queued: false, reason: "already asked in the last 6 months" };
   const now = new Date();
-  const doc = { name: p.name.trim().slice(0, 120), email, phone: (p.phone ?? "").slice(0, 20), project: (p.project ?? "").slice(0, 140), clientId: p.clientId ?? "", source: p.source, token: randomBytes(15).toString("base64url"), status: "scheduled", sendAt: new Date(now.getTime() + (p.now ? 0 : s.delayDays * 864e5)).toISOString(), sentAt: "", reminded: false, error: "", by: p.by ?? "", createdAt: now.toISOString(), response: null, approval: "pending", testimonialId: "", quote: "" };
+  const doc = { name: p.name.trim().slice(0, 120), company: (p.company ?? "").trim().slice(0, 140), email, phone: (p.phone ?? "").slice(0, 20), project: (p.project ?? "").slice(0, 140), clientId: p.clientId ?? "", source: p.source, token: randomBytes(15).toString("base64url"), status: "scheduled", sendAt: new Date(now.getTime() + (p.now ? 0 : s.delayDays * 864e5)).toISOString(), sentAt: "", reminded: false, error: "", by: p.by ?? "", createdAt: now.toISOString(), response: null, approval: "pending", testimonialId: "", quote: "" };
   const { insertedId } = await col.insertOne(doc);
   if (p.now) await sendFeedbackRequest(toFeedback({ ...doc, _id: insertedId } as WithId<Document>), false);
   return { queued: true, id: String(insertedId) };

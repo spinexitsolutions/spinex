@@ -26,7 +26,7 @@ export default async function FeedbackPage({ params }: { params: { token: string
         logo={content.brand.logo}
         name={f.name}
         project={f.project}
-        company={f.response?.company ?? ""}
+        company={f.response?.company || f.company}
         answered={f.status === "answered" ? { rating: f.response?.rating ?? 0 } : null}
         googleUrl={fs.showGoogleAfter ? writeReviewUrl(rs) : ""}
         cancelled={f.status === "cancelled"}
