@@ -102,12 +102,12 @@ function ProfitLoss({ fy, openMonth }: { fy: string; openMonth: (m: string) => v
         </div>
         <div className="mt-5 flex items-end gap-1.5 sm:gap-3" aria-hidden>
           {r.months.map((m) => (
-            <button key={m.month} onClick={() => openMonth(m.month)} title={`${monthName(m.month)}: sales ${rs(m.sales)}, costs ${rs(m.expenses + m.salaries)}, ${m.profit >= 0 ? "profit" : "loss"} ${rs(Math.abs(m.profit))}`} className="group flex h-full flex-1 flex-col justify-end">
-              <span className="flex h-[150px] items-end justify-center gap-0.5">
-                <span className="w-1/2 max-w-[18px] rounded-t bg-lav-600 transition group-hover:opacity-80" style={{ height: `${Math.round((m.sales / peak) * 150)}px` }} />
-                <span className="w-1/2 max-w-[18px] rounded-t bg-amber-400 transition group-hover:opacity-80" style={{ height: `${Math.round(((m.expenses + m.salaries) / peak) * 150)}px` }} />
+            <button key={m.month} onClick={() => openMonth(m.month)} title={`${monthName(m.month)}: sales ${rs(m.sales)}, costs ${rs(m.expenses + m.salaries)}, ${m.profit >= 0 ? "profit" : "loss"} ${rs(Math.abs(m.profit))}`} className="group flex min-w-0 flex-1 flex-col items-center justify-end">
+              <span className="flex h-[150px] w-full items-end justify-center gap-0.5">
+                <span data-bar className="block w-2.5 shrink-0 rounded-t bg-lav-600 sm:w-4 transition group-hover:opacity-80" style={{ height: `${Math.round((m.sales / peak) * 150)}px` }} />
+                <span className="block w-2.5 shrink-0 rounded-t bg-amber-400 sm:w-4 transition group-hover:opacity-80" style={{ height: `${Math.round(((m.expenses + m.salaries) / peak) * 150)}px` }} />
               </span>
-              <span className={`mt-1.5 block text-center text-[11px] ${m.month === thisMonth ? "font-semibold text-ink" : "text-muted"}`}>{monthName(m.month, { month: "short" })}</span>
+              <span className={`mt-1.5 block w-full text-center text-[11px] ${m.month === thisMonth ? "font-semibold text-ink" : "text-muted"}`}>{monthName(m.month, { month: "short" })}</span>
             </button>
           ))}
         </div>

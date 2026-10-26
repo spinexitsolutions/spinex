@@ -856,6 +856,8 @@ try {
   await db.collection("expenses").insertMany(demo);
   await ap.goto("about:blank"); await ap.goto(`${base}/admin#accounts`); await ap.waitForSelector("text=Month by month", { timeout: 15000 }); await ap.waitForTimeout(800);
   await ap.screenshot({ path: `${out}/46-profit-loss.png`, fullPage: true });
+  const barBox = await ap.locator("[data-bar]").nth(6).boundingBox();
+  ok("monthly chart bars are drawn", !!barBox && barBox.height > 20 && barBox.width > 5, JSON.stringify(barBox));
   await ap.click('[role="tab"]:has-text("Expenses")'); await ap.waitForSelector("[data-expense]", { timeout: 15000 }); await ap.waitForTimeout(500);
   await ap.screenshot({ path: `${out}/47-expenses.png`, fullPage: true });
   await ap.click("text=Add expense"); await ap.waitForSelector('input[name="vendor"]');
