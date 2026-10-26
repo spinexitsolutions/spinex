@@ -61,7 +61,7 @@ jobs:
           npx playwright install --with-deps chromium >> /tmp/portal/install.log 2>&1 || true
           (npx next start -p 3200 > server.log 2>&1 &)
           for i in $(seq 1 40); do curl -sf http://localhost:3200/portal/login > /dev/null && break; sleep 2; done
-          timeout 900 node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal > /tmp/portal/run.log 2>&1 || true
+          timeout 1500 node scripts/portal-e2e.mjs http://localhost:3200 /tmp/portal > /tmp/portal/run.log 2>&1 || true
           tail -5 /tmp/portal/install.log > /tmp/portal/install-tail.log || true
           tail -40 server.log > /tmp/portal/server.log || true
       - name: Save result

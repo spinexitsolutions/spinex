@@ -16,7 +16,7 @@ const ok = (name, pass, extra = "") => {
   try { writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); } catch {}
 };
 // Never hang the CI job: save what we have and stop after 12 minutes.
-setTimeout(() => { report.push("FAIL run (stopped after 12 minutes)"); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(0); }, 12 * 60e3).unref();
+setTimeout(() => { report.push("FAIL run (stopped after 24 minutes)"); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(0); }, 24 * 60e3).unref();
 const hash = (v) => createHash("sha256").update(`${process.env.AUTH_SECRET}:${v}`).digest("hex");
 
 process.on("unhandledRejection", (e) => { report.push(`FAIL crashed (${String(e).slice(0, 400)})`); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(1); });
@@ -949,6 +949,49 @@ try {
   await ap.selectOption("select:has(option[value='accountant'])", "accountant").catch(() => undefined);
   await ap.waitForTimeout(400);
   await ap.screenshot({ path: `${out}/55-add-accountant.png`, fullPage: false });
+  // ---- Sweep: every admin section and public page, desktop and phone ----
+  {
+    const { readFileSync } = await import("node:fs");
+    const ids = [...new Set([...readFileSync("components/admin/AdminApp.tsx", "utf8").matchAll(/\{ id: "([a-zA-Z]+)", label: "[^"]+", Icon:/g)].map((m) => m[1]))];
+    const tokenOf = async (col, q = {}) => (await db.collection(col).findOne({ token: { $type: "string", $ne: "" }, ...q }))?.token;
+    const pub = ["/", "/about", "/services", "/work", "/products", "/blog", "/careers", "/internship", "/contact", "/book", "/website-development-jaipur", "/company-profile", "/verify", "/privacy", "/terms", "/refund", "/portal/login", "/staff/login"];
+    const tokens = [["d", inv.shareToken], ["d", openQuote.shareToken], ["l", await tokenOf("letters")], ["p", await tokenOf("payslips", { status: "issued" })], ["b", await tokenOf("bookings")], ["f", await tokenOf("feedback")]].filter(([, t]) => t).map(([k, t]) => `/${k}/${t}`);
+    const state = await admin.storageState();
+    const check = async (ctx, url, label, shotName) => {
+      const pg = await ctx.newPage();
+      const errs = [];
+      pg.on("pageerror", (e) => errs.push(`js: ${String(e.message || e).slice(0, 160)}`));
+      pg.on("console", (m) => { if (m.type() === "error" && !/favicon|Download the React DevTools/.test(m.text())) errs.push(`console: ${m.text().slice(0, 160)}`); });
+      pg.on("response", (res) => { if (res.status() >= 500) errs.push(`${res.status()} ${new URL(res.url()).pathname}`); });
+      try {
+        const resp = await pg.goto(`${base}${url}`, { waitUntil: "networkidle", timeout: 30000 });
+        if (resp && resp.status() >= 400) errs.push(`page ${resp.status()}`);
+        await pg.waitForTimeout(700);
+        const over = await pg.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        if (over > 4) errs.push(`wider than the screen by ${over}px`);
+        if (shotName) await pg.screenshot({ path: `${out}/sweep/${shotName}.png`, fullPage: false });
+      } catch (e) { errs.push(`load: ${String(e).slice(0, 120)}`); }
+      await pg.close();
+      ok(`sweep ${label} ${url}`, errs.length === 0, [...new Set(errs)].slice(0, 4).join(" | "));
+    };
+    mkdirSync(`${out}/sweep`, { recursive: true });
+    const deskAdmin = await browser.newContext({ viewport: { width: 1280, height: 900 }, storageState: state });
+    const phoneAdmin = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, storageState: state, isMobile: true, hasTouch: true });
+    for (const id of ids) {
+      await check(deskAdmin, `/admin#${id}`, "admin desktop");
+      await check(phoneAdmin, `/admin#${id}`, "admin phone", `admin-${id}`);
+    }
+    const deskPub = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const phonePub = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    for (const url of [...pub, ...tokens]) {
+      const name = url === "/" ? "home" : url.replace(/^\//, "").replace(/\/[A-Za-z0-9_-]{16,}$/, "").replace(/\//g, "-");
+      await check(deskPub, url, "public desktop");
+      await check(phonePub, url, "public phone", `public-${name}`);
+    }
+    const phoneClient = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, storageState: await phone.storageState(), isMobile: true, hasTouch: true });
+    for (const url of ["/portal", "/portal/invoices", "/portal/support", "/portal/files"]) await check(phoneClient, url, "client portal phone", `portal-${url.split("/")[2] || "home"}`);
+    await Promise.all([deskAdmin, phoneAdmin, deskPub, phonePub, phoneClient].map((c) => c.close()));
+  }
   smtpSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
