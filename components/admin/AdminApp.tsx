@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video,
+  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
@@ -30,6 +30,7 @@ import ClientsManager from "./ClientsManager";
 import PayrollManager from "./PayrollManager";
 import AttendanceManager from "./AttendanceManager";
 import BookingsManager from "./BookingsManager";
+import ReviewsManager from "./ReviewsManager";
 import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
@@ -47,6 +48,7 @@ const sections = [
   { id: "attendance", label: "Attendance and leave", Icon: CalendarCheck, group: "Inbox" , perm: "payroll" },
   { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "billing" },
   { id: "clients", label: "Client portal", Icon: UsersRound, group: "Inbox" , perm: "clients" },
+  { id: "reviews", label: "Google reviews", Icon: Star, group: "Inbox" , perm: "leads" },
   { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "blog" },
@@ -316,7 +318,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "bookings", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
+  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "bookings", "reviews", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
@@ -424,6 +426,8 @@ function AdminShell() {
             {section === "attendance" && <AttendanceManager readOnly={readOnly} />}
 
             {section === "bookings" && <BookingsManager goApiKeys={() => go("apikeys")} />}
+
+            {section === "reviews" && <ReviewsManager goApiKeys={() => go("apikeys")} />}
 
             {section === "media" && <MediaLibrary />}
 

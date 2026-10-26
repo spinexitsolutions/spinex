@@ -594,6 +594,60 @@ try {
   await bp.goto(`${base}/book`, { waitUntil: "networkidle" });
   ok("switched off: booking page says closed", (await bp.content()).includes("Online booking is closed"));
   gSrv.closeAllConnections?.(); gSrv.close();
+
+  // ---- Google reviews ----
+  let placesHits = 0;
+  const pSrv = createServer((rq, rs) => {
+    placesHits++;
+    rs.setHeader("content-type", "application/json");
+    if (rq.headers["x-goog-api-key"] !== "e2e-places-key") { rs.statusCode = 403; return rs.end(JSON.stringify({ error: { message: "API key not valid" } })); }
+    rs.end(JSON.stringify({ displayName: { text: "Spinex IT Solutions" }, rating: 4.8, userRatingCount: 37, googleMapsUri: "https://maps.google.com/?cid=123", reviews: [
+      { name: "places/x/reviews/a1", rating: 5, relativePublishTimeDescription: "2 weeks ago", text: { text: "Spinex built our e-commerce store in 3 weeks. Orders started coming from day one. Very responsive team." }, authorAttribution: { displayName: "Mahesh Agarwal", photoUri: "", uri: "https://maps.google.com/u/1" } },
+      { name: "places/x/reviews/a2", rating: 5, relativePublishTimeDescription: "a month ago", text: { text: "Great work on our Google Business Profile and Instagram. Leads doubled." }, authorAttribution: { displayName: "Sunita Sharma" } },
+      { name: "places/x/reviews/a3", rating: 3, relativePublishTimeDescription: "2 months ago", text: { text: "Okay experience, a bit slow." }, authorAttribution: { displayName: "Average Reviewer" } },
+      { name: "places/x/reviews/a4", rating: 4, relativePublishTimeDescription: "3 months ago", text: { text: "Good website, fair price." }, authorAttribution: { displayName: "Rohit Saini" } },
+      { name: "places/x/reviews/a5", rating: 5, relativePublishTimeDescription: "4 months ago", authorAttribution: { displayName: "No Text" } },
+    ] }));
+  }).listen(3297);
+  const rvCur = (await (await ap.request.get(`${base}/api/admin/reviews`)).json()).settings;
+  r = await ap.request.put(`${base}/api/admin/reviews`, { data: { ...rvCur, show: true, mode: "google", placeId: "ChIJe2eTestPlace", minRating: 4, maxReviews: 6, delayDays: 1, reminderDays: 5 } });
+  ok("reviews settings save", r.status() === 200);
+  r = await ap.request.post(`${base}/api/admin/reviews`, { data: { action: "refresh" } });
+  const rg = (await r.json()).google;
+  ok("rating and reviews load from Google", r.status() === 200 && rg?.rating === 4.8 && rg?.count === 37 && rg?.reviews?.length === 5, JSON.stringify({ s: r.status(), r: rg?.rating }));
+  await bp.goto(`${base}/`, { waitUntil: "networkidle" }); await bp.waitForTimeout(600);
+  const home = await bp.content();
+  ok("home page shows the Google rating and good reviews", home.includes("Based on 37 Google reviews") && home.includes("Mahesh Agarwal") && home.includes("Rohit Saini") && !home.includes("Average Reviewer") && !home.includes("No Text"));
+  const hitsBefore = placesHits;
+  await bp.reload({ waitUntil: "networkidle" });
+  ok("Google is not asked again on every visit (cached)", placesHits === hitsBefore, `${placesHits - hitsBefore} extra calls`);
+  await bp.locator("#google-reviews-title").scrollIntoViewIfNeeded(); await bp.waitForTimeout(800);
+  await bp.locator("#google-reviews-title").locator("xpath=ancestor::section").screenshot({ path: `${out}/36-home-google-reviews.png` });
+  // Ask for a review when a project is completed.
+  const cl = (await (await ap.request.get(`${base}/api/admin/clients/${cid}`)).json()).client;
+  await db.collection("review_requests").deleteMany({});
+  r = await ap.request.patch(`${base}/api/admin/clients/${cid}`, { data: { projects: cl.projects.map((p) => (p.id === "p1" ? { ...p, status: "completed" } : p)) } });
+  let rq = await db.collection("review_requests").findOne({ email: "rahul@sharmatraders.test" });
+  ok("completing a project queues a review request", r.status() === 200 && rq?.source === "project" && rq?.project === "E-commerce website" && rq?.status === "scheduled" && Date.parse(rq.sendAt) > Date.now() + 20 * 3600e3, JSON.stringify({ s: rq?.status, p: rq?.project }));
+  await ap.request.patch(`${base}/api/admin/clients/${cid}`, { data: { projects: cl.projects.map((p) => ({ ...p, status: "completed" })) } });
+  ok("the same client isn't asked twice", (await db.collection("review_requests").countDocuments({ email: "rahul@sharmatraders.test" })) === 1);
+  await db.collection("review_requests").updateOne({ _id: rq._id }, { $set: { sendAt: new Date(Date.now() - 60e3).toISOString() } });
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  rq = await db.collection("review_requests").findOne({ _id: rq._id });
+  ok("scheduler sends the due request", rq.status === "failed" || rq.status === "sent", `${rq.status} (no email server in the test, so "failed" is expected)`);
+  r = await qp.request.get(`${base}/r/${rq.token}`, { maxRedirects: 0 });
+  ok("review link opens Google's write-a-review page", r.status() === 302 && r.headers()["location"] === "https://search.google.com/local/writereview?placeid=ChIJe2eTestPlace", r.headers()["location"]);
+  ok("opening the link is noted", (await db.collection("review_requests").findOne({ _id: rq._id })).status === "clicked");
+  r = await ap.request.post(`${base}/api/admin/reviews/requests`, { data: { name: "Neha Agarwal", email: "neha@agarwaljewels.test", phone: "9414055555", project: "Jewellery website" } });
+  ok("team can ask a client by hand", r.status() === 201 || r.status() === 502, `status ${r.status()}`);
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#reviews`); await ap.waitForSelector("text=Where the reviews come from", { timeout: 15000 }); await ap.waitForTimeout(600);
+  await ap.screenshot({ path: `${out}/37-admin-reviews.png`, fullPage: false });
+  await ap.click("text=Ask for reviews"); await ap.waitForSelector("text=Ask automatically", { timeout: 10000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/38-admin-review-requests.png`, fullPage: true });
+  await ap.request.put(`${base}/api/admin/reviews`, { data: { ...rvCur, show: false, placeId: "ChIJe2eTestPlace" } });
+  await bp.goto(`${base}/`, { waitUntil: "networkidle" });
+  ok("switched off: no reviews on the home page", !(await bp.content()).includes("Based on 37 Google reviews"));
+  pSrv.closeAllConnections?.(); pSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getReviewSettings, queueReviewRequest } from "@/lib/reviews-db";
 import { logActivity } from "@/lib/activity";
 import { guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
@@ -33,6 +34,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const doc = await col.findOneAndUpdate({ _id }, { $set: { ...update, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
   const lead = toLead(doc);
+  if (data.status === "won" && before.status !== "won" && lead.email && (await getReviewSettings()).askOnLeadWon) {
+    await queueReviewRequest({ name: lead.name, email: lead.email, phone: lead.phone, project: lead.services, source: "lead", refId: lead.id }).catch(() => undefined);
+  }
   const what = [
     data.status !== undefined && data.status !== before.status && `status → ${data.status}`,
     "assignedTo" in data && data.assignedTo !== String(before.assignedTo ?? "") && (lead.assignedName ? `given to ${lead.assignedName}` : "un-assigned"),

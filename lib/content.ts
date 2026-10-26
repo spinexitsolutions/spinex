@@ -134,6 +134,7 @@ export const HOME_BLOCKS: Record<string, string> = {
   industries: "Who we work with",
   goals: "Goal picker",
   testimonials: "Testimonials",
+  reviews: "Google reviews",
   planner: "Project planner",
   blog: "Latest articles",
   seo: "SEO text",
@@ -146,7 +147,13 @@ export const HOME_BLOCKS: Record<string, string> = {
 export function homeOrder(layout: HomeBlock[] | undefined): HomeBlock[] {
   const saved = (layout ?? []).filter((b) => b && b.id in HOME_BLOCKS);
   const missing = Object.keys(HOME_BLOCKS).filter((id) => !saved.some((b) => b.id === id)).map((id) => ({ id, visible: true }));
-  return [...missing.filter((b) => b.id === "trusted"), ...saved, ...missing.filter((b) => b.id !== "trusted")];
+  // Google reviews (added later) go right after Testimonials.
+  const out = [...missing.filter((b) => b.id === "trusted"), ...saved, ...missing.filter((b) => b.id !== "trusted" && b.id !== "reviews")];
+  if (missing.some((b) => b.id === "reviews")) {
+    const at = out.findIndex((b) => b.id === "testimonials");
+    out.splice(at >= 0 ? at + 1 : out.length, 0, { id: "reviews", visible: true });
+  }
+  return out;
 }
 
 // "Trusted by" strip: client logos (or names) and an optional Google rating line.

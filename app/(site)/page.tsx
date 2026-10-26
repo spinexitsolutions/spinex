@@ -11,6 +11,7 @@ import Showreel from "@/components/home/Showreel";
 import Industries from "@/components/home/Industries";
 import Goals from "@/components/home/Goals";
 import Testimonials from "@/components/home/Testimonials";
+import GoogleReviews from "@/components/home/GoogleReviews";
 import Planner from "@/components/home/Planner";
 import SeoText from "@/components/home/SeoText";
 import Faq from "@/components/home/Faq";
@@ -55,6 +56,7 @@ export default async function HomePage() {
     industries: <Industries />,
     goals: <Goals />,
     testimonials: <Testimonials />,
+    reviews: <GoogleReviews />,
     planner: <Planner />,
     blog: <LatestPosts posts={posts} content={content} />,
     seo: <SeoText content={content} />,

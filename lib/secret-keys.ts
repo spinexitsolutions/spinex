@@ -67,6 +67,12 @@ export const KEY_GROUPS: KeyGroup[] = [
     ],
   },
   {
+    id: "googlereviews",
+    title: "Google reviews on the website",
+    note: "Shows your live Google rating and reviews on the home page. In console.cloud.google.com turn on “Places API (New)”, create an API key (restrict it to Places API) and paste it here. Add your Place ID in Admin → Google reviews.",
+    keys: [{ name: "GOOGLE_PLACES_API_KEY", label: "Places API key", secret: true }],
+  },
+  {
     id: "chat",
     title: "AI chatbot (Claude)",
     note: "With a key the chatbot writes its own answers from your site content. Without it, it answers from the FAQ list in Admin → Chatbot.",

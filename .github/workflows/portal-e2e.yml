@@ -41,6 +41,8 @@ jobs:
       GOOGLE_AUTH_URL: http://localhost:3298
       GOOGLE_OAUTH_CLIENT_ID: e2e-client.apps.googleusercontent.com
       GOOGLE_OAUTH_CLIENT_SECRET: e2e-client-secret
+      PLACES_API_URL: http://localhost:3297
+      GOOGLE_PLACES_API_KEY: e2e-places-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

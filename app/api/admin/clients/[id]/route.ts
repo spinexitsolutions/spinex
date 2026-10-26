@@ -5,6 +5,7 @@ import { billingCol, getProfile, toBill } from "@/lib/billing-db";
 import { computeTotals, docTitle } from "@/lib/billing";
 import { cleanClientInput, clientsCol, keepAmcHistory, listPortalFiles, loginsCol, pOid, portalFilesBucket, ticketsCol, toClient, toTicket } from "@/lib/portal-db";
 import { can } from "@/lib/roles";
+import { getReviewSettings, queueReviewRequest } from "@/lib/reviews-db";
 
 type Ctx = { params: { id: string } };
 
@@ -57,6 +58,14 @@ export async function PATCH(req: Request, { params }: Ctx) {
   // Old login codes and links stop working too.
   if (update.$inc) await (await loginsCol()).deleteMany({ clientId: String(_id) });
   const c = toClient(doc!);
+  // A project just marked Completed: ask the client for a Google review (after the delay set in Google reviews).
+  if (data.projects) {
+    const was = new Map(((before.projects ?? []) as { id: string; status: string }[]).map((p) => [p.id, p.status]));
+    const done = c.projects.filter((p) => p.status === "completed" && was.get(p.id) !== "completed");
+    if (done.length && (await getReviewSettings()).askOnProjectDone) {
+      await queueReviewRequest({ name: c.name, email: c.email, phone: c.phone, project: done[0].title, source: "project", refId: c.id, by: (await getSession())?.name ?? "" }).catch(() => undefined);
+    }
+  }
   await logActivity(await getSession(), "Client portal", data.active === false && before.active !== false ? "Switched off a client login" : "Edited a client", c.company || c.name, req);
   return NextResponse.json(c);
 }
