@@ -694,7 +694,7 @@ try {
   const to = (e) => mails.filter((m) => m.to.includes(e));
   ok("reminders go to the invoices that are due", cj.done?.payments?.sent === 2 && to("client51@pay.test").length === 1 && to("client52@pay.test").length === 1, JSON.stringify(cj.done?.payments));
   ok("paid, far-off and stopped invoices get nothing", !to("client53@pay.test").length && !to("client54@pay.test").length && !to("client55@pay.test").length);
-  ok("overdue email says it is overdue", /Payment overdue/.test(to("client52@pay.test")[0]?.data || "") && /Payment reminder/.test(to("client51@pay.test")[0]?.data || ""));
+  ok("overdue email says it is overdue", /Payment[ _]overdue/.test(to("client52@pay.test")[0]?.data || "") && /Payment[ _]reminder/.test(to("client51@pay.test")[0]?.data || ""));
   ok("you get the list of reminders", mails.some((m) => m.to.includes("owner@e2e.test") && /payment reminder/i.test(m.data)));
   const b52 = await db.collection("billing").findOne({ _id: invIds[1] });
   ok("a late invoice doesn't get several reminders at once", (b52.payReminders ?? []).length === 1 && b52.payReminderKeys?.length === 3, JSON.stringify(b52.payReminderKeys));
@@ -717,9 +717,10 @@ try {
   cj = await r.json();
   let recInv = await db.collection("billing").findOne({ recurringId: rec.id });
   ok("scheduler makes this month's invoice", cj.done?.recurring?.made === 1 && !!recInv && recInv.items[0].description === `SEO and Google Business Profile, ${monthName} ${ist(0).slice(0, 4)}` && recInv.status === "unpaid", JSON.stringify(cj.done?.recurring));
-  ok("the invoice is emailed to the client", mails.some((m) => m.to.includes("vikas@guptamotors.test") && /Invoice INV/.test(m.data)));
+  ok("the invoice is emailed to the client", mails.some((m) => m.to.includes("vikas@guptamotors.test") && /Invoice[ _]INV/.test(m.data)));
   let recDoc = await db.collection("recurring_bills").findOne({ _id: new ObjectId(rec.id) });
-  ok("monthly bill moves to next month", recDoc.count === 1 && recDoc.nextDate > ist(20) && recDoc.nextDate.endsWith("-05"), recDoc.nextDate);
+  const nm = new Date(Date.UTC(Number(ist(0).slice(0, 4)), Number(ist(0).slice(5, 7)), 5)).toISOString().slice(0, 10);
+  ok("monthly bill moves to the 5th of next month", recDoc.count === 1 && recDoc.nextDate === nm, `${recDoc.nextDate} vs ${nm}`);
   await resetDay();
   await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
   ok("no second invoice for the same month", (await db.collection("billing").countDocuments({ recurringId: rec.id })) === 1);
