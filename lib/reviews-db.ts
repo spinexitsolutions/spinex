@@ -1,5 +1,6 @@
 // Server only. Google rating and reviews for the website (Places API, cached), and review requests to clients.
 import { randomBytes } from "crypto";
+import { unstable_cache } from "next/cache";
 import { ObjectId, type Document, type WithId } from "mongodb";
 import { getDb } from "./db";
 import { getSecret } from "./secrets";
@@ -74,8 +75,9 @@ export async function googleData(s: ReviewSettings, force = false): Promise<Goog
   }
 }
 
-// What the home page shows.
-export async function siteReviews() {
+// What the home page shows. Cached with the page; saving settings or reloading from Google clears it ("reviews" tag).
+export const siteReviews = unstable_cache(() => loadSiteReviews(), ["site-reviews"], { tags: ["reviews"], revalidate: 3600 });
+async function loadSiteReviews() {
   const s = await getReviewSettings();
   if (!s.show) return null;
   let rating = s.manualRating, count = s.manualCount, mapsUrl = s.manualMapsUrl, list = s.manualReviews, fromGoogle = false;
