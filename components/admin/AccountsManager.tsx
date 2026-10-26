@@ -100,12 +100,12 @@ function ProfitLoss({ fy, openMonth }: { fy: string; openMonth: (m: string) => v
           <span className="flex items-center gap-1.5 text-xs text-muted"><i className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> Expenses + salaries</span>
           <a href={`/api/admin/accounts/report?fy=${r.fy}&format=csv`} className="btn-ghost px-3 py-2 text-sm"><Download size={14} /> Download (Excel)</a>
         </div>
-        <div className="mt-5 flex h-44 items-end gap-1.5 sm:gap-3" aria-hidden>
+        <div className="mt-5 flex items-end gap-1.5 sm:gap-3" aria-hidden>
           {r.months.map((m) => (
             <button key={m.month} onClick={() => openMonth(m.month)} title={`${monthName(m.month)}: sales ${rs(m.sales)}, costs ${rs(m.expenses + m.salaries)}, ${m.profit >= 0 ? "profit" : "loss"} ${rs(Math.abs(m.profit))}`} className="group flex h-full flex-1 flex-col justify-end">
-              <span className="flex flex-1 items-end justify-center gap-0.5">
-                <span className="w-1/2 max-w-[18px] rounded-t bg-lav-600 transition group-hover:opacity-80" style={{ height: `${(m.sales / peak) * 100}%` }} />
-                <span className="w-1/2 max-w-[18px] rounded-t bg-amber-400 transition group-hover:opacity-80" style={{ height: `${((m.expenses + m.salaries) / peak) * 100}%` }} />
+              <span className="flex h-[150px] items-end justify-center gap-0.5">
+                <span className="w-1/2 max-w-[18px] rounded-t bg-lav-600 transition group-hover:opacity-80" style={{ height: `${Math.round((m.sales / peak) * 150)}px` }} />
+                <span className="w-1/2 max-w-[18px] rounded-t bg-amber-400 transition group-hover:opacity-80" style={{ height: `${Math.round(((m.expenses + m.salaries) / peak) * 150)}px` }} />
               </span>
               <span className={`mt-1.5 block text-center text-[11px] ${m.month === thisMonth ? "font-semibold text-ink" : "text-muted"}`}>{monthName(m.month, { month: "short" })}</span>
             </button>
@@ -267,7 +267,7 @@ function ExpenseForm({ initial, readOnly, onDone }: { initial: Expense; readOnly
           <input className="input" name="gst" inputMode="decimal" value={gst} onChange={(e) => setGst(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0 if no GST bill" />
           <span className="mt-1.5 flex flex-wrap gap-1.5">{[5, 12, 18, 28].map((p) => <button key={p} type="button" onClick={() => setGst(String(Math.round(a * p) / 100))} className="rounded-full border border-line px-2.5 py-0.5 text-xs hover:border-ink">{p}%</button>)}</span>
         </L>
-        <L label="Vendor GSTIN (for input credit)"><input className="input uppercase" name="vendorGstin" value={f.vendorGstin} onChange={(e) => set("vendorGstin", e.target.value.toUpperCase())} maxLength={15} placeholder="Only if their bill shows it" /></L>
+        <L label="Vendor GSTIN (for input credit)"><input className="input uppercase placeholder:normal-case" name="vendorGstin" value={f.vendorGstin} onChange={(e) => set("vendorGstin", e.target.value.toUpperCase())} maxLength={15} placeholder="Only if their bill shows it" /></L>
         <L label="Bill / invoice no"><input className="input" value={f.billNo} onChange={(e) => set("billNo", e.target.value)} /></L>
         <L label="Paid via"><select className="input" value={f.paidVia} onChange={(e) => set("paidVia", e.target.value)}>{PAID_VIA.map((c) => <option key={c}>{c}</option>)}</select></L>
         <label className="flex items-start gap-3 self-end rounded-2xl border border-line p-3 text-sm">
@@ -348,9 +348,9 @@ function GstSummary({ today }: { today: string }) {
 
           <Section title="Sales (for GSTR-1)" empty="No invoices in this period.">
             {g.sales.length > 0 && (
-              <table className="w-full min-w-[820px] text-sm">
+              <table className="w-full min-w-[940px] text-[13px]">
                 <thead className="bg-mist text-left text-xs uppercase tracking-wide text-muted"><tr><th className="px-4 py-3">Invoice</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">GSTIN</th><th className="px-4 py-3 text-right">Taxable</th><th className="px-4 py-3 text-right">CGST</th><th className="px-4 py-3 text-right">SGST</th><th className="px-4 py-3 text-right">IGST</th><th className="px-4 py-3 text-right">Total</th></tr></thead>
-                <tbody>{g.sales.map((s) => <tr key={s.number} className="border-t border-line"><td className="px-4 py-2.5 font-medium">{s.number}</td><td className="whitespace-nowrap px-4 py-2.5">{dlabel(s.date)}</td><td className="px-4 py-2.5">{s.client}</td><td className="px-4 py-2.5 font-mono text-xs">{s.gstin || <span className="font-sans text-muted">B2C</span>}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.taxable)}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.cgst)}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.sgst)}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.igst)}</td><td className="px-4 py-2.5 text-right font-semibold tabular-nums">{inr(s.total)}</td></tr>)}</tbody>
+                <tbody>{g.sales.map((s) => <tr key={s.number} className="border-t border-line [&>td]:whitespace-nowrap"><td className="px-4 py-2.5 font-medium">{s.number}</td><td className="whitespace-nowrap px-4 py-2.5">{dlabel(s.date)}</td><td className="max-w-[200px] truncate px-4 py-2.5" title={s.client}>{s.client}</td><td className="px-4 py-2.5 font-mono text-xs">{s.gstin || <span className="font-sans text-muted">B2C</span>}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.taxable)}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.cgst)}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.sgst)}</td><td className="px-4 py-2.5 text-right tabular-nums">{inr(s.igst)}</td><td className="px-4 py-2.5 text-right font-semibold tabular-nums">{inr(s.total)}</td></tr>)}</tbody>
               </table>
             )}
           </Section>
