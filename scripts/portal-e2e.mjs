@@ -624,7 +624,8 @@ try {
   ok("Google is not asked again on every visit (cached)", placesHits === hitsBefore, `${placesHits - hitsBefore} extra calls`);
   await bp.locator("#google-reviews-title").scrollIntoViewIfNeeded(); await bp.waitForTimeout(800);
   await bp.locator("#google-reviews-title").locator("xpath=ancestor::section").screenshot({ path: `${out}/36-home-google-reviews.png` });
-  // Ask for a review when a project is completed.
+  // Ask for a review when a project is completed (with Client feedback switched off, which would ask first).
+  await ap.request.put(`${base}/api/admin/feedback`, { data: { autoOnProjectDone: false } });
   const cl = (await (await ap.request.get(`${base}/api/admin/clients/${cid}`)).json()).client;
   await db.collection("review_requests").deleteMany({});
   r = await ap.request.patch(`${base}/api/admin/clients/${cid}`, { data: { projects: cl.projects.map((p) => (p.id === "p1" ? { ...p, status: "completed" } : p)) } });
@@ -737,6 +738,7 @@ try {
   await ap.goto(`${base}/admin/billing/${invIds[1]}`); await ap.waitForSelector("text=Payment follow-up", { timeout: 15000 }); await ap.locator("text=Payment follow-up").scrollIntoViewIfNeeded(); await ap.waitForTimeout(500);
   await ap.screenshot({ path: `${out}/42-invoice-follow-up.png`, fullPage: false });
   // ---- Client feedback ----
+  await ap.request.put(`${base}/api/admin/feedback`, { data: { autoOnProjectDone: true, delayDays: 1, reminderDays: 5, showGoogleAfter: true } });
   r = await ap.request.post(`${base}/api/admin/clients`, { data: { name: "Kavita Mehta", company: "Mehta Sweets", email: "kavita@mehtasweets.test", phone: "9829011122" } });
   const kc = await r.json();
   const proj = { id: "k1", title: "Restaurant website", type: "Website", status: "active", startDate: ist(-30), dueDate: ist(-2), nextStep: "", stages: [], updates: [], links: [] };
