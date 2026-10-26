@@ -29,8 +29,9 @@ export async function POST(req: Request) {
   const monthEnd = `${month}-${String(daysIn(month)).padStart(2, "0")}`;
   const eid = b.employeeId ? payOid(String(b.employeeId)) : null;
   if (b.employeeId && !eid) return NextResponse.json({ error: "Employee not found." }, { status: 404 });
-  const filter = eid ? { _id: eid } : { active: { $ne: false } };
-  const employees = (await (await employeesCol()).find(filter).toArray()).map(toEmployee).filter((e) => eid || !e.joiningDate || e.joiningDate <= monthEnd);
+  // Working people, and people who left during this month (they are paid up to their last day).
+  const filter = eid ? { _id: eid } : { $or: [{ active: { $ne: false } }, { exitDate: { $gte: `${month}-01` } }] };
+  const employees = (await (await employeesCol()).find(filter).toArray()).map(toEmployee).filter((e) => eid || ((!e.joiningDate || e.joiningDate <= monthEnd) && (!e.exitDate || e.exitDate >= `${month}-01`)));
   if (!employees.length) return NextResponse.json({ error: eid ? "Employee not found." : "No working employees yet. Add employees first." }, { status: 400 });
   const col = await payslipsCol();
   const session = await getSession();

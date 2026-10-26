@@ -12,6 +12,7 @@ export type Employee = {
   designation: string;
   department: string;
   joiningDate: string;
+  exitDate?: string; // last working day, once they leave
   location: string;
   pan: string;
   uan: string; // PF number
@@ -90,6 +91,7 @@ export const blankEmployee = (): Omit<Employee, "id" | "createdAt" | "updatedAt"
   designation: "",
   department: "",
   joiningDate: "",
+  exitDate: "",
   location: "Jaipur",
   pan: "",
   uan: "",
@@ -122,9 +124,10 @@ export function splitGross(gross: number): PayRow[] {
 
 export const sum = (rows: { amount: number }[]) => rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
 export const fullGross = (e: Pick<Employee, "earnings">) => sum(e.earnings);
-const isBasic = (label: string) => /^basic/i.test(label.trim());
+// PF wage = Basic + Dearness allowance (DA), as the PF Act counts it.
+const isBasic = (label: string) => /^basic/i.test(label.trim()) || /dearness|^da\b|\(da\)/i.test(label.trim());
 
-// PF on basic (up to the ₹15,000 wage ceiling) and ESI on gross, recalculated whenever days or amounts change.
+// PF on basic + DA (up to the ₹15,000 wage ceiling) and ESI on gross, recalculated whenever days or amounts change.
 export function recalc(slip: Payslip): Payslip {
   const ratio = slip.daysInMonth > 0 ? Math.min(1, Math.max(0, slip.paidDays / slip.daysInMonth)) : 1;
   const earnings = slip.earnings.map((r) => (r.prorate ? { ...r, amount: round(r.full * ratio) } : { ...r, amount: round(r.amount) }));

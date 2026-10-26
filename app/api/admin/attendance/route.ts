@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const all = (await (await employeesCol()).find({}).sort({ name: 1 }).limit(2000).toArray()).map(toEmployee);
   // Working people who had joined by the end of the month (and people who left but have leave this month).
   const leaves = await leavesBetween(dates[0], dates[dates.length - 1]);
-  const employees = all.filter((e) => (e.active || leaves.some((l) => l.employeeId === e.id)) && (!e.joiningDate || e.joiningDate <= dates[dates.length - 1]));
+  const employees = all.filter((e) => (e.active || (e.exitDate && e.exitDate >= dates[0]) || leaves.some((l) => l.employeeId === e.id)) && (!e.joiningDate || e.joiningDate <= dates[dates.length - 1]) && (!e.exitDate || e.exitDate >= dates[0] || leaves.some((l) => l.employeeId === e.id)));
   const { settings, summaries } = await monthAttendance(month, employees);
   return NextResponse.json({
     settings,

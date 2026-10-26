@@ -73,13 +73,15 @@ export async function saveAdLead(a: AdLead) {
   const track = cleanTrack({ utmSource: sourceName, utmMedium: "paid", utmCampaign: a.campaign, utmContent: a.adName, clickId: a.clickId ? "gclid" : "", formPage: a.formName ? `Ad form: ${a.formName}` : "Ad lead form", landingPage: "" });
   const stamp = new Date().toISOString();
   const message = [a.isTest ? "TEST LEAD (sent from the ads setup screen)" : "", a.incomplete ? `Details couldn't be loaded from ${a.source === "meta" ? "Meta" : "Google"}: ${a.incomplete}. Open the Leads Center in Meta Business Suite for this lead (ID ${a.externalId}).` : "", d.message].filter(Boolean).join("\n\n");
-  const doc = { ...d, message, plan: "", source: a.source, status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", track, adLeadId, adIncomplete: !!a.incomplete, adForm: a.formName, createdAt: stamp, updatedAt: stamp };
+  const doc = { ...d, message, plan: "", source: a.source, status: "new", value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", track, adLeadId, adIncomplete: !!a.incomplete, adForm: a.formName, ...(a.isTest ? { adTest: true, noFollowups: true } : {}), createdAt: stamp, updatedAt: stamp };
 
   const existing = await c.findOne({ adLeadId });
   if (existing) {
     if (existing.adIncomplete && !a.incomplete) {
       await c.updateOne({ _id: existing._id }, { $set: { ...d, message, track, adIncomplete: false, adForm: a.formName, updatedAt: stamp } });
       await writeState("ad_leads", { [`last_${a.source}`]: stamp, [`last_${a.source}_name`]: d.name });
+      // Now that we know who it is: thank-you email and the usual alerts.
+      await announceLead({ data: { ...d, name: d.name, phone: d.phone }, source: a.source, track, stamp, adminUrl: `${SITE_URL}/admin`, autoReply: !!d.email && !a.isTest, extraRows: [["Ad form", a.formName], ["Ad", a.adName], ["Note", "Details filled in after Meta sent the lead again"]] });
       return { saved: true, updated: true };
     }
     return { saved: false, duplicate: true };

@@ -8,6 +8,8 @@ import { getContent } from "@/lib/content-server";
 
 // Step 1 of client login: email a 6-digit code (valid 10 minutes). The reply never says whether the email exists.
 export async function POST(req: Request) {
+  const started = Date.now();
+  let sending: Promise<unknown> = Promise.resolve();
   if (!hasDb()) return NextResponse.json({ error: "Login is offline right now." }, { status: 503 });
   if (!isJsonRequest(req)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const email = normEmail((await jsonBody(req)).email);
@@ -25,13 +27,17 @@ export async function POST(req: Request) {
       { upsert: true },
     ).catch(() => undefined);
     const brand = (await getContent()).brand.name || "Spinex IT Solutions";
-    // Sent without waiting, so the reply takes the same time whether or not the email has an account.
-    void emailPerson(email, `${code} is your ${brand} login code`, "Your login code", [
+    sending = emailPerson(email, `${code} is your ${brand} login code`, "Your login code", [
       `Hi ${String(client.name || "").split(" ")[0] || "there"},`,
       `Your code to open the ${brand} client portal is:`,
       code,
       "It works for 10 minutes. If you didn't ask for it, you can ignore this email.",
     ]).catch((e) => console.error("Portal code email failed:", e));
   }
+  // Wait for the email (some hosts stop work left running after the reply), and pad every reply to the same
+  // length of time, so it never shows whether the email has an account.
+  await sending;
+  const left = 2500 - (Date.now() - started);
+  if (left > 0) await new Promise((r) => setTimeout(r, left + Math.floor(Math.random() * 300)));
   return NextResponse.json({ ok: true, message: "If this email has a client account, we've sent a 6-digit code to it." });
 }

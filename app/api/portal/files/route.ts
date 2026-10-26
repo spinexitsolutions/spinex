@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const client = await getClientSession();
   if (!client) return NextResponse.json({ error: "Please log in again." }, { status: 401 });
   if (await rateLimited(`portal-upload:${client.id}:${clientIp(req)}`, 40, 60 * 60 * 1000)) return NextResponse.json({ error: "Too many uploads. Please wait a while." }, { status: 429 });
-  if (tooBig(req)) return NextResponse.json({ error: "That file is larger than 10 MB. Share big files as a Google Drive link in a support message." }, { status: 413 });
+  if (tooBig(req)) return NextResponse.json({ error: "That file is larger than 4 MB. Share big files as a Google Drive link in a support message." }, { status: 413 });
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!file || typeof file === "string") return NextResponse.json({ error: "Choose a file to upload." }, { status: 400 });

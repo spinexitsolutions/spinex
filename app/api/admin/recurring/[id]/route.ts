@@ -12,8 +12,18 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = recOid(params.id);
   const col = await recurringCol();
-  if (!_id || !(await col.findOne({ _id }))) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  const data = cleanRecurringInput(await jsonBody(req));
+  const before = _id && (await col.findOne({ _id }));
+  if (!_id || !before) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const body = await jsonBody(req);
+  const data = cleanRecurringInput(body);
+  // Resuming a paused bill: carry on from the next date to come, never bill the months it was paused.
+  const cur = toRecurring(before);
+  if (data.active === true && !cur.active && body.nextDate === undefined) {
+    const today = todayIST();
+    let next = cur.nextDate || today;
+    for (let i = 0; next < today && i < 600; i++) next = addMonths(next, stepMonths[data.frequency ?? cur.frequency], data.day ?? cur.day);
+    data.nextDate = next;
+  }
   const doc = await col.findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   return NextResponse.json(toRecurring(doc!));
 }
@@ -47,8 +57,13 @@ export async function POST(req: Request, { params }: Ctx) {
   const claim = await col.updateOne({ _id, nextDate: r.nextDate }, { $set: { nextDate: addMonths(period, stepMonths[r.frequency], r.day), updatedAt: new Date().toISOString() } });
   if (!claim.modifiedCount) return NextResponse.json({ error: "This bill just changed. Reload the page." }, { status: 409 });
   const session = await getSession();
-  const out = await makeRecurringInvoice(r, period, session?.name ?? "");
-  if (!out.made) return NextResponse.json({ error: `Not made: ${out.reason}.` }, { status: 409 });
+  const next = addMonths(period, stepMonths[r.frequency], r.day);
+  const out = await makeRecurringInvoice(r, period, session?.name ?? "").catch((e) => ({ made: false as const, reason: e instanceof Error ? e.message : "error" }));
+  if (!out.made) {
+    // Nothing was made, so this period isn't skipped: put the date back.
+    if (out.reason !== "already made") await col.updateOne({ _id, nextDate: next }, { $set: { nextDate: period } });
+    return NextResponse.json({ error: `Not made: ${out.reason}.` }, { status: 409 });
+  }
   await col.updateOne({ _id }, { $inc: { count: 1 }, $set: { lastInvoiceId: out.id, lastNumber: out.number, lastDate: todayIST() } });
   await logActivity(session, "Invoices", `Made invoice ${out.number} from a monthly bill`, r.client.company || r.client.name, req);
   return NextResponse.json({ ...out, recurring: toRecurring((await col.findOne({ _id }))!) });

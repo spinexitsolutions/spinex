@@ -54,11 +54,21 @@ export const publicBooking = (b: Booking) => ({ ...b, note: "", leadId: "", cale
 // Booked calls and Google busy times for the booking window.
 async function taken(s: BookingSettings, now: number, exceptId?: string) {
   const from = new Date(now).toISOString();
+  // From the start of today (India time), so calls already over today still count toward the daily limit.
+  const dayStart = new Date(Date.parse(`${istToday(now)}T00:00:00+05:30`)).toISOString();
   const to = new Date(Date.parse(`${addDays(istToday(now), s.daysAhead + 1)}T00:00:00+05:30`)).toISOString();
-  const q: Record<string, unknown> = { status: "confirmed", end: { $gt: from } };
+  const col = await bookingsCol();
+  const q: Record<string, unknown> = { status: { $in: ["confirmed", "done", "noshow"] }, end: { $gt: dayStart } };
   if (exceptId && bookingOid(exceptId)) q._id = { $ne: bookingOid(exceptId) };
-  const booked = (await (await bookingsCol()).find(q, { projection: { start: 1, end: 1 } }).toArray()).map((b) => ({ start: Date.parse(String(b.start)), end: Date.parse(String(b.end)) }));
-  const busy = s.meetMode === "google" ? await busyTimes(from, to).catch((e) => { console.error("Google busy times:", e); return []; }) : [];
+  const booked = (await col.find(q, { projection: { start: 1, end: 1 } }).toArray()).map((b) => ({ start: Date.parse(String(b.start)), end: Date.parse(String(b.end)) }));
+  let busy = s.meetMode === "google" ? await busyTimes(from, to).catch((e) => { console.error("Google busy times:", e); return []; }) : [];
+  // Moving a call: its own Google Calendar event isn't "busy" for itself.
+  const own = exceptId && bookingOid(exceptId) ? await col.findOne({ _id: bookingOid(exceptId)! }, { projection: { start: 1, end: 1 } }) : null;
+  if (own) {
+    const os = Date.parse(String(own.start));
+    const oe = Date.parse(String(own.end));
+    busy = busy.filter((b) => !(Math.abs(b.start - os) < 60e3 && Math.abs(b.end - oe) < 60e3));
+  }
   return { booked, busy };
 }
 

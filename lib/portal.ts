@@ -123,7 +123,7 @@ export const fileSizeText = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 10
 export const shortDate = (iso: string) => {
   if (!iso) return "";
   const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 };
 
 // ---------- AMC ----------

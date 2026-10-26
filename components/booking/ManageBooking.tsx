@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { CalendarCheck, CalendarPlus, Loader2, Video, X } from "lucide-react";
-import { addToCalendarLink, bookingStatusLabel, dateLabel, timeLabel, type Booking } from "@/lib/booking";
+import { addToCalendarLink, bookingStatusLabel, type Booking } from "@/lib/booking";
 import BookingWidget from "./BookingWidget";
 
 type B = Pick<Booking, "name" | "date" | "time" | "start" | "end" | "status" | "meetLink" | "topic" | "phone">;
 
-export default function ManageBooking({ brand, logo, booking, token, canMove, duration, topics }: { brand: string; logo: string; booking: B; token: string; canMove: boolean; duration: number; topics: string[] }) {
+// whenText is made on the server: the server and the browser can format dates slightly differently,
+// which would break the page when it loads.
+export default function ManageBooking({ brand, logo, booking, token, canMove, duration, topics, whenText, upcoming }: { brand: string; logo: string; booking: B; token: string; canMove: boolean; duration: number; topics: string[]; whenText: string; upcoming: boolean }) {
   const [mode, setMode] = useState<"view" | "move" | "cancel">("view");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
-  const upcoming = booking.status === "confirmed" && Date.parse(booking.start) > Date.now();
 
   const cancel = async () => {
     setBusy(true);
@@ -36,7 +37,7 @@ export default function ManageBooking({ brand, logo, booking, token, canMove, du
       </div>
       <section className="rounded-[28px] border border-line bg-white p-7 sm:p-9">
         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-lav-700">Free consultation call</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">{dateLabel(booking.date)}, {timeLabel(booking.time)}</h1>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">{whenText}</h1>
         <p className="mt-1 text-muted">India time · {booking.name}{booking.topic ? ` · ${booking.topic}` : ""}</p>
         <p className={`mt-4 inline-block rounded-full px-3 py-1 text-xs font-semibold ${booking.status === "confirmed" ? "bg-emerald-50 text-emerald-800" : "bg-mist text-muted"}`}>{bookingStatusLabel[booking.status]}</p>
         {msg && <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{msg}</p>}

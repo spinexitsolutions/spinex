@@ -45,8 +45,14 @@ export default function PayOnline({ token, due }: { token: string; due: string }
         theme: { color: "#6e59d9" },
         modal: { ondismiss: () => setBusy(false) },
         handler: async (r: RazorpayHandlerResponse) => {
-          const v = await fetch(`/api/pay/${token}/verify`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature }) });
-          const d = await v.json().catch(() => ({}));
+          let d: { ok?: boolean; message?: string; error?: string } = {};
+          try {
+            const v = await fetch(`/api/pay/${token}/verify`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature }) });
+            d = await v.json().catch(() => ({}));
+          } catch {
+            // The money went through (Razorpay told us); only our check failed. It is also confirmed by Razorpay's webhook.
+            d = { message: "Payment done. Your connection dropped before we could confirm it, but it will show on this invoice shortly. Please don't pay again." };
+          }
           setBusy(false);
           if (d.ok) {
             setDone("Payment successful. Thank you! Your receipt is on its way from Razorpay.");

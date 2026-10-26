@@ -478,7 +478,7 @@ try {
   ok("same Meta lead twice is saved once", (await db.collection("leads").countDocuments({ adLeadId: "meta:700000001" })) === 1);
   r = await metaPost(metaEvent("700000002"));
   ml = await db.collection("leads").findOne({ adLeadId: "meta:700000002" });
-  ok("lead is kept even when the token fails", r.status() === 200 && ml?.adIncomplete === true && /700000002/.test(ml?.message || ""));
+  ok("lead is kept even when the token fails (and Meta is asked to send it again)", r.status() === 500 && ml?.adIncomplete === true && /700000002/.test(ml?.message || ""));
   tokenBroken = false;
   await metaPost(metaEvent("700000002"));
   ml = await db.collection("leads").findOne({ adLeadId: "meta:700000002" });
@@ -638,7 +638,10 @@ try {
   rq = await db.collection("review_requests").findOne({ _id: rq._id });
   ok("scheduler sends the due request", rq.status === "failed" || rq.status === "sent", `${rq.status} (no email server in the test, so "failed" is expected)`);
   r = await qp.request.get(`${base}/r/${rq.token}`, { maxRedirects: 0 });
-  ok("review link opens Google's write-a-review page", r.status() === 302 && r.headers()["location"] === "https://search.google.com/local/writereview?placeid=ChIJe2eTestPlace", r.headers()["location"]);
+  const rhtml = await r.text();
+  ok("review link opens Google's write-a-review page", r.status() === 200 && rhtml.includes("https://search.google.com/local/writereview?placeid=ChIJe2eTestPlace"), rhtml.slice(0, 200));
+  ok("an email scanner opening the link doesn't count as the client", (await db.collection("review_requests").findOne({ _id: rq._id })).status !== "clicked");
+  await qp.request.post(`${base}/r/${rq.token}`);
   ok("opening the link is noted", (await db.collection("review_requests").findOne({ _id: rq._id })).status === "clicked");
   r = await ap.request.post(`${base}/api/admin/reviews/requests`, { data: { name: "Neha Agarwal", email: "neha@agarwaljewels.test", phone: "9414055555", project: "Jewellery website" } });
   ok("team can ask a client by hand", r.status() === 201 || r.status() === 502, `status ${r.status()}`);
@@ -687,7 +690,7 @@ try {
   const rmCur = (await (await ap.request.get(`${base}/api/admin/billing/reminders`)).json()).settings;
   r = await ap.request.put(`${base}/api/admin/billing/reminders`, { data: { ...rmCur, enabled: true, steps: "-3, 0, 3, 7, 15", email: true, whatsapp: true, summary: true } });
   ok("payment reminders turned on", r.status() === 200 && (await r.json()).enabled === true);
-  const resetDay = () => db.collection("settings").updateOne({ _id: "state:automation" }, { $unset: { "value.lastBilling": "" } });
+  const resetDay = () => db.collection("settings").updateOne({ _id: "state:automation" }, { $unset: { "value.lastBilling": "", "value.lastExpenses": "" } });
   await resetDay();
   mails.length = 0;
   r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
@@ -728,7 +731,16 @@ try {
   r = await ap.request.post(`${base}/api/admin/recurring/${rec.id}`, { data: { action: "now" } });
   ok("next invoice can be made early by hand", r.status() === 200 && (await db.collection("billing").countDocuments({ recurringId: rec.id })) === 2);
   r = await ap.request.post(`${base}/api/admin/recurring`, { data: { fromInvoice: String(invIds[2]) } });
-  ok("an invoice can be turned into a monthly bill", r.status() === 201 && /\{period\}/.test((await r.json()).items[0].description));
+  const fromInv = await r.json();
+  ok("an invoice can be turned into a monthly bill", r.status() === 201 && /\{period\}/.test(fromInv.items[0].description));
+  r = await ap.request.post(`${base}/api/admin/recurring`, { data: { fromInvoice: String(invIds[2]) } });
+  ok("pressing it again doesn't make a second monthly bill", r.status() === 409 && (await db.collection("recurring_bills").countDocuments({ fromInvoiceId: String(invIds[2]) })) <= 1, `status ${r.status()}`);
+  // Paused for a few months, then resumed: no invoices for the paused months.
+  await ap.request.patch(`${base}/api/admin/recurring/${fromInv.id}`, { data: { active: false } });
+  await db.collection("recurring_bills").updateOne({ _id: new ObjectId(fromInv.id) }, { $set: { nextDate: ist(-95) } });
+  r = await ap.request.patch(`${base}/api/admin/recurring/${fromInv.id}`, { data: { active: true } });
+  const resumed = await r.json();
+  ok("resuming a paused monthly bill carries on from the next date to come", resumed.active === true && resumed.nextDate >= ist(0), resumed.nextDate);
   await ap.goto("about:blank"); await ap.goto(`${base}/admin#billing`); await ap.waitForSelector("text=Monthly bills", { timeout: 15000 }); await ap.waitForTimeout(800);
   await ap.screenshot({ path: `${out}/39-invoices-overdue.png`, fullPage: false });
   await ap.click("text=Payment reminders"); await ap.waitForSelector("text=Days from the due date", { timeout: 10000 }); await ap.waitForTimeout(400);
@@ -757,6 +769,8 @@ try {
   await fpg.click('[data-star="5"]');
   await fpg.fill("textarea >> nth=0", "Mehta ji ki team ne humari restaurant website 2 hafte mein bana di. Online orders shuru ho gaye aur Google pe bhi dikhne lage. Bahut achha kaam!");
   await fpg.fill("textarea >> nth=1", "Thoda pehle update dete to aur achha hota.");
+  ok("permission to show it on the website is not ticked for them", !(await fpg.isChecked('input[name="publish"]')));
+  await fpg.check('input[name="publish"]');
   await fpg.fill('input[aria-label="Role"]', "Owner");
   await fpg.waitForTimeout(300);
   await fpg.screenshot({ path: `${out}/43-feedback-form.png`, fullPage: true });
@@ -814,9 +828,10 @@ try {
   ok("vendor GSTIN is cleaned up", figma?.vendorGstin === "29ABCDE1234F1Z5");
   const rep = await (await ap.request.get(`${base}/api/admin/accounts/report?fy=2024-25`)).json();
   const may = rep.months?.find((m) => m.month === "2024-05");
-  ok("profit and loss: sales, expenses and salaries for the month", rep.months?.length === 12 && rep.months[0].month === "2024-04" && rep.months[11].month === "2025-03" && may?.sales === 150000 && may?.expenses === 35000 && may?.salaries === 30000 && may?.profit === 85000, JSON.stringify(may));
-  ok("cancelled invoices, quotations and draft payslips aren't counted", may?.invoiced === 177000 && may?.received === 118000 && may?.gstOut === 27000 && may?.gstIn === 2700);
-  ok("expenses by category", may?.byCategory?.Rent === 20000 && may?.byCategory?.["Software and tools"] === 10000 && rep.totals?.profit === 85000);
+  ok("profit and loss: sales, expenses and salaries for the month", rep.months?.length === 12 && rep.months[0].month === "2024-04" && rep.months[11].month === "2025-03" && may?.sales === 150000 && may?.expenses === 35900 && may?.salaries === 30000 && may?.profit === 84100, JSON.stringify(may));
+  ok("cancelled invoices, quotations and draft payslips aren't counted", may?.invoiced === 177000 && may?.received === 118000 && may?.gstOut === 27000 && may?.gstIn === 1800);
+  ok("GST on a bill without the vendor's GSTIN counts as a cost (it can't be claimed back)", may?.byCategory?.["Ads and marketing"] === 5900);
+  ok("expenses by category", may?.byCategory?.Rent === 20000 && may?.byCategory?.["Software and tools"] === 10000 && rep.totals?.profit === 84100);
   const gst = await (await ap.request.get(`${base}/api/admin/accounts/gst?from=2024-05-01&to=2024-05-31`)).json();
   const gt = gst.totals || {};
   ok("GST summary: CGST, SGST and IGST collected", gt.cgst === 9000 && gt.sgst === 9000 && gt.igst === 9000 && gt.gstOut === 27000 && gst.sales?.length === 2, JSON.stringify(gt));
@@ -933,6 +948,9 @@ try {
   ok("telecaller role can be added and log in", tc.status === 201 && tc.u.role === "telecaller" && tc.u.access?.leads === "edit" && tc.u.access?.billing === "none" && tc.login === 200, `${tc.status} ${tc.login}`);
   const stOf = async (p, url) => (await p.request.get(`${base}${url}`)).status();
   ok("telecaller sees leads but not invoices, expenses or payslips", (await stOf(tc.p, "/api/admin/leads")) === 200 && (await stOf(tc.p, "/api/admin/billing")) === 403 && (await stOf(tc.p, "/api/admin/expenses")) === 403 && (await stOf(tc.p, "/api/admin/payroll/payslips")) === 403);
+  const tcBook = await tc.p.request.put(`${base}/api/admin/bookings/settings`, { data: { enabled: false } });
+  const tcFu = await tc.p.request.put(`${base}/api/admin/lead-followups`, { data: { enabled: false } });
+  ok("telecaller can't switch off call booking or change automatic emails", tcBook.status() === 403 && tcFu.status() === 403, `${tcBook.status()} ${tcFu.status()}`);
   const ac = await roleUser("accountant", "accountant@e2e.test");
   ok("accountant can work on invoices and expenses, not leads or website", ac.login === 200 && (await stOf(ac.p, "/api/admin/billing")) === 200 && (await stOf(ac.p, "/api/admin/accounts/report")) === 200 && (await stOf(ac.p, "/api/admin/leads")) === 403);
   const vw = await roleUser("viewer", "viewer@e2e.test");
@@ -989,6 +1007,9 @@ try {
       await check(phonePub, url, "public phone", `public-${name}`);
     }
     const phoneClient = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, storageState: await phone.storageState(), isMobile: true, hasTouch: true });
+    const phoneStaff = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, storageState: await sc.storageState(), isMobile: true, hasTouch: true });
+    await check(phoneStaff, "/staff", "staff portal phone", "staff-home");
+    await phoneStaff.close();
     for (const url of ["/portal", "/portal/invoices", "/portal/support", "/portal/files"]) await check(phoneClient, url, "client portal phone", `portal-${url.split("/")[2] || "home"}`);
     await Promise.all([deskAdmin, phoneAdmin, deskPub, phonePub, phoneClient].map((c) => c.close()));
   }

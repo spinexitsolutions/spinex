@@ -5,7 +5,7 @@ import { cleanBookingSettings } from "@/lib/booking";
 import { saveBookingSettings } from "@/lib/booking-db";
 
 export async function PUT(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("leadSettings");
   if (deny) return deny;
   const next = cleanBookingSettings(await jsonBody(req));
   await saveBookingSettings(next);

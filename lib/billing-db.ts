@@ -16,6 +16,12 @@ export const getProfile = async () => {
   return p;
 };
 
+// Stored on each new quotation or invoice (see BillDoc.seller).
+export const sellerNow = async () => {
+  const p = await getProfile();
+  return { gstin: String(p.gstin || "").trim(), state: String(p.state || "").trim() };
+};
+
 export function toBill(doc: WithId<Document>): BillDoc {
   const { _id, ...rest } = doc;
   return {

@@ -327,7 +327,7 @@ const money = (v: string) => {
 export function longDate(iso: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
   const d = new Date(`${iso}T00:00:00`);
-  return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 }
 
 // All values a letter's wording can use, already written out for printing.

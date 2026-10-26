@@ -50,6 +50,7 @@ export async function POST(req: Request) {
   const token = await getSecret("META_PAGE_TOKEN");
   const changes = (body.entry ?? []).flatMap((e) => e.changes ?? []).filter((c) => c.field === "leadgen" && c.value?.leadgen_id).slice(0, 50);
   let saved = 0;
+  let failed = 0;
   for (const c of changes) {
     const id = String(c.value!.leadgen_id).replace(/[^\d_]/g, "").slice(0, 40);
     if (!id) continue;
@@ -68,7 +69,10 @@ export async function POST(req: Request) {
       const why = e instanceof Error ? e.message : "unknown error";
       await saveAdLead({ source: "meta", externalId: id, fields: [], campaign: "", adName: "", formName: "", platform: "facebook", clickId: "", isTest: false, incomplete: why });
       await noteAdError("meta", `Couldn't load lead ${id}: ${why}`);
+      failed++;
     }
   }
+  // An error reply makes Meta send these leads again later, so they get filled in once the token works.
+  if (failed) return NextResponse.json({ ok: false, saved, failed }, { status: 500 });
   return NextResponse.json({ ok: true, saved });
 }

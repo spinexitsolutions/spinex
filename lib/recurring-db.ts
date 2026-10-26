@@ -1,7 +1,7 @@
 // Server only. Recurring bills ("recurring_bills") and making their invoices.
 import { ObjectId, type Document, type WithId } from "mongodb";
 import { getDb } from "./db";
-import { billingCol, getProfile, newToken, nextNumber } from "./billing-db";
+import { billingCol, getProfile, newToken, nextNumber, sellerNow } from "./billing-db";
 import { addDays, computeTotals, inr, todayIST, type BillDoc, type BillItem } from "./billing";
 import { addMonths, fillItem, periodLabel, stepMonths, type Frequency, type Recurring } from "./recurring";
 import { emailPerson, notifyAdmin } from "./notify";
@@ -83,6 +83,7 @@ export async function makeRecurringInvoice(r: Recurring, periodDate: string, by:
     createdBy: by || "Monthly bills",
     createdAt: stamp,
     updatedAt: stamp,
+    seller: await sellerNow(),
     recurringId: r.id,
     recurringKey: key,
     period: periodLabel(periodDate, r.frequency),
@@ -124,6 +125,10 @@ export async function runRecurring() {
       await col.updateOne({ _id: raw._id }, { $set: { active: false, updatedAt: new Date().toISOString() } });
       continue;
     }
+    if (!r.items.length || !(r.client.name || r.client.company)) {
+      lines.push(`• ${r.client.company || r.client.name || r.title}: not made, it has no ${r.items.length ? "client" : "items"}. Open Monthly bills to fix it.`);
+      continue;
+    }
     const period = r.nextDate;
     const next = addMonths(period, stepMonths[r.frequency], r.day);
     // Move the date first, so two scheduler runs can't make the same period twice.
@@ -134,7 +139,11 @@ export async function runRecurring() {
       made++;
       await col.updateOne({ _id: raw._id }, { $inc: { count: 1 }, $set: { lastInvoiceId: out.id, lastNumber: out.number, lastDate: today } });
       lines.push(`• ${r.client.company || r.client.name}: ${out.number}, ${inr(out.total ?? 0, 0)}${r.autoSend ? (out.emailed || out.whatsapp ? " · sent to client" : " · couldn't send to client") : " · not sent (send it yourself)"}`);
-    } else if (out.reason !== "already made") lines.push(`• ${r.client.company || r.client.name}: FAILED (${out.reason})`);
+    } else if (out.reason !== "already made") {
+      // Put the date back so this period is tried again on the next run instead of being skipped.
+      await col.updateOne({ _id: raw._id, nextDate: next }, { $set: { nextDate: period, ...(r.endDate && next > r.endDate ? { active: true } : {}) } });
+      lines.push(`• ${r.client.company || r.client.name}: FAILED (${out.reason}), will try again on the next run`);
+    }
   }
   if (lines.length) await notifyAdmin(`${made} monthly invoice${made === 1 ? "" : "s"} made`, [["Invoices", lines.join("\n")]], `${SITE_URL}/admin#billing`).catch(() => undefined);
   return { made };

@@ -46,10 +46,10 @@ export default function PayrollManager({ readOnly = false }: { readOnly?: boolea
   }, [month]);
   useEffect(() => { load(); }, [load]);
 
-  const working = employees.filter((e) => e.active);
+  const working = employees.filter((e) => e.active || (e.exitDate && e.exitDate >= `${month}-01`));
   const monthEnd = `${month}-${String(daysIn(month)).padStart(2, "0")}`;
-  // Same rule as the server: working, and joined by the end of the month.
-  const missing = working.filter((e) => (!e.joiningDate || e.joiningDate <= monthEnd) && !slips.some((s) => s.employeeId === e.id));
+  // Same rule as the server: working (or left this month), and joined by the end of the month.
+  const missing = working.filter((e) => (!e.joiningDate || e.joiningDate <= monthEnd) && (!e.exitDate || e.exitDate >= `${month}-01`) && !slips.some((s) => s.employeeId === e.id));
   const sum = useMemo(() => slips.filter((s) => s.status !== "revoked").reduce((a, s) => { const t = slipTotals(s); return { gross: a.gross + t.gross, net: a.net + t.net }; }, { gross: 0, net: 0 }), [slips]);
   const drafts = slips.filter((s) => s.status === "draft").length;
   const unsent = slips.filter((s) => s.status !== "revoked" && !s.sentAt).length;
@@ -233,6 +233,7 @@ function EmployeeForm({ employee, readOnly, onDone }: { employee: Employee | nul
           {L({ label: "Designation", children: <input className="input" value={e.designation} onChange={(x) => set({ designation: x.target.value })} placeholder="e.g. Web Developer" /> })}
           {L({ label: "Department", children: <input className="input" value={e.department} onChange={(x) => set({ department: x.target.value })} placeholder="e.g. Development" /> })}
           {L({ label: "Date of joining", children: <input className="input" type="date" value={e.joiningDate} onChange={(x) => set({ joiningDate: x.target.value })} /> })}
+          {L({ label: "Last working day (if they left)", children: <input className="input" type="date" name="exitDate" value={e.exitDate ?? ""} onChange={(x) => set({ exitDate: x.target.value, ...(x.target.value ? { active: false } : {}) })} /> })}
           {L({ label: "Work location", children: <input className="input" value={e.location} onChange={(x) => set({ location: x.target.value })} /> })}
           {L({ label: "PAN", children: <input className="input uppercase" value={e.pan} onChange={(x) => set({ pan: x.target.value.toUpperCase() })} maxLength={10} /> })}
           {L({ label: "UAN (PF number, if any)", children: <input className="input" value={e.uan} onChange={(x) => set({ uan: x.target.value })} /> })}

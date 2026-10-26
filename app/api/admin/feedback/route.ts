@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("leadSettings");
   if (deny) return deny;
   const next = cleanFeedbackSettings(await jsonBody(req));
   await saveFeedbackSettings(next);

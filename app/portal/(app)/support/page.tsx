@@ -15,7 +15,8 @@ export default async function PortalSupport({ searchParams }: { searchParams: { 
   const projects = client.projects.map((p) => ({ id: p.id, title: p.title }));
   const cover = coveringAmc(client.amcs);
   const plan = cover ?? mainAmc(client.amcs);
-  const amc = plan ? { title: plan.title, covered: !!cover, label: amcStateLabel(plan), responseTime: plan.responseTime } : null;
+  const todayIn = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+  const amc = plan ? { title: plan.title, covered: !!cover, label: amcStateLabel(plan), responseTime: plan.responseTime, startsOn: !cover && plan.startDate > todayIn ? shortDate(plan.startDate) : "" } : null;
   const renewPlan = searchParams.renew ? client.amcs.find((a) => a.id === searchParams.renew) : undefined;
 
   const _id = searchParams.t ? pOid(searchParams.t) : null;
@@ -34,7 +35,7 @@ export default async function PortalSupport({ searchParams }: { searchParams: { 
           <div className="mt-6 space-y-3">
             {t.messages.map((m) => (
               <div key={m.id} className={`rounded-[20px] p-5 ${m.from === "team" ? "mr-6 border border-lav-200 bg-lav-100/50" : "ml-6 border border-line bg-white"}`}>
-                <p className="text-xs text-muted"><b className="text-ink">{m.from === "team" ? `${m.name} (team)` : "You"}</b> · {new Date(m.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
+                <p className="text-xs text-muted"><b className="text-ink">{m.from === "team" ? `${m.name} (team)` : "You"}</b> · {new Date(m.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}</p>
                 <p className="mt-1.5 whitespace-pre-line text-sm">{m.text}</p>
               </div>
             ))}

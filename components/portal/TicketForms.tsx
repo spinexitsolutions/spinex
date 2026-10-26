@@ -20,7 +20,7 @@ const KINDS: [Kind, string, string][] = [
 
 export function NewTicket({ projects, initialProject = "", initialKind = "", initialSubject = "", initialMessage = "", amc }: {
   projects: { id: string; title: string }[]; initialProject?: string; initialKind?: string; initialSubject?: string; initialMessage?: string;
-  amc?: { title: string; covered: boolean; label: string; responseTime: string } | null;
+  amc?: { title: string; covered: boolean; label: string; responseTime: string; startsOn?: string } | null;
 }) {
   const [kind, setKind] = useState<Kind>((KINDS.find((k) => k[0] === initialKind)?.[0] ?? "problem") as Kind);
   const [urgent, setUrgent] = useState(false);
@@ -51,7 +51,7 @@ export function NewTicket({ projects, initialProject = "", initialKind = "", ini
       </div>
       {amc && (
         <p className={`rounded-xl px-4 py-2.5 text-sm ${amc.covered ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
-          {amc.covered ? `Covered by your ${amc.title} (${amc.label.toLowerCase()}).${amc.responseTime ? ` We reply ${amc.responseTime.charAt(0).toLowerCase()}${amc.responseTime.slice(1)}.` : ""}` : `Your ${amc.title} has ended, so this may be charged separately. Choose “Renew my AMC” to renew it.`}
+          {amc.covered ? `Covered by your ${amc.title} (${amc.label.toLowerCase()}).${amc.responseTime ? ` We reply ${amc.responseTime.charAt(0).toLowerCase()}${amc.responseTime.slice(1)}.` : ""}` : amc.startsOn ? `Your ${amc.title} starts on ${amc.startsOn}. Until then this may be charged separately.` : `Your ${amc.title} has ended, so this may be charged separately. Choose “Renew my AMC” to renew it.`}
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-[1.4fr_1fr]">

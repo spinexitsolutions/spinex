@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasDb } from "@/lib/db";
+import { clientIp, rateLimited } from "@/lib/antispam";
 import { internsCol } from "@/lib/intern-db";
 import { isLetterCode, templateFor } from "@/lib/letters";
 import { lettersCol } from "@/lib/letter-db";
@@ -14,6 +15,8 @@ export async function GET(req: Request) {
   const payslip = isPayslipCode(id);
   if (!letter && !payslip && !/^SPX-\d{4}-\d{4,}$/.test(id)) return NextResponse.json({ valid: false, error: "Enter a number like SPX-2026-0001, SPX-L-7KQ2X9 or SPX-P-4MW8RT." }, { status: 400 });
   if (!hasDb()) return NextResponse.json({ valid: false, error: "Verification is offline right now." }, { status: 503 });
+  // Plenty for real checks, too few to guess codes.
+  if (await rateLimited(`verify:${clientIp(req)}`, 60, 60 * 60 * 1000)) return NextResponse.json({ valid: false, error: "Too many checks from this connection. Please try again in an hour." }, { status: 429 });
 
   if (payslip) {
     const doc = await (await payslipsCol()).findOne({ verifyCode: id, status: { $in: ["issued", "revoked"] } }, { projection: { month: 1, number: 1, status: 1, emp: 1, earnings: 1, deductions: 1, issuedAt: 1 } });
@@ -33,7 +36,7 @@ export async function GET(req: Request) {
       month: monthLabel(String(doc.month)),
       gross,
       net: Math.max(0, gross - add(doc.deductions)),
-      issuedOn: String(doc.issuedAt ?? "").slice(0, 10),
+      issuedOn: doc.issuedAt ? new Date(Date.parse(String(doc.issuedAt)) + 5.5 * 3600e3).toISOString().slice(0, 10) : "",
     });
   }
 

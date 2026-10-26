@@ -41,8 +41,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
       return NextResponse.json({ error: `This invoice number is for the ${fy} financial year, so its date must be between 1 April and 31 March of that year.` }, { status: 400 });
     }
   }
-  const doc = await col.findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
-  const b = toBill(doc!);
+  // Same check again in the save itself, in case a payment lands between the two steps.
+  const doc = await col.findOneAndUpdate({ _id, updatedAt: current.updatedAt }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
+  if (!doc) return NextResponse.json({ error: "This document changed while you were saving (for example a payment came in). Reload the page, then make your change again." }, { status: 409 });
+  const b = toBill(doc);
   const statusNote = data.status && data.status !== current.status ? ` (status → ${data.status})` : "";
   const paidNote = data.paid !== undefined && data.paid !== Number(current.paid ?? 0) ? ` (payment ₹${data.paid})` : "";
   await logActivity(await getSession(), "Invoices", `Edited ${b.type === "quote" ? "quotation" : "invoice"} ${b.number}${statusNote}${paidNote}`, b.client.company || b.client.name, req);

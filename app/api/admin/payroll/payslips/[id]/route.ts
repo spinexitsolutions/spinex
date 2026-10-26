@@ -3,7 +3,7 @@ import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { monthLabel, recalc, withAttendance } from "@/lib/payroll";
 import { monthAttendance } from "@/lib/leave-db";
-import { cleanSlipInput, payOid, payslipsCol, toPayslip } from "@/lib/payroll-db";
+import { cleanSlipInput, employeesCol, payOid, payslipsCol, toPayslip } from "@/lib/payroll-db";
 import { issueSlip } from "@/lib/payslip-issue";
 import { getLetterhead } from "@/lib/letter-db";
 
@@ -58,11 +58,13 @@ export async function POST(req: Request, { params }: Ctx) {
       return NextResponse.json(out);
     }
     if (action === "attendance" && found.slip.status === "draft") {
-      const { summaries } = await monthAttendance(found.slip.month, [{ id: found.slip.employeeId, joiningDate: found.slip.emp.joiningDate }]);
+      const empDoc = payOid(found.slip.employeeId) ? await (await employeesCol()).findOne({ _id: payOid(found.slip.employeeId)! }, { projection: { exitDate: 1 } }) : null;
+      const { summaries } = await monthAttendance(found.slip.month, [{ id: found.slip.employeeId, joiningDate: found.slip.emp.joiningDate, exitDate: String(empDoc?.exitDate ?? "") }]);
       const sm = summaries.get(found.slip.employeeId)!;
       const { id: _skip, ...next } = recalc(withAttendance(found.slip, sm));
       const doc = await col.findOneAndUpdate({ _id: found._id, status: "draft" }, { $set: { ...next, updatedAt: stamp } }, { returnDocument: "after" });
-      return NextResponse.json(toPayslip(doc!));
+      if (!doc) return NextResponse.json({ error: "This payslip was issued meanwhile. Reload the page." }, { status: 409 });
+      return NextResponse.json(toPayslip(doc));
     }
     if (action === "revoke" && found.slip.status === "issued") {
       const doc = await col.findOneAndUpdate({ _id: found._id }, { $set: { status: "revoked", updatedAt: stamp } }, { returnDocument: "after" });
@@ -71,7 +73,8 @@ export async function POST(req: Request, { params }: Ctx) {
     }
     if (action === "draft" && found.slip.status !== "draft") {
       // Keeps the number; the old verification code stops working and a new one is given when issued again.
-      const doc = await col.findOneAndUpdate({ _id: found._id }, { $set: { status: "draft", verifyCode: "", updatedAt: stamp } }, { returnDocument: "after" });
+      // Sent and issued dates are cleared, so the corrected slip is emailed again and shows its new date.
+      const doc = await col.findOneAndUpdate({ _id: found._id }, { $set: { status: "draft", verifyCode: "", sentAt: "", issuedAt: "", updatedAt: stamp } }, { returnDocument: "after" });
       await logActivity(session, "Payroll", `Made ${what} a draft again`, found.slip.emp.name, req);
       return NextResponse.json(toPayslip(doc!));
     }

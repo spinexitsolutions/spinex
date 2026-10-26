@@ -141,11 +141,17 @@ export async function sendRequest(r: ReviewRequest, reminder: boolean) {
   const brand = (await getContent().catch(() => null))?.brand.name || "Spinex IT Solutions";
   const link = `${SITE_URL}/r/${r.token}`;
   const paras = [`Hi ${r.name.split(" ")[0] || "there"},`, ...fill(s.message, r, brand).split(/\n{2,}/), ...(reminder ? ["(Just a gentle reminder. If you've already written one, thank you so much!)"] : []), `Team ${brand}`];
-  const ok = await emailPerson(r.email, reminder ? `Reminder: ${fill(s.subject, r, brand)}` : fill(s.subject, r, brand), "Would you share a quick review?", paras, { label: "★ Write a Google review", url: link });
   const col = await requestsCol();
+  // Claim it first, so the scheduler and "Ask now" (or two scheduler runs) can't both email it.
+  if (!reminder) {
+    const stale = new Date(Date.now() - 15 * 60e3).toISOString();
+    const claim = await col.updateOne({ _id: reviewOid(r.id)!, $or: [{ status: { $in: ["scheduled", "failed"] } }, { status: "sending", sendingAt: { $lt: stale } }] }, { $set: { status: "sending", sendingAt: new Date().toISOString() } });
+    if (!claim.modifiedCount) return false;
+  }
+  const ok = await emailPerson(r.email, reminder ? `Reminder: ${fill(s.subject, r, brand)}` : fill(s.subject, r, brand), "Would you share a quick review?", paras, { label: "★ Write a Google review", url: link });
   const now = new Date().toISOString();
   if (reminder) await col.updateOne({ _id: reviewOid(r.id)! }, { $set: { reminded: true } });
-  else await col.updateOne({ _id: reviewOid(r.id)!, status: "scheduled" }, ok ? { $set: { status: "sent", sentAt: now, error: "" } } : { $set: { status: "failed", error: "Email couldn't be sent. Check API keys → Email alerts." } });
+  else await col.updateOne({ _id: reviewOid(r.id)!, status: "sending" }, ok ? { $set: { status: "sent", sentAt: now, error: "" } } : { $set: { status: "failed", error: "Email couldn't be sent. Check API keys → Email alerts." } });
   return ok;
 }
 
@@ -156,7 +162,7 @@ export async function runReviewRequests() {
   const now = Date.now();
   let sent = 0;
   let reminders = 0;
-  for (const d of await col.find({ status: "scheduled", sendAt: { $lte: new Date(now).toISOString() } }).limit(50).toArray()) {
+  for (const d of await col.find({ $or: [{ status: "scheduled", sendAt: { $lte: new Date(now).toISOString() } }, { status: "sending", sendingAt: { $lt: new Date(now - 15 * 60e3).toISOString() } }] }).limit(50).toArray()) {
     if (await sendRequest(toRequest(d), false)) sent++;
   }
   if (s.reminderDays > 0) {
@@ -174,7 +180,7 @@ export async function runReviewRequests() {
 // Someone opened their review link: note it once and tell the team.
 export async function markClicked(token: string) {
   const col = await requestsCol();
-  const doc = await col.findOneAndUpdate({ token, status: { $in: ["sent", "scheduled", "failed"] } }, { $set: { status: "clicked", clickedAt: new Date().toISOString(), error: "" } }, { returnDocument: "after" });
+  const doc = await col.findOneAndUpdate({ token, status: { $in: ["sent", "scheduled", "failed", "sending"] } }, { $set: { status: "clicked", clickedAt: new Date().toISOString(), error: "" } }, { returnDocument: "after" });
   if (doc) await notifyAdmin(`${doc.name} opened the Google review page`, [["Client", String(doc.name)], ["Project", String(doc.project || "-")], ["Tip", "Check Google in a few minutes and reply to their review."]], `${SITE_URL}/admin#reviews`).catch(() => undefined);
   return (await col.findOne({ token })) ? true : false;
 }

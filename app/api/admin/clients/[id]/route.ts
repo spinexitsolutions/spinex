@@ -40,7 +40,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const col = await clientsCol();
   const before = _id && (await col.findOne({ _id }));
   if (!_id || !before) return NextResponse.json({ error: "Client not found." }, { status: 404 });
-  const data = cleanClientInput(await jsonBody(req));
+  const body = await jsonBody(req);
+  // Someone else saved (or renewed an AMC) after this screen loaded: don't overwrite their change.
+  if (body.version && String(body.version) !== String(before.updatedAt ?? "")) {
+    return NextResponse.json({ error: "Someone changed this client after you opened it (for example an AMC renewal). Reload the page, then make your change again." }, { status: 409 });
+  }
+  const data = cleanClientInput(body);
   // Linking quotations and invoices needs billing access too.
   if (data.billingIds && !can(await getSession(), "billing", "view")) delete data.billingIds;
   if (data.amcs) data.amcs = keepAmcHistory(data.amcs, before.amcs);
@@ -51,7 +56,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if ((data.active === false && before.active !== false) || (data.email && data.email !== before.email)) update.$inc = { tokenVersion: 1 };
   let doc;
   try {
-    doc = await col.findOneAndUpdate({ _id }, update, { returnDocument: "after" });
+    doc = await col.findOneAndUpdate(body.version ? { _id, updatedAt: before.updatedAt } : { _id }, update, { returnDocument: "after" });
+    if (!doc) return NextResponse.json({ error: "Someone changed this client while you were saving. Reload the page, then make your change again." }, { status: 409 });
   } catch (e) {
     if ((e as { code?: number }).code === 11000) return NextResponse.json({ error: "Another client already uses this email." }, { status: 409 });
     throw e;

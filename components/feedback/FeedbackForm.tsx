@@ -10,7 +10,7 @@ export default function FeedbackForm({ token, brand, logo, name, project, compan
 }) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
-  const [f, setF] = useState({ liked: "", better: "", publish: true, displayName: name, role: "", company });
+  const [f, setF] = useState({ liked: "", better: "", publish: false, displayName: name, role: "", company });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ googleUrl: string; rating: number } | null>(answered ? { googleUrl, rating: answered.rating } : null);
@@ -78,7 +78,7 @@ export default function FeedbackForm({ token, brand, logo, name, project, compan
         <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">What did you like about working with us?</span><textarea className="input min-h-[100px]" value={f.liked} onChange={(e) => setF({ ...f, liked: e.target.value })} maxLength={1200} placeholder="e.g. The team understood what we needed and delivered on time." /></label>
         <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">What could we do better? <span className="font-normal text-muted">(only our team sees this)</span></span><textarea className="input min-h-[80px]" value={f.better} onChange={(e) => setF({ ...f, better: e.target.value })} maxLength={1200} /></label>
         <label className="flex items-start gap-3 rounded-2xl border border-line p-4 text-sm">
-          <input type="checkbox" className="mt-0.5 h-4 w-4 accent-lav-600" checked={f.publish} onChange={(e) => setF({ ...f, publish: e.target.checked })} />
+          <input type="checkbox" name="publish" className="mt-0.5 h-4 w-4 accent-lav-600" checked={f.publish} onChange={(e) => setF({ ...f, publish: e.target.checked })} />
           <span><b>You may show what I liked on your website</b>, with my name. <span className="text-muted">We check it before it goes up.</span></span>
         </label>
         {f.publish && (

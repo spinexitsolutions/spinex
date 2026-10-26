@@ -41,6 +41,20 @@ export async function readState(id: string): Promise<Record<string, unknown>> {
   return ((await (await col()).findOne({ _id: `state:${id}` }))?.value ?? {}) as Record<string, unknown>;
 }
 export async function writeState(id: string, patch: Record<string, unknown>) {
-  const current = await readState(id);
-  await (await col()).updateOne({ _id: `state:${id}` }, { $set: { value: { ...current, ...patch }, updatedAt: new Date().toISOString() } }, { upsert: true });
+  // Field by field, so two jobs writing at the same time don't undo each other.
+  const set: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  for (const [k, v] of Object.entries(patch)) set[`value.${k}`] = v;
+  await (await col()).updateOne({ _id: `state:${id}` }, { $set: set }, { upsert: true });
+}
+
+// Sets state key to value only if it isn't that already, in one step. Returns true for exactly one caller,
+// so two scheduler calls at the same moment can't both start the same daily job.
+export async function claimState(id: string, key: string, value: string) {
+  try {
+    const r = await (await col()).updateOne({ _id: `state:${id}`, [`value.${key}`]: { $ne: value } }, { $set: { [`value.${key}`]: value, updatedAt: new Date().toISOString() } }, { upsert: true });
+    return r.modifiedCount > 0 || r.upsertedCount > 0;
+  } catch (e) {
+    if ((e as { code?: number }).code === 11000) return false; // the other call won
+    throw e;
+  }
 }

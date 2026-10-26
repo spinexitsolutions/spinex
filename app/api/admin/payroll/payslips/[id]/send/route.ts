@@ -23,7 +23,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: e instanceof Error ? e.message : "Couldn't issue it." }, { status: 400 });
   }
   const r = await emailSlip(slip, process.env.NODE_ENV === "production" ? SITE_URL : new URL(req.url).origin);
-  if (!r.ok) return NextResponse.json({ error: r.error, payslip: slip }, { status: 502 });
+  // Issued but not emailed: say so, and still return the issued slip so the screen shows it as issued.
+  if (!r.ok) return NextResponse.json({ ok: false, error: `Issued, but the email couldn't be sent: ${r.error}`, payslip: slip });
   await logActivity(await getSession(), "Payroll", `Emailed ${monthLabel(slip.month)} payslip ${slip.number} to ${slip.emp.email}`, slip.emp.name, req);
   return NextResponse.json({ ok: true, message: `Sent to ${slip.emp.email}`, payslip: toPayslip((await col.findOne({ _id }))!) });
 }

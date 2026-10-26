@@ -13,7 +13,8 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const deny = await guard("billing");
+  // Company-wide switch and message: needs the billing details right, not just invoices.
+  const deny = await guard("billingDetails");
   if (deny) return deny;
   const next = cleanReminderSettings(await jsonBody(req));
   await saveReminderSettings(next);

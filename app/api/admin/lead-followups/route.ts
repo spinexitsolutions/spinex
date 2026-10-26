@@ -18,11 +18,11 @@ export async function GET() {
     col.aggregate([{ $match: { "followups.at": { $gte: since } } }, { $unwind: "$followups" }, { $match: { "followups.at": { $gte: since }, "followups.ok": true } }, { $count: "n" }]).toArray(),
     col.countDocuments({ noFollowups: true, unsubToken: { $exists: true } }),
   ]);
-  return NextResponse.json({ settings: s, emailReady: !!(smtp.SMTP_HOST && smtp.SMTP_USER && smtp.SMTP_PASS), bookingOn: booking.enabled, sent30: sent30[0]?.n ?? 0, stopped, canEdit: !(await guard("leads")) });
+  return NextResponse.json({ settings: s, emailReady: !!(smtp.SMTP_HOST && smtp.SMTP_USER && smtp.SMTP_PASS), bookingOn: booking.enabled, sent30: sent30[0]?.n ?? 0, stopped, canEdit: !(await guard("leadSettings")) });
 }
 
 export async function PUT(req: Request) {
-  const deny = await guard("leads");
+  const deny = await guard("leadSettings");
   if (deny) return deny;
   const prev = await getFollowups();
   const next = cleanFollowups(await jsonBody(req), prev);
@@ -34,7 +34,7 @@ export async function PUT(req: Request) {
 
 // { step: 0, name } → preview. Add { sendTo: true } to email the preview to the alert email (or your own).
 export async function POST(req: Request) {
-  const deny = await guard("leads", "view");
+  const deny = await guard("leads");
   if (deny) return deny;
   const b = await jsonBody(req);
   const s = cleanFollowups({ ...(b.settings && typeof b.settings === "object" ? (b.settings as Record<string, unknown>) : {}) }, await getFollowups());

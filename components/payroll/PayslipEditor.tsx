@@ -97,9 +97,9 @@ export default function PayslipEditor({ id, logo, verifyBase, readOnly }: { id: 
     if (dirty && !(await save())) return;
     setBusy("send");
     try {
-      const r = await api<{ message: string; payslip: Payslip }>(`/api/admin/payroll/payslips/${id}/send`, { method: "POST" });
+      const r = await api<{ ok?: boolean; message?: string; error?: string; payslip: Payslip }>(`/api/admin/payroll/payslips/${id}/send`, { method: "POST" });
       take(r.payslip);
-      flash(r.message);
+      flash(r.ok === false ? r.error || "Issued, but the email couldn't be sent." : r.message || "Sent.");
     } catch (e) {
       flash(e instanceof Error ? e.message : "Couldn't send.");
     } finally {

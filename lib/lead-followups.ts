@@ -5,7 +5,7 @@ import { getDb } from "./db";
 import { leadsCol } from "./lead-db";
 import { emailPerson, smtpSettings } from "./notify";
 import { getContent } from "./content-server";
-import { getBookingSettings } from "./booking-db";
+import { bookingsCol, getBookingSettings } from "./booking-db";
 import { SITE_URL } from "./site";
 
 export type FollowupStep = { day: number; on: boolean; subject: string; body: string };
@@ -16,7 +16,7 @@ export const defaultFollowups: FollowupSettings = {
   enabled: false,
   enabledAt: "",
   portfolioPath: "/work",
-  fromHour: 10,
+  fromHour: 9,
   toHour: 19,
   steps: [
     {
@@ -61,6 +61,7 @@ export async function saveFollowups(v: FollowupSettings) {
   await (await settings()).updateOne({ _id: "lead_followups" }, { $set: { value: v, updatedAt: new Date().toISOString() } }, { upsert: true });
 }
 
+const escRx = (t: string) => t.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
 const abs = (p: string) => (/^https?:\/\//.test(p) ? p : `${SITE_URL}${p}`);
 const istHour = (ms = Date.now()) => new Date(ms + 5.5 * 3600e3).getUTCHours();
 
@@ -97,7 +98,23 @@ export async function runLeadFollowups(now = Date.now()) {
   const maxDay = steps[steps.length - 1].day;
   const oldest = new Date(Math.max(Date.parse(s.enabledAt) || now, now - (maxDay + 10) * 86400e3)).toISOString();
   const col = await leadsCol();
-  const leads = (await col.find({ status: "new", email: { $regex: "@" }, noFollowups: { $ne: true }, createdAt: { $gte: oldest, $lte: new Date(now - steps[0].day * 86400e3).toISOString() } }).limit(300).toArray()) as unknown as LeadRow[];
+  const found = (await col.find({ status: "new", email: { $regex: "@" }, noFollowups: { $ne: true }, source: { $ne: "booking" }, adTest: { $ne: true }, createdAt: { $gte: oldest, $lte: new Date(now - steps[0].day * 86400e3).toISOString() } }).sort({ createdAt: 1 }).limit(300).toArray()) as unknown as LeadRow[];
+  // One person, one set of follow-ups: skip anyone who stopped them, was contacted on another enquiry,
+  // or has booked a call. Only their first open enquiry gets the emails.
+  const emails = Array.from(new Set(found.map((l) => (l.email || "").trim().toLowerCase())));
+  const rx = emails.map((e) => new RegExp(`^${escRx(e)}$`, "i"));
+  const [blockedLeads, booked] = await Promise.all([
+    rx.length ? col.find({ email: { $in: rx }, $or: [{ noFollowups: true }, { status: { $ne: "new" } }] }, { projection: { email: 1 } }).toArray() : Promise.resolve([]),
+    rx.length ? (await bookingsCol()).find({ email: { $in: rx }, status: { $in: ["confirmed", "done"] } }, { projection: { email: 1 } }).toArray() : Promise.resolve([]),
+  ]);
+  const blocked = new Set([...blockedLeads, ...booked].map((x) => String(x.email || "").trim().toLowerCase()));
+  const seen = new Set<string>();
+  const leads = found.filter((l) => {
+    const e = (l.email || "").trim().toLowerCase();
+    if (blocked.has(e) || seen.has(e)) return false;
+    seen.add(e);
+    return true;
+  });
   let sent = 0;
   let failed = 0;
   for (const l of leads) {
@@ -131,7 +148,11 @@ export async function stopFollowups(token: string) {
   if (!token || token.length < 10) return null;
   const col = await leadsCol();
   const r = await col.findOneAndUpdate({ unsubToken: token }, { $set: { noFollowups: true, noFollowupsAt: new Date().toISOString() } }, { returnDocument: "after" });
-  return r ? { name: String(r.name || "") } : null;
+  if (!r) return null;
+  // Every enquiry from this email stops, not just the one the link came from.
+  const e = String(r.email || "").trim();
+  if (e) await col.updateMany({ email: { $regex: `^${escRx(e)}$`, $options: "i" } }, { $set: { noFollowups: true, noFollowupsAt: new Date().toISOString() } });
+  return { name: String(r.name || "") };
 }
 export async function findByStopToken(token: string) {
   if (!token || token.length < 10) return null;

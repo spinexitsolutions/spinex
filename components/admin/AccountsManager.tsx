@@ -88,7 +88,7 @@ function ProfitLoss({ fy, openMonth }: { fy: string; openMonth: (m: string) => v
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card Icon={ReceiptText} label="Sales (before GST)" value={rs(t.sales)} sub={`Received ${rs(t.received)} of ${rs(t.invoiced)} invoiced`} />
-        <Card Icon={Wallet} label="Expenses (before GST)" value={rs(t.expenses)} sub={cats[0] ? `Biggest: ${cats[0][0]}` : "None added yet"} />
+        <Card Icon={Wallet} label="Expenses" value={rs(t.expenses)} sub={cats[0] ? `Biggest: ${cats[0][0]}` : "None added yet"} />
         <Card Icon={Landmark} label="Salaries (issued payslips)" value={rs(t.salaries)} />
         <Card Icon={t.profit >= 0 ? TrendingUp : TrendingDown} label={t.profit >= 0 ? "Profit" : "Loss"} value={rs(Math.abs(t.profit))} tone={t.profit >= 0 ? "good" : "bad"} sub={t.sales ? `${Math.round((t.profit / t.sales) * 100)}% of sales` : undefined} />
       </div>
@@ -116,7 +116,7 @@ function ProfitLoss({ fy, openMonth }: { fy: string; openMonth: (m: string) => v
       <div className="overflow-x-auto rounded-3xl border border-line bg-white">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-mist text-left text-xs uppercase tracking-wide text-muted">
-            <tr><th className="px-4 py-3">Month</th><th className="px-4 py-3 text-right">Sales</th><th className="px-4 py-3 text-right">Expenses</th><th className="px-4 py-3 text-right">Salaries</th><th className="px-4 py-3 text-right">Profit / loss</th><th className="px-4 py-3 text-right">GST collected</th><th className="px-4 py-3 text-right">GST on expenses</th></tr>
+            <tr><th className="px-4 py-3">Month</th><th className="px-4 py-3 text-right">Sales</th><th className="px-4 py-3 text-right">Expenses</th><th className="px-4 py-3 text-right">Salaries</th><th className="px-4 py-3 text-right">Profit / loss</th><th className="px-4 py-3 text-right">GST collected</th><th className="px-4 py-3 text-right">GST credit on expenses</th></tr>
           </thead>
           <tbody>
             {shown.map((m) => (
@@ -151,7 +151,7 @@ function ProfitLoss({ fy, openMonth }: { fy: string; openMonth: (m: string) => v
           </ul>
         </div>
       )}
-      <p className="text-xs text-muted">How it&apos;s worked out: sales are invoices by invoice date, before GST (quotations and cancelled invoices aren&apos;t counted). Expenses are before GST. Salaries are the gross pay on issued payslips for that month. GST isn&apos;t income or a cost, so it&apos;s shown separately. This is a management report; your CA&apos;s books are the final word.</p>
+      <p className="text-xs text-muted">How it&apos;s worked out: sales are invoices by invoice date, before GST (quotations and cancelled invoices aren&apos;t counted). Expenses are before GST, except GST that can&apos;t be claimed back (no vendor GSTIN on the bill, or you aren&apos;t GST registered), which is a real cost and is added. Salaries are the gross pay on issued payslips for that month. GST isn&apos;t income or a cost, so it&apos;s shown separately. This is a management report; your CA&apos;s books are the final word.</p>
     </div>
   );
 }

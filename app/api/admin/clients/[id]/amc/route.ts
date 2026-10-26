@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
-import { billingCol, getProfile, newToken, nextNumber } from "@/lib/billing-db";
+import { billOid, billingCol, getProfile, newToken, nextNumber, sellerNow } from "@/lib/billing-db";
 import { addDays, todayIST, type BillDoc } from "@/lib/billing";
 import { clientsCol, pOid, toClient } from "@/lib/portal-db";
 import { addDaysTo, shortDate, todayIndia, yearEnd, type AmcPlan } from "@/lib/portal";
@@ -62,13 +62,17 @@ export async function POST(req: Request, { params }: Ctx) {
     const profile = await getProfile();
     const date = todayIST();
     const stamp = new Date().toISOString();
+    // Address, state and GSTIN from this client's latest invoice, so GST is split right (CGST+SGST or IGST).
+    const ids = (c.billingIds ?? []).map((x: string) => billOid(x)).filter(Boolean);
+    const last = ids.length ? await bills.findOne({ _id: { $in: ids }, type: "invoice" }, { sort: { date: -1 } }) : null;
+    const lastClient = (last?.client ?? {}) as Partial<BillDoc["client"]>;
     const inv: Omit<BillDoc, "id"> & { amcRenewal: string } = {
       type: "invoice",
       number: await nextNumber("invoice", date, profile),
       date,
       dueDate: a.endDate && a.endDate > date ? a.endDate : addDays(date, profile.invoiceDueDays),
       status: "unpaid",
-      client: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: "", state: "", gstin: "" },
+      client: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: lastClient.address ?? "", state: lastClient.state ?? "", gstin: lastClient.gstin ?? "" },
       items: [{ id: Math.random().toString(36).slice(2, 10), description: `${a.title} renewal (${shortDate(term.start)} to ${shortDate(term.end)})`, sac: profile.defaultSac, qty: 1, rate: a.amount, gst: profile.defaultGst }],
       discount: 0,
       notes: a.covers ? `Includes: ${a.covers.split("\n").map((x) => x.trim()).filter(Boolean).join(", ")}` : "",
@@ -83,6 +87,7 @@ export async function POST(req: Request, { params }: Ctx) {
       createdBy: session?.name ?? "",
       createdAt: stamp,
       updatedAt: stamp,
+      seller: await sellerNow(),
       amcRenewal: tag,
     };
     let insertedId;

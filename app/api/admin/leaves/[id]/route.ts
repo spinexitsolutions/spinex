@@ -17,7 +17,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!_id || !doc) return NextResponse.json({ error: "Leave request not found." }, { status: 404 });
   const l = toLeave(doc);
   const b = await jsonBody(req);
-  const action = String(b.action ?? "");
+  // "approve-unpaid": approve, but as leave without pay (e.g. more than the yearly limit).
+  const unpaid = String(b.action ?? "") === "approve-unpaid";
+  const action = unpaid ? "approve" : String(b.action ?? "");
   const note = String(b.note ?? "").trim().slice(0, 300);
   const allowed: Record<string, string[]> = { approve: ["pending", "rejected"], reject: ["pending", "approved"], cancel: ["pending", "approved"] };
   if (!allowed[action]?.includes(l.status)) return NextResponse.json({ error: "That can't be done for this request." }, { status: 400 });
@@ -28,7 +30,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const session = await getSession();
   const now = new Date().toISOString();
   const status = action === "approve" ? "approved" : action === "reject" ? "rejected" : "cancelled";
-  const out = await col.findOneAndUpdate({ _id, status: l.status }, { $set: { status, decidedBy: session?.name ?? "", decidedAt: now, decisionNote: note, updatedAt: now } }, { returnDocument: "after" });
+  const out = await col.findOneAndUpdate({ _id, status: l.status }, { $set: { status, decidedBy: session?.name ?? "", decidedAt: now, decisionNote: note, updatedAt: now, ...(unpaid ? { paid: false } : {}) } }, { returnDocument: "after" });
   if (!out) return NextResponse.json({ error: "This request just changed. Reload the page." }, { status: 409 });
   const when = rangeText(l.from, l.to, l.half);
   let emailed = false;
@@ -39,7 +41,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       const origin = process.env.NODE_ENV === "production" ? SITE_URL : new URL(req.url).origin;
       emailed = await emailPerson(String(emp.email), `Leave ${status === "approved" ? "approved" : "not approved"}: ${when}`, status === "approved" ? "Your leave is approved" : "Your leave was not approved", [
         `Hi ${String(emp.name || "").split(" ")[0] || "there"},`,
-        `Your ${l.typeLabel.toLowerCase()} for ${when} (${l.days} working day${l.days === 1 ? "" : "s"}) is ${status === "approved" ? "approved" : "not approved"}.`,
+        `Your ${l.typeLabel.toLowerCase()} for ${when} (${l.days} working day${l.days === 1 ? "" : "s"}) is ${status === "approved" ? (unpaid ? "approved as leave without pay" : "approved") : "not approved"}.`,
         ...(note ? [`Note from ${session?.name ?? "HR"}: ${note}`] : []),
       ], { label: "Open staff portal", url: `${origin}/staff` });
     }

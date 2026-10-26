@@ -70,7 +70,7 @@ function LeaveRequests({ readOnly, onPending }: { readOnly: boolean; onPending: 
   }, [filter]);
   useEffect(() => { load(); }, [load]);
 
-  const act = async (l: LeaveRequest, action: "approve" | "reject" | "cancel") => {
+  const act = async (l: LeaveRequest, action: "approve" | "approve-unpaid" | "reject" | "cancel") => {
     setBusy(`${action}:${l.id}`);
     setMsg(null);
     try {
@@ -112,7 +112,7 @@ function LeaveRequests({ readOnly, onPending }: { readOnly: boolean; onPending: 
                       {bal && (bal.perYear ? ` · ${bal.label}: ${bal.used} of ${bal.perYear} used this year${bal.pending ? `, ${bal.pending} waiting` : ""}` : ` · ${bal.label}: ${bal.used} taken this year`)}
                       {l.decidedBy && !l.byAdmin && l.status !== "pending" ? ` · ${leaveStatusLabel[l.status]} by ${l.decidedBy}` : ""}{l.decisionNote ? ` · “${l.decisionNote}”` : ""}
                     </p>
-                    {over && <p className="mt-1 text-xs font-semibold text-amber-700">More than the yearly limit. You can approve it, or add the extra days as unpaid leave instead.</p>}
+                    {over && <p className="mt-1 text-xs font-semibold text-amber-700">More than the yearly limit. You can approve it as paid, or approve it as unpaid (leave without pay).</p>}
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[l.status]}`}>{leaveStatusLabel[l.status]}</span>
                 </div>
@@ -120,6 +120,7 @@ function LeaveRequests({ readOnly, onPending }: { readOnly: boolean; onPending: 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {l.status === "pending" && <input className="input h-10 max-w-xs flex-1 text-sm" placeholder="Note to them (optional)" value={note[l.id] ?? ""} onChange={(e) => setNote({ ...note, [l.id]: e.target.value })} />}
                     {(l.status === "pending" || l.status === "rejected") && <button onClick={() => act(l, "approve")} disabled={!!busy} className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy === `approve:${l.id}` ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Approve</button>}
+                    {(l.status === "pending" || l.status === "rejected") && l.paid && <button onClick={() => act(l, "approve-unpaid")} disabled={!!busy} className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">{busy === `approve-unpaid:${l.id}` ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Approve as unpaid</button>}
                     {(l.status === "pending" || l.status === "approved") && <button onClick={() => act(l, "reject")} disabled={!!busy} className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">{busy === `reject:${l.id}` ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />} Don&apos;t approve</button>}
                     {l.status === "approved" && <button onClick={() => act(l, "cancel")} disabled={!!busy} className="rounded-full px-3 py-2 text-xs font-semibold text-muted hover:bg-mist">Cancel leave</button>}
                   </div>

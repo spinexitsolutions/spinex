@@ -27,8 +27,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   const doc = _id && (await col.findOne({ _id }));
   if (!doc) return NextResponse.json({ error: "Not found." }, { status: 404 });
   await col.deleteOne({ _id: doc._id });
-  // The month before keeps repeating from here on if this was its copy.
-  await col.updateMany({ copiedTo: params.id }, { $set: { copiedTo: "" } });
+  // Deleting a repeating expense ends the repeat: the month before keeps pointing at this one, so it
+  // isn't made again tomorrow.
   const e = toExpense(doc);
   await logActivity(await getSession(), "Expenses", `Deleted an expense (${inr(e.amount + e.gst)}, ${e.category})`, e.vendor || e.description, req);
   return NextResponse.json({ ok: true });

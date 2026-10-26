@@ -83,15 +83,18 @@ export function leaveDays(s: AttendanceSettings, from: string, to: string, half:
   return datesBetween(from, to).filter((d) => isWorkingDay(s, d)).length;
 }
 
-// One employee's status on one day. Order: not joined → admin's mark → approved leave → weekly off/holiday → check-in → default.
+// One employee's status on one day. Order: not joined / left → approved leave → admin's mark → weekly off/holiday → check-in → default.
 export function dayStatus(
   d: string,
-  ctx: { s: AttendanceSettings; today: string; joiningDate: string; day?: AttendanceDay; leave?: Pick<LeaveRequest, "paid" | "half"> },
+  ctx: { s: AttendanceSettings; today: string; joiningDate: string; exitDate?: string; day?: AttendanceDay; leave?: Pick<LeaveRequest, "paid" | "half"> },
 ): DayStatus {
   const { s, today, joiningDate, day, leave } = ctx;
   if (joiningDate && d < joiningDate) return "na";
+  if (ctx.exitDate && d > ctx.exitDate) return "na";
+  // Approved leave wins over a mark made before it was approved (e.g. marked absent, then sick leave approved),
+  // unless HR marked them present that day.
+  if (leave && isWorkingDay(s, d) && day?.mark !== "present") return leave.paid ? (leave.half ? "half-leave" : "leave") : leave.half ? "half-unpaid" : "unpaid";
   if (day?.mark) return day.mark;
-  if (leave && isWorkingDay(s, d)) return leave.paid ? (leave.half ? "half-leave" : "leave") : leave.half ? "half-unpaid" : "unpaid";
   if (isHoliday(s, d)) return "holiday";
   if (s.weeklyOff.includes(weekday(d))) return "off";
   if (day?.checkIn) return "present";
@@ -102,13 +105,13 @@ export function dayStatus(
 
 export type MonthSummary = { present: number; half: number; absent: number; paidLeave: number; unpaidLeave: number; off: number; holidays: number; lop: number; days: Record<string, DayStatus> };
 
-export function monthSummary(month: string, ctx: { s: AttendanceSettings; today: string; joiningDate: string; days: AttendanceDay[]; leaves: Pick<LeaveRequest, "from" | "to" | "paid" | "half" | "status">[] }): MonthSummary {
+export function monthSummary(month: string, ctx: { s: AttendanceSettings; today: string; joiningDate: string; exitDate?: string; days: AttendanceDay[]; leaves: Pick<LeaveRequest, "from" | "to" | "paid" | "half" | "status">[] }): MonthSummary {
   const byDate = new Map(ctx.days.map((x) => [x.date, x]));
   const approved = ctx.leaves.filter((l) => l.status === "approved");
   const out: MonthSummary = { present: 0, half: 0, absent: 0, paidLeave: 0, unpaidLeave: 0, off: 0, holidays: 0, lop: 0, days: {} };
   for (const d of monthDates(month)) {
     const leave = approved.find((l) => l.from <= d && d <= l.to);
-    const st = dayStatus(d, { s: ctx.s, today: ctx.today, joiningDate: ctx.joiningDate, day: byDate.get(d), leave });
+    const st = dayStatus(d, { s: ctx.s, today: ctx.today, joiningDate: ctx.joiningDate, exitDate: ctx.exitDate, day: byDate.get(d), leave });
     out.days[d] = st;
     out.lop += lopOf[st];
     if (st === "present") out.present++;
@@ -121,17 +124,24 @@ export function monthSummary(month: string, ctx: { s: AttendanceSettings; today:
     else if (st === "off") out.off++;
     else if (st === "holiday") out.holidays++;
   }
-  // Days before joining are not paid either.
+  // Days before joining (or after leaving) are not paid either.
   out.lop += Object.values(out.days).filter((x) => x === "na").length;
   return out;
 }
 
 // Leave taken (approved) and waiting (pending) per type in a calendar year.
-export function leaveBalance(s: AttendanceSettings, leaves: Pick<LeaveRequest, "type" | "from" | "days" | "status">[], year: string) {
+// A leave that crosses the new year (29 Dec to 3 Jan) is split: each year counts its own days.
+export function leaveBalance(s: AttendanceSettings, leaves: (Pick<LeaveRequest, "type" | "from" | "days" | "status"> & Partial<Pick<LeaveRequest, "to" | "half">>)[], year: string) {
+  const inYear = (l: (typeof leaves)[number]) => {
+    const to = l.to || l.from;
+    if (l.from.startsWith(year) && to.startsWith(year)) return l.days;
+    if (to < `${year}-01-01` || l.from > `${year}-12-31`) return 0;
+    return leaveDays(s, l.from < `${year}-01-01` ? `${year}-01-01` : l.from, to > `${year}-12-31` ? `${year}-12-31` : to, !!l.half);
+  };
   return s.leaveTypes.map((t) => {
-    const mine = leaves.filter((l) => l.type === t.id && l.from.startsWith(year));
-    const used = mine.filter((l) => l.status === "approved").reduce((a, l) => a + l.days, 0);
-    const pending = mine.filter((l) => l.status === "pending").reduce((a, l) => a + l.days, 0);
+    const mine = leaves.filter((l) => l.type === t.id);
+    const used = mine.filter((l) => l.status === "approved").reduce((a, l) => a + inYear(l), 0);
+    const pending = mine.filter((l) => l.status === "pending").reduce((a, l) => a + inYear(l), 0);
     return { ...t, used, pending, left: t.perYear ? Math.max(0, t.perYear - used) : null };
   });
 }

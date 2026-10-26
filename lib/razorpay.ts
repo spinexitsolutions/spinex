@@ -43,14 +43,22 @@ export async function paymentsCol() {
   return col;
 }
 
-// New Razorpay order for what is still due on an invoice (amount in paise).
+// Razorpay order for what is still due on an invoice (amount in paise).
+// The same open order is reused for a day, so two tabs (or two people) can't both pay the full amount:
+// once one payment goes through, Razorpay refuses a second payment on that order.
 export async function createOrderForBill(billId: string, number: string, amountRupees: number) {
   const amount = Math.round(amountRupees * 100);
+  const col = await ordersCol();
+  const open = await col.findOne({ billId, amount, createdAt: { $gt: new Date(Date.now() - 20 * 3600e3) } }, { sort: { createdAt: -1 } });
+  if (open) {
+    const o = await rzp<RzpOrder>(`/orders/${encodeURIComponent(open._id)}`).catch(() => null);
+    if (o && o.status !== "paid") return o;
+  }
   const order = await rzp<RzpOrder>("/orders", {
     method: "POST",
     body: JSON.stringify({ amount, currency: "INR", receipt: number.slice(0, 40), notes: { billId, invoice: number } }),
   });
-  await (await ordersCol()).updateOne({ _id: order.id }, { $set: { billId, amount, createdAt: new Date() } }, { upsert: true });
+  await col.updateOne({ _id: order.id }, { $set: { billId, amount, createdAt: new Date() } }, { upsert: true });
   return order;
 }
 
@@ -85,17 +93,18 @@ export async function recordPayment(p: { billId: string; orderId: string; paymen
   try {
     await (await paymentsCol()).insertOne({ _id: p.paymentId, billId: p.billId, orderId: p.orderId, amount, method: p.method, source: p.source, at: new Date() });
   } catch (e) {
-    if ((e as { code?: number }).code === 11000) return { recorded: false, already: true };
-    throw e;
+    // Already noted. Carry on: if adding it to the invoice failed last time, it is added now (the invoice check below stops doubles).
+    if ((e as { code?: number }).code !== 11000) throw e;
   }
   const col = await billingCol();
   const now = new Date().toISOString();
+  // The invoice itself records each payment id, so a payment is only ever counted once.
   const after = await col.findOneAndUpdate(
-    { _id, type: "invoice" },
+    { _id, type: "invoice", "onlinePayments.id": { $ne: p.paymentId } },
     { $inc: { paid: amount }, $push: { onlinePayments: { id: p.paymentId, orderId: p.orderId, amount, method: p.method, at: now } } as never, $set: { updatedAt: now } },
     { returnDocument: "after" },
   );
-  if (!after) return { recorded: false };
+  if (!after) return { recorded: false, already: true };
   const doc = toBill(after);
   const t = computeTotals(doc, await getProfile());
   if (doc.status !== "cancelled") {
@@ -105,10 +114,11 @@ export async function recordPayment(p: { billId: string; orderId: string; paymen
   const who = doc.client.company || doc.client.name || "A client";
   const adminUrl = `${process.env.NODE_ENV === "production" || !p.req ? SITE_URL : new URL(p.req.url).origin}/admin/billing/${doc.id}`;
   const left = Math.max(0, t.total - doc.paid);
+  const over = Math.round((doc.paid - t.total) * 100) / 100;
   const content = await getContent().catch(() => null);
   await Promise.all([
-    notifyAdmin(`Payment received: ${inr(amount, 0)} for ${doc.number} (${who})`, [["Invoice", doc.number], ["Client", who], ["Amount", inr(amount)], ["Method", p.method || "online"], ["Razorpay payment", p.paymentId], ["Still due", inr(left)]], adminUrl).catch(() => undefined),
-    content?.leadReplies?.whatsappAlert ? sendWhatsAppAlert(`💰 Payment received\n${who} paid ${inr(amount, 0)} for ${doc.number} by ${p.method || "online payment"}.${left > 0 ? `\nStill due: ${inr(left, 0)}` : "\nFully paid."}\n${adminUrl}`).catch(() => undefined) : Promise.resolve(),
+    notifyAdmin(`Payment received: ${inr(amount, 0)} for ${doc.number} (${who})`, [["Invoice", doc.number], ["Client", who], ["Amount", inr(amount)], ["Method", p.method || "online"], ["Razorpay payment", p.paymentId], ["Still due", inr(left)], ...(over > 0.5 ? [["Paid extra", `${inr(over)}: the client paid more than the invoice. Refund it from Razorpay or adjust it in the next bill.`] as [string, string]] : [])], adminUrl).catch(() => undefined),
+    content?.leadReplies?.whatsappAlert ? sendWhatsAppAlert(`💰 Payment received\n${who} paid ${inr(amount, 0)} for ${doc.number} by ${p.method || "online payment"}.${left > 0 ? `\nStill due: ${inr(left, 0)}` : "\nFully paid."}${over > 0.5 ? `\n⚠️ Paid ${inr(over, 0)} more than the invoice.` : ""}\n${adminUrl}`).catch(() => undefined) : Promise.resolve(),
   ]);
   await logActivity({ name: "Razorpay", uid: "", role: "" }, "Invoices", `Online payment ${inr(amount, 0)} received for invoice ${doc.number} (${p.paymentId})`, who, p.req);
   return { recorded: true, paid: doc.paid, total: t.total };

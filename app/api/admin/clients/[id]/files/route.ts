@@ -14,7 +14,7 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!doc) return NextResponse.json({ error: "Client not found." }, { status: 404 });
   const c = toClient(doc);
   const session = await getSession();
-  if (tooBig(req)) return NextResponse.json({ error: "That file is larger than 10 MB." }, { status: 413 });
+  if (tooBig(req)) return NextResponse.json({ error: "That file is larger than 4 MB." }, { status: 413 });
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!file || typeof file === "string") return NextResponse.json({ error: "Choose a file to upload." }, { status: 400 });

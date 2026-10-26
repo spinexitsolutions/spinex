@@ -3,7 +3,7 @@ import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { billOid, billingCol, toBill } from "@/lib/billing-db";
 import { todayIST } from "@/lib/billing";
-import { getReminderSettings, sendReminder } from "@/lib/payment-reminders";
+import { dueStep, getReminderSettings, sendReminder, stepsOf } from "@/lib/payment-reminders";
 
 // { action: "send" } sends a payment reminder now; "pause" / "resume" switches automatic reminders for this invoice.
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -25,7 +25,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const late = d.dueDate ? Math.round((Date.parse(`${todayIST()}T00:00:00Z`) - Date.parse(`${d.dueDate}T00:00:00Z`)) / 864e5) : 0;
   const settings = await getReminderSettings();
   // Sent by hand: email and WhatsApp are tried even if they are off for the automatic ones.
-  const r = await sendReminder(d, { ...settings, email: true, whatsapp: true }, { step: late, late, manual: true, by: session?.name ?? "" });
+  // The automatic step due today (if any) counts as done, so the client doesn't get a second one today.
+  const due = dueStep({ dueDate: d.dueDate, payReminderKeys: (doc.payReminderKeys as string[]) ?? [] }, stepsOf(settings.steps), todayIST());
+  const r = await sendReminder(d, { ...settings, email: true, whatsapp: true }, { step: late, late, manual: true, by: session?.name ?? "", keys: due?.keys });
   if (!r.email && !r.whatsapp) return NextResponse.json({ error: r.error }, { status: 502 });
   await logActivity(session, "Invoices", `Sent a payment reminder for ${d.number}`, d.client.company || d.client.name, req);
   const after = toBill((await col.findOne({ _id }))!);

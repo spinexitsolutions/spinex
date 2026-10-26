@@ -57,6 +57,7 @@ export function toEmployee(doc: WithId<Document>): Employee {
     designation: r.designation ?? "",
     department: r.department ?? "",
     joiningDate: r.joiningDate ?? "",
+    exitDate: r.exitDate ?? "",
     location: r.location ?? "",
     pan: r.pan ?? "",
     uan: r.uan ?? "",
@@ -83,6 +84,7 @@ export function cleanEmployeeInput(b: Record<string, unknown>) {
   // Only the last 4 digits of the bank account are kept.
   if (b.bankLast4 !== undefined) out.bankLast4 = s(b.bankLast4, 40).replace(/\D/g, "").slice(-4);
   if (b.joiningDate !== undefined) out.joiningDate = date(b.joiningDate);
+  if (b.exitDate !== undefined) out.exitDate = date(b.exitDate);
   if (b.active !== undefined) out.active = !!b.active;
   if (b.pf !== undefined) out.pf = !!b.pf;
   if (b.esi !== undefined) out.esi = !!b.esi;

@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 
 // Upload a file for the client (portal) or for the team (admin). Refreshes the page when done.
+// 4 MB: many hosts (Vercel among them) refuse bigger uploads before they reach the site.
+const MAX_MB = 4;
 export default function PortalUpload({ url, projects, onDone }: { url: string; projects: { id: string; title: string }[]; onDone?: (data: unknown) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState("");
@@ -15,6 +17,8 @@ export default function PortalUpload({ url, projects, onDone }: { url: string; p
   const send = async () => {
     const files = Array.from(input.current?.files ?? []);
     if (!files.length) return setError("Choose a file first.");
+    const big = files.find((f) => f.size > MAX_MB * 1024 * 1024);
+    if (big) return setError(`${big.name} is larger than ${MAX_MB} MB. Share big files as a Google Drive link in a support message instead.`);
     setBusy(true);
     setError("");
     setMsg("");
@@ -27,7 +31,7 @@ export default function PortalUpload({ url, projects, onDone }: { url: string; p
       const res = await fetch(url, { method: "POST", body: form }).catch(() => null);
       const data = res ? await res.json().catch(() => ({})) : {};
       if (!res || !res.ok) {
-        setError((data as { error?: string }).error || "Upload failed. Try again.");
+        setError((data as { error?: string }).error || (res?.status === 413 ? `That file is too big. Keep it under ${MAX_MB} MB, or share a Google Drive link.` : "Upload failed. Try again."));
         setBusy(false);
         return;
       }
@@ -55,7 +59,7 @@ export default function PortalUpload({ url, projects, onDone }: { url: string; p
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button onClick={send} disabled={busy} className="btn-dark px-5 py-2.5 text-sm">{busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Upload</button>
-        <span className="text-xs text-muted">PDF, Word, Excel, images, ZIP or video, up to 10 MB each.</span>
+        <span className="text-xs text-muted">PDF, Word, Excel, images, ZIP or video, up to {MAX_MB} MB each.</span>
         {msg && <span className="text-sm font-medium text-emerald-700">{msg}</span>}
       </div>
       {error && <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}

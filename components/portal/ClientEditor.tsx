@@ -68,7 +68,7 @@ export default function ClientEditor({ id, initialTab = "projects", readOnly = f
   const save = async () => {
     setBusy("save");
     try {
-      const out = await api<PortalClient>(`/api/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(editable(client)) });
+      const out = await api<PortalClient>(`/api/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify({ ...editable(client), version: client.updatedAt }) });
       setClient(out);
       setSaved(JSON.stringify(editable(out)));
       setData((d) => (d ? { ...d, client: out } : d));

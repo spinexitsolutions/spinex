@@ -197,7 +197,7 @@ export async function savePortalFile(file: File, meta: { clientId: string; proje
   const ext = fileExt(file.name || "");
   const type = PORTAL_FILE_TYPES[ext];
   if (!type) return { error: `${file.name || "This file"} isn't an allowed type. Use PDF, Word, Excel, images, ZIP or video.` };
-  if (file.size > 10 * 1024 * 1024) return { error: `${file.name} is larger than 10 MB. Share big files as a Google Drive link in a message instead.` };
+  if (file.size > 4 * 1024 * 1024) return { error: `${file.name} is larger than 4 MB. Share big files as a Google Drive link in a message instead.` };
   if (!file.size) return { error: `${file.name} is empty.` };
   const name = (file.name || `file.${ext}`).replace(/[\\/\u0000-\u001f"<>]/g, "_").slice(0, 140);
   const bucket = await portalFilesBucket();
@@ -216,7 +216,7 @@ export async function listPortalFiles(clientId: string) {
 
 // Portal POST routes accept JSON only, so a form on another site can't post to them (login CSRF).
 export const isJsonRequest = (req: Request) => (req.headers.get("content-type") || "").toLowerCase().includes("application/json");
-export const tooBig = (req: Request) => Number(req.headers.get("content-length") || 0) > 11 * 1024 * 1024;
+export const tooBig = (req: Request) => Number(req.headers.get("content-length") || 0) > 5 * 1024 * 1024;
 
 // Failed code tries per client: after 10 in a day the email login is locked for the rest of that day.
 export const MAX_DAILY_FAILS = 10;

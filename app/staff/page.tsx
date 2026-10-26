@@ -21,7 +21,7 @@ export default async function StaffPage() {
     (await leavesCol()).find({ employeeId: emp.id }).sort({ from: -1 }).limit(100).toArray(),
     (await attendanceCol()).findOne({ _id: `${emp.id}:${today}` }),
     (await payslipsCol()).find({ employeeId: emp.id, status: "issued" }).sort({ month: -1 }).limit(24).toArray(),
-    monthAttendance(month, [{ id: emp.id, joiningDate: emp.joiningDate }]),
+    monthAttendance(month, [{ id: emp.id, joiningDate: emp.joiningDate, exitDate: emp.exitDate }]),
   ]);
   const leaves = leavesRaw.map(toLeave);
   const balance = leaveBalance(att.settings, leaves, today.slice(0, 4));

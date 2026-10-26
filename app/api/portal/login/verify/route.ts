@@ -30,7 +30,8 @@ export async function POST(req: Request) {
     { sort: { _id: -1 }, returnDocument: "after" },
   );
   if (!row || !sameHash(String(row.hash), hashSecret(code))) {
-    const fails = await countLoginFail(cid);
+    // Only guesses against a real code count toward the daily lock, so a stranger can't lock someone out.
+    const fails = row ? await countLoginFail(cid) : 0;
     if (fails === MAX_DAILY_FAILS) {
       await logins.deleteMany({ clientId: cid });
       await notifyAdmin(`Client portal login locked: ${client.company || client.name}`, [["Client", String(client.company || client.name)], ["Email", email], ["Why", `${MAX_DAILY_FAILS} wrong codes today. Email login is locked until tomorrow. You can send a one-time login link from the admin panel.`]], `${originOf(req)}/admin/clients/${cid}`);

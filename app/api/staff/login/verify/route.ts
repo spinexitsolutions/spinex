@@ -30,7 +30,8 @@ export async function POST(req: Request) {
     { returnDocument: "after" },
   );
   if (!row || !sameHash(String(row.hash), hashSecret(code))) {
-    if ((await countLoginFail(key)) === MAX_DAILY_FAILS) {
+    // Only guesses against a real code count toward the daily lock, so a stranger can't lock someone out.
+    if (row && (await countLoginFail(key)) === MAX_DAILY_FAILS) {
       await logins.deleteMany({ clientId: key });
       await notifyAdmin(`Staff portal login locked: ${emp.name}`, [["Employee", String(emp.name)], ["Email", email], ["Why", `${MAX_DAILY_FAILS} wrong codes today. Email login is locked until tomorrow.`]], `${originOf(req)}/admin#payslips`);
     }

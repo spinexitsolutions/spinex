@@ -40,28 +40,31 @@ async function invoicesBetween(from: string, to: string) {
 export async function monthlyReport(months: string[]): Promise<MonthRow[]> {
   const from = `${months[0]}-01`;
   const to = monthEnd(months[months.length - 1]);
-  const [{ rows }, exps, slips] = await Promise.all([
+  const [{ rows, profile }, exps, slips] = await Promise.all([
     invoicesBetween(from, to),
     (await expensesCol()).find({ date: { $gte: from, $lte: to } }).limit(20000).toArray(),
     (await payslipsCol()).find({ status: "issued", month: { $gte: months[0], $lte: months[months.length - 1] } }).limit(20000).toArray(),
   ]);
+  const gstOn = !!String(profile.gstin || "").trim();
   return months.map((m) => {
     const inv = rows.filter((x) => x.d.date.startsWith(m));
     const ex = exps.map(toExpense).filter((e) => e.date.startsWith(m));
     const sl = slips.map(toPayslip).filter((p) => p.month === m);
     const byCategory: Record<string, number> = {};
-    for (const e of ex) byCategory[e.category] = r2((byCategory[e.category] ?? 0) + e.amount);
+    for (const e of ex) byCategory[e.category] = r2((byCategory[e.category] ?? 0) + e.amount + (gstOn && e.vendorGstin ? 0 : e.gst));
     const sales = r2(inv.reduce((s, x) => s + x.t.taxable, 0));
-    const expenses = r2(ex.reduce((s, e) => s + e.amount, 0));
+    // GST that can't be claimed back (no GST registration, or the bill has no vendor GSTIN) is a real cost.
+    const claimable = (e: Expense) => !!gstOn && !!e.vendorGstin;
+    const expenses = r2(ex.reduce((s, e) => s + e.amount + (claimable(e) ? 0 : e.gst), 0));
     const salaries = r2(sl.reduce((s, p) => s + slipTotals(p).gross, 0));
     return {
       month: m,
       sales,
       invoiced: r2(inv.reduce((s, x) => s + x.t.total, 0)),
-      received: r2(inv.reduce((s, x) => s + Math.min(x.d.paid, x.t.total), 0)),
+      received: r2(inv.reduce((s, x) => s + (x.d.status === "paid" ? x.t.total : Math.min(x.d.paid, x.t.total)), 0)),
       gstOut: r2(inv.reduce((s, x) => s + x.t.tax, 0)),
       expenses,
-      gstIn: r2(ex.reduce((s, e) => s + e.gst, 0)),
+      gstIn: r2(ex.reduce((s, e) => s + (claimable(e) ? e.gst : 0), 0)),
       salaries,
       profit: r2(sales - expenses - salaries),
       byCategory,
@@ -93,12 +96,15 @@ export async function runRepeatingExpenses() {
   const today = todayIST();
   let made = 0;
   for (let round = 0; round < 24; round++) {
-    const due = (await col.find({ repeat: true, copiedTo: { $in: ["", null] } }).limit(500).toArray()).map(toExpense).filter((e) => nextMonthDate(e.date) <= today);
+    const raw = await col.find({ repeat: true, copiedTo: { $in: ["", null] } }).limit(500).toArray();
+    const dayOf = new Map(raw.map((r) => [String(r._id), Number(r.repeatDay) || Number(String(r.date).slice(8, 10)) || 1]));
+    const due = raw.map(toExpense).filter((e) => nextMonthDate(e.date, dayOf.get(e.id)) <= today);
     if (!due.length) break;
     for (const e of due) {
-      const date = nextMonthDate(e.date);
+      const repeatDay = dayOf.get(e.id) ?? 1;
+      const date = nextMonthDate(e.date, repeatDay);
       const now = new Date().toISOString();
-      const copy = { date, category: e.category, vendor: e.vendor, description: e.description, amount: e.amount, gst: e.gst, vendorGstin: e.vendorGstin, billNo: "", paidVia: e.paidVia, repeat: true, copiedTo: "", createdBy: "Repeats monthly", createdAt: now, updatedAt: now };
+      const copy = { date, category: e.category, vendor: e.vendor, description: e.description, amount: e.amount, gst: e.gst, vendorGstin: e.vendorGstin, billNo: "", paidVia: e.paidVia, repeat: true, repeatDay, copiedTo: "", createdBy: "Repeats monthly", createdAt: now, updatedAt: now };
       const ins = await col.insertOne(copy);
       const claim = await col.updateOne({ _id: expOid(e.id)!, copiedTo: { $in: ["", null] } }, { $set: { copiedTo: String(ins.insertedId) } });
       if (!claim.modifiedCount) await col.deleteOne({ _id: ins.insertedId }); // another run made it first
@@ -107,9 +113,10 @@ export async function runRepeatingExpenses() {
   }
   return { made };
 }
-function nextMonthDate(d: string) {
+// Same day next month; the day it first repeated on is kept, so 31 Jan → 28 Feb → 31 Mar (not the 28th for ever).
+function nextMonthDate(d: string, wantDay?: number) {
   const [y, m, day] = d.split("-").map(Number);
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  const t = new Date(Date.UTC(y, m, Math.min(day, last)));
+  const t = new Date(Date.UTC(y, m, Math.min(wantDay || day, last)));
   return t.toISOString().slice(0, 10);
 }

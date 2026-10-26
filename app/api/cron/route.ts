@@ -10,7 +10,7 @@ import { runPaymentReminders } from "@/lib/payment-reminders";
 import { runRecurring } from "@/lib/recurring-db";
 import { runRepeatingExpenses } from "@/lib/accounts-db";
 import { runLeadFollowups } from "@/lib/lead-followups";
-import { readState, writeState } from "@/lib/settings-db";
+import { claimState, readState, writeState } from "@/lib/settings-db";
 import { SITE_URL } from "@/lib/site";
 
 // Called by a scheduler (Vercel Cron, cron-job.org or a server crontab), ideally every hour.
@@ -42,17 +42,19 @@ export async function GET(req: Request) {
   const done: Record<string, unknown> = {};
   await writeState("automation", { lastCron: new Date().toISOString() });
 
-  if (settings.remindersOn && state.lastReminders !== now.date && now.hour >= settings.reminderHour) {
+  if (settings.remindersOn && state.lastReminders !== now.date && now.hour >= settings.reminderHour && (await claimState("automation", "gateReminders", now.date))) {
     done.reminders = await runReminders(origin).catch((e) => ({ error: String(e) }));
   }
   // Monthly bills first (so a new invoice is counted), then payment reminders. Once a day, at the reminder hour.
-  if (state.lastBilling !== now.date && now.hour >= settings.reminderHour) {
-    await writeState("automation", { lastBilling: now.date });
+  if (now.hour >= settings.reminderHour && (await claimState("automation", "lastBilling", now.date))) {
     done.recurring = await runRecurring().catch((e) => ({ error: String(e) }));
     done.payments = await runPaymentReminders().catch((e) => ({ error: String(e) }));
+  }
+  // Separate, so a slow billing run that hits the time limit doesn't hold this back.
+  if (await claimState("automation", "lastExpenses", now.date)) {
     done.expenses = await runRepeatingExpenses().catch((e) => ({ error: String(e) }));
   }
-  if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour) {
+  if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour && (await claimState("automation", "gateAmc", now.date))) {
     done.amc = await runAmcReminders(origin, { days: settings.amcRemindDays, emailClient: settings.amcEmailClient, whatsapp: settings.whatsappSummary }).catch((e) => ({ error: String(e) }));
   }
   // Call reminders are checked on every run (the scheduler should run every hour).
@@ -60,7 +62,7 @@ export async function GET(req: Request) {
   done.reviews = await runReviewRequests().catch((e) => ({ error: String(e) }));
   done.feedback = await runFeedbackRequests().catch((e) => ({ error: String(e) }));
   done.followups = await runLeadFollowups().catch((e) => ({ error: String(e) }));
-  if (backupDue(settings, String(state.lastBackup || ""))) {
+  if (backupDue(settings, String(state.lastBackup || "")) && (await claimState("automation", "gateBackup", `${now.date}T${now.hour}`))) {
     done.backup = await runBackup().catch((e) => ({ error: String(e) }));
   }
   return NextResponse.json({ ok: true, at: now, done });

@@ -51,6 +51,8 @@ export type BillDoc = {
   noReminders?: boolean; // payment reminders switched off for this invoice
   recurringId?: string; // made by a monthly bill
   period?: string; // e.g. November 2026
+  // Our GSTIN and state when it was made, so registering for GST (or moving) later doesn't change old invoices.
+  seller?: { gstin: string; state: string };
 };
 
 export type OnlinePayment = { id: string; orderId: string; amount: number; method: string; at: string };
@@ -169,7 +171,8 @@ export type Totals = {
 };
 
 // Your GSTIN decides whether GST is charged; same state → CGST + SGST, other state → IGST.
-export function computeTotals(doc: Pick<BillDoc, "items" | "discount" | "client" | "paid">, profile: Pick<BillingProfile, "state" | "gstin">): Totals {
+export function computeTotals(doc: Pick<BillDoc, "items" | "discount" | "client" | "paid"> & { seller?: BillDoc["seller"] }, current: Pick<BillingProfile, "state" | "gstin">): Totals {
+  const profile = doc.seller ?? current;
   const gstOn = !!String(profile.gstin || "").trim();
   const ours = String(profile.state || "").trim().toLowerCase();
   const theirs = String(doc.client?.state || stateFromGstin(doc.client?.gstin || "") || "").trim().toLowerCase();

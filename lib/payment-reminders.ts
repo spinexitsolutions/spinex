@@ -105,6 +105,8 @@ export async function runPaymentReminders() {
   let overdueTotal = 0;
   for (const raw of docs) {
     const d = toBill(raw);
+    // Not on the day the invoice is made, and not for a monthly-bill invoice that was never sent to the client.
+    if (d.date >= today || (raw.recurringId && !raw.sentAt)) continue;
     const t = computeTotals(d, profile);
     if (t.balance < 1) continue;
     const late = daysBetween(d.dueDate, today);

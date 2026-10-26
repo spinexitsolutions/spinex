@@ -60,10 +60,16 @@ export async function sendFeedbackRequest(f: Feedback, reminder: boolean) {
   const s = await getFeedbackSettings();
   const brand = (await getContent().catch(() => null))?.brand.name || "Spinex IT Solutions";
   const fill = (t: string) => t.replace(/\{name\}/g, f.name.split(" ")[0] || "there").replace(/\{project\}/g, f.project || "your project").replace(/\{brand\}/g, brand);
-  const ok = await emailPerson(f.email, reminder ? `Reminder: ${fill(s.subject)}` : fill(s.subject), "How did we do?", [`Hi ${f.name.split(" ")[0] || "there"},`, ...fill(s.message).split(/\n{2,}/), ...(reminder ? ["(Just a gentle reminder. Thank you!)"] : []), `Team ${brand}`], { label: "★ Rate our work", url: `${SITE_URL}/f/${f.token}` });
   const col = await feedbackCol();
+  // Claim it first, so the scheduler and "Ask now" (or two scheduler runs) can't both email it.
+  if (!reminder) {
+    const stale = new Date(Date.now() - 15 * 60e3).toISOString();
+    const claim = await col.updateOne({ _id: fbOid(f.id)!, $or: [{ status: { $in: ["scheduled", "failed"] } }, { status: "sending", sendingAt: { $lt: stale } }] }, { $set: { status: "sending", sendingAt: new Date().toISOString() } });
+    if (!claim.modifiedCount) return false;
+  }
+  const ok = await emailPerson(f.email, reminder ? `Reminder: ${fill(s.subject)}` : fill(s.subject), "How did we do?", [`Hi ${f.name.split(" ")[0] || "there"},`, ...fill(s.message).split(/\n{2,}/), ...(reminder ? ["(Just a gentle reminder. Thank you!)"] : []), `Team ${brand}`], { label: "★ Rate our work", url: `${SITE_URL}/f/${f.token}` });
   if (reminder) await col.updateOne({ _id: fbOid(f.id)! }, { $set: { reminded: true } });
-  else await col.updateOne({ _id: fbOid(f.id)!, status: { $in: ["scheduled", "failed"] } }, ok ? { $set: { status: "sent", sentAt: new Date().toISOString(), error: "" } } : { $set: { status: "failed", error: "Email couldn't be sent. Check API keys → Email alerts." } });
+  else await col.updateOne({ _id: fbOid(f.id)!, status: "sending" }, ok ? { $set: { status: "sent", sentAt: new Date().toISOString(), error: "" } } : { $set: { status: "failed", error: "Email couldn't be sent. Check API keys → Email alerts." } });
   return ok;
 }
 
@@ -73,7 +79,7 @@ export async function runFeedbackRequests() {
   const col = await feedbackCol();
   let sent = 0;
   let reminders = 0;
-  for (const d of await col.find({ status: "scheduled", sendAt: { $lte: new Date().toISOString() } }).limit(50).toArray()) if (await sendFeedbackRequest(toFeedback(d), false)) sent++;
+  for (const d of await col.find({ $or: [{ status: "scheduled", sendAt: { $lte: new Date().toISOString() } }, { status: "sending", sendingAt: { $lt: new Date(Date.now() - 15 * 60e3).toISOString() } }] }).limit(50).toArray()) if (await sendFeedbackRequest(toFeedback(d), false)) sent++;
   if (s.reminderDays > 0) {
     for (const d of await col.find({ status: "sent", reminded: false, sentAt: { $lte: new Date(Date.now() - s.reminderDays * 864e5).toISOString() } }).limit(50).toArray()) {
       const claim = await col.updateOne({ _id: d._id, reminded: false }, { $set: { reminded: true } });
@@ -86,7 +92,7 @@ export async function runFeedbackRequests() {
 // The client's answer. Low ratings reach the team at once (email and WhatsApp) so they can call the client.
 export async function saveAnswer(token: string, a: Feedback["response"]) {
   const col = await feedbackCol();
-  const doc = await col.findOneAndUpdate({ token, status: { $in: ["sent", "scheduled", "failed"] } }, { $set: { response: a, status: "answered", quote: a!.liked } }, { returnDocument: "after" });
+  const doc = await col.findOneAndUpdate({ token, status: { $in: ["sent", "scheduled", "failed", "sending"] } }, { $set: { response: a, status: "answered", quote: a!.liked } }, { returnDocument: "after" });
   if (!doc) return null;
   const f = toFeedback(doc);
   const r = a!;

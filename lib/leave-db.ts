@@ -84,7 +84,7 @@ export async function overlappingLeave(employeeId: string, from: string, to: str
 }
 
 // Attendance summary of a month for some employees (for the admin grid and for payslips).
-export async function monthAttendance(month: string, employees: Pick<Employee, "id" | "joiningDate">[]) {
+export async function monthAttendance(month: string, employees: (Pick<Employee, "id" | "joiningDate"> & { exitDate?: string })[]) {
   const dates = monthDates(month);
   const [settings, days, leaves] = await Promise.all([
     getAttendanceSettings(),
@@ -94,7 +94,7 @@ export async function monthAttendance(month: string, employees: Pick<Employee, "
   const today = todayIST();
   const out = new Map<string, ReturnType<typeof monthSummary>>();
   for (const e of employees) {
-    out.set(e.id, monthSummary(month, { s: settings, today, joiningDate: e.joiningDate, days: days.filter((d) => d.employeeId === e.id), leaves: leaves.filter((l) => l.employeeId === e.id) }));
+    out.set(e.id, monthSummary(month, { s: settings, today, joiningDate: e.joiningDate, exitDate: e.exitDate, days: days.filter((d) => d.employeeId === e.id), leaves: leaves.filter((l) => l.employeeId === e.id) }));
   }
   return { settings, summaries: out };
 }

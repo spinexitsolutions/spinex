@@ -43,7 +43,9 @@ export async function POST(req: Request) {
     updatedAt: now,
   });
   const who = client.company || client.name;
-  const amcText = cover ? `Covered by ${cover.title} (till ${shortDate(cover.endDate)})` : last ? `Not covered: ${last.title} ended ${shortDate(last.endDate)}` : "No AMC";
+  const today = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+  const notStarted = !cover && last && last.startDate > today;
+  const amcText = cover ? `Covered by ${cover.title} (till ${shortDate(cover.endDate)})` : notStarted ? `Not covered yet: ${last.title} starts ${shortDate(last.startDate)}` : last ? `Not covered: ${last.title} ended ${shortDate(last.endDate)}` : "No AMC";
   const link = `${originOf(req)}/admin/clients/${client.id}?tab=support`;
   await notifyAdmin(`${urgent ? "URGENT " : ""}${kind === "renewal" ? "AMC renewal request" : "Support request"}: ${subject}`, [["Client", who], ["Type", `${ticketKindLabel[kind]}${urgent ? " (urgent)" : ""}`], ["AMC", amcText], ["Subject", subject], ["Message", text]], link);
   // Urgent problems and renewal requests also come on WhatsApp, when WhatsApp alerts are set up.

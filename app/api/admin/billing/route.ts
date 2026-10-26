@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
-import { billOid, billingCol, getProfile, newToken, nextNumber, toBill } from "@/lib/billing-db";
+import { billOid, billingCol, getProfile, newToken, nextNumber, toBill, sellerNow } from "@/lib/billing-db";
 import { addDays, todayIST, type BillDoc, type BillItem } from "@/lib/billing";
 import { leadsCol } from "@/lib/lead-db";
 
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       createdBy: session?.name ?? "",
       createdAt: stamp,
       updatedAt: stamp,
+      seller: await sellerNow(),
     };
     let insertedId;
     try {
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
     createdBy: session?.name ?? "",
     createdAt: stamp,
     updatedAt: stamp,
+    seller: await sellerNow(),
   };
   const { insertedId } = await col.insertOne(doc);
   await logActivity(session, "Invoices", `Created ${type === "quote" ? "quotation" : "invoice"} ${doc.number}`, client.company || client.name, req);

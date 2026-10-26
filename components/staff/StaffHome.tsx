@@ -109,10 +109,10 @@ export default function StaffHome(props: {
         <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
           <section className="rounded-[24px] border border-line bg-white p-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Clock size={18} className="text-lav-700" /> Today</h2>
-            <p className="mt-1 text-sm text-muted">{new Date(`${today}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}{holidayToday ? ` · Holiday: ${holidayToday.label}` : offToday ? " · Weekly off" : ""}</p>
+            <p className="mt-1 text-sm text-muted" suppressHydrationWarning>{new Date(`${today}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}{holidayToday ? ` · Holiday: ${holidayToday.label}` : offToday ? " · Weekly off" : ""}</p>
             <div className="mt-5 grid grid-cols-2 gap-3 text-center">
-              <div className="rounded-2xl bg-mist p-4"><p className="text-xs text-muted">Checked in</p><p className="mt-1 text-xl font-semibold">{time(checkIn) || "—"}</p></div>
-              <div className="rounded-2xl bg-mist p-4"><p className="text-xs text-muted">Checked out</p><p className="mt-1 text-xl font-semibold">{time(checkOut) || "—"}</p></div>
+              <div className="rounded-2xl bg-mist p-4"><p className="text-xs text-muted">Checked in</p><p className="mt-1 text-xl font-semibold" suppressHydrationWarning>{time(checkIn) || "—"}</p></div>
+              <div className="rounded-2xl bg-mist p-4"><p className="text-xs text-muted">Checked out</p><p className="mt-1 text-xl font-semibold" suppressHydrationWarning>{time(checkOut) || "—"}</p></div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {!checkIn ? (
@@ -199,7 +199,7 @@ export default function StaffHome(props: {
           {payslips.length === 0 ? <p className="mt-3 text-sm text-muted">Your payslips will show here once HR issues them.</p> : (
             <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {payslips.map((p) => (
-                <li key={p.id}><a href={`/p/${p.token}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl border border-line px-4 py-3 hover:border-ink"><CheckCircle2 size={17} className="text-emerald-600" /><span className="min-w-0 flex-1"><span className="block font-semibold">{monthLabel(p.month)}</span><span className="block text-xs text-muted">{p.number}</span></span><b className="tabular-nums">{rs(p.net)}</b></a></li>
+                <li key={p.id}><a href={`/p/${p.token}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl border border-line px-4 py-3 hover:border-ink"><CheckCircle2 size={17} className="text-emerald-600" /><span className="min-w-0 flex-1"><span className="block font-semibold" suppressHydrationWarning>{monthLabel(p.month)}</span><span className="block text-xs text-muted">{p.number}</span></span><b className="tabular-nums">{rs(p.net)}</b></a></li>
               ))}
             </ul>
           )}

@@ -9,6 +9,8 @@ import { getContent } from "@/lib/content-server";
 
 // Staff login step 1: email a 6-digit code. The reply never says whether the email belongs to an employee.
 export async function POST(req: Request) {
+  const started = Date.now();
+  let sending: Promise<unknown> = Promise.resolve();
   if (!hasDb()) return NextResponse.json({ error: "Login is offline right now." }, { status: 503 });
   if (!isJsonRequest(req)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const email = normEmail((await jsonBody(req)).email);
@@ -24,12 +26,17 @@ export async function POST(req: Request) {
       { upsert: true },
     ).catch(() => undefined);
     const brand = (await getContent()).brand.name || "Spinex IT Solutions";
-    void emailPerson(email, `${code} is your ${brand} staff login code`, "Your login code", [
+    sending = emailPerson(email, `${code} is your ${brand} staff login code`, "Your login code", [
       `Hi ${String(emp.name || "").split(" ")[0] || "there"},`,
       `Your code to open the ${brand} staff portal is:`,
       code,
       "It works for 10 minutes. If you didn't ask for it, you can ignore this email.",
     ]).catch((e) => console.error("Staff code email failed:", e));
   }
+  // Wait for the email (some hosts stop work left running after the reply), and pad every reply to the same
+  // length of time, so it never shows whether the email has an account.
+  await sending;
+  const left = 2500 - (Date.now() - started);
+  if (left > 0) await new Promise((r) => setTimeout(r, left + Math.floor(Math.random() * 300)));
   return NextResponse.json({ ok: true, message: "If this is an employee email, we've sent a 6-digit code to it." });
 }
