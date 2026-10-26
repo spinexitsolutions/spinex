@@ -1,26 +1,44 @@
 // Admin roles and what each person can open. Shared by server and admin screens.
 //
 // Every team member has an "access" list: for each area, None, View (look only) or Edit (look and change).
-// The 5 roles are ready-made starting points; the owner can then tick each area per person.
+// The roles are ready-made starting points; the owner can then tick each area per person.
 // Team, API keys and automation/backups are always owner-only.
 
-export const ROLES = ["owner", "admin", "editor", "sales", "hr"] as const;
+export const ROLES = ["owner", "admin", "manager", "editor", "writer", "marketing", "designer", "sales", "telecaller", "support", "projectManager", "accountant", "hr", "viewer"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const roleLabel: Record<Role, string> = {
   owner: "Owner",
   admin: "Admin",
+  manager: "Manager",
   editor: "Content editor",
+  writer: "Blog writer",
+  marketing: "Marketing / SEO",
+  designer: "Designer",
   sales: "Sales",
+  telecaller: "Telecaller",
+  support: "Support executive",
+  projectManager: "Project manager",
+  accountant: "Accountant",
   hr: "HR",
+  viewer: "Viewer (look only)",
 };
 
 export const roleHelp: Record<Role, string> = {
   owner: "Everything, including team members",
   admin: "Everything except team members, API keys and backups",
+  manager: "Runs the day to day: leads, clients, invoices, website and interns. No salaries, profit or bank details",
   editor: "Website content, blog, media and SEO",
+  writer: "Writes and publishes blog posts only",
+  marketing: "Website content, blog, SEO, tracking codes, and sees where leads come from",
+  designer: "Image library, and can look at website content, blog and client projects",
   sales: "Leads, quotations, invoices and the client portal",
+  telecaller: "Calls and updates leads only (no invoices or client data)",
+  support: "Client portal: support requests, AMC, project updates and files",
+  projectManager: "Client projects, files and support requests; can look at leads and invoices",
+  accountant: "Invoices, payments, billing details, expenses, profit and GST; can look at payslips",
   hr: "Interns, job applicants, certificates, HR letters and payslips",
+  viewer: "Can look at most things but change nothing (no salaries or profit)",
 };
 
 export type Level = "none" | "view" | "edit";
@@ -51,9 +69,18 @@ const all = (level: Level): Access => Object.fromEntries(AREAS.map((a) => [a.id,
 export const ROLE_ACCESS: Record<Role, Access> = {
   owner: all("edit"),
   admin: all("edit"),
+  manager: { ...all("edit"), billingDetails: "view", payroll: "none", accounts: "none" },
   editor: { ...all("none"), dashboard: "view", content: "edit", blog: "edit", media: "edit" },
+  writer: { ...all("none"), blog: "edit", media: "edit" },
+  marketing: { ...all("none"), dashboard: "view", content: "edit", blog: "edit", media: "edit", integrations: "edit", leads: "view" },
+  designer: { ...all("none"), media: "edit", content: "view", blog: "view", clients: "view" },
   sales: { ...all("none"), dashboard: "view", leads: "edit", billing: "edit", billingDetails: "view", clients: "edit" },
+  telecaller: { ...all("none"), dashboard: "view", leads: "edit" },
+  support: { ...all("none"), dashboard: "view", clients: "edit", leads: "view", media: "view" },
+  projectManager: { ...all("none"), dashboard: "view", clients: "edit", leads: "view", billing: "view", media: "edit" },
+  accountant: { ...all("none"), dashboard: "view", billing: "edit", billingDetails: "edit", accounts: "edit", payroll: "view", clients: "view" },
   hr: { ...all("none"), dashboard: "view", people: "edit", payroll: "edit", media: "view" },
+  viewer: { ...all("view"), payroll: "none", accounts: "none", billingDetails: "none", activity: "none" },
 };
 
 // Keeps only known areas and levels ("edit" on a look-only area becomes "view"). Missing areas: from the role.

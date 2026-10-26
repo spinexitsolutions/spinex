@@ -920,6 +920,35 @@ try {
   await ap.click("text=Follow Lead 1").catch(() => undefined);
   await ap.waitForSelector("[data-followups]", { timeout: 8000 }).then(() => ap.waitForTimeout(400)).then(() => ap.screenshot({ path: `${out}/53-lead-followups.png`, fullPage: false })).catch(() => undefined);
   await db.collection("settings").updateOne({ _id: "billing" }, { $set: { "value.gstin": "" } });
+  // ---- More ready-made team roles ----
+  const roleUser = async (role, email) => {
+    const rr = await ap.request.post(`${base}/api/admin/users`, { data: { name: `E2E ${role}`, email, role, password: "Role-pass-2026!" } });
+    const u = await rr.json();
+    const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1.25 });
+    const p = await c.newPage();
+    const lr = await p.request.post(`${base}/api/auth/login`, { data: { email, password: "Role-pass-2026!" } });
+    return { u, p, status: rr.status(), login: lr.status() };
+  };
+  const tc = await roleUser("telecaller", "telecaller@e2e.test");
+  ok("telecaller role can be added and log in", tc.status === 201 && tc.u.role === "telecaller" && tc.u.access?.leads === "edit" && tc.u.access?.billing === "none" && tc.login === 200, `${tc.status} ${tc.login}`);
+  const stOf = async (p, url) => (await p.request.get(`${base}${url}`)).status();
+  ok("telecaller sees leads but not invoices, expenses or payslips", (await stOf(tc.p, "/api/admin/leads")) === 200 && (await stOf(tc.p, "/api/admin/billing")) === 403 && (await stOf(tc.p, "/api/admin/expenses")) === 403 && (await stOf(tc.p, "/api/admin/payroll/payslips")) === 403);
+  const ac = await roleUser("accountant", "accountant@e2e.test");
+  ok("accountant can work on invoices and expenses, not leads or website", ac.login === 200 && (await stOf(ac.p, "/api/admin/billing")) === 200 && (await stOf(ac.p, "/api/admin/accounts/report")) === 200 && (await stOf(ac.p, "/api/admin/leads")) === 403);
+  const vw = await roleUser("viewer", "viewer@e2e.test");
+  const vr = await vw.p.request.post(`${base}/api/admin/expenses`, { data: { date: ist(0), category: "Other", vendor: "x", amount: 10 } });
+  const vl = await vw.p.request.patch(`${base}/api/admin/leads/${l3._id}`, { data: { notes: "viewer was here" } });
+  ok("viewer can look at leads but change nothing, and can't see profit", vw.login === 200 && (await stOf(vw.p, "/api/admin/leads")) === 200 && vl.status() === 403 && vr.status() === 403 && (await stOf(vw.p, "/api/admin/accounts/report")) === 403);
+  r = await ap.request.post(`${base}/api/admin/users`, { data: { name: "Bad", email: "bad@e2e.test", role: "owner", password: "Role-pass-2026!" } });
+  ok("nobody can be made a second owner", (await r.json()).role !== "owner");
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#team`); await ap.waitForSelector("[data-role='telecaller']", { timeout: 15000 }); await ap.waitForTimeout(500);
+  await ap.locator("text=Ready-made roles").scrollIntoViewIfNeeded();
+  await ap.screenshot({ path: `${out}/54-team-roles.png`, fullPage: true });
+  await ap.click('button:has-text("Add member")').catch(() => undefined);
+  await ap.waitForTimeout(500);
+  await ap.selectOption("select:has(option[value='accountant'])", "accountant").catch(() => undefined);
+  await ap.waitForTimeout(400);
+  await ap.screenshot({ path: `${out}/55-add-accountant.png`, fullPage: false });
   smtpSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));

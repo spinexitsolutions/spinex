@@ -6,6 +6,10 @@ import { AREAS, ROLES, ROLE_ACCESS, roleHelp, roleLabel, sameAccess, type Access
 import type { AdminUser } from "@/lib/users";
 import Modal from "./Modal";
 
+const SHORT: Partial<Record<(typeof AREAS)[number]["id"], string>> = {
+  leads: "Leads", billing: "Invoices", billingDetails: "Bank and GST details", clients: "Client portal", content: "Website", blog: "Blog", media: "Images",
+  people: "Interns and HR letters", payroll: "Payslips and leave", accounts: "Expenses and profit", integrations: "Tracking codes", activity: "Activity log",
+};
 const assignable = ROLES.filter((r) => r !== "owner");
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -110,14 +114,26 @@ export default function UsersManager() {
       <section className="rounded-3xl border border-line bg-white p-6 sm:p-8">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><ShieldCheck size={18} className="text-lav-600" /> Ready-made roles</h2>
         <p className="mt-1 text-sm text-muted">Pick one as a starting point, then press the role button next to a person to tick exactly what they can see and change. Team, API keys and backups always stay with you (owner).</p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {ROLES.map((r) => (
-            <li key={r} className="rounded-2xl bg-mist p-4">
-              <p className="font-semibold">{roleLabel[r]}</p>
-              <p className="text-sm text-muted">{roleHelp[r]}</p>
-            </li>
-          ))}
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {ROLES.map((r) => {
+            const edit = AREAS.filter((a) => ROLE_ACCESS[r][a.id] === "edit");
+            const view = AREAS.filter((a) => ROLE_ACCESS[r][a.id] === "view" && a.id !== "dashboard");
+            return (
+              <li key={r} data-role={r} className="rounded-2xl bg-mist p-4">
+                <p className="font-semibold">{roleLabel[r]}</p>
+                <p className="text-sm text-muted">{roleHelp[r]}</p>
+                {r !== "owner" && r !== "admin" && (
+                  <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
+                    {edit.map((a) => <span key={a.id} title={`Can change: ${a.label}`} className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-800">{SHORT[a.id] ?? a.label}</span>)}
+                    {view.map((a) => <span key={a.id} title={`Can only look: ${a.label}`} className="rounded-full bg-lav-100 px-2 py-0.5 font-medium text-lav-700">{SHORT[a.id] ?? a.label} (view)</span>)}
+                  </div>
+                )}
+                {users.some((u) => u.role === r) && <p className="mt-2 text-xs text-muted">{users.filter((u) => u.role === r).length} on the team</p>}
+              </li>
+            );
+          })}
         </ul>
+        <p className="mt-3 text-xs text-muted"><span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-800">Green</span> = can change, <span className="rounded-full bg-lav-100 px-2 py-0.5 font-medium text-lav-700">purple</span> = can only look.</p>
       </section>
 
       <Modal open={adding} title="Add a team member" onClose={() => setAdding(false)} wide>
