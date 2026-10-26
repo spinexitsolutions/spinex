@@ -99,7 +99,6 @@ function AdminShell() {
   const { content, update } = useContent();
   const [saving, setSaving] = useState(false);
   const [, setNewLeads] = useState(-1);
-  const badgeKeys = ["leads", "bookings", "clients", "attendance", "billing", "feedback", "reviews", "interns"];
   const [draft, setDraft] = useState<SiteContent>(content);
   const [section, setSection] = useState<SectionId>("overview");
   const [me, setMe] = useState<{ email: string; name: string; role: Role; uid: string; access?: Partial<Access> | null } | null>(null);
@@ -123,20 +122,9 @@ function AdminShell() {
   }, []);
   const allowed = sections.filter((x) => !me || x.perm === "any" || can(me, x.perm as Perm));
   // What waits in each section (sidebar numbers), refreshed every 20 seconds; open screens reload on changes.
-  const { badges, clear: clearBadge } = useBadges(!!me);
-  // The open section never shows a number: you're looking at it. Opening it (and leaving it) marks it as seen.
+  const badges = useBadges(!!me, section);
+  // The open section never shows a number: you're looking at it.
   const badgeOf = (id: string) => (id === section ? 0 : badges[id]?.count ?? 0);
-  const markSeen = (id: string) => { if (!badgeKeys.includes(id)) return; clearBadge(id); fetch("/api/admin/badges", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ section: id }) }).catch(() => undefined); };
-  useEffect(() => {
-    if (!me) return;
-    markSeen(section);
-    return () => markSeen(section);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section, !!me]);
-  useEffect(() => {
-    if (me && (badges[section]?.count ?? 0) > 0) markSeen(section);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badges]);
   const badgeTitle: Record<string, string> = { leads: "new leads", bookings: "new call bookings", clients: "new client messages", attendance: "new leave requests", billing: "quotations accepted, changes asked or payments received", feedback: "new feedback", reviews: "clients opened the review link", interns: "new applications" };
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);

@@ -23,7 +23,6 @@ jobs:
         ports: ["27017:27017"]
     env:
       NEXT_TELEMETRY_DISABLED: "1"
-      BADGES_DEBUG: "1"
       MONGODB_URI: mongodb://localhost:27017/spinex_e2e
       MONGODB_DB: spinex_e2e
       AUTH_SECRET: e2e-only-not-a-real-secret-0123456789abcdef

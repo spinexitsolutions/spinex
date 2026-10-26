@@ -22,7 +22,6 @@ const seenCol = async () => (await getDb()).collection<{ _id: string; value?: Re
 const seenId = (uid: string) => `seen:${uid || "owner"}`;
 
 export async function POST(req: Request) {
-  const t0 = Date.now();
   if (!hasDb()) return NextResponse.json({ ok: false });
   const me = await getSession();
   if (!me) return NextResponse.json({ error: "Please log in again." }, { status: 401 });
@@ -30,14 +29,12 @@ export async function POST(req: Request) {
   const section = String(b.section ?? "");
   if (!/^[a-z]{2,20}$/.test(section)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   await (await seenCol()).updateOne({ _id: seenId(me.uid) }, { $set: { [`value.${section}`]: new Date().toISOString() } }, { upsert: true });
-  if (process.env.BADGES_DEBUG) console.log(`badges POST ${section} ${Date.now() - t0}ms`);
   return NextResponse.json({ ok: true });
 }
 
 // For the admin sidebar: what's new in each section since this person last opened it, and a marker that changes
 // whenever something in it changes, so the open screen can refresh itself without a page reload.
-export async function GET() {
-  const t0 = Date.now();
+export async function GET(req: Request) {
   if (!hasDb()) return NextResponse.json({});
   const me = await getSession();
   if (!me) return NextResponse.json({ error: "Please log in again." }, { status: 401 });
@@ -46,6 +43,9 @@ export async function GET() {
   const seenDoc = await (await seenCol()).findOne({ _id: seenId(me.uid) });
   const seen: Record<string, string> = { ...(seenDoc?.value ?? {}) };
   const fresh: Record<string, string> = {};
+  // The section open on screen right now counts as seen.
+  const open = new URL(req.url).searchParams.get("open") ?? "";
+  if (/^[a-z]{2,20}$/.test(open)) { seen[open] = now; fresh[`value.${open}`] = now; }
   // First time: start counting from now, so old records don't show as new.
   const since = (k: string) => {
     if (!seen[k]) { seen[k] = now; fresh[`value.${k}`] = now; }
@@ -100,6 +100,5 @@ export async function GET() {
     out[k] = await fn().catch(() => ({ count: 0, stamp: "" }));
   }));
   if (Object.keys(fresh).length) await (await seenCol()).updateOne({ _id: seenId(me.uid) }, { $set: fresh }, { upsert: true });
-  if (process.env.BADGES_DEBUG) console.log(`badges GET ${Date.now() - t0}ms`);
   return NextResponse.json(out, { headers: { "cache-control": "no-store" } });
 }
