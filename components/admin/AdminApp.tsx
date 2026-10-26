@@ -98,7 +98,8 @@ export default function AdminApp() {
 function AdminShell() {
   const { content, update } = useContent();
   const [saving, setSaving] = useState(false);
-  const [newLeads, setNewLeads] = useState(-1);
+  const [, setNewLeads] = useState(-1);
+  const badgeKeys = ["leads", "bookings", "clients", "attendance", "billing", "feedback", "reviews", "interns"];
   const [draft, setDraft] = useState<SiteContent>(content);
   const [section, setSection] = useState<SectionId>("overview");
   const [me, setMe] = useState<{ email: string; name: string; role: Role; uid: string; access?: Partial<Access> | null } | null>(null);
@@ -122,9 +123,21 @@ function AdminShell() {
   }, []);
   const allowed = sections.filter((x) => !me || x.perm === "any" || can(me, x.perm as Perm));
   // What waits in each section (sidebar numbers), refreshed every 20 seconds; open screens reload on changes.
-  const badges = useBadges(!!me);
-  const badgeOf = (id: string) => (id === "leads" && section === "leads" && newLeads >= 0 ? newLeads : badges[id]?.count ?? 0);
-  const badgeTitle: Record<string, string> = { leads: "new leads", bookings: "calls coming up", clients: "unread client messages", attendance: "leave requests waiting", billing: "overdue invoices", feedback: "good feedback to approve", interns: "new applications" };
+  const { badges, clear: clearBadge } = useBadges(!!me);
+  // The open section never shows a number: you're looking at it. Opening it (and leaving it) marks it as seen.
+  const badgeOf = (id: string) => (id === section ? 0 : badges[id]?.count ?? 0);
+  const markSeen = (id: string) => { if (!badgeKeys.includes(id)) return; clearBadge(id); fetch("/api/admin/badges", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ section: id }) }).catch(() => undefined); };
+  useEffect(() => {
+    if (!me) return;
+    markSeen(section);
+    return () => markSeen(section);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section, !!me]);
+  useEffect(() => {
+    if (me && (badges[section]?.count ?? 0) > 0) markSeen(section);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badges]);
+  const badgeTitle: Record<string, string> = { leads: "new leads", bookings: "new call bookings", clients: "new client messages", attendance: "new leave requests", billing: "quotations accepted, changes asked or payments received", feedback: "new feedback", reviews: "clients opened the review link", interns: "new applications" };
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
   const [conflict, setConflict] = useState("");
@@ -345,7 +358,7 @@ function AdminShell() {
               {section === id && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-white/10" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
               <Icon size={17} className={`relative ${section === id ? "text-lav-300" : "text-white/50"}`} />
               <span className={`relative flex-1 ${section === id ? "text-white" : "text-white/70"}`}>{label}</span>
-              {badgeOf(id) > 0 && <span title={`${badgeOf(id)} ${badgeTitle[id] ?? ""}`} className={`relative rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${id === "billing" ? "bg-red-500/90 text-white" : "bg-lav-500 text-white"}`}>{badgeOf(id)}</span>}
+              {badgeOf(id) > 0 && <span title={`${badgeOf(id)} ${badgeTitle[id] ?? ""}`} className={`relative rounded-full px-2 py-0.5 text-xs font-bold tabular-nums bg-lav-500 text-white`}>{badgeOf(id)}</span>}
             </button>
             </div>
           ))}

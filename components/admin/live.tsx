@@ -28,7 +28,9 @@ export function useBadges(enabled: boolean) {
     window.addEventListener("focus", onShow);
     return () => { stop = true; clearInterval(t); document.removeEventListener("visibilitychange", onShow); window.removeEventListener("focus", onShow); };
   }, [enabled]);
-  return badges;
+  // Zero a section's number at once (it was just opened); the next check brings the real numbers.
+  const clear = (key: string) => setBadges((b) => (b[key]?.count ? { ...b, [key]: { ...b[key], count: 0 } } : b));
+  return { badges, clear };
 }
 
 // Reloads a section's data quietly when something in it changes (a new lead, a reply, a booking…).
