@@ -4,6 +4,7 @@
 import { createHash, createHmac } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { createServer as createTcpServer } from "node:net";
 import { MongoClient, GridFSBucket, ObjectId } from "mongodb";
 import { chromium } from "playwright";
 
@@ -648,6 +649,92 @@ try {
   await bp.goto(`${base}/`, { waitUntil: "networkidle" });
   ok("switched off: no reviews on the home page", !(await bp.content()).includes("Based on 37 Google reviews"));
   pSrv.closeAllConnections?.(); pSrv.close();
+
+  // ---- Payment reminders and monthly bills ----
+  // A tiny mail server, so emails really go out in this test.
+  const mails = [];
+  const smtpSrv = createTcpServer((sock) => {
+    let mode = "cmd", data = "", rcpt = [], buf = "", authStep = 0;
+    const say = (t) => sock.write(t + "\r\n");
+    say("220 e2e ESMTP");
+    sock.on("data", (chunk) => {
+      buf += chunk.toString("utf8");
+      let i;
+      while ((i = buf.indexOf("\r\n")) >= 0) {
+        const line = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (mode === "data") { if (line === ".") { mails.push({ to: rcpt.join(","), data }); mode = "cmd"; data = ""; rcpt = []; say("250 OK queued"); } else data += line + "\n"; continue; }
+        if (authStep === 1) { authStep = 2; say("334 UGFzc3dvcmQ6"); continue; }
+        if (authStep === 2) { authStep = 0; say("235 OK"); continue; }
+        const cmd = line.toUpperCase();
+        if (cmd.startsWith("EHLO") || cmd.startsWith("HELO")) sock.write("250-e2e\r\n250-AUTH PLAIN LOGIN\r\n250 OK\r\n");
+        else if (cmd.startsWith("AUTH LOGIN")) { authStep = 1; say("334 VXNlcm5hbWU6"); }
+        else if (cmd.startsWith("AUTH")) say("235 OK");
+        else if (cmd.startsWith("MAIL")) say("250 OK");
+        else if (cmd.startsWith("RCPT")) { rcpt.push(line.replace(/^RCPT TO:\s*/i, "").replace(/[<>]/g, "")); say("250 OK"); }
+        else if (cmd === "DATA") { mode = "data"; say("354 go"); }
+        else if (cmd === "QUIT") { say("221 bye"); sock.end(); }
+        else say("250 OK");
+      }
+    });
+    sock.on("error", () => {});
+  }).listen(2526);
+  r = await ap.request.put(`${base}/api/admin/secrets`, { data: { keys: { SMTP_HOST: "127.0.0.1", SMTP_PORT: "2526", SMTP_USER: "bot@e2e.test", SMTP_PASS: "e2e-pass", NOTIFY_EMAIL: "owner@e2e.test" } } });
+  ok("email settings saved for the test", r.status() === 200, `status ${r.status()}`);
+  const mkInv = (n, due, extra = {}) => ({ ...inv, number: `INV/2026-27/0${n}`, date: ist(-20), dueDate: due, status: "unpaid", paid: 0, shareToken: `e2eReminderToken${n}abcdefgh`, client: { ...inv.client, name: `Client ${n}`, company: `Company ${n}`, email: `client${n}@pay.test`, phone: "" }, items: [{ id: "i1", description: "Website work", sac: "998314", qty: 1, rate: 10000, gst: 0 }], payReminders: [], ...extra });
+  const { insertedIds: invIds } = await db.collection("billing").insertMany([mkInv(51, ist(3)), mkInv(52, ist(-4)), mkInv(53, ist(10)), mkInv(54, ist(-4), { status: "paid", paid: 10000 }), mkInv(55, ist(-4), { noReminders: true })]);
+  const rmCur = (await (await ap.request.get(`${base}/api/admin/billing/reminders`)).json()).settings;
+  r = await ap.request.put(`${base}/api/admin/billing/reminders`, { data: { ...rmCur, enabled: true, steps: "-3, 0, 3, 7, 15", email: true, whatsapp: true, summary: true } });
+  ok("payment reminders turned on", r.status() === 200 && (await r.json()).enabled === true);
+  const resetDay = () => db.collection("settings").updateOne({ _id: "state:automation" }, { $unset: { "value.lastBilling": "" } });
+  await resetDay();
+  mails.length = 0;
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  cj = await r.json();
+  const to = (e) => mails.filter((m) => m.to.includes(e));
+  ok("reminders go to the invoices that are due", cj.done?.payments?.sent === 2 && to("client51@pay.test").length === 1 && to("client52@pay.test").length === 1, JSON.stringify(cj.done?.payments));
+  ok("paid, far-off and stopped invoices get nothing", !to("client53@pay.test").length && !to("client54@pay.test").length && !to("client55@pay.test").length);
+  ok("overdue email says it is overdue", /Payment overdue/.test(to("client52@pay.test")[0]?.data || "") && /Payment reminder/.test(to("client51@pay.test")[0]?.data || ""));
+  ok("you get the list of reminders", mails.some((m) => m.to.includes("owner@e2e.test") && /payment reminder/i.test(m.data)));
+  const b52 = await db.collection("billing").findOne({ _id: invIds[1] });
+  ok("a late invoice doesn't get several reminders at once", (b52.payReminders ?? []).length === 1 && b52.payReminderKeys?.length === 3, JSON.stringify(b52.payReminderKeys));
+  await resetDay();
+  mails.length = 0;
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  ok("the same reminder isn't sent twice", (await r.json()).done?.payments?.sent === 0 && !to("client51@pay.test").length);
+  r = await ap.request.post(`${base}/api/admin/billing/${invIds[2]}/remind`, { data: { action: "send" } });
+  ok("team sends a reminder by hand", r.status() === 200 && (await r.json()).email === true && to("client53@pay.test").length === 1);
+  r = await ap.request.post(`${base}/api/admin/billing/${invIds[0]}/remind`, { data: { action: "pause" } });
+  ok("reminders can be stopped for one invoice", (await r.json()).noReminders === true);
+  // Monthly bill.
+  mails.length = 0;
+  const monthName = new Date(`${ist(0).slice(0, 7)}-01T00:00:00Z`).toLocaleDateString("en-IN", { month: "long", timeZone: "UTC" });
+  r = await ap.request.post(`${base}/api/admin/recurring`, { data: { title: "SEO retainer", client: { name: "Vikas Gupta", company: "Gupta Motors", email: "vikas@guptamotors.test", phone: "", address: "Tonk Road, Jaipur", state: "Rajasthan", gstin: "" }, items: [{ id: "s1", description: "SEO and Google Business Profile, {month} {year}", sac: "998361", qty: 1, rate: 15000, gst: 18 }], frequency: "monthly", day: 5, nextDate: ist(0), dueDays: 7, autoSend: true } });
+  const rec = await r.json();
+  ok("monthly bill is set up", r.status() === 201 && rec.nextDate === ist(0), `status ${r.status()}`);
+  await resetDay();
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  cj = await r.json();
+  let recInv = await db.collection("billing").findOne({ recurringId: rec.id });
+  ok("scheduler makes this month's invoice", cj.done?.recurring?.made === 1 && !!recInv && recInv.items[0].description === `SEO and Google Business Profile, ${monthName} ${ist(0).slice(0, 4)}` && recInv.status === "unpaid", JSON.stringify(cj.done?.recurring));
+  ok("the invoice is emailed to the client", mails.some((m) => m.to.includes("vikas@guptamotors.test") && /Invoice INV/.test(m.data)));
+  let recDoc = await db.collection("recurring_bills").findOne({ _id: new ObjectId(rec.id) });
+  ok("monthly bill moves to next month", recDoc.count === 1 && recDoc.nextDate > ist(20) && recDoc.nextDate.endsWith("-05"), recDoc.nextDate);
+  await resetDay();
+  await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  ok("no second invoice for the same month", (await db.collection("billing").countDocuments({ recurringId: rec.id })) === 1);
+  r = await ap.request.post(`${base}/api/admin/recurring/${rec.id}`, { data: { action: "now" } });
+  ok("next invoice can be made early by hand", r.status() === 200 && (await db.collection("billing").countDocuments({ recurringId: rec.id })) === 2);
+  r = await ap.request.post(`${base}/api/admin/recurring`, { data: { fromInvoice: String(invIds[2]) } });
+  ok("an invoice can be turned into a monthly bill", r.status() === 201 && /\{period\}/.test((await r.json()).items[0].description));
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#billing`); await ap.waitForSelector("text=Monthly bills", { timeout: 15000 }); await ap.waitForTimeout(800);
+  await ap.screenshot({ path: `${out}/39-invoices-overdue.png`, fullPage: false });
+  await ap.click("text=Payment reminders"); await ap.waitForSelector("text=Days from the due date", { timeout: 10000 }); await ap.waitForTimeout(400);
+  await ap.screenshot({ path: `${out}/40-payment-reminders.png`, fullPage: false });
+  await ap.click("button:has-text('Monthly bills')"); await ap.waitForSelector("text=Gupta Motors", { timeout: 10000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/41-monthly-bills.png`, fullPage: false });
+  await ap.goto(`${base}/admin/billing/${invIds[1]}`); await ap.waitForSelector("text=Payment follow-up", { timeout: 15000 }); await ap.locator("text=Payment follow-up").scrollIntoViewIfNeeded(); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/42-invoice-follow-up.png`, fullPage: false });
+  smtpSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

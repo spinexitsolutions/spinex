@@ -174,7 +174,7 @@ export async function runReviewRequests() {
 // Someone opened their review link: note it once and tell the team.
 export async function markClicked(token: string) {
   const col = await requestsCol();
-  const doc = await col.findOneAndUpdate({ token, status: { $in: ["sent", "scheduled", "failed"] } }, { $set: { status: "clicked", clickedAt: new Date().toISOString() } }, { returnDocument: "after" });
+  const doc = await col.findOneAndUpdate({ token, status: { $in: ["sent", "scheduled", "failed"] } }, { $set: { status: "clicked", clickedAt: new Date().toISOString(), error: "" } }, { returnDocument: "after" });
   if (doc) await notifyAdmin(`${doc.name} opened the Google review page`, [["Client", String(doc.name)], ["Project", String(doc.project || "-")], ["Tip", "Check Google in a few minutes and reply to their review."]], `${SITE_URL}/admin#reviews`).catch(() => undefined);
   return (await col.findOne({ token })) ? true : false;
 }

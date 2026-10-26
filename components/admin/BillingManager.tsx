@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, FilePlus2, FileText, Loader2, Plus, ReceiptIndianRupee, RefreshCw, Save, Search, Trash2 } from "lucide-react";
 import { INDIAN_STATES, computeTotals, defaultProfile, docTitle, inr, statusLabel, validGstin, type BillDoc, type BillSigner, type BillingProfile } from "@/lib/billing";
 import ImageField from "./ImageField";
+import { MonthlyBills, PaymentRemindersCard } from "./RecurringBills";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -21,7 +22,7 @@ const tone: Record<string, string> = {
   unpaid: "bg-amber-50 text-amber-800", "partly-paid": "bg-amber-50 text-amber-800", paid: "bg-emerald-50 text-emerald-800", cancelled: "bg-mist text-muted line-through",
 };
 
-type Tab = "all" | "quote" | "invoice" | "due";
+type Tab = "all" | "quote" | "invoice" | "due" | "monthly";
 
 export default function BillingManager({ canEditProfile, readOnly = false }: { canEditProfile: boolean; readOnly?: boolean }) {
   const [docs, setDocs] = useState<BillDoc[]>([]);
@@ -32,6 +33,8 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
   const [q, setQ] = useState("");
   const [creating, setCreating] = useState("");
   const [showProfile, setShowProfile] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
+  const [monthlyCount, setMonthlyCount] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,6 +43,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
       const [d, p] = await Promise.all([api<BillDoc[]>("/api/admin/billing"), api<BillingProfile>("/api/admin/billing/settings")]);
       setDocs(d);
       setProfile(p);
+      api<{ active: boolean }[]>("/api/admin/recurring").then((r) => setMonthlyCount(r.filter((x) => x.active).length)).catch(() => undefined);
       if (!p.legalName || (!p.gstin && !p.bankName && !p.upi)) setShowProfile(canEditProfile);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't load.");
@@ -52,7 +56,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
   const rows = useMemo(() => docs.map((d) => ({ d, t: computeTotals(d, profile) })), [docs, profile]);
   const unpaid = rows.filter(({ d }) => d.type === "invoice" && (d.status === "unpaid" || d.status === "partly-paid"));
   const dueTotal = unpaid.reduce((s, r) => s + r.t.balance, 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 
   const list = rows.filter(({ d }) => {
     if (tab === "quote" && d.type !== "quote") return false;
@@ -81,6 +85,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
     { id: "quote", label: "Quotations", n: docs.filter((d) => d.type === "quote").length },
     { id: "invoice", label: "Invoices", n: docs.filter((d) => d.type === "invoice").length },
     { id: "due", label: "Payment due", n: unpaid.length },
+    { id: "monthly", label: "Monthly bills", n: monthlyCount },
   ];
 
   return (
@@ -88,13 +93,15 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
       <div className="flex flex-wrap items-center gap-2">
         {!readOnly && <><button onClick={() => create("quote")} disabled={!!creating} className="btn-dark px-5 py-2.5 text-sm">{creating === "quote" ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={16} />} New quotation</button>
         <button onClick={() => create("invoice")} disabled={!!creating} className="btn-ghost px-5 py-2.5 text-sm">{creating === "invoice" ? <Loader2 size={15} className="animate-spin" /> : <ReceiptIndianRupee size={16} />} New invoice</button></>}
-        <button onClick={() => setShowProfile((v) => !v)} className="btn-ghost ml-auto px-5 py-2.5 text-sm">{showProfile ? "Hide" : "Billing details"}</button>
+        <button onClick={() => setShowReminders((v) => !v)} className="btn-ghost ml-auto px-5 py-2.5 text-sm">{showReminders ? "Hide reminders" : "Payment reminders"}</button>
+        <button onClick={() => setShowProfile((v) => !v)} className="btn-ghost px-5 py-2.5 text-sm">{showProfile ? "Hide" : "Billing details"}</button>
       </div>
       <p className="text-sm text-muted">Tip: open a lead in <b>Leads</b> and press <b>Make quotation</b> to fill in the client automatically.</p>
 
       {showProfile && <ProfileForm initial={profile} canEdit={canEditProfile} onSaved={setProfile} />}
+      {showReminders && <PaymentRemindersCard readOnly={readOnly} />}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} aria-pressed={tab === t.id} className={`rounded-2xl border p-4 text-left transition-colors ${tab === t.id ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink"}`}>
             <p className="font-display text-3xl font-semibold">{t.n}</p>
@@ -104,6 +111,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
       </div>
       {dueTotal > 0 && <p className="text-sm text-muted">Waiting to be paid: <b className="text-ink">{inr(dueTotal, 0)}</b></p>}
 
+      {tab === "monthly" ? <MonthlyBills readOnly={readOnly} defaultGst={profile.defaultGst} defaultSac={profile.defaultSac} /> : <>
       <label className="flex items-center gap-2 rounded-2xl border border-line bg-white px-4">
         <Search size={16} className="text-muted" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search number, client or phone" className="h-12 w-full bg-transparent text-sm outline-none" aria-label="Search" />
@@ -127,7 +135,9 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
                 <span className="block font-semibold">{d.client.company || d.client.name || "No client yet"}</span>
                 <span className="block text-sm text-muted">{d.number} · {d.date}</span>
               </span>
-              {overdue && <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">Overdue</span>}
+              {overdue && <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">{(() => { const n = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${d.dueDate}T00:00:00Z`)) / 864e5); return `Overdue ${n} day${n === 1 ? "" : "s"}`; })()}</span>}
+              {d.type === "invoice" && (d.payReminders ?? []).length > 0 && t.balance > 0 && <span className="rounded-full bg-mist px-2.5 py-1 text-xs font-semibold text-muted">Reminded {(d.payReminders ?? []).length}×</span>}
+              {d.recurringId && <span className="rounded-full bg-lav-100 px-2.5 py-1 text-xs font-semibold text-lav-700">Monthly</span>}
               {d.type === "quote" && d.acceptance && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">Accepted online</span>}
               {d.type === "quote" && !d.acceptance && (d.changes ?? []).length > 0 && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">Changes asked</span>}
               {d.type === "quote" && !d.acceptance && !(d.changes ?? []).length && d.viewedAt && <span className="rounded-full bg-lav-100 px-2.5 py-1 text-xs font-semibold text-lav-700">Viewed</span>}
@@ -137,6 +147,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
           );
         })}
       </div>
+      </>}
     </div>
   );
 }

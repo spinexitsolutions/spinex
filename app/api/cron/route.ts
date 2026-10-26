@@ -5,6 +5,8 @@ import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } fr
 import { runAmcReminders } from "@/lib/amc";
 import { runBookingReminders } from "@/lib/booking-db";
 import { runReviewRequests } from "@/lib/reviews-db";
+import { runPaymentReminders } from "@/lib/payment-reminders";
+import { runRecurring } from "@/lib/recurring-db";
 import { readState, writeState } from "@/lib/settings-db";
 import { SITE_URL } from "@/lib/site";
 
@@ -39,6 +41,12 @@ export async function GET(req: Request) {
 
   if (settings.remindersOn && state.lastReminders !== now.date && now.hour >= settings.reminderHour) {
     done.reminders = await runReminders(origin).catch((e) => ({ error: String(e) }));
+  }
+  // Monthly bills first (so a new invoice is counted), then payment reminders. Once a day, at the reminder hour.
+  if (state.lastBilling !== now.date && now.hour >= settings.reminderHour) {
+    await writeState("automation", { lastBilling: now.date });
+    done.recurring = await runRecurring().catch((e) => ({ error: String(e) }));
+    done.payments = await runPaymentReminders().catch((e) => ({ error: String(e) }));
   }
   if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour) {
     done.amc = await runAmcReminders(origin, { days: settings.amcRemindDays, emailClient: settings.amcEmailClient, whatsapp: settings.whatsappSummary }).catch((e) => ({ error: String(e) }));

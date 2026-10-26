@@ -47,6 +47,10 @@ export type BillDoc = {
   acceptance?: QuoteAcceptance | null; // set when the client presses Accept
   changes?: QuoteChange[]; // "Request changes" messages
   onlinePayments?: OnlinePayment[]; // paid on the invoice link (Razorpay)
+  payReminders?: { at: string; step: number; email: boolean; whatsapp: boolean; manual: boolean; by: string }[];
+  noReminders?: boolean; // payment reminders switched off for this invoice
+  recurringId?: string; // made by a monthly bill
+  period?: string; // e.g. November 2026
 };
 
 export type OnlinePayment = { id: string; orderId: string; amount: number; method: string; at: string };

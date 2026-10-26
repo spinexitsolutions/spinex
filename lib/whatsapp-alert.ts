@@ -15,10 +15,28 @@ export { waNumber };
 const TIMEOUT = 8000;
 
 export async function sendWhatsAppAlert(text: string): Promise<AlertResult> {
+  return send(text, "");
+}
+
+// To a client's number (payment reminders, invoices). Works with your own panel (a link with {to}) or the Cloud API
+// with an approved template. CallMeBot can only message your own number, so it is not used here.
+export async function sendWhatsAppTo(phone: string, text: string): Promise<AlertResult> {
+  const n = waNumber(phone);
+  if (!n) return { ok: false, error: "No phone number.", via: "" };
+  return send(text, n);
+}
+
+export async function canWhatsAppClients() {
+  const [apiUrl, cloudToken, cloudPhoneId] = await Promise.all(["WA_API_URL", "WA_CLOUD_TOKEN", "WA_CLOUD_PHONE_ID"].map(getSecret));
+  return (!!apiUrl && apiUrl.includes("{to}")) || (!!cloudToken && !!cloudPhoneId);
+}
+
+async function send(text: string, toClient: string): Promise<AlertResult> {
   const [to, apiUrl, cloudToken, cloudPhoneId, cloudTemplate, cloudLang, callmebotKey] = await Promise.all(
     ["WA_ALERT_TO", "WA_API_URL", "WA_CLOUD_TOKEN", "WA_CLOUD_PHONE_ID", "WA_CLOUD_TEMPLATE", "WA_CLOUD_LANG", "CALLMEBOT_APIKEY"].map(getSecret),
   );
-  const number = waNumber(to);
+  const number = toClient || waNumber(to);
+  if (toClient && apiUrl && !apiUrl.includes("{to}")) return { ok: false, error: "Your WhatsApp panel link has no {to}, so it can only send to your own number.", via: "panel" };
 
   try {
     // 1. Own panel / any provider with a "send message" link.
@@ -56,7 +74,7 @@ export async function sendWhatsAppAlert(text: string): Promise<AlertResult> {
     }
 
     // 3. CallMeBot (free, own number only).
-    if (callmebotKey) {
+    if (callmebotKey && !toClient) {
       if (!number) return { ok: false, error: "Add your WhatsApp number ('Send alerts to').", via: "callmebot" };
       const url = `https://api.callmebot.com/whatsapp.php?phone=%2B${number}&text=${encodeURIComponent(text)}&apikey=${encodeURIComponent(callmebotKey)}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT) });

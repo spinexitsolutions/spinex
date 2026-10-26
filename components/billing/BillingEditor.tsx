@@ -27,6 +27,12 @@ const waNumber = (p: string) => {
   return d.length === 10 ? `91${d}` : d;
 };
 
+// Reminder history and the "stop reminders" switch are saved on their own, so they don't count as unsaved changes.
+const snap = (d: BillDoc) => {
+  const { payReminders: _a, noReminders: _b, ...rest } = d;
+  return JSON.stringify(rest);
+};
+
 export default function BillingEditor({ id, logo, readOnly = false }: { id: string; logo: string; readOnly?: boolean }) {
   const [doc, setDoc] = useState<BillDoc | null>(null);
   const [saved, setSaved] = useState("");
@@ -45,13 +51,13 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
     Promise.all([api<BillDoc>(`/api/admin/billing/${id}`), api<BillingProfile>("/api/admin/billing/settings")])
       .then(([d, p]) => {
         setDoc(d);
-        setSaved(JSON.stringify(d));
+        setSaved(snap(d));
         setProfile(p);
       })
       .catch((e) => setError(e.message));
   }, [id]);
 
-  const dirty = !!doc && JSON.stringify(doc) !== saved;
+  const dirty = !!doc && snap(doc) !== saved;
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
     window.addEventListener("beforeunload", warn);
@@ -73,7 +79,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
         body: JSON.stringify({ version: doc.updatedAt, date: doc.date, dueDate: doc.dueDate, status: doc.status, client: doc.client, items: doc.items, discount: doc.discount, paid: doc.paid, notes: doc.notes, terms: doc.terms, signers: doc.signers ?? null }),
       });
       setDoc(out);
-      setSaved(JSON.stringify(out));
+      setSaved(snap(out));
       flash("Saved");
       return out;
     } catch (e) {
@@ -115,7 +121,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
       flash(r.message);
       const fresh = await api<BillDoc>(`/api/admin/billing/${doc.id}`);
       setDoc(fresh);
-      setSaved(JSON.stringify(fresh));
+      setSaved(snap(fresh));
     } catch (e) {
       flash(e instanceof Error ? e.message : "Couldn't send.");
     } finally {
@@ -272,6 +278,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
                 <p className="mt-1 text-xs opacity-80">Already added to “Payment received”. Refunds are done in the Razorpay dashboard.</p>
               </div>
             )}
+            {doc.type === "invoice" && doc.status !== "cancelled" && <PaymentFollowUp doc={doc} balance={totals.balance} readOnly={readOnly} onChange={(patch) => setDoc((d) => (d ? { ...d, ...patch } : d))} flash={flash} />}
             <div className="mt-5 flex flex-wrap justify-end gap-x-6 gap-y-1 rounded-2xl bg-mist px-5 py-4 text-sm">
               <span>Subtotal <b>{inr(totals.subtotal)}</b></span>
               {totals.gstOn && <span>GST <b>{inr(totals.tax)}</b></span>}
@@ -345,5 +352,59 @@ function F({ label, hint, wide, children }: { label: string; hint?: string; wide
       {children}
       {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
     </label>
+  );
+}
+
+// Invoice → reminders sent, "Send reminder now", stop/restart automatic reminders, and "Repeat every month".
+function PaymentFollowUp({ doc, balance, readOnly, onChange, flash }: { doc: BillDoc; balance: number; readOnly: boolean; onChange: (p: Partial<BillDoc>) => void; flash: (m: string) => void }) {
+  const [busy, setBusy] = useState("");
+  const call = async (action: string) => {
+    setBusy(action);
+    try {
+      const res = await fetch(`/api/admin/billing/${doc.id}/remind`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Couldn't do that.");
+      if (action === "send") {
+        onChange({ payReminders: d.payReminders });
+        flash(`Reminder sent by ${[d.email && "email", d.whatsapp && "WhatsApp"].filter(Boolean).join(" and ")}`);
+      } else {
+        onChange({ noReminders: d.noReminders });
+        flash(d.noReminders ? "Automatic reminders stopped for this invoice" : "Automatic reminders are on for this invoice");
+      }
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Couldn't do that.");
+    } finally {
+      setBusy("");
+    }
+  };
+  const repeat = async () => {
+    setBusy("repeat");
+    try {
+      const res = await fetch("/api/admin/recurring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fromInvoice: doc.id }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Couldn't set it up.");
+      flash(`Monthly bill set up. Next invoice on ${d.nextDate}. Change it in Quotes and invoices → Monthly bills.`);
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Couldn't set it up.");
+    } finally {
+      setBusy("");
+    }
+  };
+  const logs = doc.payReminders ?? [];
+  return (
+    <div className="mt-4 rounded-2xl border border-line px-5 py-4 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="mr-auto font-semibold">Payment follow-up{doc.noReminders ? <span className="ml-2 rounded-full bg-mist px-2 py-0.5 text-xs font-semibold text-muted">Automatic reminders off</span> : null}</p>
+        {!readOnly && balance >= 1 && <button onClick={() => call("send")} disabled={!!busy} className="btn-ghost px-3 py-1.5 text-xs">{busy === "send" ? <Loader2 size={12} className="animate-spin" /> : null} Send reminder now</button>}
+        {!readOnly && balance >= 1 && <button onClick={() => call(doc.noReminders ? "resume" : "pause")} disabled={!!busy} className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:bg-mist">{doc.noReminders ? "Restart reminders" : "Stop reminders"}</button>}
+        {!readOnly && !doc.recurringId && <button onClick={repeat} disabled={!!busy} className="btn-ghost px-3 py-1.5 text-xs">{busy === "repeat" ? <Loader2 size={12} className="animate-spin" /> : null} Repeat every month</button>}
+      </div>
+      {doc.recurringId && <p className="mt-1 text-xs text-muted">Made by a monthly bill{doc.period ? ` for ${doc.period}` : ""}.</p>}
+      {logs.length > 0 ? (
+        <ul className="mt-2 space-y-0.5 text-xs text-muted">
+          {[...logs].reverse().map((l, i) => <li key={i}>{new Date(l.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })} · {l.manual ? `sent by ${l.by || "team"}` : l.step < 0 ? `${-l.step} days before due` : l.step === 0 ? "on the due date" : `${l.step} days after due`} · {[l.email && "email", l.whatsapp && "WhatsApp"].filter(Boolean).join(" + ") || "couldn't send"}</li>)}
+        </ul>
+      ) : <p className="mt-1 text-xs text-muted">{balance >= 1 ? "No reminders sent yet. They go out on their own when Payment reminders are on." : "Fully paid."}</p>}
+    </div>
   );
 }
