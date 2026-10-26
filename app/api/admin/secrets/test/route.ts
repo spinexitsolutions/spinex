@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { guard, jsonBody } from "@/lib/admin-guard";
 import { getSecret } from "@/lib/secrets";
-import { notifyAdmin, smtpSettings } from "@/lib/notify";
+import { lastEmailError, notifyAdmin, smtpSettings } from "@/lib/notify";
 import { sendLeadWebhook } from "@/lib/webhook";
 import { leadAlertText, sendWhatsAppAlert } from "@/lib/whatsapp-alert";
 
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const s = await smtpSettings();
     if (!s.SMTP_HOST || !s.SMTP_USER || !s.SMTP_PASS || !s.NOTIFY_EMAIL) return NextResponse.json({ ok: false, message: "Fill server, email login, password and 'Send alerts to' first, then save." });
     const ok = await notifyAdmin("Test email from your website", [["Status", "Email alerts are working."], ["Sent at", new Date().toLocaleString("en-IN")]]);
-    return NextResponse.json({ ok, message: ok ? `Sent to ${s.NOTIFY_EMAIL}. Check the inbox (and spam).` : "Sending failed. Check the login and app password, then try again." });
+    return NextResponse.json({ ok, message: ok ? `Sent to ${s.NOTIFY_EMAIL}. Check the inbox (and spam).` : `Sending failed. ${lastEmailError() || "Check the login and app password, then try again."}` });
   }
 
   if (kind === "chat") {

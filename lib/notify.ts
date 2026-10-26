@@ -1,8 +1,50 @@
 import nodemailer from "nodemailer";
 import { getSecret } from "./secrets";
 
-// Give up on a slow or unreachable mail server quickly, so forms aren't held up.
-const TIMEOUTS = { connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 8000 };
+// Give up on a slow or unreachable mail server in reasonable time, so forms aren't held up for long.
+const TIMEOUTS = { connectionTimeout: 12000, greetingTimeout: 10000, socketTimeout: 20000 };
+
+// Errors that mean "couldn't reach the mail server" (blocked port, firewall, antivirus mail shield, bad network).
+const CONN_ERRORS = new Set(["ETIMEDOUT", "ECONNREFUSED", "ESOCKET", "ECONNECTION", "ECONNRESET", "EDNS", "EHOSTUNREACH", "ENETUNREACH"]);
+// A port that worked when the saved one didn't (465 ↔ 587), kept while the server runs.
+let workingPort: number | null = null;
+let lastError = "";
+export const lastEmailError = () => lastError;
+
+function explain(e: unknown, host: string, ports: number[]) {
+  const err = e as { code?: string; responseCode?: number; message?: string };
+  if (err.responseCode === 535) return "The mail server rejected the email login or password. For Gmail, use a 16-letter App Password made on the same Gmail account (myaccount.google.com/apppasswords).";
+  if (err.code && CONN_ERRORS.has(err.code)) return `Couldn't reach ${host} on port ${ports.join(" or ")} (${err.code}). Something on this computer or network is blocking email: often an antivirus "mail shield" or firewall, or the internet provider. Allow Node.js in the firewall/antivirus, or try another network. On a live server this usually works.`;
+  return err.message || String(e);
+}
+
+// Sends one email with the saved SMTP settings. If the server can't be reached on the saved port, it tries the
+// other common port once (465 with SSL, 587 with STARTTLS) and keeps using the one that works.
+export async function sendMail(mail: nodemailer.SendMailOptions, timeouts: Partial<typeof TIMEOUTS> = {}) {
+  const { SMTP_HOST: host, SMTP_PORT, SMTP_USER: user, SMTP_PASS: pass } = await smtpSettings();
+  if (!host || !user || !pass) throw new Error("Email isn't set up (Admin → API keys → Email alerts).");
+  const saved = Number(SMTP_PORT) || 465;
+  const first = workingPort ?? saved;
+  const ports = [first, ...(first === 465 ? [587] : first === 587 ? [465] : [])];
+  let last: unknown = null;
+  for (const port of ports) {
+    try {
+      const transport = nodemailer.createTransport({ host, port, secure: port === 465, requireTLS: port === 587, auth: { user, pass }, ...TIMEOUTS, ...timeouts });
+      const info = await transport.sendMail(mail);
+      if (port !== saved && workingPort !== port) console.warn(`Email: port ${saved} couldn't be reached, port ${port} works. You can save ${port} in Admin → API keys.`);
+      workingPort = port === saved ? null : port;
+      lastError = "";
+      return info;
+    } catch (e) {
+      last = e;
+      if (!CONN_ERRORS.has(String((e as { code?: string }).code))) break;
+    }
+  }
+  lastError = explain(last, host, ports);
+  const out = new Error(lastError) as Error & { cause?: unknown };
+  out.cause = last;
+  throw out;
+}
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
@@ -15,14 +57,13 @@ export async function notifyAdmin(subject: string, rows: [string, string][], lin
     console.warn(`Alert email skipped: ${missing.join(", ")} not set (Admin → API keys, or .env.local).`);
     return false;
   }
+  void SMTP_PORT;
   try {
-    const port = Number(SMTP_PORT);
-    const transport = nodemailer.createTransport({ host: SMTP_HOST, port, secure: port === 465, auth: { user: SMTP_USER, pass: SMTP_PASS }, ...TIMEOUTS });
     const table = rows
       .filter(([, v]) => v)
       .map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#625C74;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;color:#120F1B;white-space:pre-wrap">${esc(v)}</td></tr>`)
       .join("");
-    await transport.sendMail({
+    await sendMail({
       from: `"Spinex website" <${SMTP_USER}>`,
       to: NOTIFY_EMAIL,
       subject,
@@ -34,12 +75,7 @@ export async function notifyAdmin(subject: string, rows: [string, string][], lin
     console.log(`Alert email sent to ${NOTIFY_EMAIL}`);
     return true;
   } catch (e) {
-    const code = (e as { responseCode?: number }).responseCode;
-    if (code === 535) {
-      console.error("Alert email failed: Gmail rejected the email login / password. Use a 16-letter App Password created on the same Gmail account (myaccount.google.com/apppasswords).");
-    } else {
-      console.error("Alert email failed:", e);
-    }
+    console.error(`Alert email failed: ${e instanceof Error ? e.message : String(e)}`);
     return false;
   }
 }
@@ -51,10 +87,9 @@ export async function smtpSettings() {
 }
 
 async function smtp() {
-  const { SMTP_HOST: host, SMTP_PORT, SMTP_USER: user, SMTP_PASS: pass, NOTIFY_EMAIL } = await smtpSettings();
-  const port = Number(SMTP_PORT);
+  const { SMTP_HOST: host, SMTP_USER: user, SMTP_PASS: pass, NOTIFY_EMAIL } = await smtpSettings();
   if (!host || !user || !pass) return null;
-  return { transport: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass }, ...TIMEOUTS }), from: user, replyTo: NOTIFY_EMAIL || user };
+  return { transport: { sendMail: (m: nodemailer.SendMailOptions) => sendMail(m) }, from: user, replyTo: NOTIFY_EMAIL || user };
 }
 
 const wrap = (title: string, paragraphs: string[], button?: { label: string; url: string }) => `
@@ -82,7 +117,7 @@ export async function emailPerson(to: string, subject: string, title: string, pa
     });
     return true;
   } catch (e) {
-    console.error("Applicant email failed:", e);
+    console.error(`Email to ${to} failed: ${e instanceof Error ? e.message : String(e)}`);
     return false;
   }
 }
@@ -92,10 +127,9 @@ export async function emailFile(to: string, subject: string, text: string, file:
   const { SMTP_HOST: host, SMTP_PORT, SMTP_USER: user, SMTP_PASS: pass } = await smtpSettings();
   if (!host || !user || !pass || !to) return false;
   try {
-    const port = Number(SMTP_PORT);
+    void SMTP_PORT;
     // A bigger file needs more time to upload than the quick alert emails.
-    const transport = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass }, connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 120000 });
-    await transport.sendMail({ from: `"Spinex website" <${user}>`, to, subject, text, attachments: [file] });
+    await sendMail({ from: `"Spinex website" <${user}>`, to, subject, text, attachments: [file] }, { socketTimeout: 120000 });
     return true;
   } catch (e) {
     console.error("Email with attachment failed:", e);
