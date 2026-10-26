@@ -94,7 +94,7 @@ export default function BillingManager({ canEditProfile, readOnly = false }: { c
         {!readOnly && <><button onClick={() => create("quote")} disabled={!!creating} className="btn-dark px-5 py-2.5 text-sm">{creating === "quote" ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={16} />} New quotation</button>
         <button onClick={() => create("invoice")} disabled={!!creating} className="btn-ghost px-5 py-2.5 text-sm">{creating === "invoice" ? <Loader2 size={15} className="animate-spin" /> : <ReceiptIndianRupee size={16} />} New invoice</button></>}
         <button onClick={() => setShowReminders((v) => !v)} className="btn-ghost ml-auto px-5 py-2.5 text-sm">{showReminders ? "Hide reminders" : "Payment reminders"}</button>
-        <button onClick={() => setShowProfile((v) => !v)} className="btn-ghost px-5 py-2.5 text-sm">{showProfile ? "Hide" : "Billing details"}</button>
+        <button onClick={() => setShowProfile((v) => !v)} className="btn-ghost px-5 py-2.5 text-sm">{showProfile ? "Hide billing details" : "Billing details"}</button>
       </div>
       <p className="text-sm text-muted">Tip: open a lead in <b>Leads</b> and press <b>Make quotation</b> to fill in the client automatically.</p>
 
