@@ -557,6 +557,7 @@ try {
   const bp = await bc.newPage();
   const bd2 = ist(2);
   await bp.goto(`${base}/book`, { waitUntil: "networkidle" }); await bp.waitForSelector(`[data-date="${bd2}"]`, { timeout: 15000 });
+  ok("booking page has its own title", (await bp.textContent("h1"))?.replace(/\s+/g, " ").includes("consultation") && (await bp.content()).includes("Book a call"));
   await bp.click(`[data-date="${bd2}"]`); await bp.click(`[data-time="15:00"]`); await bp.waitForTimeout(400);
   await bp.screenshot({ path: `${out}/31-book-page.png`, fullPage: true });
   await bp.click("text=Continue");

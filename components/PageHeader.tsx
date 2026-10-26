@@ -16,14 +16,16 @@ const fallbackBanner = "/images/stock/photo-1497366216548-37526070297c.jpg";
 
 // Inner-page hero: the banner fills the background, a dark wash keeps the text readable,
 // and the image drifts slower than the page on scroll.
-export default function PageHeader({ page: pageProp, title: titleProp, intro: introProp, badge: badgeProp }: { page?: Page; title: string; intro: string; kicker?: string; badge?: { value: string; label: string } }) {
+export default function PageHeader({ page: pageProp, title: titleProp, intro: introProp, badge: badgeProp, crumb }: { page?: Page; title: string; intro: string; kicker?: string; badge?: { value: string; label: string }; crumb?: string }) {
   const { content } = useContent();
   const pathname = usePathname();
   const fromUrl = pages.find((p) => pathname?.startsWith(`/${p}`));
+  // Pages outside the editable list (e.g. /book) pass their own breadcrumb and keep their own text.
+  const own = !!crumb;
   const page: Page = pageProp && pages.includes(pageProp) ? pageProp : fromUrl ?? "about";
   // Text edited in Admin > Page headers wins over the defaults passed in by the page.
-  const title = content.pages?.[page]?.title || titleProp;
-  const intro = content.pages?.[page]?.intro || introProp;
+  const title = (!own && content.pages?.[page]?.title) || titleProp;
+  const intro = (!own && content.pages?.[page]?.intro) || introProp;
 
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -43,14 +45,14 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
     blog: { value: "", label: "" },
     careers: { value: content.careers?.open ? String(content.careers.jobs.length) : "", label: "Open roles" },
   }[page];
-  const shown = badgeProp ?? badge;
+  const shown = badgeProp ?? (own ? { value: "", label: "" } : badge);
 
   return (
     <section ref={ref} className="relative flex min-h-[78svh] items-end overflow-hidden bg-ink text-white">
       {/* Background banner */}
       <motion.div style={{ y: bgY }} className="absolute inset-0">
         <motion.img
-          src={content.banners?.[page] || fallbackBanner}
+          src={(!own && content.banners?.[page]) || fallbackBanner}
           alt=""
           initial={{ scale: 1.25 }}
           animate={{ scale: 1.08 }}
@@ -66,7 +68,7 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
           <ol className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-ink/40 px-4 py-2 text-sm text-white/70 backdrop-blur">
             <li><Link href="/" className="hover:text-white">Home</Link></li>
             <li aria-hidden><ChevronRight size={14} /></li>
-            <li aria-current="page" className="text-white">{labels[page]}</li>
+            <li aria-current="page" className="text-white">{crumb || labels[page]}</li>
           </ol>
         </motion.nav>
 

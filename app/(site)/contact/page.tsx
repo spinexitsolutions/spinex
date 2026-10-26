@@ -26,7 +26,7 @@ export default async function ContactPage() {
           <div className="container-x mb-10">
             <Link href="/book" className="group flex flex-wrap items-center gap-4 rounded-[24px] bg-ink px-6 py-5 text-white transition hover:bg-ink/90">
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10"><CalendarCheck size={22} /></span>
-              <span className="min-w-0 flex-1"><span className="block font-display text-lg font-semibold">Prefer to talk? Book a free {booking.duration}-minute call</span><span className="block text-sm text-white/65">Pick a time that suits you{booking.meetMode === "phone" ? ". We call you." : " and get a Google Meet link right away."}</span></span>
+              <span className="min-w-0 flex-1"><span className="block font-display text-lg font-semibold">{`Prefer to talk? Book a free ${booking.duration}-minute call`}</span><span className="block text-sm text-white/65">Pick a time that suits you{booking.meetMode === "phone" ? ". We call you." : " and get a Google Meet link right away."}</span></span>
               <span className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink">Choose a time</span>
             </Link>
           </div>
