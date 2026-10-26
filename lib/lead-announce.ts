@@ -10,21 +10,21 @@ import type { LeadTrack } from "./attribution";
 
 type Data = Record<string, string> & { name: string; phone: string };
 
-export async function announceLead(p: { data: Data; plan?: string; source: LeadSource; track: LeadTrack; stamp: string; adminUrl: string; autoReply: boolean; extraRows?: [string, string][] }) {
+export async function announceLead(p: { data: Data; plan?: string; source: LeadSource; track: LeadTrack; stamp: string; adminUrl: string; autoReply: boolean; extraRows?: [string, string][]; skipAlerts?: boolean }) {
   const { data, source, track, stamp, adminUrl } = p;
   const plan = p.plan ?? "";
   const content = await getContent().catch(() => null);
   // Each gives up quickly and never throws.
   await Promise.allSettled([
     content && p.autoReply ? sendAutoReply(content, data) : Promise.resolve(false),
-    content?.leadReplies?.whatsappAlert
+    content?.leadReplies?.whatsappAlert && !p.skipAlerts
       ? sendWhatsAppAlert(leadAlertText({ ...data, cameVia: [track.channel, track.utmCampaign].filter(Boolean).join(" · ") }, LEAD_SOURCES[source], adminUrl)).then((r) => {
           if (!r.ok && r.via) console.error("WhatsApp alert failed:", r.error);
           return r;
         })
       : Promise.resolve(null),
     sendLeadWebhook({ ...data, plan, source, sourceLabel: LEAD_SOURCES[source], track, createdAt: stamp }),
-    notifyAdmin(
+    p.skipAlerts ? Promise.resolve(false) : notifyAdmin(
       `New enquiry from ${data.name}`,
       [
         ["Name", data.name],

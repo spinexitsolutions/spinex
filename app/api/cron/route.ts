@@ -3,6 +3,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { hasDb } from "@/lib/db";
 import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } from "@/lib/automation";
 import { runAmcReminders } from "@/lib/amc";
+import { runBookingReminders } from "@/lib/booking-db";
 import { readState, writeState } from "@/lib/settings-db";
 import { SITE_URL } from "@/lib/site";
 
@@ -41,6 +42,8 @@ export async function GET(req: Request) {
   if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour) {
     done.amc = await runAmcReminders(origin, { days: settings.amcRemindDays, emailClient: settings.amcEmailClient, whatsapp: settings.whatsappSummary }).catch((e) => ({ error: String(e) }));
   }
+  // Call reminders are checked on every run (the scheduler should run every hour).
+  done.calls = await runBookingReminders().catch((e) => ({ error: String(e) }));
   if (backupDue(settings, String(state.lastBackup || ""))) {
     done.backup = await runBackup().catch((e) => ({ error: String(e) }));
   }

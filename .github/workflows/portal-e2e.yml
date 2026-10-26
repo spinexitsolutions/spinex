@@ -36,6 +36,11 @@ jobs:
       META_VERIFY_TOKEN: e2e-meta-verify-token
       META_PAGE_TOKEN: e2e-meta-page-token
       GOOGLE_LEADS_KEY: e2e-google-leads-key
+      GOOGLE_OAUTH_URL: http://localhost:3298
+      GOOGLE_API_URL: http://localhost:3298
+      GOOGLE_AUTH_URL: http://localhost:3298
+      GOOGLE_OAUTH_CLIENT_ID: e2e-client.apps.googleusercontent.com
+      GOOGLE_OAUTH_CLIENT_SECRET: e2e-client-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

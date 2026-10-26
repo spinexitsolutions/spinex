@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   if (Object.keys(errors).length) return NextResponse.json({ error: "Please fix the highlighted fields.", errors }, { status: 400 });
 
   // Ad sources are only set by the Meta and Google webhooks, never by the website forms.
-  const source = (Object.keys(LEAD_SOURCES).includes(String(body.source)) && !["meta", "google"].includes(String(body.source)) ? body.source : "contact") as LeadSource;
+  const source = (Object.keys(LEAD_SOURCES).includes(String(body.source)) && !["meta", "google", "booking"].includes(String(body.source)) ? body.source : "contact") as LeadSource;
   const plan = String(body.plan ?? "").slice(0, 2000);
   const stamp = new Date().toISOString();
   const track = cleanTrack(body.track);

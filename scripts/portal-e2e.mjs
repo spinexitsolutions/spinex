@@ -496,6 +496,98 @@ try {
   await ap.screenshot({ path: `${out}/29-leads-from-ads.png`, fullPage: false });
   await ap.click("text=Get leads from ads"); await ap.waitForSelector("text=Callback URL for Meta", { timeout: 10000 }); await ap.waitForTimeout(600);
   await ap.screenshot({ path: `${out}/30-ads-setup.png`, fullPage: false });
+
+  // ---- Free consultation call booking ----
+  const gcal = { events: [], patches: [], deletes: [], busy: [] };
+  const gSrv = createServer(async (rq, rs) => {
+    const u = new URL(rq.url, "http://x");
+    let body = "";
+    for await (const c of rq) body += c;
+    rs.setHeader("content-type", "application/json");
+    if (u.pathname === "/o/oauth2/v2/auth") { rs.statusCode = 302; rs.setHeader("location", `${u.searchParams.get("redirect_uri")}?code=e2e-code&state=${u.searchParams.get("state")}`); return rs.end(); }
+    if (u.pathname === "/token") { const f = new URLSearchParams(body); return rs.end(JSON.stringify(f.get("grant_type") === "authorization_code" ? { refresh_token: "e2e-refresh", access_token: "at1", expires_in: 3600 } : { access_token: "at2", expires_in: 3600 })); }
+    if (u.pathname === "/calendar/v3/freeBusy") return rs.end(JSON.stringify({ calendars: { primary: { busy: gcal.busy } } }));
+    if (u.pathname === "/calendar/v3/calendars/primary") return rs.end(JSON.stringify({ id: "owner@spinex.test" }));
+    if (u.pathname === "/calendar/v3/calendars/primary/events" && rq.method === "POST") { gcal.events.push({ q: u.search, body: JSON.parse(body) }); return rs.end(JSON.stringify({ id: `evt${gcal.events.length}`, hangoutLink: `https://meet.google.com/e2e-test-${gcal.events.length}` })); }
+    if (u.pathname.startsWith("/calendar/v3/calendars/primary/events/") && rq.method === "PATCH") { gcal.patches.push(JSON.parse(body)); return rs.end("{}"); }
+    if (u.pathname.startsWith("/calendar/v3/calendars/primary/events/") && rq.method === "DELETE") { gcal.deletes.push(u.pathname); rs.statusCode = 204; return rs.end(); }
+    rs.statusCode = 404; rs.end("{}");
+  }).listen(3298);
+  r = await qp.request.get(`${base}/api/booking/slots`);
+  ok("booking is off until it is turned on", (await r.json()).enabled === false);
+  r = await qp.request.post(`${base}/api/booking`, { data: { name: "X", phone: "9876543210", email: "x@y.test", date: ist(1), time: "10:00", startedAt: String(Date.now() - 9000) } });
+  ok("booking API refuses while off", r.status() === 403, `status ${r.status()}`);
+  const week = Array.from({ length: 7 }, () => ({ on: true, start: "09:00", end: "18:00" }));
+  r = await ap.request.put(`${base}/api/admin/bookings/settings`, { data: { enabled: true, duration: 30, buffer: 0, minNoticeHours: 0, daysAhead: 7, maxPerDay: 0, week, blocked: [ist(3)], meetMode: "google", meetLink: "https://meet.google.com/backup-link", topics: ["Website", "Mobile app", "Digital marketing"], reminders: true } });
+  ok("admin turns booking on", r.status() === 200 && (await r.json()).enabled === true);
+  await ap.goto(`${base}/api/admin/google/connect`); await ap.waitForURL((u) => u.pathname === "/admin", { timeout: 15000 });
+  let bk = await (await ap.request.get(`${base}/api/admin/bookings`)).json();
+  ok("Google Calendar connects", bk.google.connected === true && bk.google.email === "owner@spinex.test", JSON.stringify(bk.google));
+  const bd1 = ist(1);
+  gcal.busy = [{ start: `${bd1}T11:00:00+05:30`, end: `${bd1}T11:30:00+05:30` }];
+  let slots = (await (await qp.request.get(`${base}/api/booking/slots`)).json()).days;
+  const day1 = slots.find((x) => x.date === bd1);
+  ok("free times skip Google busy times and days off", !!day1 && day1.slots.includes("10:00") && !day1.slots.includes("11:00") && !slots.some((x) => x.date === ist(3)), JSON.stringify(day1?.slots?.slice(0, 6)));
+  const book = (o) => qp.request.post(`${base}/api/booking`, { data: { name: "Ankit Jain", phone: "9829098290", email: "ankit@jainsarees.test", company: "Jain Sarees", topic: "Website", message: "Need an online saree store with COD.", date: bd1, time: "10:00", startedAt: String(Date.now() - 9000), ...o } });
+  r = await book();
+  const bj = await r.json();
+  ok("client books a call and gets a Meet link", r.status() === 201 && bj.meetLink === "https://meet.google.com/e2e-test-1", JSON.stringify(bj).slice(0, 160));
+  const ev = gcal.events[0];
+  ok("calendar event invites the client with a Meet request", !!ev && /conferenceDataVersion=1/.test(ev.q) && /sendUpdates=all/.test(ev.q) && ev.body.attendees?.[0]?.email === "ankit@jainsarees.test" && ev.body.start.dateTime.startsWith(`${bd1}T04:30`), JSON.stringify(ev?.body?.start));
+  r = await book({ name: "Someone Else", email: "else@x.test" });
+  ok("the same time can't be booked twice", r.status() === 409, `status ${r.status()}`);
+  const bdoc = await db.collection("bookings").findOne({ token: bj.token });
+  const blead = await db.collection("leads").findOne({ bookingId: String(bdoc._id) });
+  ok("booking also shows in Leads", blead?.source === "booking" && blead?.followUp === bd1 && /Booked a free call/.test(blead?.message || ""));
+  slots = (await (await qp.request.get(`${base}/api/booking/slots`)).json()).days;
+  ok("booked time leaves the page", !slots.find((x) => x.date === bd1)?.slots.includes("10:00"));
+  r = await qp.request.post(`${base}/api/booking/${bj.token}`, { data: { action: "move", date: bd1, time: "11:00" } });
+  ok("can't move into a busy time", r.status() === 409);
+  r = await qp.request.post(`${base}/api/booking/${bj.token}`, { data: { action: "move", date: bd1, time: "12:00" } });
+  ok("client moves the call", r.status() === 200 && gcal.patches.length === 1 && (await db.collection("bookings").findOne({ token: bj.token })).time === "12:00");
+  slots = (await (await qp.request.get(`${base}/api/booking/slots`)).json()).days;
+  ok("old time is free again", slots.find((x) => x.date === bd1)?.slots.includes("10:00"));
+  // Booking page in the browser.
+  const bc = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1.25 });
+  const bp = await bc.newPage();
+  const bd2 = ist(2);
+  await bp.goto(`${base}/book`, { waitUntil: "networkidle" }); await bp.waitForSelector(`[data-date="${bd2}"]`, { timeout: 15000 });
+  await bp.click(`[data-date="${bd2}"]`); await bp.click(`[data-time="15:00"]`); await bp.waitForTimeout(400);
+  await bp.screenshot({ path: `${out}/31-book-page.png`, fullPage: true });
+  await bp.click("text=Continue");
+  await bp.fill('input[autocomplete="name"]', "Priya Khandelwal"); await bp.fill('input[type="tel"]', "9414011223"); await bp.fill('input[type="email"]', "priya@khandelwalfoods.test"); await bp.fill('input[autocomplete="organization"]', "Khandelwal Foods");
+  await bp.waitForTimeout(2600);
+  await bp.click("text=Book my free call"); await bp.waitForSelector("text=Your call is booked", { timeout: 15000 }); await bp.waitForTimeout(500);
+  ok("booking works in the browser", (await bp.content()).includes("meet.google.com/e2e-test-2"));
+  await bp.screenshot({ path: `${out}/32-booked.png`, fullPage: false });
+  await bp.goto(`${base}/b/${bj.token}`, { waitUntil: "networkidle" }); await bp.waitForTimeout(400);
+  ok("client's own link shows the call", (await bp.content()).includes("Join Google Meet") && (await bp.content()).includes("12:00 PM"));
+  await bp.screenshot({ path: `${out}/33-manage-booking.png`, fullPage: false });
+  await bp.goto(`${base}/contact`, { waitUntil: "networkidle" });
+  ok("contact page shows the book-a-call button", (await bp.content()).includes("Book a free 30-minute call"));
+  // Reminders (scheduler).
+  const soonStart = new Date(Date.now() + 50 * 60e3);
+  await db.collection("bookings").insertOne({ name: "Soon Client", phone: "9000000001", email: "soon@x.test", company: "", topic: "Website", message: "", start: soonStart.toISOString(), end: new Date(soonStart.getTime() + 30 * 60e3).toISOString(), date: ist(0), time: "23:59", token: "soonTokenSoonTokenSoon01", status: "confirmed", meetMode: "google", meetLink: "https://meet.google.com/soon", calendarEventId: "", leadId: "", reminded: { day: true, hour: false }, cancelledBy: "", note: "", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  cj = await r.json();
+  ok("scheduler sends the 1-hour reminder", cj.done?.calls?.hour === 1 && (await db.collection("bookings").findOne({ token: "soonTokenSoonTokenSoon01" })).reminded.hour === true, JSON.stringify(cj.done?.calls));
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  ok("reminder goes only once", (await r.json()).done?.calls?.hour === 0);
+  // Admin screens.
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#bookings`); await ap.waitForSelector("text=Priya Khandelwal", { timeout: 15000 }); await ap.waitForTimeout(700);
+  await ap.screenshot({ path: `${out}/34-admin-bookings.png`, fullPage: false });
+  await ap.click("button:has-text('Settings')"); await ap.waitForSelector("text=When you take calls", { timeout: 10000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/35-admin-booking-settings.png`, fullPage: false });
+  // Cancel and switch off.
+  r = await qp.request.post(`${base}/api/booking/${bj.token}`, { data: { action: "cancel" } });
+  ok("client cancels and the calendar event goes", r.status() === 200 && gcal.deletes.length === 1 && (await db.collection("bookings").findOne({ token: bj.token })).status === "cancelled");
+  r = await qp.request.post(`${base}/api/booking/${bj.token}`, { data: { action: "cancel" } });
+  ok("cancelled call can't be cancelled again", r.status() === 400);
+  const cur2 = (await (await ap.request.get(`${base}/api/admin/bookings`)).json()).settings;
+  await ap.request.put(`${base}/api/admin/bookings/settings`, { data: { ...cur2, enabled: false } });
+  await bp.goto(`${base}/book`, { waitUntil: "networkidle" });
+  ok("switched off: booking page says closed", (await bp.content()).includes("Online booking is closed"));
+  gSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));
   for (const pg of ctx.pages().concat(browser.contexts().flatMap((c) => c.pages()))) await pg.screenshot({ path: `${out}/error-${Math.random().toString(36).slice(2, 6)}.png`, fullPage: true }).catch(() => undefined);

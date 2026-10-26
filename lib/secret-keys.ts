@@ -56,6 +56,17 @@ export const KEY_GROUPS: KeyGroup[] = [
     ],
   },
   {
+    id: "googlecal",
+    title: "Google Calendar (call booking)",
+    note: "Gives every booked call its own Google Meet link, puts it in your calendar and keeps busy times off the booking page. Steps are in Admin → Call bookings → Settings. The refresh token is filled in when you press Connect Google Calendar.",
+    keys: [
+      { name: "GOOGLE_OAUTH_CLIENT_ID", label: "OAuth client ID", placeholder: "…apps.googleusercontent.com" },
+      { name: "GOOGLE_OAUTH_CLIENT_SECRET", label: "OAuth client secret", secret: true },
+      { name: "GOOGLE_CAL_REFRESH_TOKEN", label: "Refresh token (filled in by Connect)", secret: true },
+      { name: "GOOGLE_CAL_ID", label: "Calendar", placeholder: "primary", hint: "leave empty for your main calendar" },
+    ],
+  },
+  {
     id: "chat",
     title: "AI chatbot (Claude)",
     note: "With a key the chatbot writes its own answers from your site content. Without it, it answers from the FAQ list in Admin → Chatbot.",
