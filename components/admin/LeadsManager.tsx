@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart3, BellRing, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
+import { BarChart3, BellRing, MailPlus, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
 import { LEAD_SOURCES, LEAD_STATUSES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
 import AdLeadsSetup from "./AdLeadsSetup";
+import LeadFollowupsSetup from "./LeadFollowupsSetup";
 
 const badge: Record<LeadStatus, string> = {
   new: "bg-lav-600 text-white",
@@ -58,6 +59,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
   const [channel, setChannel] = useState("all");
   const [showReport, setShowReport] = useState(false);
   const [showAds, setShowAds] = useState(false);
+  const [showFollowups, setShowFollowups] = useState(false);
   const [myId, setMyId] = useState("");
 
   useEffect(() => {
@@ -178,6 +180,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
         </select>
         <button onClick={() => setShowReport((v) => !v)} aria-pressed={showReport} className="btn-ghost px-4 py-2.5 text-sm"><BarChart3 size={16} /> Where leads come from</button>
         <button onClick={() => setShowAds(true)} className="btn-ghost px-4 py-2.5 text-sm"><Megaphone size={16} /> Get leads from ads</button>
+        <button onClick={() => setShowFollowups(true)} className="btn-ghost px-4 py-2.5 text-sm"><MailPlus size={16} /> Follow-up emails</button>
         <a href="/api/admin/leads/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
         <button onClick={load} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
       </div>
@@ -278,6 +281,9 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
       <Modal open={showAds} title="Get leads from ads" onClose={() => setShowAds(false)}>
         {showAds && <AdLeadsSetup goApiKeys={goApiKeys} />}
       </Modal>
+      <Modal open={showFollowups} title="Automatic follow-up emails" onClose={() => setShowFollowups(false)}>
+        {showFollowups && <LeadFollowupsSetup />}
+      </Modal>
     </div>
   );
 }
@@ -340,6 +346,19 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete }: { lead: Le
         <Info label="Form" value={LEAD_SOURCES[lead.source] ?? lead.source} />
         <Info label="Received" value={`${formatDate(lead.createdAt.slice(0, 10))}, ${new Date(lead.createdAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`} />
       </dl>
+
+      {(lead.followups?.length || lead.noFollowups) ? (
+        <div className="mt-4 rounded-2xl border border-line p-5" data-followups>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="mr-auto flex items-center gap-2 text-sm font-semibold"><MailPlus size={15} className="text-lav-700" /> Automatic follow-up emails</p>
+            {!readOnly && <button onClick={() => onSave({ noFollowups: !lead.noFollowups })} className="btn-ghost px-3 py-1.5 text-xs">{lead.noFollowups ? "Turn back on" : "Stop for this lead"}</button>}
+          </div>
+          <ul className="mt-3 space-y-1.5 text-sm">
+            {(lead.followups ?? []).map((f, i) => <li key={i} className="flex gap-2"><span className={f.ok ? "text-emerald-700" : "text-red-600"}>{f.ok ? "Sent" : "Failed"}</span><span className="text-muted">{new Date(f.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}</span><span className="truncate">{f.subject}</span></li>)}
+          </ul>
+          {lead.noFollowups && <p className="mt-2 text-xs text-amber-700">Stopped: no more follow-up emails will go to this lead.</p>}
+        </div>
+      ) : null}
 
       {lead.track && (
         <div className="mt-4 rounded-2xl border border-line p-5">

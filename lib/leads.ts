@@ -33,6 +33,8 @@ export type Lead = {
   assignedName: string;
   notes: string;
   track?: LeadTrack; // where the visitor came from (ad, search, Instagram…)
+  followups?: { day: number; at: string; ok: boolean; subject: string }[]; // automatic follow-up emails sent
+  noFollowups?: boolean; // they (or we) stopped the follow-up emails
   createdAt: string;
   updatedAt: string;
 };

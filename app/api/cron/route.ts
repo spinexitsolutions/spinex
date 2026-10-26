@@ -8,6 +8,8 @@ import { runReviewRequests } from "@/lib/reviews-db";
 import { runFeedbackRequests } from "@/lib/feedback-db";
 import { runPaymentReminders } from "@/lib/payment-reminders";
 import { runRecurring } from "@/lib/recurring-db";
+import { runRepeatingExpenses } from "@/lib/accounts-db";
+import { runLeadFollowups } from "@/lib/lead-followups";
 import { readState, writeState } from "@/lib/settings-db";
 import { SITE_URL } from "@/lib/site";
 
@@ -48,6 +50,7 @@ export async function GET(req: Request) {
     await writeState("automation", { lastBilling: now.date });
     done.recurring = await runRecurring().catch((e) => ({ error: String(e) }));
     done.payments = await runPaymentReminders().catch((e) => ({ error: String(e) }));
+    done.expenses = await runRepeatingExpenses().catch((e) => ({ error: String(e) }));
   }
   if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour) {
     done.amc = await runAmcReminders(origin, { days: settings.amcRemindDays, emailClient: settings.amcEmailClient, whatsapp: settings.whatsappSummary }).catch((e) => ({ error: String(e) }));
@@ -56,6 +59,7 @@ export async function GET(req: Request) {
   done.calls = await runBookingReminders().catch((e) => ({ error: String(e) }));
   done.reviews = await runReviewRequests().catch((e) => ({ error: String(e) }));
   done.feedback = await runFeedbackRequests().catch((e) => ({ error: String(e) }));
+  done.followups = await runLeadFollowups().catch((e) => ({ error: String(e) }));
   if (backupDue(settings, String(state.lastBackup || ""))) {
     done.backup = await runBackup().catch((e) => ({ error: String(e) }));
   }

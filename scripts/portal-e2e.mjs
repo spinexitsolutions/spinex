@@ -787,6 +787,137 @@ try {
   r = await ap.request.post(`${base}/api/admin/feedback/${fbDoc._id}`, { data: { action: "unpublish" } });
   const content2 = (await db.collection("settings").findOne({ _id: "content" }))?.data;
   ok("it can be taken off again", r.status() === 200 && !(content2?.testimonials ?? []).some((t) => t.id?.startsWith("fb-")));
+  // ---- Expenses, profit and loss, GST summary ----
+  await db.collection("settings").updateOne({ _id: "billing" }, { $set: { "value.gstin": "08AAACS1234F1Z5", "value.state": "Rajasthan" } }, { upsert: true });
+  const { _id: _accInv, ...accBase } = inv;
+  const accInv = (n, date, extra = {}) => ({ ...accBase, number: `INV/E2E/${n}`, date, dueDate: date, status: "unpaid", paid: 0, shareToken: `e2eAccountsToken${n}abcdefghij`, client: { ...inv.client, company: `Acc Client ${n}`, state: "Rajasthan", gstin: "" }, items: [{ id: "i1", description: "Website", sac: "998314", qty: 1, rate: 100000, gst: 18 }], ...extra });
+  await db.collection("billing").insertMany([
+    accInv(1, "2024-05-10", { status: "paid", paid: 118000 }),
+    accInv(2, "2024-05-20", { client: { ...inv.client, company: "Delhi Buyer", state: "", gstin: "07AAAAA0000A1Z5" }, items: [{ id: "i1", description: "App", sac: "998314", qty: 1, rate: 50000, gst: 18 }] }),
+    accInv(3, "2024-05-25", { status: "cancelled" }),
+    { ...accInv(4, "2024-05-26"), type: "quote", number: "QT/E2E/4" },
+  ]);
+  const slipBase = { emp: { empCode: "E2E9", name: "Acc Staff", email: "", designation: "Dev", department: "", joiningDate: "2024-01-01", location: "", pan: "", uan: "", bankName: "", bankLast4: "" }, daysInMonth: 31, paidDays: 31, deductions: [], esiOn: false, attendance: null, paymentDate: "", paymentMode: "Bank transfer", note: "", token: "", sentAt: "", createdBy: "E2E", createdAt: now.toISOString(), updatedAt: now.toISOString() };
+  await db.collection("payslips").insertMany([
+    { ...slipBase, month: "2024-05", employeeId: "e2e-acc-1", earnings: [{ id: "a", label: "Basic", amount: 20000 }, { id: "b", label: "HRA", amount: 10000 }], number: "PS/E2E/1", verifyCode: "SPX-P-E2EACC1", status: "issued", issuedAt: now.toISOString() },
+    { ...slipBase, month: "2024-05", employeeId: "e2e-acc-2", earnings: [{ id: "a", label: "Basic", amount: 99999 }], number: "", verifyCode: "", status: "draft", issuedAt: "" },
+  ]);
+  r = await ap.request.post(`${base}/api/admin/expenses`, { data: { date: "2024-05-03", category: "Rent", vendor: "Landlord" } });
+  ok("an expense needs an amount", r.status() === 400);
+  for (const e of [
+    { date: "2024-05-01", category: "Rent", vendor: "Landlord", description: "Office rent May", amount: 20000, gst: 0 },
+    { date: "2024-05-15", category: "Software and tools", vendor: "Figma", amount: 10000, gst: 1800, vendorGstin: "29abcde1234f1z5", billNo: "FG-881" },
+    { date: "2024-05-20", category: "Ads and marketing", vendor: "Local printer", amount: 5000, gst: 900 },
+  ]) r = await ap.request.post(`${base}/api/admin/expenses`, { data: e });
+  ok("expenses are added", r.status() === 201 && (await db.collection("expenses").countDocuments({ date: { $gte: "2024-05-01", $lte: "2024-05-31" } })) === 3);
+  const figma = await db.collection("expenses").findOne({ vendor: "Figma" });
+  ok("vendor GSTIN is cleaned up", figma?.vendorGstin === "29ABCDE1234F1Z5");
+  const rep = await (await ap.request.get(`${base}/api/admin/accounts/report?fy=2024-25`)).json();
+  const may = rep.months?.find((m) => m.month === "2024-05");
+  ok("profit and loss: sales, expenses and salaries for the month", rep.months?.length === 12 && rep.months[0].month === "2024-04" && rep.months[11].month === "2025-03" && may?.sales === 150000 && may?.expenses === 35000 && may?.salaries === 30000 && may?.profit === 85000, JSON.stringify(may));
+  ok("cancelled invoices, quotations and draft payslips aren't counted", may?.invoiced === 177000 && may?.received === 118000 && may?.gstOut === 27000 && may?.gstIn === 2700);
+  ok("expenses by category", may?.byCategory?.Rent === 20000 && may?.byCategory?.["Software and tools"] === 10000 && rep.totals?.profit === 85000);
+  const gst = await (await ap.request.get(`${base}/api/admin/accounts/gst?from=2024-05-01&to=2024-05-31`)).json();
+  const gt = gst.totals || {};
+  ok("GST summary: CGST, SGST and IGST collected", gt.cgst === 9000 && gt.sgst === 9000 && gt.igst === 9000 && gt.gstOut === 27000 && gst.sales?.length === 2, JSON.stringify(gt));
+  ok("GST to pay = collected minus input credit (only bills with the vendor's GSTIN)", gt.gstIn === 2700 && gt.eligibleIn === 1800 && gt.payable === 25200);
+  ok("B2B invoice shows the client's GSTIN", gst.sales?.find((s) => s.number === "INV/E2E/2")?.type === "B2B" && gst.sales?.find((s) => s.number === "INV/E2E/1")?.type === "B2C");
+  r = await ap.request.get(`${base}/api/admin/accounts/gst?from=2024-05-01&to=2024-05-31&format=csv`);
+  const gcsv = await r.text();
+  ok("GST file for the CA downloads", /text\/csv/.test(r.headers()["content-type"] || "") && gcsv.includes("GST to pay") && gcsv.includes("25200") && gcsv.includes("INV/E2E/2") && gcsv.includes("FG-881"));
+  r = await ap.request.get(`${base}/api/admin/accounts/report?fy=2024-25&format=csv`);
+  ok("profit and loss file downloads", (await r.text()).includes("May 2024"));
+  r = await qp.request.get(`${base}/api/admin/accounts/report`);
+  ok("someone not logged in can't see the accounts", r.status() === 401 || r.status() === 403, `status ${r.status()}`);
+  // Expense that repeats every month (rent): next month's copy is made by the scheduler.
+  r = await ap.request.post(`${base}/api/admin/expenses`, { data: { date: ist(-35), category: "Rent", vendor: "Office landlord", description: "Monthly rent", amount: 15000, repeat: true } });
+  const rentId = (await r.json()).id;
+  await resetDay();
+  await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  await resetDay();
+  await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  const rents = await db.collection("expenses").find({ vendor: "Office landlord" }).sort({ date: 1 }).toArray();
+  ok("repeating expense is added next month, once", rents.length === 2 && rents[0].copiedTo === String(rents[1]._id) && rents[1].repeat === true && rents[1].amount === 15000 && rents[1].date > rents[0].date && rents[1].date <= ist(0), JSON.stringify(rents.map((x) => x.date)));
+  r = await ap.request.patch(`${base}/api/admin/expenses/${rentId}`, { data: { amount: 16000 } });
+  ok("an expense can be changed", r.status() === 200 && (await r.json()).amount === 16000);
+  // A few months of this year's expenses, for the screenshots.
+  const thisFy = (() => { const y = Number(ist(0).slice(0, 4)), m = Number(ist(0).slice(5, 7)); return m >= 4 ? y : y - 1; })();
+  const fyMonth = (i) => { const m = ((3 + i) % 12) + 1; return `${m <= 3 ? thisFy + 1 : thisFy}-${String(m).padStart(2, "0")}`; };
+  const demo = [];
+  for (let i = 0; i < 12; i++) {
+    const m = fyMonth(i);
+    if (`${m}-01` > ist(0)) break;
+    demo.push({ date: `${m}-01`, category: "Rent", vendor: "Office landlord", description: "Office rent", amount: 18000, gst: 0, vendorGstin: "", billNo: "", paidVia: "Bank transfer", repeat: false, copiedTo: "", createdBy: "E2E", createdAt: now.toISOString(), updatedAt: now.toISOString() });
+    demo.push({ date: `${m}-05`, category: "Software and tools", vendor: "Google Workspace", description: "Email for 6 people", amount: 4800, gst: 864, vendorGstin: "29AACCG0527D1Z8", billNo: `GW-${i}`, paidVia: "Card", repeat: false, copiedTo: "", createdBy: "E2E", createdAt: now.toISOString(), updatedAt: now.toISOString() });
+    demo.push({ date: `${m}-12`, category: "Ads and marketing", vendor: "Meta Ads", description: "Lead ads", amount: 12000 + i * 1500, gst: (12000 + i * 1500) * 0.18, vendorGstin: "", billNo: "", paidVia: "Card", repeat: false, copiedTo: "", createdBy: "E2E", createdAt: now.toISOString(), updatedAt: now.toISOString() });
+    if (i % 2) demo.push({ date: `${m}-20`, category: "Freelancers", vendor: "Rohit (designer)", description: "Logo and banners", amount: 15000, gst: 0, vendorGstin: "", billNo: "", paidVia: "UPI", repeat: false, copiedTo: "", createdBy: "E2E", createdAt: now.toISOString(), updatedAt: now.toISOString() });
+    await db.collection("billing").insertOne(accInv(`D${i}`, `${m}-08`, { status: i % 3 ? "paid" : "unpaid", paid: i % 3 ? 70800 : 0, items: [{ id: "i1", description: "Website and SEO", sac: "998314", qty: 1, rate: 60000 + i * 9000, gst: 18 }] }));
+  }
+  await db.collection("expenses").insertMany(demo);
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#accounts`); await ap.waitForSelector("text=Month by month", { timeout: 15000 }); await ap.waitForTimeout(800);
+  await ap.screenshot({ path: `${out}/46-profit-loss.png`, fullPage: true });
+  await ap.click('[role="tab"]:has-text("Expenses")'); await ap.waitForSelector("[data-expense]", { timeout: 15000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/47-expenses.png`, fullPage: true });
+  await ap.click("text=Add expense"); await ap.waitForSelector('input[name="vendor"]');
+  await ap.selectOption('select[name="category"]', "Freelancers");
+  await ap.fill('input[name="vendor"]', "Ankit (video editor)");
+  await ap.fill('input[name="description"]', "Reels for client");
+  await ap.fill('input[name="amount"]', "8000");
+  await ap.waitForTimeout(400);
+  await ap.screenshot({ path: `${out}/48-add-expense.png`, fullPage: false });
+  await ap.click('form button:has-text("Add expense")'); await ap.waitForSelector("text=Expense of", { timeout: 15000 });
+  ok("expense added from the admin screen", !!(await db.collection("expenses").findOne({ vendor: "Ankit (video editor)", amount: 8000, category: "Freelancers" })));
+  await ap.click('[role="tab"]:has-text("GST for CA")'); await ap.waitForSelector("[data-gst-payable]", { timeout: 15000 });
+  await ap.selectOption('select[aria-label="Period"]', "this"); await ap.waitForTimeout(1200);
+  await ap.screenshot({ path: `${out}/49-gst-summary.png`, fullPage: true });
+
+  // ---- Automatic follow-up emails to new leads ----
+  r = await ap.request.put(`${base}/api/admin/lead-followups`, { data: { enabled: true, fromHour: 0, toHour: 24 } });
+  const fu = (await r.json()).settings;
+  ok("follow-up emails turned on (day 2 and day 5)", r.status() === 200 && fu.enabled && !!fu.enabledAt && fu.steps.map((x) => x.day).join(",") === "2,5");
+  await db.collection("settings").updateOne({ _id: "lead_followups" }, { $set: { "value.enabledAt": new Date(Date.now() - 8 * 864e5).toISOString() } });
+  const ago = (d) => new Date(Date.now() - d * 864e5).toISOString();
+  const lead = (n, status, days, extra = {}) => ({ name: `Follow Lead ${n}`, phone: "9800000000", email: `fu${n}@lead.test`, services: "E-commerce website", budget: "", message: "", plan: "", source: "contact", status, value: "", followUp: "", followUpNote: "", assignedTo: "", assignedName: "", notes: "", createdAt: ago(days), updatedAt: ago(days), ...extra });
+  await db.collection("leads").insertMany([lead(0, "new", 9), lead(1, "new", 2.2), lead(2, "contacted", 2.2), lead(3, "new", 5.3), lead(4, "new", 1), lead(5, "new", 2.5, { noFollowups: true }), lead(6, "new", 2.3, { email: "" })]);
+  mails.length = 0;
+  r = await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  cj = await r.json();
+  const fmail = (n) => mails.filter((m) => m.to.includes(`fu${n}@lead.test`)).map((m) => m.data.replace(/=\r?\n/g, ""));
+  ok("day 2 follow-up goes to a new lead", fmail(1).length === 1 && /recent work/.test(fmail(1)[0]) && fmail(1)[0].includes("/stop-emails/"), JSON.stringify(cj.done?.followups));
+  ok("a lead past day 5 gets only the day 5 email", fmail(3).length === 1 && /Still planning/.test(fmail(3)[0]));
+  ok("contacted, too-new, stopped, no-email and old leads get nothing", [0, 2, 4, 5].every((n) => !fmail(n).length));
+  let l1 = await db.collection("leads").findOne({ email: "fu1@lead.test" });
+  ok("the lead keeps a record of what was sent", l1.followups?.length === 1 && l1.followups[0].ok && l1.followups[0].day === 2 && !!l1.unsubToken);
+  mails.length = 0;
+  await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  ok("it is sent only once", !fmail(1).length && !fmail(3).length);
+  await db.collection("leads").updateOne({ _id: l1._id }, { $set: { createdAt: ago(5.1) } });
+  await qp.request.get(`${base}${cronUrl.pathname}${cronUrl.search}`);
+  ok("then the day 5 email", fmail(1).length === 1 && /Still planning/.test(fmail(1)[0]));
+  const l3 = await db.collection("leads").findOne({ email: "fu3@lead.test" });
+  r = await ap.request.patch(`${base}/api/admin/leads/${l3._id}`, { data: { noFollowups: true } });
+  ok("follow-ups can be stopped for one lead", r.status() === 200 && (await db.collection("leads").findOne({ _id: l3._id })).noFollowups === true);
+  r = await ap.request.post(`${base}/api/admin/lead-followups`, { data: { step: 0 } });
+  const pv = await r.json();
+  ok("preview fills in the name and service", pv.subject?.includes("Rahul") && pv.paras?.join(" ").includes("Website design"));
+  mails.length = 0;
+  r = await ap.request.post(`${base}/api/admin/lead-followups`, { data: { step: 1, sendTo: true } });
+  ok("send me a test", r.status() === 200 && mails.some((m) => m.to.includes("owner@e2e.test") && /Test/.test(m.data)));
+  l1 = await db.collection("leads").findOne({ _id: l1._id });
+  const stp = await (await browser.newContext({ viewport: { width: 900, height: 800 }, deviceScaleFactor: 1.25 })).newPage();
+  await stp.goto(`${base}/stop-emails/${l1.unsubToken}`, { waitUntil: "networkidle" });
+  await stp.screenshot({ path: `${out}/50-stop-emails.png`, fullPage: false });
+  await stp.click("text=Stop the emails"); await stp.waitForSelector("text=no more follow-up emails", { timeout: 15000 }); await stp.waitForTimeout(300);
+  await stp.screenshot({ path: `${out}/51-stop-emails-done.png`, fullPage: false });
+  ok("the person can stop the emails from the link", (await db.collection("leads").findOne({ _id: l1._id })).noFollowups === true);
+  await ap.goto("about:blank"); await ap.goto(`${base}/admin#leads`); await ap.waitForSelector("text=Follow-up emails", { timeout: 15000 });
+  await ap.click("button:has-text('Follow-up emails')"); await ap.waitForSelector("[data-step]", { timeout: 15000 });
+  await ap.click("[data-step='0'] >> text=Preview"); await ap.waitForSelector("[data-preview]", { timeout: 15000 }); await ap.waitForTimeout(500);
+  await ap.screenshot({ path: `${out}/52-followup-settings.png`, fullPage: true });
+  await ap.keyboard.press("Escape"); await ap.waitForTimeout(400);
+  await ap.click("text=Follow Lead 1").catch(() => undefined);
+  await ap.waitForSelector("[data-followups]", { timeout: 8000 }).then(() => ap.waitForTimeout(400)).then(() => ap.screenshot({ path: `${out}/53-lead-followups.png`, fullPage: false })).catch(() => undefined);
+  await db.collection("settings").updateOne({ _id: "billing" }, { $set: { "value.gstin": "" } });
   smtpSrv.close();
 } catch (e) {
   ok("run", false, String(e).slice(0, 300));

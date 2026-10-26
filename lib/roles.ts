@@ -36,6 +36,7 @@ const AREA_LIST = [
   { id: "media", label: "Image library", help: "Upload and delete images" },
   { id: "people", label: "Interns, applicants, certificates and HR letters", help: "Applications, status emails, certificates, offer and experience letters" },
   { id: "payroll", label: "Employees, payslips, attendance and leave", help: "Salary details, monthly payslips, approving leave and marking attendance" },
+  { id: "accounts", label: "Expenses, profit and GST report", help: "Add business expenses, see monthly profit and loss (includes total salaries) and the GST summary" },
   { id: "integrations", label: "WhatsApp button, analytics and cookie banner", help: "Tracking codes that run on every page" },
   { id: "activity", label: "Everyone's activity log", help: "Without this they see only their own", viewOnly: true },
 ] as const;

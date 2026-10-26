@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
+  PiggyBank, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
   LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -32,6 +32,7 @@ import AttendanceManager from "./AttendanceManager";
 import BookingsManager from "./BookingsManager";
 import ReviewsManager from "./ReviewsManager";
 import FeedbackManager from "./FeedbackManager";
+import AccountsManager from "./AccountsManager";
 import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
@@ -48,6 +49,7 @@ const sections = [
   { id: "payslips", label: "Payslips", Icon: Wallet, group: "Inbox" , perm: "payroll" },
   { id: "attendance", label: "Attendance and leave", Icon: CalendarCheck, group: "Inbox" , perm: "payroll" },
   { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "billing" },
+  { id: "accounts", label: "Expenses and profit", Icon: PiggyBank, group: "Inbox" , perm: "accounts" },
   { id: "clients", label: "Client portal", Icon: UsersRound, group: "Inbox" , perm: "clients" },
   { id: "feedback", label: "Client feedback", Icon: MessageSquareHeart, group: "Inbox" , perm: "leads" },
   { id: "reviews", label: "Google reviews", Icon: Star, group: "Inbox" , perm: "leads" },
@@ -320,7 +322,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "bookings", "reviews", "feedback", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
+  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "accounts", "bookings", "reviews", "feedback", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
 
@@ -432,6 +434,7 @@ function AdminShell() {
             {section === "reviews" && <ReviewsManager goApiKeys={() => go("apikeys")} />}
 
             {section === "feedback" && <FeedbackManager />}
+            {section === "accounts" && <AccountsManager readOnly={readOnly || (!!me && !can(me, "accounts", "edit"))} />}
 
             {section === "media" && <MediaLibrary />}
 

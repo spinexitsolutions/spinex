@@ -16,7 +16,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (deny) return deny;
   const _id = oid(params.id);
   if (!_id) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
-  const data = cleanLead(await jsonBody(req));
+  const body = await jsonBody(req);
+  const data = cleanLead(body);
   if (data.name === "") return NextResponse.json({ error: "Name can't be empty." }, { status: 400 });
   const col = await leadsCol();
   const before = await col.findOne({ _id });
@@ -32,7 +33,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
       update.assignedName = assignee.name;
     } else update.assignedName = "";
   }
-  const doc = await col.findOneAndUpdate({ _id }, { $set: { ...update, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
+  const extra = typeof body.noFollowups === "boolean" ? { noFollowups: body.noFollowups } : {};
+  const doc = await col.findOneAndUpdate({ _id }, { $set: { ...update, ...extra, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
   const lead = toLead(doc);
   if (data.status === "won" && before.status !== "won" && lead.email && (await getFeedbackSettings()).autoOnLeadWon) {
@@ -46,6 +48,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     data.followUp !== undefined && data.followUp !== String(before.followUp ?? "") && (data.followUp ? `follow-up ${data.followUp}` : "follow-up cleared"),
     data.value !== undefined && data.value !== String(before.value ?? "") && `value ₹${data.value || 0}`,
     data.notes !== undefined && data.notes !== String(before.notes ?? "") && "notes",
+    typeof body.noFollowups === "boolean" && body.noFollowups !== !!before.noFollowups && (body.noFollowups ? "stopped follow-up emails" : "follow-up emails back on"),
   ].filter(Boolean);
   if (what.length) await logActivity(await getSession(), "Leads", `Updated lead: ${what.join(", ")}`, lead.name, req);
 
