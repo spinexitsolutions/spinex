@@ -1,0 +1,354 @@
+PASS portal redirects to login when logged out
+PASS wrong code is refused (That code isn't right or has expired. Ask for a new one.)
+PASS client logs in with the emailed code
+PASS code works only once
+PASS overview shows the project
+PASS files page lists shared file
+PASS invoices page shows the invoice
+PASS ticket thread opens
+PASS client can't download another client's file (status 404)
+PASS client can't reply to another client's ticket (status 404)
+PASS client cookie can't open admin API (status 401)
+PASS client can open a support request (status 201)
+PASS client downloads own file as attachment (status 200)
+PASS switched-off client is logged out
+PASS login API works (status 200)
+PASS owner logs in to admin
+PASS admin makes a one-time login link
+PASS one-time link logs in (status 200)
+PASS one-time link can't be used twice (status 400)
+PASS admin replies to a ticket (status 200)
+PASS quote view is recorded
+PASS change request is saved
+PASS quote is accepted with a record (total 100000)
+PASS second accept is refused (status 409)
+PASS accepted quote is locked (status 200)
+PASS old version can't be accepted (status 409)
+PASS form posts from other sites are refused (status 400)
+PASS invoice link shows Pay now
+PASS webhook payment is recorded (paid 22700)
+PASS same payment twice is counted once
+PASS unsigned webhook is refused (status 400)
+PASS payment for an unknown order is ignored
+PASS full payment marks the invoice paid (paid 30000)
+PASS checkout with a fake signature is refused (status 400)
+PASS stale admin save can't overwrite a payment (status 409)
+PASS paid invoice hides Pay now
+PASS portal shows the AMC with days left
+PASS urgent complaint is saved as covered by AMC (status 201)
+PASS unknown type and urgent on non-problems are ignored
+PASS renew link fills the renewal request
+PASS admin open requests list puts urgent first (first Website is not opening)
+PASS reminder history can't be set from the browser
+PASS scheduler finds the AMC renewal due ({"due":1,"clientEmails":0})
+PASS reminder is marked as sent (2026-11-02:30,2026-11-02:7)
+PASS same reminder is not sent twice
+PASS renewal invoice is made and shown in the portal (status 201)
+PASS second renewal invoice is refused (status 409)
+PASS renew moves the plan one year ahead (2026-11-03 to 2027-11-02)
+PASS early renewal keeps the client covered until the new year starts
+PASS double renew is refused (status 409)
+PASS request after the AMC ended is marked not covered
+PASS portal asks to renew an expired plan
+PASS employee is added with an auto ID and only the last 4 bank digits (SPX-E-001 4821)
+PASS payslips are made for everyone working that month ({"made":2,"skipped":0,"noSalary":[],"id":"6ae0ca86cba67cab3ee8ad66"})
+PASS making them again doesn't duplicate
+PASS PF and ESI are worked out (net 16785)
+PASS leave without pay and a bonus are worked out (net 27380)
+PASS stale payslip save is refused (status 409)
+PASS draft payslip link doesn't open (status 404)
+PASS issue all drafts
+PASS issued payslip has number and code (SPX/PS/2026-09/001 SPX-P-PTC85M)
+PASS verify shows the payslip ({"valid":true,"kind":"payslip","certId":"SPX-P-PTC85M","letterType":"Payslip","number":"SPX/PS/2026-09/001","name":"Aman Verma","role":"Web Developer","month":")
+PASS issued payslip can't be changed
+PASS issued payslip can't be deleted
+PASS employee with issued payslips can't be deleted
+PASS employee link shows the payslip
+PASS payslip PDF is one page (1 pages)
+PASS revoked payslip shows as withdrawn
+PASS corrected payslip gets a new code, old one stops working (SPX-P-PTC85M → SPX-P-UJH9KA)
+PASS late joiner isn't counted as missing
+PASS team can add leave for someone (status 201)
+PASS leave over a holiday and Sunday counts only working days ({"pl":1,"d15":"holiday"})
+PASS pay cut days from absent, unpaid leave and half day (lop 3.5)
+PASS payslip paid days come from attendance (27.5 / 31)
+PASS salary is cut for those days (basic 7984)
+PASS staff wrong code is refused
+PASS employee logs in to the staff portal (status 200)
+PASS staff cookie can't open admin API (status 401)
+PASS check-in keeps the first time
+PASS employee applies for leave (status 201)
+PASS overlapping leave is refused (status 409)
+PASS leave on a weekly off is refused (status 400)
+PASS old backdated leave is refused
+PASS admin sees waiting requests first
+PASS admin approves leave
+PASS approving twice is refused
+PASS admin can say no
+PASS employee can't cancel a rejected request
+PASS employee can't touch other leave
+PASS staff portal shows balance, leave and payslips
+PASS employee marked as left is logged out
+PASS Meta webhook verification answers the challenge
+PASS wrong verify token is refused
+PASS unsigned Meta webhook is refused (status 401)
+PASS Meta lead lands in Leads ({"s":200,"n":"Rakesh Meena","p":"+919828012345"})
+PASS Meta lead keeps campaign, ad and extra answers (Meta Ads (Facebook / Instagram) | City: Jaipur)
+PASS same Meta lead twice is saved once
+PASS lead is kept even when the token fails (and Meta is asked to send it again)
+PASS Meta's retry fills in the details
+PASS Google webhook with the wrong key is refused
+PASS Google Ads lead lands in Leads ({"n":"Neha Agarwal","ch":"Google Ads","m":"Business type: Jewellery shop"})
+PASS same Google lead twice is saved once
+PASS Google test data is marked as a test
+PASS setup screen shows both working (Rakesh Meena)
+PASS booking is off until it is turned on
+PASS booking API refuses while off (status 403)
+PASS admin turns booking on
+PASS Google Calendar connects ({"ready":true,"connected":true,"email":"owner@spinex.test","redirectUri":"http://localhost:3200/api/admin/google/callback","error":""})
+PASS free times skip Google busy times and days off (["09:00","09:30","10:00","10:30","11:30","12:00"])
+PASS client books a call and gets a Meet link ({"ok":true,"token":"48eKYH-opmkCN2VaHOqLSIlj","when":"Wednesday, 28 October, 10:00 AM","meetLink":"https://meet.google.com/e2e-test-1","meetMode":"google"})
+PASS calendar event invites the client with a Meet request ({"dateTime":"2026-10-28T04:30:00.000Z","timeZone":"Asia/Kolkata"})
+PASS the same time can't be booked twice (status 409)
+PASS booking also shows in Leads
+PASS booked time leaves the page
+PASS can't move into a busy time
+PASS client moves the call
+PASS old time is free again
+PASS booking page has its own title
+PASS booking works in the browser
+PASS client's own link shows the call
+PASS contact page shows the book-a-call button
+PASS scheduler sends the 1-hour reminder ({"day":0,"hour":1})
+PASS reminder goes only once
+PASS client cancels and the calendar event goes
+PASS cancelled call can't be cancelled again
+PASS switched off: booking page says closed
+PASS reviews settings save
+PASS rating and reviews load from Google ({"s":200,"r":4.8})
+PASS home page shows the Google rating and good reviews
+PASS Google is not asked again on every visit (cached) (0 extra calls)
+PASS completing a project queues a review request ({"s":"scheduled","p":"E-commerce website"})
+PASS the same client isn't asked twice
+PASS scheduler sends the due request (failed (no email server in the test, so "failed" is expected))
+PASS review link opens Google's write-a-review page (<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Opening Google reviews…</tit)
+PASS an email scanner opening the link doesn't count as the client
+PASS opening the link is noted
+PASS team can ask a client by hand (status 201)
+PASS switched off: no reviews on the home page
+PASS email settings saved for the test (status 200)
+PASS payment reminders turned on
+PASS reminders go to the invoices that are due ({"sent":2,"overdue":10000})
+PASS paid, far-off and stopped invoices get nothing
+PASS overdue email says it is overdue
+PASS you get the list of reminders
+PASS a late invoice doesn't get several reminders at once (["2026-10-23:-3","2026-10-23:0","2026-10-23:3"])
+PASS the same reminder isn't sent twice
+PASS team sends a reminder by hand
+PASS reminders can be stopped for one invoice
+PASS monthly bill is set up (status 201)
+PASS scheduler makes this month's invoice ({"made":1})
+PASS the invoice is emailed to the client
+PASS monthly bill moves to the 5th of next month (2026-11-05 vs 2026-11-05)
+PASS no second invoice for the same month
+PASS next invoice can be made early by hand
+PASS an invoice can be turned into a monthly bill
+PASS pressing it again doesn't make a second monthly bill (status 409)
+PASS resuming a paused monthly bill carries on from the next date to come (2026-11-07)
+PASS completed project asks for feedback (instead of a direct Google request)
+PASS feedback email goes out
+PASS permission to show it on the website is not ticked for them
+PASS thank-you page invites a Google review
+PASS feedback can be sent only once
+PASS answer is saved
+PASS low rating alerts you
+PASS feedback the client didn't allow can't go on the website
+PASS approved feedback goes to Testimonials ({"id":"fb-3ee8ad9e","name":"Kavita Mehta","role":"Owner, Mehta Sweets","quote":"Mehta ji ki team ne humari restaurant website 2 hafte mein bana di. Online orders shuru ho gaye. Bahut achha kaam!","rating":"5"})
+PASS it shows on the home page
+PASS it can be taken off again
+PASS an expense needs an amount
+PASS expenses are added
+PASS vendor GSTIN is cleaned up
+PASS profit and loss: sales, expenses and salaries for the month ({"month":"2024-05","sales":150000,"invoiced":177000,"received":118000,"gstOut":27000,"expenses":35900,"gstIn":1800,"salaries":30000,"profit":84100,"byCategory":{"Ads and marketing":5900,"Software and tools":10000,"Rent":20000}})
+PASS cancelled invoices, quotations and draft payslips aren't counted
+PASS GST on a bill without the vendor's GSTIN counts as a cost (it can't be claimed back)
+PASS expenses by category
+PASS GST summary: CGST, SGST and IGST collected ({"taxable":150000,"cgst":9000,"sgst":9000,"igst":9000,"gstOut":27000,"gstIn":2700,"eligibleIn":1800,"payable":25200,"carryForward":0})
+PASS GST to pay = collected minus input credit (only bills with the vendor's GSTIN)
+PASS B2B invoice shows the client's GSTIN
+PASS GST file for the CA downloads
+PASS profit and loss file downloads
+PASS someone not logged in can't see the accounts (status 401)
+PASS repeating expense is added next month, once (["2026-09-22","2026-10-22"])
+PASS an expense can be changed
+PASS monthly chart bars are drawn ({"x":800.375,"y":399,"width":16,"height":150})
+PASS expense added from the admin screen
+PASS follow-up emails turned on (day 2 and day 5)
+PASS day 2 follow-up goes to a new lead ({"sent":2,"failed":0})
+PASS a lead past day 5 gets only the day 5 email
+PASS contacted, too-new, stopped, no-email and old leads get nothing
+PASS the lead keeps a record of what was sent
+PASS it is sent only once
+PASS then the day 5 email
+PASS follow-ups can be stopped for one lead
+PASS preview fills in the name and service
+PASS send me a test
+PASS the person can stop the emails from the link
+PASS telecaller role can be added and log in (201 200)
+PASS telecaller sees leads but not invoices, expenses or payslips
+PASS telecaller can't switch off call booking or change automatic emails (403 403)
+PASS telecaller doesn't see call bookings, feedback or reviews (["leads"])
+PASS no numbers for things already seen ({"leads":0,"attendance":0,"clients":2,"billing":0,"bookings":0,"interns":0,"feedback":0,"reviews":0})
+PASS a new lead shows as 1 on Leads (1)
+PASS opening Leads clears the number (0)
+PASS new lead appears on the open screen without a reload
+PASS sidebar shows 1 on Leads for the new lead while on another section
+PASS accountant can work on invoices and expenses, not leads or website
+PASS viewer can look at leads but change nothing, and can't see profit
+PASS nobody can be made a second owner
+PASS sweep admin desktop /admin#overview
+PASS sweep admin phone /admin#overview
+PASS sweep admin desktop /admin#leads
+PASS sweep admin phone /admin#leads
+PASS sweep admin desktop /admin#bookings
+PASS sweep admin phone /admin#bookings
+PASS sweep admin desktop /admin#interns
+PASS sweep admin phone /admin#interns
+PASS sweep admin desktop /admin#certificates
+PASS sweep admin phone /admin#certificates
+PASS sweep admin desktop /admin#letters
+PASS sweep admin phone /admin#letters
+PASS sweep admin desktop /admin#payslips
+PASS sweep admin phone /admin#payslips
+PASS sweep admin desktop /admin#attendance
+PASS sweep admin phone /admin#attendance
+PASS sweep admin desktop /admin#billing
+PASS sweep admin phone /admin#billing
+PASS sweep admin desktop /admin#accounts
+PASS sweep admin phone /admin#accounts
+PASS sweep admin desktop /admin#clients
+PASS sweep admin phone /admin#clients
+PASS sweep admin desktop /admin#feedback
+PASS sweep admin phone /admin#feedback
+PASS sweep admin desktop /admin#reviews
+PASS sweep admin phone /admin#reviews
+PASS sweep admin desktop /admin#replies
+PASS sweep admin phone /admin#replies
+PASS sweep admin desktop /admin#careers
+PASS sweep admin phone /admin#careers
+PASS sweep admin desktop /admin#blog
+PASS sweep admin phone /admin#blog
+PASS sweep admin desktop /admin#home
+PASS sweep admin phone /admin#home
+PASS sweep admin desktop /admin#hero
+PASS sweep admin phone /admin#hero
+PASS sweep admin desktop /admin#pages
+PASS sweep admin phone /admin#pages
+PASS sweep admin desktop /admin#services
+PASS sweep admin phone /admin#services
+PASS sweep admin desktop /admin#products
+PASS sweep admin phone /admin#products
+PASS sweep admin desktop /admin#projects
+PASS sweep admin phone /admin#projects
+PASS sweep admin desktop /admin#process
+PASS sweep admin phone /admin#process
+PASS sweep admin desktop /admin#industries
+PASS sweep admin phone /admin#industries
+PASS sweep admin desktop /admin#cities
+PASS sweep admin phone /admin#cities
+PASS sweep admin desktop /admin#profile
+PASS sweep admin phone /admin#profile
+PASS sweep admin desktop /admin#goals
+PASS sweep admin phone /admin#goals
+PASS sweep admin desktop /admin#planner
+PASS sweep admin phone /admin#planner
+PASS sweep admin desktop /admin#about
+PASS sweep admin phone /admin#about
+PASS sweep admin desktop /admin#testimonials
+PASS sweep admin phone /admin#testimonials
+PASS sweep admin desktop /admin#trusted
+PASS sweep admin phone /admin#trusted
+PASS sweep admin desktop /admin#internship
+PASS sweep admin phone /admin#internship
+PASS sweep admin desktop /admin#showreel
+PASS sweep admin phone /admin#showreel
+PASS sweep admin desktop /admin#chatbot
+PASS sweep admin phone /admin#chatbot
+PASS sweep admin desktop /admin#theme
+PASS sweep admin phone /admin#theme
+PASS sweep admin desktop /admin#media
+PASS sweep admin phone /admin#media
+PASS sweep admin desktop /admin#banners
+PASS sweep admin phone /admin#banners
+PASS sweep admin desktop /admin#seo
+PASS sweep admin phone /admin#seo
+PASS sweep admin desktop /admin#contact
+PASS sweep admin phone /admin#contact
+PASS sweep admin desktop /admin#history
+PASS sweep admin phone /admin#history
+PASS sweep admin desktop /admin#integrations
+PASS sweep admin phone /admin#integrations
+PASS sweep admin desktop /admin#backup
+PASS sweep admin phone /admin#backup
+PASS sweep admin desktop /admin#automation
+PASS sweep admin phone /admin#automation
+PASS sweep admin desktop /admin#apikeys
+PASS sweep admin phone /admin#apikeys
+PASS sweep admin desktop /admin#team
+PASS sweep admin phone /admin#team
+PASS sweep admin desktop /admin#activity
+PASS sweep admin phone /admin#activity
+PASS sweep admin desktop /admin#account
+PASS sweep admin phone /admin#account
+PASS sweep public desktop /
+PASS sweep public phone /
+PASS sweep public desktop /about
+PASS sweep public phone /about
+PASS sweep public desktop /services
+PASS sweep public phone /services
+PASS sweep public desktop /work
+PASS sweep public phone /work
+PASS sweep public desktop /products
+PASS sweep public phone /products
+PASS sweep public desktop /blog
+PASS sweep public phone /blog
+PASS sweep public desktop /careers
+PASS sweep public phone /careers
+PASS sweep public desktop /internship
+PASS sweep public phone /internship
+PASS sweep public desktop /contact
+PASS sweep public phone /contact
+PASS sweep public desktop /book
+PASS sweep public phone /book
+PASS sweep public desktop /website-development-jaipur
+PASS sweep public phone /website-development-jaipur
+PASS sweep public desktop /company-profile
+PASS sweep public phone /company-profile
+PASS sweep public desktop /verify
+PASS sweep public phone /verify
+PASS sweep public desktop /privacy
+PASS sweep public phone /privacy
+PASS sweep public desktop /terms
+PASS sweep public phone /terms
+PASS sweep public desktop /refund
+PASS sweep public phone /refund
+PASS sweep public desktop /portal/login
+PASS sweep public phone /portal/login
+PASS sweep public desktop /staff/login
+PASS sweep public phone /staff/login
+PASS sweep public desktop /d/e2eShareTokenSharmaTraders01
+PASS sweep public phone /d/e2eShareTokenSharmaTraders01
+PASS sweep public desktop /d/e2eOpenQuoteTokenSharma0001
+PASS sweep public phone /d/e2eOpenQuoteTokenSharma0001
+PASS sweep public desktop /p/EXuhbffqTzzCoa3MSEuZdBkr
+PASS sweep public phone /p/EXuhbffqTzzCoa3MSEuZdBkr
+PASS sweep public desktop /b/48eKYH-opmkCN2VaHOqLSIlj
+PASS sweep public phone /b/48eKYH-opmkCN2VaHOqLSIlj
+PASS sweep public desktop /f/hGuZNxfVypaGfFS83zdU
+PASS sweep public phone /f/hGuZNxfVypaGfFS83zdU
+PASS sweep staff portal phone /staff
+PASS sweep client portal phone /portal
+PASS sweep client portal phone /portal/invoices
+PASS sweep client portal phone /portal/support
+PASS sweep client portal phone /portal/files
