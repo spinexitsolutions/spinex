@@ -143,5 +143,5 @@ export async function getLetterhead(): Promise<Letterhead> {
 // use this website's own address (NEXT_PUBLIC_SITE_URL), so letters follow a domain change.
 export function letterVerifyBase(saved: string | undefined) {
   const v = String(saved ?? "").trim();
-  return !v || v === "spinexwebsolutions.in/verify" ? `${SITE_URL}/verify` : v;
+  return !v || v === "spinexwebsolutions.in/verify" || v === "spinexitsolutions.com/verify" ? `${SITE_URL}/verify` : v;
 }

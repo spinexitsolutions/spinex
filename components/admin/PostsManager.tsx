@@ -15,6 +15,7 @@ import ImageField from "./ImageField";
 import { TagInput } from "./fields";
 import MediaLibrary from "./MediaLibrary";
 import Modal from "./Modal";
+import { SITE_URL } from "@/lib/site";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -359,7 +360,7 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
           </Panel>
           <Panel title="Google search">
             <div className="rounded-xl border border-line p-3">
-              <p className="truncate text-xs text-muted">spinexwebsolutions.in/blog/{post.slug}</p>
+              <p className="truncate text-xs text-muted">{SITE_URL.replace(/^https?:\/\//, "")}/blog/{post.slug}</p>
               <p className="mt-0.5 line-clamp-2 text-[15px] text-[#1a0dab]">{seoTitle || "Post title"}</p>
               <p className="mt-0.5 line-clamp-2 text-xs text-muted">{seoDesc || "Add a summary or SEO description."}</p>
             </div>

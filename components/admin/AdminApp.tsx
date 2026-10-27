@@ -38,6 +38,7 @@ import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
 import { can, roleLabel, type Access, type Perm, type Role } from "@/lib/roles";
 import { LiveProvider, useBadges } from "./live";
+import { SITE_URL } from "@/lib/site";
 
 const sections = [
   { id: "overview", label: "Overview", Icon: LayoutDashboard, group: "" , perm: "stats" },
@@ -612,7 +613,7 @@ function AdminShell() {
               <div className="space-y-6">
                 <Card title="Google search result" note="How the home page appears on Google. Keep the title under 60 characters and the description between 140 and 160.">
                   <div className="mb-6 rounded-2xl border border-line p-5">
-                    <p className="text-xs text-muted">spinexwebsolutions.in</p>
+                    <p className="text-xs text-muted">{SITE_URL.replace(/^https?:\/\//, "")}</p>
                     <p className="mt-1 truncate text-lg text-[#1a0dab]">{draft.seo.metaTitle}</p>
                     <p className="mt-1 line-clamp-2 text-sm text-muted">{draft.seo.metaDescription}</p>
                   </div>

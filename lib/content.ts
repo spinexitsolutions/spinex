@@ -578,7 +578,7 @@ const baseContent: SiteContent = {
   certificate: {
     title: "Certificate of Internship",
     body: "has successfully completed an internship as {role} at {company} from {start} to {end}, and showed dedication, discipline and a strong willingness to learn.",
-    verifyUrl: "spinexwebsolutions.in/verify",
+    verifyUrl: "spinexitsolutions.com/verify",
     signers: [
       { id: "sg1", name: "Palak Pareek", title: "Founder", image: "" },
       { id: "sg2", name: "Supriya Banetiya", title: "E-commerce and Operations", image: "" },
@@ -849,6 +849,9 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   // Old company email saved in the admin panel → new one.
   const contact = out.contact as SiteContent["contact"];
   if (contact.email?.trim().toLowerCase() === "info.spinexwebsolutions@gmail.com") out.contact = { ...contact, email: base.contact.email };
+  // Old domain in the certificate verify address → the new domain.
+  const cert = out.certificate as SiteContent["certificate"];
+  if (cert?.verifyUrl && /^(https?:\/\/)?(www\.)?spinexwebsolutions\.in\/verify\/?$/i.test(cert.verifyUrl.trim())) out.certificate = { ...cert, verifyUrl: base.certificate.verifyUrl };
   const hero = out.hero as SiteContent["hero"];
   if (legacy && hero.kicker === "Website development company in Jaipur") out.hero = { ...hero, kicker: base.hero.kicker };
   // Planner timings: keep saved values, add defaults for services that have none yet.
