@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "Spinex IT Solutions builds websites, online stores and on-demand apps, and runs SEO, ads, social media, video and brand promotion for businesses across India.",
     keywords: ["IT Company Jaipur", "Website Development Jaipur", "Website Development India", "App Development", "Digital Marketing Agency India", "Spinex IT Solutions"],
     openGraph: { title: "Spinex IT Solutions", description: "Websites, apps and digital marketing from Jaipur, for businesses across India.", type: "website" },
-    // Browser tab and phone home-screen icon: the company logo from Admin > Brand and hero
+    // Browser tab and phone home-screen icon: the company logo from Admin > Logo and company name
     icons: brand.logo
       ? {
           icon: [{ url: "/api/brand-icon?size=64&pad=12", type: "image/png", sizes: "64x64" }, { url: "/api/brand-icon?size=192&pad=12", type: "image/png", sizes: "192x192" }],

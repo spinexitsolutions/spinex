@@ -157,7 +157,7 @@ export const defaultIntro: IntroSettings = {
   admin: false,
 };
 
-// Homepage hero: one of several designs, picked and customised in Admin → Brand and hero.
+// Homepage hero: one of several designs, picked and customised in Admin → Homepage hero.
 export const HERO_DESIGNS = ["classic", "centered", "split", "fullscreen", "bento", "aurora", "type"] as const;
 export type HeroDesign = (typeof HERO_DESIGNS)[number];
 export type HeroSettings = {
@@ -177,7 +177,7 @@ export const heroDefaults: Omit<HeroSettings, "kicker" | "title" | "subtitle" | 
   showStats: true, showLocation: true, showTicker: true,
 };
 
-// Custom mouse cursor on the website (desktop only; phones and tablets keep the normal touch), set in Admin → Intro & cursor.
+// Custom mouse cursor on the website (desktop only; phones and tablets keep the normal touch), set in Admin → Site settings → Intro & cursor.
 export const CURSOR_STYLES = ["ring", "dot", "blend", "glow"] as const;
 export type CursorStyle = (typeof CURSOR_STYLES)[number];
 export type CursorSettings = { enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean };

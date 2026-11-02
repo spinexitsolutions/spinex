@@ -16,7 +16,7 @@ const DESIGNS: Record<HeroDesign, { name: string; about: string; uses: string }>
   type: { name: "Big type", about: "A very large headline alone, with a dark band of services moving at the bottom.", uses: "Uses: services ticker" },
 };
 
-// Admin → Brand and hero: pick a hero design, see it live, and change its text, links, photo and colour.
+// Admin → Homepage hero: pick a hero design, see it live, and change its text, links, photo and colour.
 export default function HeroEditor({ value, onChange, readOnly }: { value: HeroSettings; onChange: (v: HeroSettings) => void; readOnly?: boolean }) {
   const v = heroSettings(value, value);
   const set = (patch: Partial<HeroSettings>) => onChange({ ...v, ...patch });

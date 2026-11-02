@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  PiggyBank, Sparkles, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
+  PiggyBank, Sparkles, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
   LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -47,53 +47,66 @@ import { SITE_URL } from "@/lib/site";
 
 const sections = [
   { id: "overview", label: "Overview", Icon: LayoutDashboard, group: "" , perm: "stats" },
-  { id: "leads", label: "Leads", Icon: Inbox, group: "Inbox" , perm: "leads" },
-  { id: "bookings", label: "Call bookings", Icon: Video, group: "Inbox" , perm: "bookings" },
-  { id: "interns", label: "Interns", Icon: Users, group: "Inbox" , perm: "people" },
-  { id: "certificates", label: "Certificates", Icon: Award, group: "Inbox" , perm: "people" },
-  { id: "letters", label: "HR letters", Icon: FileSignature, group: "Inbox" , perm: "people" },
-  { id: "payslips", label: "Payslips", Icon: Wallet, group: "Inbox" , perm: "payroll" },
-  { id: "attendance", label: "Attendance and leave", Icon: CalendarCheck, group: "Inbox" , perm: "payroll" },
-  { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Inbox" , perm: "billing" },
-  { id: "accounts", label: "Expenses and profit", Icon: PiggyBank, group: "Inbox" , perm: "accounts" },
-  { id: "clients", label: "Client portal", Icon: UsersRound, group: "Inbox" , perm: "clients" },
-  { id: "feedback", label: "Client feedback", Icon: MessageSquareHeart, group: "Inbox" , perm: "reviews" },
-  { id: "reviews", label: "Google reviews", Icon: Star, group: "Inbox" , perm: "reviews" },
-  { id: "replies", label: "Auto-reply and alerts", Icon: MailCheck, group: "Inbox" , perm: "content" },
-  { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
-  { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "blog" },
-  { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Content" , perm: "content" },
-  { id: "intro", label: "Intro & cursor", Icon: Sparkles, group: "Content" , perm: "content" },
-  { id: "hero", label: "Brand and hero", Icon: Type, group: "Content" , perm: "content" },
-  { id: "pages", label: "Page headers", Icon: PanelTop, group: "Content" , perm: "content" },
-  { id: "services", label: "Services", Icon: Layers, group: "Content" , perm: "content" },
-  { id: "products", label: "Products", Icon: Package, group: "Content" , perm: "content" },
-  { id: "projects", label: "Projects", Icon: Briefcase, group: "Content" , perm: "content" },
-  { id: "process", label: "Process steps", Icon: ListOrdered, group: "Content" , perm: "content" },
-  { id: "industries", label: "Industries", Icon: Building2, group: "Content" , perm: "content" },
-  { id: "cities", label: "City pages (local SEO)", Icon: MapPin, group: "Content" , perm: "content" },
-  { id: "profile", label: "Company profile (PDF)", Icon: BookOpen, group: "Content" , perm: "content" },
-  { id: "goals", label: "Goal picker", Icon: Target, group: "Content" , perm: "content" },
-  { id: "planner", label: "Project planner", Icon: CalendarClock, group: "Content" , perm: "content" },
-  { id: "about", label: "About and stats", Icon: Info, group: "Content" , perm: "content" },
-  { id: "testimonials", label: "Testimonials", Icon: Quote, group: "Content" , perm: "content" },
-  { id: "trusted", label: "Trusted by (clients)", Icon: BadgeCheck, group: "Content" , perm: "content" },
-  { id: "internship", label: "Internship", Icon: GraduationCap, group: "Content" , perm: "content" },
-  { id: "showreel", label: "Showreel video", Icon: Film, group: "Content" , perm: "content" },
-  { id: "chatbot", label: "Chatbot and FAQ", Icon: Bot, group: "Content" , perm: "content" },
-  { id: "theme", label: "Colour theme", Icon: Palette, group: "Files and settings" , perm: "content" },
-  { id: "media", label: "Media", Icon: Images, group: "Files and settings" , perm: "media" },
-  { id: "banners", label: "Page banners", Icon: ImageIcon, group: "Files and settings" , perm: "content" },
-  { id: "seo", label: "SEO", Icon: Search, group: "Files and settings" , perm: "content" },
-  { id: "contact", label: "Contact details", Icon: Phone, group: "Files and settings" , perm: "content" },
-  { id: "history", label: "History", Icon: History, group: "Files and settings" , perm: "content" },
-  { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Files and settings" , perm: "integrations" },
-  { id: "backup", label: "Backup and restore", Icon: DatabaseBackup, group: "Files and settings" , perm: "content" },
-  { id: "automation", label: "Automation and backups", Icon: Timer, group: "Files and settings" , perm: "users" },
-  { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Files and settings" , perm: "users" },
-  { id: "team", label: "Team and roles", Icon: UserCog, group: "Files and settings" , perm: "users" },
-  { id: "activity", label: "Activity log", Icon: ScrollText, group: "Files and settings" , perm: "any" },
-  { id: "account", label: "My account", Icon: UserRound, group: "Files and settings" , perm: "any" },
+  { id: "leads", label: "Leads", Icon: Inbox, group: "CRM" , perm: "leads" },
+  { id: "bookings", label: "Call bookings", Icon: Video, group: "CRM" , perm: "bookings" },
+  { id: "clients", label: "Clients and portal", Icon: UsersRound, group: "CRM" , perm: "clients" },
+  { id: "feedback", label: "Client feedback", Icon: MessageSquareHeart, group: "CRM" , perm: "reviews" },
+  { id: "reviews", label: "Google reviews", Icon: Star, group: "CRM" , perm: "reviews" },
+  { id: "replies", label: "Lead emails and alerts", Icon: MailCheck, group: "CRM" , perm: "content" },
+  { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Sales and accounts" , perm: "billing" },
+  { id: "accounts", label: "Expenses and profit", Icon: PiggyBank, group: "Sales and accounts" , perm: "accounts" },
+  { id: "interns", label: "Interns", Icon: Users, group: "HR and team" , perm: "people" },
+  { id: "attendance", label: "Attendance and leave", Icon: CalendarCheck, group: "HR and team" , perm: "payroll" },
+  { id: "payslips", label: "Payslips", Icon: Wallet, group: "HR and team" , perm: "payroll" },
+  { id: "letters", label: "HR letters", Icon: FileSignature, group: "HR and team" , perm: "people" },
+  { id: "certificates", label: "Certificates", Icon: Award, group: "HR and team" , perm: "people" },
+  { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Website pages" , perm: "content" },
+  { id: "hero", label: "Homepage hero", Icon: Type, group: "Website pages" , perm: "content" },
+  { id: "pages", label: "Page headers", Icon: PanelTop, group: "Website pages" , perm: "content" },
+  { id: "banners", label: "Page banners", Icon: ImageIcon, group: "Website pages" , perm: "content" },
+  { id: "about", label: "About and stats", Icon: Info, group: "Website pages" , perm: "content" },
+  { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Website pages" , perm: "content" },
+  { id: "internship", label: "Internship", Icon: GraduationCap, group: "Website pages" , perm: "content" },
+  { id: "cities", label: "City pages (local SEO)", Icon: MapPin, group: "Website pages" , perm: "content" },
+  { id: "services", label: "Services", Icon: Layers, group: "Website content" , perm: "content" },
+  { id: "products", label: "Products", Icon: Package, group: "Website content" , perm: "content" },
+  { id: "projects", label: "Projects", Icon: Briefcase, group: "Website content" , perm: "content" },
+  { id: "industries", label: "Industries", Icon: Building2, group: "Website content" , perm: "content" },
+  { id: "process", label: "Process steps", Icon: ListOrdered, group: "Website content" , perm: "content" },
+  { id: "testimonials", label: "Testimonials", Icon: Quote, group: "Website content" , perm: "content" },
+  { id: "trusted", label: "Trusted by (clients)", Icon: Handshake, group: "Website content" , perm: "content" },
+  { id: "goals", label: "Goal picker", Icon: Target, group: "Website content" , perm: "content" },
+  { id: "planner", label: "Project planner", Icon: CalendarClock, group: "Website content" , perm: "content" },
+  { id: "showreel", label: "Showreel video", Icon: Film, group: "Website content" , perm: "content" },
+  { id: "profile", label: "Company profile (PDF)", Icon: BookOpen, group: "Website content" , perm: "content" },
+  { id: "chatbot", label: "Chatbot and FAQ", Icon: Bot, group: "Website content" , perm: "content" },
+  { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Blog and media" , perm: "blog" },
+  { id: "media", label: "Media", Icon: Images, group: "Blog and media" , perm: "media" },
+  { id: "brand", label: "Logo and company name", Icon: BadgeCheck, group: "Site settings" , perm: "content" },
+  { id: "contact", label: "Contact details", Icon: Phone, group: "Site settings" , perm: "content" },
+  { id: "theme", label: "Colour theme", Icon: Palette, group: "Site settings" , perm: "content" },
+  { id: "intro", label: "Intro & cursor", Icon: Sparkles, group: "Site settings" , perm: "content" },
+  { id: "seo", label: "SEO", Icon: Search, group: "Site settings" , perm: "content" },
+  { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Site settings" , perm: "integrations" },
+  { id: "team", label: "Team and roles", Icon: UserCog, group: "Admin and security" , perm: "users" },
+  { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Admin and security" , perm: "users" },
+  { id: "automation", label: "Automation", Icon: Timer, group: "Admin and security" , perm: "users" },
+  { id: "backup", label: "Backup and restore", Icon: DatabaseBackup, group: "Admin and security" , perm: "content" },
+  { id: "history", label: "History", Icon: History, group: "Admin and security" , perm: "content" },
+  { id: "activity", label: "Activity log", Icon: ScrollText, group: "Admin and security" , perm: "any" },
+  { id: "account", label: "My account", Icon: UserRound, group: "Admin and security" , perm: "any" },
+] as const;
+
+// Sidebar groups, in order. A group shows only if this person can open something in it.
+const GROUPS = [
+  { label: "CRM", Icon: Contact },
+  { label: "Sales and accounts", Icon: ReceiptIndianRupee },
+  { label: "HR and team", Icon: Users },
+  { label: "Website pages", Icon: LayoutTemplate },
+  { label: "Website content", Icon: Layers },
+  { label: "Blog and media", Icon: Newspaper },
+  { label: "Site settings", Icon: Settings },
+  { label: "Admin and security", Icon: ShieldCheck },
 ] as const;
 
 type SectionId = (typeof sections)[number]["id"];
@@ -148,6 +161,19 @@ function AdminShell() {
   const badgeTitle: Record<string, string> = { leads: "new leads", bookings: "new call bookings", clients: "new client messages", attendance: "new leave requests", billing: "quotations accepted, changes asked or payments received", feedback: "new feedback", reviews: "clients opened the review link", interns: "new applications" };
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
+  const [find, setFind] = useState("");
+  // Sidebar groups the person opened; the group of the open section is always open. Remembered on this computer.
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+  useEffect(() => {
+    try { const saved = JSON.parse(localStorage.getItem("spinex-admin-groups") || "[]"); if (Array.isArray(saved)) setOpenGroups((now) => Array.from(new Set([...now, ...saved.filter((x) => typeof x === "string")]))); } catch {}
+  }, []);
+  const saveGroups = (next: string[]) => { try { localStorage.setItem("spinex-admin-groups", JSON.stringify(next)); } catch {} return next; };
+  const toggleGroup = (label: string) => setOpenGroups((list) => saveGroups(list.includes(label) ? list.filter((x) => x !== label) : [...list, label]));
+  // Opening a section (from the address, the dashboard or search) opens its group.
+  useEffect(() => {
+    const g = sections.find((x) => x.id === section)?.group;
+    if (g) setOpenGroups((list) => (list.includes(g) ? list : saveGroups([...list, g])));
+  }, [section]);
   const [conflict, setConflict] = useState("");
   // True when the latest saved content couldn't be fetched, so the save base is unknown.
   const [loadFailed, setLoadFailed] = useState(false);
@@ -360,18 +386,50 @@ function AdminShell() {
           </div>
           <button onClick={() => setNav(false)} className="lg:hidden" aria-label="Close menu"><X size={20} /></button>
         </div>
+        <div className="relative mb-3">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a section…" aria-label="Find a section" data-admin-find
+            className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/30" />
+        </div>
         <nav className="-mx-1 flex-1 space-y-0.5 overflow-y-auto px-1 [scrollbar-width:thin]" aria-label="Admin sections">
-          {allowed.map(({ id, label, Icon, group }, i) => (
-            <div key={id}>
-            {group && group !== allowed[i - 1]?.group && <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-white/35">{group}</p>}
-            <button onClick={() => { go(id); setNav(false); }} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14.5px]">
-              {section === id && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-white/10" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
-              <Icon size={17} className={`relative ${section === id ? "text-lav-300" : "text-white/50"}`} />
-              <span className={`relative flex-1 ${section === id ? "text-white" : "text-white/70"}`}>{label}</span>
-              {badgeOf(id) > 0 && <span title={`${badgeOf(id)} ${badgeTitle[id] ?? ""}`} className={`relative rounded-full px-2 py-0.5 text-xs font-bold tabular-nums bg-lav-500 text-white`}>{badgeOf(id)}</span>}
-            </button>
-            </div>
-          ))}
+          {find.trim() ? (
+            <>
+              {allowed.filter((x) => `${x.label} ${x.group}`.toLowerCase().includes(find.trim().toLowerCase())).map((x) => (
+                <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} sub={x.group} onClick={() => { go(x.id); setNav(false); setFind(""); }} />
+              ))}
+              {!allowed.some((x) => `${x.label} ${x.group}`.toLowerCase().includes(find.trim().toLowerCase())) && <p className="px-3 py-2 text-sm text-white/50">Nothing found.</p>}
+            </>
+          ) : (
+            <>
+              {allowed.filter((x) => !x.group).map((x) => (
+                <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} onClick={() => { go(x.id); setNav(false); }} />
+              ))}
+              {GROUPS.map((g) => {
+                const items = allowed.filter((x) => x.group === g.label);
+                if (!items.length) return null;
+                const isOpen = openGroups.includes(g.label);
+                const total = items.reduce((n, x) => n + badgeOf(x.id), 0);
+                return (
+                  <div key={g.label} className="pt-1" data-admin-group={g.label}>
+                    <button type="button" onClick={() => toggleGroup(g.label)} aria-expanded={isOpen}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold uppercase tracking-wider text-white/55 hover:bg-white/5 hover:text-white">
+                      <g.Icon size={16} className="text-white/45" />
+                      <span className="flex-1">{g.label}</span>
+                      {!isOpen && total > 0 && <span className="rounded-full bg-lav-500 px-2 py-0.5 text-xs font-bold normal-case tabular-nums text-white">{total}</span>}
+                      <ChevronDown size={15} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {isOpen && (
+                      <div className="ml-[18px] space-y-0.5 border-l border-white/10 pl-2">
+                        {items.map((x) => (
+                          <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} onClick={() => { go(x.id); setNav(false); }} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )}
         </nav>
         {me && (
           <div className="mt-4 rounded-xl bg-white/5 px-3 py-2.5">
@@ -388,7 +446,7 @@ function AdminShell() {
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-white/90 px-5 py-4 backdrop-blur sm:px-8">
           <button onClick={() => setNav(true)} className="lg:hidden" aria-label="Open menu"><Menu size={22} /></button>
-          <h1 className="flex-1 font-display text-xl font-semibold">{current.label}</h1>
+          <div className="min-w-0 flex-1">{current.group && <p className="truncate text-xs font-semibold uppercase tracking-wider text-muted">{current.group}</p>}<h1 className="truncate font-display text-xl font-semibold">{current.label}</h1></div>
           <Link href="/" target="_blank" className="hidden items-center gap-2 text-sm text-muted hover:text-ink sm:flex"><ExternalLink size={15} /> View site</Link>
           {contentSection && dirty && <button onClick={() => setDraft(content)} className="btn-ghost px-4 py-2 text-sm">Discard</button>}
           {contentSection && dirty && <button onClick={preview} disabled={previewing} title="See the website with these changes before they go live (only you see it)" className="btn-ghost px-4 py-2 text-sm">{previewing ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />} Preview</button>}
@@ -421,7 +479,7 @@ function AdminShell() {
             </p>
           )}
           <motion.div key={section} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            {section === "overview" && <Dashboard go={(id) => go(id as SectionId)} name={me?.name ?? "there"} />}
+            {section === "overview" && <Dashboard go={(id) => go(id as SectionId)} name={me?.name ?? "there"} areas={GROUPS.map((g) => ({ label: g.label, Icon: g.Icon, items: allowed.filter((x) => x.group === g.label) })).filter((a) => a.items.length > 0)} />}
 
             {section === "team" && <UsersManager />}
 
@@ -477,21 +535,17 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "hero" && (
-              <div className="space-y-6">
-                <Card title="Brand">
-                  <ObjectEditor value={draft.brand} onChange={(v) => set("brand", v)} fields={[
-                    { key: "name", label: "Company name" },
-                    { key: "tagline", label: "Tagline", hint: "Shown in the footer" },
-                    { key: "logo", label: "Logo", type: "image", hint: "Used in navbar and footer only" },
-                  ]} />
-                </Card>
-                <div>
-                  <h2 className="mb-3 font-display text-xl font-semibold">Homepage hero</h2>
-                  <HeroEditor value={draft.hero} onChange={(v) => set("hero", v)} readOnly={readOnly} />
-                </div>
-              </div>
+            {section === "brand" && (
+              <Card title="Logo and company name">
+                <ObjectEditor value={draft.brand} onChange={(v) => set("brand", v)} fields={[
+                  { key: "name", label: "Company name" },
+                  { key: "tagline", label: "Tagline", hint: "Shown in the footer" },
+                  { key: "logo", label: "Logo", type: "image", hint: "Used in the navbar, footer, intro and browser tab" },
+                ]} />
+              </Card>
             )}
+
+            {section === "hero" && <HeroEditor value={draft.hero} onChange={(v) => set("hero", v)} readOnly={readOnly} />}
 
             {section === "blog" && <PostsManager onDirtyChange={setPostDirty} readOnly={readOnly} />}
 
@@ -1039,5 +1093,23 @@ function Backup({ draft, onImport, onReset }: { draft: SiteContent; onImport: (c
         <button onClick={() => { if (confirm("Replace the live website content with the original content? This can't be undone unless you have a backup.")) onReset(); }} className="btn border border-red-200 text-red-600 hover:bg-red-50"><RotateCcw size={17} /> Restore defaults</button>
       </Card>
     </div>
+  );
+}
+
+function NavItem({ item, active, badge, title, sub, onClick }: {
+  item: { id: string; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> };
+  active: boolean; badge: number; title?: string; sub?: string; onClick: () => void;
+}) {
+  const { Icon } = item;
+  return (
+    <button onClick={onClick} data-admin-nav={item.id} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14.5px]">
+      {active && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-white/10" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
+      <Icon size={17} className={`relative shrink-0 ${active ? "text-lav-300" : "text-white/50"}`} />
+      <span className={`relative flex-1 ${active ? "text-white" : "text-white/70"}`}>
+        {item.label}
+        {sub && <span className="block text-[11px] text-white/40">{sub}</span>}
+      </span>
+      {badge > 0 && <span title={`${badge} ${title ?? ""}`} className="relative rounded-full bg-lav-500 px-2 py-0.5 text-xs font-bold tabular-nums text-white">{badge}</span>}
+    </button>
   );
 }

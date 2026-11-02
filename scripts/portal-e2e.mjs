@@ -1069,6 +1069,21 @@ try {
     cr = await ap.request.get(`${base}/api/admin/content`); cd = await cr.json();
     await ap.request.put(`${base}/api/admin/content`, { data: { ...cd, cursor: { ...(cd.cursor || {}), enabled: true } }, headers: { "x-base-updated": cr.headers()["x-content-updated"] || "unknown" } });
   }
+  // ---- Admin menu: grouped categories, search, dashboard shortcuts ----
+  {
+    await ap.goto("about:blank"); await ap.goto(`${base}/admin#overview`); await ap.waitForSelector("[data-admin-group]", { timeout: 15000 });
+    const groups = await ap.locator("[data-admin-group]").evaluateAll((els) => els.map((e) => e.getAttribute("data-admin-group")));
+    ok("admin menu shows the categories", ["CRM", "Sales and accounts", "HR and team", "Website pages", "Website content", "Blog and media", "Site settings", "Admin and security"].every((g) => groups.includes(g)), groups.join(", "));
+    await ap.waitForSelector("[data-admin-areas]", { timeout: 15000 }).catch(() => undefined);
+    ok("dashboard shows shortcut cards for each category", (await ap.locator("[data-admin-areas] section").count()) >= 8);
+    await ap.screenshot({ path: `${out}/62-admin-menu.png`, fullPage: false });
+    await ap.fill("[data-admin-find]", "logo");
+    const found = await ap.locator('[data-admin-nav="brand"]').count();
+    await ap.screenshot({ path: `${out}/63-admin-find.png`, fullPage: false });
+    await ap.click('[data-admin-nav="brand"]').catch(() => undefined);
+    await ap.waitForTimeout(600);
+    ok("menu search finds Logo and company name in Site settings", found === 1 && ap.url().endsWith("#brand"), ap.url());
+  }
   // ---- Hero designs: picker in admin, and each design on the website (desktop and phone) ----
   {
     mkdirSync(`${out}/hero`, { recursive: true });

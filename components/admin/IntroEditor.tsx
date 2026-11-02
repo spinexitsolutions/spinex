@@ -97,7 +97,7 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, logo, r
           <Text label="Top-left text" value={v.cornerLeft} onChange={(x) => set({ cornerLeft: x })} placeholder="Leave empty to hide" />
           <Text label="Top-right text" value={v.cornerRight} onChange={(x) => set({ cornerRight: x })} placeholder="Leave empty to hide" />
           <label className="flex items-center gap-3 text-sm sm:col-span-2">
-            <input type="checkbox" checked={v.showLogo} onChange={(e) => set({ showLogo: e.target.checked })} /> Show the logo (from Brand and hero)
+            <input type="checkbox" checked={v.showLogo} onChange={(e) => set({ showLogo: e.target.checked })} /> Show the logo (from Site settings → Logo and company name)
           </label>
         </div>
 

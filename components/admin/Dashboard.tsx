@@ -19,7 +19,9 @@ type Stats = {
 
 const PALETTE = ["#6E59D9", "#A595FB", "#120F1B", "#34C78C", "#FFBD2E", "#FF7896", "#C2B6FF"];
 
-export default function Dashboard({ go, name }: { go: (s: string) => void; name: string }) {
+type Area = { label: string; Icon: React.ComponentType<{ size?: number; className?: string }>; items: { id: string; label: string }[] };
+
+export default function Dashboard({ go, name, areas = [] }: { go: (s: string) => void; name: string; areas?: Area[] }) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState("");
 
@@ -44,6 +46,22 @@ export default function Dashboard({ go, name }: { go: (s: string) => void; name:
   return (
     <div className="space-y-6">
       <h2 className="font-display text-2xl font-semibold">{greet}, {name.split(" ")[0]}.</h2>
+
+      {areas.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-admin-areas>
+          {areas.map((a) => (
+            <section key={a.label} className="rounded-2xl border border-line bg-white p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold"><a.Icon size={16} className="text-lav-600" /> {a.label}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {a.items.slice(0, 8).map((x) => (
+                  <button key={x.id} type="button" onClick={() => go(x.id)} className="rounded-full bg-mist px-2.5 py-1 text-xs font-medium text-ink/75 hover:bg-ink hover:text-white">{x.label}</button>
+                ))}
+                {a.items.length > 8 && <span className="px-1 py-1 text-xs text-muted">+{a.items.length - 8} more in the menu</span>}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {leads && <Kpi Icon={Inbox} label="New leads this week" value={leads.newThisWeek} onClick={() => go("leads")} />}

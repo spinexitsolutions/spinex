@@ -80,7 +80,7 @@ export default function ProfileEditor({ value, onChange }: { value: CompanyProfi
           { key: "address", label: "Office address", hint: "leave empty to use Contact details" },
           { key: "website", label: "Website", hint: "printed on every page and in the QR code" },
         ]} />
-        <p className="mt-4 text-sm text-muted">Phone, email and social links come from Contact details. The logo comes from Brand and hero.</p>
+        <p className="mt-4 text-sm text-muted">Phone, email and social links come from Contact details. The logo comes from Logo and company name.</p>
       </section>
     </div>
   );
