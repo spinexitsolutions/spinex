@@ -1025,6 +1025,50 @@ try {
     const back = await rr.json();
     await ap.request.put(`${base}/api/admin/content`, { data: { ...back, intro: { ...back.intro, when: "session", style: "logo", pageTransition: "curtain", background: "", accent: "" } }, headers: { "x-base-updated": rr.headers()["x-content-updated"] || "unknown" } });
   }
+  // ---- Custom cursor: desktop only, and it can be switched off in admin ----
+  {
+    await ap.goto("about:blank"); await ap.goto(`${base}/admin#intro`); await ap.waitForSelector("[data-cursor-editor]", { timeout: 15000 });
+    ok("cursor settings show 4 styles", (await ap.locator("[data-cursor-option]").count()) === 4);
+    await ap.locator("[data-cursor-editor]").scrollIntoViewIfNeeded();
+    const tryBox = await ap.locator("[data-cursor-try]").boundingBox();
+    if (tryBox) { await ap.mouse.move(tryBox.x + 40, tryBox.y + 40); await ap.mouse.move(tryBox.x + tryBox.width / 2 - 60, tryBox.y + tryBox.height / 2 + 18, { steps: 8 }); }
+    await ap.waitForTimeout(500);
+    await ap.locator("[data-cursor-editor]").screenshot({ path: `${out}/59-cursor-settings.png` });
+    const skipIntro = () => { try { sessionStorage.setItem("spinex-intro-seen", "1"); } catch {} };
+    const cursorOn = async (pg) => pg.evaluate(() => !!document.querySelector(".spx-cursor") && document.documentElement.classList.contains("custom-cursor"));
+    const dc2 = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    await dc2.addInitScript(skipIntro);
+    const dp = await dc2.newPage();
+    await dp.goto(`${base}/`, { waitUntil: "domcontentloaded" });
+    await dp.waitForTimeout(1200);
+    await dp.mouse.move(300, 300); await dp.mouse.move(640, 380, { steps: 10 });
+    await dp.waitForTimeout(400);
+    const deskOn = await cursorOn(dp);
+    const link = dp.locator("main a").first();
+    const lb = await link.boundingBox().catch(() => null);
+    if (lb) { await dp.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2, { steps: 10 }); await dp.waitForTimeout(500); }
+    await dp.screenshot({ path: `${out}/60-cursor-desktop.png`, fullPage: false });
+    ok("custom cursor shows on desktop", deskOn);
+    const ph = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+    await ph.addInitScript(skipIntro);
+    const pp = await ph.newPage();
+    await pp.goto(`${base}/`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(1500);
+    await pp.touchscreen.tap(200, 400).catch(() => undefined);
+    ok("no custom cursor on a phone", !(await cursorOn(pp)));
+    await ph.close();
+    let cr = await ap.request.get(`${base}/api/admin/content`);
+    let cd = await cr.json();
+    let sr = await ap.request.put(`${base}/api/admin/content`, { data: { ...cd, cursor: { ...(cd.cursor || {}), enabled: false } }, headers: { "x-base-updated": cr.headers()["x-content-updated"] || "unknown" } });
+    ok("cursor switch-off saves", sr.status() === 200 && (await sr.json()).cursor?.enabled === false, `status ${sr.status()}`);
+    await dp.reload({ waitUntil: "domcontentloaded" });
+    await dp.waitForTimeout(1200);
+    await dp.mouse.move(500, 300); await dp.mouse.move(640, 380, { steps: 6 });
+    ok("cursor switched off in admin is gone on the website", !(await cursorOn(dp)));
+    await dc2.close();
+    cr = await ap.request.get(`${base}/api/admin/content`); cd = await cr.json();
+    await ap.request.put(`${base}/api/admin/content`, { data: { ...cd, cursor: { ...(cd.cursor || {}), enabled: true } }, headers: { "x-base-updated": cr.headers()["x-content-updated"] || "unknown" } });
+  }
   // ---- Sweep: every admin section and public page, desktop and phone ----
   {
     const { readFileSync } = await import("node:fs");

@@ -6,6 +6,15 @@ import { Play, RotateCcw } from "lucide-react";
 import IntroAnimation, { STYLE_INFO, introLength } from "../intro/IntroAnimation";
 import { INTRO_STYLES, defaultIntro, type IntroSettings, type PageTransition } from "@/lib/content";
 import { introSettings } from "../Intro";
+import CustomCursor, { CursorMarks, cursorSettings } from "../CustomCursor";
+import { CURSOR_STYLES, type CursorSettings, type CursorStyle } from "@/lib/content";
+
+const CURSORS: Record<CursorStyle, { name: string; about: string }> = {
+  ring: { name: "Dot and ring", about: "A small dot with a ring that follows. The ring grows over links." },
+  dot: { name: "Soft dot", about: "One coloured dot that grows over links and buttons." },
+  blend: { name: "Invert", about: "A white circle that flips the colours under it." },
+  glow: { name: "Glow", about: "A small dot with a soft light following it." },
+};
 
 const TRANSITIONS: Record<PageTransition, { name: string; about: string }> = {
   none: { name: "None", about: "The new page just appears." },
@@ -16,7 +25,14 @@ const TRANSITIONS: Record<PageTransition, { name: string; about: string }> = {
 };
 
 // Admin → Intro animation: pick a style, see it play, and set text, colours, speed and when it shows.
-export default function IntroEditor({ value, onChange, logo, readOnly }: { value: IntroSettings; onChange: (v: IntroSettings) => void; logo: string; readOnly?: boolean }) {
+export default function IntroEditor({ value, onChange, cursor, onCursor, logo, readOnly }: {
+  value: IntroSettings; onChange: (v: IntroSettings) => void;
+  cursor?: Partial<CursorSettings>; onCursor?: (v: CursorSettings) => void;
+  logo: string; readOnly?: boolean;
+}) {
+  const cur = cursorSettings(cursor);
+  const setCur = (patch: Partial<CursorSettings>) => onCursor?.({ ...cur, ...patch });
+  const [trying, setTrying] = useState(false);
   const v = introSettings(value);
   const set = (patch: Partial<IntroSettings>) => onChange({ ...v, ...patch });
   const [run, setRun] = useState(0);
@@ -125,8 +141,47 @@ export default function IntroEditor({ value, onChange, logo, readOnly }: { value
           <input type="checkbox" className="h-5 w-5" checked={v.admin} onChange={(e) => set({ admin: e.target.checked })} />
         </label>
         <button type="button" onClick={() => { onChange({ ...defaultIntro }); replay(); }} className="text-sm font-semibold text-muted underline hover:text-ink">Reset intro to the default</button>
+
+        {/* Custom cursor */}
+        {onCursor && (
+          <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-cursor-editor>
+            <p className="font-semibold">Mouse cursor</p>
+            <p className="text-sm text-muted">A custom cursor on the website. Only on computers (mouse or trackpad). Phones and tablets never show it.</p>
+            <label className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-line p-4">
+              <span><b>Show the custom cursor on desktop</b><span className="block text-sm text-muted">Switch off to use the normal arrow cursor.</span></span>
+              <input type="checkbox" name="cursorOn" className="h-5 w-5" checked={cur.enabled} onChange={(e) => setCur({ enabled: e.target.checked })} />
+            </label>
+            <div className={`mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 ${cur.enabled ? "" : "opacity-50"}`}>
+              {CURSOR_STYLES.map((id) => (
+                <button type="button" key={id} data-cursor-option={id} onClick={() => setCur({ style: id })}
+                  className={`rounded-2xl border p-3 text-left transition ${cur.style === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                  <span className="relative block h-16 overflow-hidden rounded-xl bg-mist">
+                    <span className="absolute inset-y-0 right-0 w-1/2 bg-ink" />
+                    <CursorMarks style={id} color={cur.color} still />
+                  </span>
+                  <span className="mt-2 block text-sm font-semibold">{CURSORS[id].name}</span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-muted">{CURSORS[id].about}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap items-end gap-6">
+              <ColourPick label="Cursor colour" value={cur.color} fallback="#8873EE" onChange={(x) => setCur({ color: x })} />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={cur.admin} onChange={(e) => setCur({ admin: e.target.checked })} /> Use it in the admin panel too
+              </label>
+            </div>
+            <div onMouseEnter={() => setTrying(true)} onMouseLeave={() => setTrying(false)} data-cursor-try
+              className="mt-4 grid h-36 place-items-center rounded-2xl border border-dashed border-line bg-mist text-center text-sm text-muted">
+              <div>
+                <p className="font-semibold text-ink">Move your mouse here to try it</p>
+                <p className="mt-2 flex justify-center gap-2"><a href="#cursor" onClick={(e) => e.preventDefault()} className="btn-dark px-4 py-2 text-xs">A button</a><span className="rounded-full bg-ink px-4 py-2 text-xs text-white">Dark area</span></p>
+              </div>
+            </div>
+            {trying && <CustomCursor cfg={{ ...cur, enabled: true }} />}
+          </div>
+        )}
       </fieldset>
-      <p className="text-xs text-muted">People who turn on “reduce motion” on their phone or computer don&apos;t see the intro. Press <b>Save and publish</b> at the top to put changes live.</p>
+      <p className="text-xs text-muted">People who turn on “reduce motion” on their phone or computer don&apos;t see the intro or the custom cursor. Press <b>Save and publish</b> at the top to put changes live.</p>
     </div>
   );
 }

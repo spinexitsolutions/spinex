@@ -34,6 +34,7 @@ import ReviewsManager from "./ReviewsManager";
 import FeedbackManager from "./FeedbackManager";
 import AccountsManager from "./AccountsManager";
 import IntroEditor from "./IntroEditor";
+import CustomCursor from "../CustomCursor";
 import IntroAnimation from "../intro/IntroAnimation";
 import { introSettings } from "../Intro";
 import AutomationPanel from "./AutomationPanel";
@@ -61,7 +62,7 @@ const sections = [
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "blog" },
   { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Content" , perm: "content" },
-  { id: "intro", label: "Intro animation", Icon: Sparkles, group: "Content" , perm: "content" },
+  { id: "intro", label: "Intro & cursor", Icon: Sparkles, group: "Content" , perm: "content" },
   { id: "hero", label: "Brand and hero", Icon: Type, group: "Content" , perm: "content" },
   { id: "pages", label: "Page headers", Icon: PanelTop, group: "Content" , perm: "content" },
   { id: "services", label: "Services", Icon: Layers, group: "Content" , perm: "content" },
@@ -343,6 +344,7 @@ function AdminShell() {
 
   return (
     <LiveProvider value={badges}>
+    {me && content.cursor?.admin && section !== "intro" && <CustomCursor cfg={content.cursor} />}
     {adminIntro && <IntroAnimation cfg={introSettings(content.intro)} logo={content.brand.logo} onDone={() => setAdminIntro(false)} />}
     <MediaDeleteContext.Provider value={!!me && can(me, "media", "edit")}>
     <div className="min-h-screen bg-mist lg:flex">
@@ -901,7 +903,7 @@ function AdminShell() {
               </Card>
             )}
 
-            {section === "intro" && <IntroEditor value={draft.intro} onChange={(v) => set("intro", v)} logo={draft.brand.logo} readOnly={readOnly} />}
+            {section === "intro" && <IntroEditor value={draft.intro} onChange={(v) => set("intro", v)} cursor={draft.cursor} onCursor={(v) => set("cursor", v)} logo={draft.brand.logo} readOnly={readOnly} />}
 
             {section === "showreel" && (
               <Card title="Showreel">

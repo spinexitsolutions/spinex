@@ -62,3 +62,25 @@ body { @apply bg-white text-ink font-sans; }
 .prose-spinex pre { background: rgb(var(--c-ink)); color: rgb(var(--c-lav-100)); padding: 1.2em 1.4em; border-radius: 16px; overflow-x: auto; font-size: 0.85em; line-height: 1.6; }
 .prose-spinex pre code { background: none; padding: 0; }
 .prose-spinex hr { border: 0; border-top: 1px solid rgb(var(--c-line)); margin: 2.5em 0; }
+
+/* Custom cursor (components/CustomCursor.tsx). Desktop only; the class is added by the script. */
+html.custom-cursor, html.custom-cursor * { cursor: none !important; }
+html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]):not([type="color"]), textarea, [contenteditable="true"]) { cursor: text !important; }
+.spx-cursor > div { translate: -50% -50%; border-radius: 9999px; transition: width .25s cubic-bezier(.2,.8,.2,1), height .25s cubic-bezier(.2,.8,.2,1), background-color .25s, border-color .25s, opacity .2s, scale .15s; }
+.spx-cursor > div[data-down="1"] { scale: .8; }
+/* Ring: small dot plus a ring that follows a little behind. */
+.spx-cursor-ring { width: 38px; height: 38px; border: 1.5px solid var(--cur); }
+.spx-cursor-ring[data-hover="1"] { width: 64px; height: 64px; background: color-mix(in srgb, var(--cur) 16%, transparent); border-color: color-mix(in srgb, var(--cur) 60%, transparent); }
+.spx-cursor-ring-dot { width: 7px; height: 7px; background: var(--cur); }
+.spx-cursor-ring-dot[data-hover="1"] { width: 4px; height: 4px; }
+/* Dot: one soft dot that grows over links and buttons. */
+.spx-cursor-dot-dot { width: 14px; height: 14px; background: var(--cur); }
+.spx-cursor-dot-dot[data-hover="1"] { width: 52px; height: 52px; background: color-mix(in srgb, var(--cur) 30%, transparent); }
+/* Blend: a white circle that inverts the colours under it. */
+.spx-cursor-blend-dot { width: 24px; height: 24px; background: #fff; mix-blend-mode: difference; }
+.spx-cursor-blend-dot[data-hover="1"] { width: 76px; height: 76px; }
+/* Glow: small dot with a soft light following it. */
+.spx-cursor-glow { width: 260px; height: 260px; background: radial-gradient(circle, color-mix(in srgb, var(--cur) 28%, transparent) 0%, transparent 65%); }
+.spx-cursor-glow[data-hover="1"] { width: 340px; height: 340px; }
+.spx-cursor-glow-dot { width: 8px; height: 8px; background: var(--cur); box-shadow: 0 0 12px var(--cur); }
+.spx-cursor-glow-dot[data-hover="1"] { width: 22px; height: 22px; background: color-mix(in srgb, var(--cur) 40%, transparent); }

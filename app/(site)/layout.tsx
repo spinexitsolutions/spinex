@@ -4,6 +4,7 @@ import Chatbot from "@/components/Chatbot";
 import SmoothScroll from "@/components/SmoothScroll";
 import ScrollProgress from "@/components/ScrollProgress";
 import { IntroProvider, IntroCover } from "@/components/Intro";
+import { SiteCursor } from "@/components/CustomCursor";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import Analytics from "@/components/Analytics";
 import CookieBanner from "@/components/CookieBanner";
@@ -28,6 +29,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <Analytics />
         <CookieBanner />
         <AttributionTracker />
+        <SiteCursor />
         {previewing === "on" && <PreviewBar />}
         {previewing === "stale" && <ClearStalePreview />}
         {customCode && <CustomCode code={customCode} />}

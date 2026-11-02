@@ -157,6 +157,12 @@ export const defaultIntro: IntroSettings = {
   admin: false,
 };
 
+// Custom mouse cursor on the website (desktop only; phones and tablets keep the normal touch), set in Admin → Intro & cursor.
+export const CURSOR_STYLES = ["ring", "dot", "blend", "glow"] as const;
+export type CursorStyle = (typeof CURSOR_STYLES)[number];
+export type CursorSettings = { enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean };
+export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false };
+
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
 export type Heading = { heading: string; intro: string };
 export type PageText = { title: string; intro: string };
@@ -282,6 +288,7 @@ export type SiteContent = {
   leadReplies: LeadReplies;
   showreel: { title: string; video: string; poster: string };
   intro: IntroSettings;
+  cursor: CursorSettings;
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
@@ -660,6 +667,7 @@ const baseContent: SiteContent = {
     ],
   },
   intro: defaultIntro,
+  cursor: defaultCursor,
   showreel: {
     title: "A look at what we make",
     video: "/showreel.mp4",
