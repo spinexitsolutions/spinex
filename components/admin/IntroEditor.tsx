@@ -44,7 +44,7 @@ export default function IntroEditor({ value, onChange, logo, readOnly }: { value
             <button type="button" onClick={replay} className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold shadow"><RotateCcw size={12} /> Replay</button>
           )}
         </div>
-        {!v.enabled && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">The intro is switched off, so visitors won't see it. Switch it on below.</p>}
+        {!v.enabled && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">The intro is switched off, so visitors won&apos;t see it. Switch it on below.</p>}
       </div>
 
       <fieldset disabled={readOnly} className="space-y-6">
@@ -126,7 +126,7 @@ export default function IntroEditor({ value, onChange, logo, readOnly }: { value
         </label>
         <button type="button" onClick={() => { onChange({ ...defaultIntro }); replay(); }} className="text-sm font-semibold text-muted underline hover:text-ink">Reset intro to the default</button>
       </fieldset>
-      <p className="text-xs text-muted">People who turn on “reduce motion” on their phone or computer don't see the intro. Press <b>Save and publish</b> at the top to put changes live.</p>
+      <p className="text-xs text-muted">People who turn on “reduce motion” on their phone or computer don&apos;t see the intro. Press <b>Save and publish</b> at the top to put changes live.</p>
     </div>
   );
 }
