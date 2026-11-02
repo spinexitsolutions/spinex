@@ -1012,13 +1012,13 @@ try {
     const ic = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const ip = await ic.newPage();
     await ip.goto(`${base}/about`, { waitUntil: "domcontentloaded" });
-    const firstSeen = await ip.waitForSelector('[data-intro="letters"]', { timeout: 10000 }).then(() => true).catch(() => false);
+    const firstSeen = await ip.waitForSelector('[data-intro="letters"]', { state: "attached", timeout: 10000 }).then(() => true).catch(() => false);
     const domInfo = await ip.evaluate(() => `intro el: ${document.querySelector("[data-intro]")?.getAttribute("data-intro") ?? "none"}, cover: ${document.getElementById("intro-cover")?.style.display}, seen: ${sessionStorage.getItem("spinex-intro-seen")}`);
     await ip.waitForTimeout(900);
     await ip.screenshot({ path: `${out}/58-intro-on-site.png`, fullPage: false });
     await ip.waitForSelector('[data-intro="letters"]', { state: "detached", timeout: 15000 }).catch(() => undefined);
     await ip.reload({ waitUntil: "domcontentloaded" });
-    const againSeen = await ip.waitForSelector('[data-intro="letters"]', { timeout: 10000 }).then(() => true).catch(() => false);
+    const againSeen = await ip.waitForSelector('[data-intro="letters"]', { state: "attached", timeout: 10000 }).then(() => true).catch(() => false);
     ok("chosen intro plays on any page, and again on every visit when set to 'every time'", firstSeen && againSeen, `${firstSeen} ${againSeen} | ${htmlInfo} | ${domInfo}`);
     await ic.close();
     rr = await ap.request.get(`${base}/api/admin/content`);
