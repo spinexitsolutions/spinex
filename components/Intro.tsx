@@ -7,6 +7,9 @@ import IntroAnimation from "./intro/IntroAnimation";
 import { INTRO_STYLES, PAGE_TRANSITIONS, defaultIntro, type IntroSettings } from "@/lib/content";
 
 const SEEN_KEY = "spinex-intro-seen";
+// This page load's decision (play the intro or not), and whether it has finished.
+let decision: boolean | null = null;
+let finished = false;
 const IntroContext = createContext(true);
 // Layout effect on the client so the decision lands before the first paint after hydration.
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -89,30 +92,35 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   const [done, setDone] = useState(false);
 
   useIsoLayoutEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let seen = true;
-    try {
-      seen = !!sessionStorage.getItem(SEEN_KEY);
-    } catch {
-      // Storage blocked: count it as seen rather than replay it on every page.
+    // Decided once per page load. If React mounts this twice (it can while recovering from an error),
+    // the second mount keeps the first decision instead of thinking the intro was already seen.
+    if (decision === null) {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let seen = true;
+      try {
+        seen = !!sessionStorage.getItem(SEEN_KEY);
+      } catch {
+        // Storage blocked: count it as seen rather than replay it on every page.
+      }
+      decision = shouldPlay(cfg, path, seen, reduced);
+      if (decision) {
+        try {
+          sessionStorage.setItem(SEEN_KEY, "1");
+        } catch {
+          // ignore: storage unavailable
+        }
+      }
     }
-    if (!shouldPlay(cfg, path, seen, reduced)) {
+    if (!decision || finished) {
       hideCover();
       setDone(true);
       return;
-    }
-    try {
-      sessionStorage.setItem(SEEN_KEY, "1");
-    } catch {
-      // ignore: storage unavailable
     }
     lockScroll();
     setShow(true);
     return () => {
       unlockScroll();
-      hideCover();
     };
-    // Decided once, on the first page of the visit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -129,6 +137,7 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
           cfg={cfg}
           logo={content.brand.logo}
           onDone={() => {
+            finished = true;
             setShow(false);
             unlockScroll();
             setDone(true);

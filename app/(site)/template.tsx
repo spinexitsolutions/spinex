@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useLayoutEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useContent } from "@/components/ContentProvider";
 import { introSettings } from "@/components/Intro";
 
 // Runs again on every page change. The very first page of a visit has the intro instead, so it only fades in.
-let firstPage = true;
+// Decided in the browser only, so the server and the browser draw the same first frame.
+let navigated = false;
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 const ease: [number, number, number, number] = [0.76, 0, 0.24, 1];
 
 // Transition between pages (Admin → Intro animation → Between pages). The overlay sits on top of the new
@@ -13,8 +16,13 @@ const ease: [number, number, number, number] = [0.76, 0, 0.24, 1];
 export default function Template({ children }: { children: React.ReactNode }) {
   const { content } = useContent();
   const cfg = introSettings(content.intro);
-  const kind = firstPage ? "fade" : cfg.pageTransition;
-  firstPage = false;
+  const [kind, setKind] = useState<string>("fade");
+  // Before the new page is painted: page changes get the chosen transition, the first page doesn't.
+  useIsoLayoutEffect(() => {
+    if (navigated) setKind(cfg.pageTransition);
+    navigated = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const bg = cfg.background || "rgb(var(--c-ink))";
   const accent = cfg.accent || "rgb(var(--c-lav-400))";
   return (
