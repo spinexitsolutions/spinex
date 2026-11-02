@@ -16,7 +16,7 @@ const ok = (name, pass, extra = "") => {
   try { writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); } catch {}
 };
 // Never hang the CI job: save what we have and stop after 12 minutes.
-setTimeout(() => { report.push("FAIL run (stopped after 24 minutes)"); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(0); }, 24 * 60e3).unref();
+setTimeout(() => { report.push("FAIL run (stopped after 30 minutes)"); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(0); }, 30 * 60e3).unref();
 const hash = (v) => createHash("sha256").update(`${process.env.AUTH_SECRET}:${v}`).digest("hex");
 
 process.on("unhandledRejection", (e) => { report.push(`FAIL crashed (${String(e).slice(0, 400)})`); writeFileSync(`${out}/report.txt`, report.join("\n") + "\n"); process.exit(1); });
@@ -1068,6 +1068,48 @@ try {
     await dc2.close();
     cr = await ap.request.get(`${base}/api/admin/content`); cd = await cr.json();
     await ap.request.put(`${base}/api/admin/content`, { data: { ...cd, cursor: { ...(cd.cursor || {}), enabled: true } }, headers: { "x-base-updated": cr.headers()["x-content-updated"] || "unknown" } });
+  }
+  // ---- Hero designs: picker in admin, and each design on the website (desktop and phone) ----
+  {
+    mkdirSync(`${out}/hero`, { recursive: true });
+    const designs = ["classic", "centered", "split", "fullscreen", "bento", "aurora", "type"];
+    await ap.goto("about:blank"); await ap.goto(`${base}/admin#hero`); await ap.waitForSelector("[data-hero-preview]", { timeout: 15000 });
+    ok("hero editor shows 7 designs with a live preview", (await ap.locator("[data-hero-design]").count()) === 7);
+    for (const d of designs) {
+      await ap.click(`[data-hero-design="${d}"]`);
+      await ap.waitForTimeout(1400);
+      await ap.locator("[data-hero-preview]").screenshot({ path: `${out}/hero/admin-${d}.png` });
+    }
+    await ap.locator("[data-hero-preview]").scrollIntoViewIfNeeded();
+    await ap.screenshot({ path: `${out}/61-hero-editor.png`, fullPage: false });
+    const saveHero = async (patch) => {
+      const r0 = await ap.request.get(`${base}/api/admin/content`);
+      const d0 = await r0.json();
+      const r1 = await ap.request.put(`${base}/api/admin/content`, { data: { ...d0, hero: { ...d0.hero, ...patch } }, headers: { "x-base-updated": r0.headers()["x-content-updated"] || "unknown" } });
+      return { status: r1.status(), hero: (await r1.json().catch(() => ({}))).hero };
+    };
+    const skip = () => { try { sessionStorage.setItem("spinex-intro-seen", "1"); } catch {} };
+    const hd = await browser.newContext({ viewport: { width: 1440, height: 900 } }); await hd.addInitScript(skip);
+    const hm = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }); await hm.addInitScript(skip);
+    const dpg = await hd.newPage(); const mpg = await hm.newPage();
+    const bad = [];
+    for (const d of designs) {
+      const r = await saveHero({ design: d, highlight: "your business runs on" });
+      if (r.status !== 200 || r.hero?.design !== d) { bad.push(`${d}: save ${r.status}`); continue; }
+      for (const [pg, tag] of [[dpg, "desktop"], [mpg, "phone"]]) {
+        await pg.goto(`${base}/`, { waitUntil: "domcontentloaded" });
+        const seen = await pg.waitForSelector(`[data-hero="${d}"]`, { state: "attached", timeout: 15000 }).then(() => true).catch(() => false);
+        await pg.waitForTimeout(1800);
+        const wide = await pg.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        if (!seen) bad.push(`${d} ${tag}: not shown`);
+        if (wide > 2) bad.push(`${d} ${tag}: ${wide}px too wide`);
+        await pg.screenshot({ path: `${out}/hero/${tag}-${d}.png`, fullPage: false });
+      }
+    }
+    ok("every hero design shows on the website, fits on desktop and phone", bad.length === 0, bad.join("; "));
+    await hd.close(); await hm.close();
+    const back = await saveHero({ design: "classic", highlight: "" });
+    ok("hero set back to the default design", back.status === 200 && back.hero?.design === "classic");
   }
   // ---- Sweep: every admin section and public page, desktop and phone ----
   {

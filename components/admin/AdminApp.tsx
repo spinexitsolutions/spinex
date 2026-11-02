@@ -34,6 +34,7 @@ import ReviewsManager from "./ReviewsManager";
 import FeedbackManager from "./FeedbackManager";
 import AccountsManager from "./AccountsManager";
 import IntroEditor from "./IntroEditor";
+import HeroEditor from "./HeroEditor";
 import CustomCursor from "../CustomCursor";
 import IntroAnimation from "../intro/IntroAnimation";
 import { introSettings } from "../Intro";
@@ -485,15 +486,10 @@ function AdminShell() {
                     { key: "logo", label: "Logo", type: "image", hint: "Used in navbar and footer only" },
                   ]} />
                 </Card>
-                <Card title="Homepage hero">
-                  <ObjectEditor value={draft.hero} onChange={(v) => set("hero", v)} fields={[
-                    { key: "kicker", label: "Keyword line (part of the H1)", hint: "Small line above the headline, e.g. Website development company in Jaipur" },
-                    { key: "title", label: "Headline", type: "textarea" },
-                    { key: "subtitle", label: "Supporting text", type: "textarea" },
-                    { key: "primaryCta", label: "Main button" },
-                    { key: "secondaryCta", label: "Second button" },
-                  ]} />
-                </Card>
+                <div>
+                  <h2 className="mb-3 font-display text-xl font-semibold">Homepage hero</h2>
+                  <HeroEditor value={draft.hero} onChange={(v) => set("hero", v)} readOnly={readOnly} />
+                </div>
               </div>
             )}
 

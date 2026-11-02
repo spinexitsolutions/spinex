@@ -157,6 +157,26 @@ export const defaultIntro: IntroSettings = {
   admin: false,
 };
 
+// Homepage hero: one of several designs, picked and customised in Admin → Brand and hero.
+export const HERO_DESIGNS = ["classic", "centered", "split", "fullscreen", "bento", "aurora", "type"] as const;
+export type HeroDesign = (typeof HERO_DESIGNS)[number];
+export type HeroSettings = {
+  kicker: string; title: string; subtitle: string; primaryCta: string; secondaryCta: string;
+  design: HeroDesign;
+  highlight: string; // words of the headline shown in the highlight colour ("" = none)
+  primaryLink: string; secondaryLink: string;
+  image: string; // split and full-screen designs
+  video: string; // full-screen design (.mp4), optional
+  overlay: number; // full-screen design: how dark the layer over the photo is, 0–90
+  accent: string; // highlight colour, "" = brand
+  showStats: boolean; showLocation: boolean; showTicker: boolean;
+};
+export const heroDefaults: Omit<HeroSettings, "kicker" | "title" | "subtitle" | "primaryCta" | "secondaryCta"> = {
+  design: "classic", highlight: "", primaryLink: "/contact", secondaryLink: "/work",
+  image: "/images/stock/photo-1522071820081-009f0129c71c.jpg", video: "", overlay: 55, accent: "",
+  showStats: true, showLocation: true, showTicker: true,
+};
+
 // Custom mouse cursor on the website (desktop only; phones and tablets keep the normal touch), set in Admin → Intro & cursor.
 export const CURSOR_STYLES = ["ring", "dot", "blend", "glow"] as const;
 export type CursorStyle = (typeof CURSOR_STYLES)[number];
@@ -267,7 +287,7 @@ export type SiteContent = {
   planner: PlannerSettings;
   removedServices: string[]; // built-in service ids the admin deleted on purpose
   brand: { name: string; logo: string; tagline: string };
-  hero: { kicker: string; title: string; subtitle: string; primaryCta: string; secondaryCta: string };
+  hero: HeroSettings;
   sections: {
     services: Heading; why: Heading; process: Heading; work: Heading; industries: Heading; goals: Heading;
     planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; tools: string[];
@@ -362,6 +382,7 @@ const baseContent: SiteContent = {
       "Spinex IT Solutions builds fast business websites, Shopify and WooCommerce stores, and runs SEO, social media, ads and video for brands in Jaipur and across India.",
     primaryCta: "Start your project",
     secondaryCta: "See our work",
+    ...heroDefaults,
   },
   sections: {
     services: { heading: "What we do, done properly.", intro: "One team for your website, store, ads, social and video, so everything looks and works like one brand." },
