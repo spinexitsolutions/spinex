@@ -7,6 +7,7 @@ import {
   PiggyBank, Sparkles, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
   LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
@@ -1097,7 +1098,7 @@ function Backup({ draft, onImport, onReset }: { draft: SiteContent; onImport: (c
 }
 
 function NavItem({ item, active, badge, title, sub, onClick }: {
-  item: { id: string; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> };
+  item: { id: string; label: string; Icon: LucideIcon };
   active: boolean; badge: number; title?: string; sub?: string; onClick: () => void;
 }) {
   const { Icon } = item;

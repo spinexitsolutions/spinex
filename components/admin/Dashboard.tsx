@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BellRing, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { leadStatusLabel, LEAD_SOURCES, type LeadStatus } from "@/lib/leads";
 import { statusLabel, type Status } from "@/lib/interns";
 
@@ -19,7 +20,7 @@ type Stats = {
 
 const PALETTE = ["#6E59D9", "#A595FB", "#120F1B", "#34C78C", "#FFBD2E", "#FF7896", "#C2B6FF"];
 
-type Area = { label: string; Icon: React.ComponentType<{ size?: number; className?: string }>; items: { id: string; label: string }[] };
+type Area = { label: string; Icon: LucideIcon; items: { id: string; label: string }[] };
 
 export default function Dashboard({ go, name, areas = [] }: { go: (s: string) => void; name: string; areas?: Area[] }) {
   const [stats, setStats] = useState<Stats | null>(null);
