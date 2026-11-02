@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
-import { AnimatePresence, animate, motion } from "framer-motion";
-import { ease } from "./Reveal";
+import { usePathname } from "next/navigation";
+import { useContent } from "./ContentProvider";
+import IntroAnimation from "./intro/IntroAnimation";
+import { INTRO_STYLES, PAGE_TRANSITIONS, defaultIntro, type IntroSettings } from "@/lib/content";
 
 const SEEN_KEY = "spinex-intro-seen";
 const IntroContext = createContext(true);
@@ -22,29 +24,50 @@ function unlockScroll() {
   root.style.paddingRight = "";
 }
 
-// Dark screen sent in the page HTML, shown by a tiny script before the page is painted, so a first-time
-// visitor never sees the page flash before the intro starts. Hidden by default: returning visitors,
-// people with reduced motion and browsers without JavaScript never see it. The intro below takes over from it.
-const COVER_ID = "intro-cover";
-const coverScript = `(function(){try{if(sessionStorage.getItem("${SEEN_KEY}"))return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;var c=document.getElementById("${COVER_ID}");if(c)c.style.display="flex"}catch(e){}})()`;
+// Saved settings with anything unknown replaced by the default, so a bad value can never break the page.
+export function introSettings(raw: Partial<IntroSettings> | undefined): IntroSettings {
+  const v = { ...defaultIntro, ...(raw ?? {}) };
+  const color = (c: unknown) => (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : "");
+  return {
+    ...v,
+    enabled: v.enabled !== false,
+    style: (INTRO_STYLES as readonly string[]).includes(v.style) ? v.style : defaultIntro.style,
+    pageTransition: (PAGE_TRANSITIONS as readonly string[]).includes(v.pageTransition) ? v.pageTransition : defaultIntro.pageTransition,
+    when: v.when === "always" ? "always" : "session",
+    pages: v.pages === "home" ? "home" : "all",
+    speed: v.speed === "fast" || v.speed === "slow" ? v.speed : "normal",
+    title: String(v.title ?? "").slice(0, 60),
+    tagline: String(v.tagline ?? "").slice(0, 80),
+    cornerLeft: String(v.cornerLeft ?? "").slice(0, 60),
+    cornerRight: String(v.cornerRight ?? "").slice(0, 60),
+    background: color(v.background),
+    accent: color(v.accent),
+    text: color(v.text),
+    showLogo: v.showLogo !== false,
+    admin: !!v.admin,
+  };
+}
 
-export function IntroCover() {
+// Should the intro play on this page load? Same rules on the server-sent cover script and in React.
+function shouldPlay(cfg: IntroSettings, path: string, seen: boolean, reduced: boolean) {
+  if (!cfg.enabled || reduced) return false;
+  if (cfg.pages === "home" && path !== "/") return false;
+  if (cfg.when === "session" && seen) return false;
+  return true;
+}
+
+// Plain screen in the intro's colour, sent with the page HTML and shown by a tiny script before the page is painted,
+// so a visitor never sees the page flash before the intro starts. Hidden by default (returning visitors, reduced
+// motion, no JavaScript). The animated intro takes over from it.
+const COVER_ID = "intro-cover";
+export function IntroCover({ cfg: raw }: { cfg?: Partial<IntroSettings> }) {
+  const cfg = introSettings(raw);
+  const rules = JSON.stringify({ enabled: cfg.enabled, pages: cfg.pages, when: cfg.when });
+  const script = `(function(){try{var r=${rules};if(!r.enabled)return;if(r.pages==="home"&&location.pathname!=="/")return;if(r.when==="session"&&sessionStorage.getItem("${SEEN_KEY}"))return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;var c=document.getElementById("${COVER_ID}");if(c)c.style.display="block"}catch(e){}})()`;
   return (
     <>
-      <div
-        id={COVER_ID}
-        suppressHydrationWarning
-        aria-hidden
-        style={{ display: "none" }}
-        className="fixed inset-0 z-[99] flex-col justify-between bg-ink p-6 text-white sm:p-10"
-      >
-        <div className="flex justify-between text-sm text-white/55">
-          <span>Spinex IT Solutions</span>
-          <span>Jaipur</span>
-        </div>
-        <div className="h-[2px] w-full bg-white/10" />
-      </div>
-      <script dangerouslySetInnerHTML={{ __html: coverScript }} />
+      <div id={COVER_ID} suppressHydrationWarning aria-hidden style={{ display: "none", background: cfg.background || "rgb(var(--c-ink))" }} className="fixed inset-0 z-[99]" />
+      <script dangerouslySetInnerHTML={{ __html: script }} />
     </>
   );
 }
@@ -54,16 +77,16 @@ const hideCover = () => {
   if (c) c.style.display = "none";
 };
 
-// True once the intro loader has finished (or was skipped). Hero waits for this.
+// True once the intro has finished (or was skipped). The home hero waits for this.
 export const useIntroDone = () => useContext(IntroContext);
 
-// The overlay is never part of the server HTML (no flash for returning visitors, nothing stuck
-// on screen without JS). On mount we decide: first visit in this session plays it, otherwise
-// the hero is released straight away.
+// Decides on the first load whether the intro plays (settings in Admin → Intro animation), then plays it once.
 export function IntroProvider({ children }: { children: React.ReactNode }) {
+  const { content } = useContent();
+  const cfg = introSettings(content.intro);
+  const path = usePathname() || "/";
   const [show, setShow] = useState(false);
   const [done, setDone] = useState(false);
-  const [count, setCount] = useState(0);
 
   useIsoLayoutEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -71,80 +94,47 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
     try {
       seen = !!sessionStorage.getItem(SEEN_KEY);
     } catch {
-      // Storage blocked: skip the intro rather than replay it on every page.
+      // Storage blocked: count it as seen rather than replay it on every page.
     }
-    if (seen || reduced) {
+    if (!shouldPlay(cfg, path, seen, reduced)) {
       hideCover();
-      setShow(false);
       setDone(true);
       return;
     }
-    setShow(true);
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      // ignore: storage unavailable
+    }
     lockScroll();
-    const c = animate(0, 100, {
-      duration: 1.3,
-      ease: [0.65, 0, 0.35, 1],
-      onUpdate: (v) => setCount(Math.round(v)),
-      onComplete: () => {
-        try {
-          sessionStorage.setItem(SEEN_KEY, "1");
-        } catch {
-          // ignore: storage unavailable
-        }
-        setShow(false);
-      },
-    });
+    setShow(true);
     return () => {
-      c.stop();
       unlockScroll();
       hideCover();
     };
+    // Decided once, on the first page of the visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // The animated intro is on screen now, so the plain cover under it can go.
   useEffect(() => {
-    if (show) hideCover();
+    if (show) requestAnimationFrame(hideCover);
   }, [show]);
 
   return (
     <IntroContext.Provider value={done}>
       {children}
-      <AnimatePresence
-        onExitComplete={() => {
-          unlockScroll();
-          setDone(true);
-        }}
-      >
-        {show && (
-          <motion.div
-            key="intro"
-            data-lenis-prevent
-            className="fixed inset-0 z-[100] flex flex-col justify-between bg-ink p-6 text-white sm:p-10"
-            exit={{ clipPath: "inset(0 0 100% 0)" }}
-            transition={{ duration: 0.8, ease }}
-            aria-hidden
-          >
-            <div className="flex justify-between text-sm text-white/55">
-              <span>Spinex IT Solutions</span>
-              <span>Jaipur</span>
-            </div>
-            <div className="overflow-hidden">
-              <motion.p
-                initial={{ y: "100%" }}
-                animate={{ y: "0%" }}
-                transition={{ duration: 0.8, ease }}
-                className="font-display text-[22vw] font-bold leading-[0.85] tracking-tightest sm:text-[16vw]"
-              >
-                {count}
-                <span className="text-lav-400">%</span>
-              </motion.p>
-            </div>
-            <div className="h-[2px] w-full overflow-hidden bg-white/10">
-              <div className="h-full bg-lav-400" style={{ width: `${count}%` }} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {show && (
+        <IntroAnimation
+          cfg={cfg}
+          logo={content.brand.logo}
+          onDone={() => {
+            setShow(false);
+            unlockScroll();
+            setDone(true);
+          }}
+        />
+      )}
     </IntroContext.Provider>
   );
 }

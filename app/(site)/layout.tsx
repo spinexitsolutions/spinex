@@ -10,14 +10,14 @@ import CookieBanner from "@/components/CookieBanner";
 import AttributionTracker from "@/components/AttributionTracker";
 import CustomCode from "@/components/CustomCode";
 import { getHeadCode } from "@/lib/secrets";
-import { isPreviewing } from "@/lib/content-server";
+import { getContent, isPreviewing } from "@/lib/content-server";
 import PreviewBar, { ClearStalePreview } from "@/components/PreviewBar";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const [customCode, previewing] = await Promise.all([getHeadCode(), isPreviewing()]);
+  const [customCode, previewing, content] = await Promise.all([getHeadCode(), isPreviewing(), getContent()]);
   return (
     <IntroProvider>
-      <IntroCover />
+      <IntroCover cfg={content.intro} />
       <SmoothScroll>
         <ScrollProgress />
         <Navbar />

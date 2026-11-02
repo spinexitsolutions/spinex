@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  PiggyBank, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
+  PiggyBank, Sparkles, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
   LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -33,6 +33,9 @@ import BookingsManager from "./BookingsManager";
 import ReviewsManager from "./ReviewsManager";
 import FeedbackManager from "./FeedbackManager";
 import AccountsManager from "./AccountsManager";
+import IntroEditor from "./IntroEditor";
+import IntroAnimation from "../intro/IntroAnimation";
+import { introSettings } from "../Intro";
 import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
@@ -58,6 +61,7 @@ const sections = [
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Content" , perm: "blog" },
   { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Content" , perm: "content" },
+  { id: "intro", label: "Intro animation", Icon: Sparkles, group: "Content" , perm: "content" },
   { id: "hero", label: "Brand and hero", Icon: Type, group: "Content" , perm: "content" },
   { id: "pages", label: "Page headers", Icon: PanelTop, group: "Content" , perm: "content" },
   { id: "services", label: "Services", Icon: Layers, group: "Content" , perm: "content" },
@@ -124,6 +128,19 @@ function AdminShell() {
   const allowed = sections.filter((x) => !me || x.perm === "any" || can(me, x.perm as Perm));
   // What waits in each section (sidebar numbers), refreshed every 20 seconds; open screens reload on changes.
   const badges = useBadges(!!me, section);
+  // Optional intro when the admin panel opens (Admin → Intro animation), once per visit.
+  const [adminIntro, setAdminIntro] = useState(false);
+  useEffect(() => {
+    if (!me || !content.intro?.admin || !content.intro?.enabled || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    try {
+      if (sessionStorage.getItem("spinex-admin-intro")) return;
+      sessionStorage.setItem("spinex-admin-intro", "1");
+    } catch {
+      return;
+    }
+    setAdminIntro(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!me]);
   // The open section never shows a number: you're looking at it.
   const badgeOf = (id: string) => (id === section ? 0 : badges[id]?.count ?? 0);
   const badgeTitle: Record<string, string> = { leads: "new leads", bookings: "new call bookings", clients: "new client messages", attendance: "new leave requests", billing: "quotations accepted, changes asked or payments received", feedback: "new feedback", reviews: "clients opened the review link", interns: "new applications" };
@@ -326,6 +343,7 @@ function AdminShell() {
 
   return (
     <LiveProvider value={badges}>
+    {adminIntro && <IntroAnimation cfg={introSettings(content.intro)} logo={content.brand.logo} onDone={() => setAdminIntro(false)} />}
     <MediaDeleteContext.Provider value={!!me && can(me, "media", "edit")}>
     <div className="min-h-screen bg-mist lg:flex">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col bg-ink p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
@@ -882,6 +900,8 @@ function AdminShell() {
                 ]} />
               </Card>
             )}
+
+            {section === "intro" && <IntroEditor value={draft.intro} onChange={(v) => set("intro", v)} logo={draft.brand.logo} readOnly={readOnly} />}
 
             {section === "showreel" && (
               <Card title="Showreel">

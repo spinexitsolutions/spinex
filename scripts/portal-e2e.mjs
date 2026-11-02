@@ -991,6 +991,37 @@ try {
   await ap.selectOption("select:has(option[value='accountant'])", "accountant").catch(() => undefined);
   await ap.waitForTimeout(400);
   await ap.screenshot({ path: `${out}/55-add-accountant.png`, fullPage: false });
+  // ---- Intro animation: styles in admin, and on the website ----
+  {
+    mkdirSync(`${out}/intro`, { recursive: true });
+    await ap.goto("about:blank"); await ap.goto(`${base}/admin#intro`); await ap.waitForSelector("[data-intro-preview]", { timeout: 15000 });
+    for (const st of ["logo", "counter", "letters", "split", "circle", "typing", "stripes", "minimal"]) {
+      await ap.click(`[data-style="${st}"]`);
+      await ap.waitForTimeout(st === "typing" ? 1500 : 1150);
+      await ap.locator("[data-intro-preview]").screenshot({ path: `${out}/intro/${st}.png` });
+    }
+    await ap.locator("[data-intro-preview]").scrollIntoViewIfNeeded();
+    await ap.screenshot({ path: `${out}/57-intro-editor.png`, fullPage: false });
+    ok("intro editor shows all 8 styles with a live preview", (await ap.locator("[data-style]").count()) === 8 && (await ap.locator("[data-transition]").count()) === 5);
+    const cur = await ap.request.get(`${base}/api/admin/content`);
+    const curData = await cur.json();
+    let rr = await ap.request.put(`${base}/api/admin/content`, { data: { ...curData, intro: { ...(curData.intro || {}), enabled: true, style: "letters", when: "always", pageTransition: "wipe", title: "Spinex", background: "#101828", accent: "#22c55e" } }, headers: { "x-base-updated": cur.headers()["x-content-updated"] || "unknown" } });
+    ok("intro settings save", rr.status() === 200 && (await rr.json()).intro?.style === "letters", `status ${rr.status()}`);
+    const ic = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const ip = await ic.newPage();
+    await ip.goto(`${base}/about`, { waitUntil: "domcontentloaded" });
+    const firstSeen = await ip.waitForSelector('[data-intro="letters"]', { timeout: 10000 }).then(() => true).catch(() => false);
+    await ip.waitForTimeout(900);
+    await ip.screenshot({ path: `${out}/58-intro-on-site.png`, fullPage: false });
+    await ip.waitForSelector('[data-intro="letters"]', { state: "detached", timeout: 15000 }).catch(() => undefined);
+    await ip.reload({ waitUntil: "domcontentloaded" });
+    const againSeen = await ip.waitForSelector('[data-intro="letters"]', { timeout: 10000 }).then(() => true).catch(() => false);
+    ok("chosen intro plays on any page, and again on every visit when set to 'every time'", firstSeen && againSeen);
+    await ic.close();
+    rr = await ap.request.get(`${base}/api/admin/content`);
+    const back = await rr.json();
+    await ap.request.put(`${base}/api/admin/content`, { data: { ...back, intro: { ...back.intro, when: "session", style: "logo", pageTransition: "curtain", background: "", accent: "" } }, headers: { "x-base-updated": rr.headers()["x-content-updated"] || "unknown" } });
+  }
   // ---- Sweep: every admin section and public page, desktop and phone ----
   {
     const { readFileSync } = await import("node:fs");

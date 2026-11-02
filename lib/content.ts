@@ -117,6 +117,46 @@ export const cityPath = (c: Pick<CityPage, "slug" | "city">) => `/website-develo
 export type Stat = { id: string; value: string; label: string };
 
 export type ProcessStep = { id: string; title: string; time: string; text: string; gets: string[] };
+// Opening animation of the website (and the short transition between pages), set in Admin → Intro animation.
+export const INTRO_STYLES = ["logo", "counter", "letters", "split", "circle", "typing", "stripes", "minimal"] as const;
+export type IntroStyle = (typeof INTRO_STYLES)[number];
+export const PAGE_TRANSITIONS = ["none", "fade", "curtain", "wipe", "logo"] as const;
+export type PageTransition = (typeof PAGE_TRANSITIONS)[number];
+export type IntroSettings = {
+  enabled: boolean;
+  style: IntroStyle;
+  when: "session" | "always"; // first page of each visit, or every time the website is opened
+  pages: "all" | "home"; // which page can start with the intro
+  speed: "fast" | "normal" | "slow";
+  title: string;
+  tagline: string;
+  cornerLeft: string;
+  cornerRight: string;
+  showLogo: boolean;
+  background: string; // "" = brand dark
+  accent: string; // "" = brand colour
+  text: string; // "" = white
+  pageTransition: PageTransition;
+  admin: boolean; // play it when the admin panel opens too
+};
+export const defaultIntro: IntroSettings = {
+  enabled: true,
+  style: "logo",
+  when: "session",
+  pages: "all",
+  speed: "normal",
+  title: "Spinex",
+  tagline: "Websites · Apps · Digital growth",
+  cornerLeft: "Spinex IT Solutions",
+  cornerRight: "Jaipur, India",
+  showLogo: true,
+  background: "",
+  accent: "",
+  text: "",
+  pageTransition: "curtain",
+  admin: false,
+};
+
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
 export type Heading = { heading: string; intro: string };
 export type PageText = { title: string; intro: string };
@@ -241,6 +281,7 @@ export type SiteContent = {
   trusted: TrustedBy;
   leadReplies: LeadReplies;
   showreel: { title: string; video: string; poster: string };
+  intro: IntroSettings;
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
@@ -618,6 +659,7 @@ const baseContent: SiteContent = {
       { id: "r-marketing", title: "Digital marketing", description: "Help run Meta and Google ad campaigns and track what works.", skills: ["Meta Ads basics", "Google Ads basics", "Comfort with numbers"] },
     ],
   },
+  intro: defaultIntro,
   showreel: {
     title: "A look at what we make",
     video: "/showreel.mp4",
