@@ -583,7 +583,7 @@ try {
   // Admin screens.
   await ap.goto("about:blank"); await ap.goto(`${base}/admin#bookings`); await ap.waitForSelector("text=Priya Khandelwal", { timeout: 15000 }); await ap.waitForTimeout(700);
   await ap.screenshot({ path: `${out}/34-admin-bookings.png`, fullPage: false });
-  await ap.click("button:has-text('Settings')"); await ap.waitForSelector("text=When you take calls", { timeout: 10000 }); await ap.waitForTimeout(500);
+  await ap.click("main button:has-text('Settings')"); await ap.waitForSelector("text=When you take calls", { timeout: 10000 }); await ap.waitForTimeout(500);
   await ap.screenshot({ path: `${out}/35-admin-booking-settings.png`, fullPage: false });
   // Cancel and switch off.
   r = await qp.request.post(`${base}/api/booking/${bj.token}`, { data: { action: "cancel" } });
