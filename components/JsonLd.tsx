@@ -42,7 +42,17 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
       })),
     },
   };
-  const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: content.brand.name, inLanguage: "en-IN", publisher: { "@id": `${SITE_URL}/#business` } };
+  const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: content.brand.name, alternateName: ["Spinex", "Spinex IT"], inLanguage: "en-IN", publisher: { "@id": `${SITE_URL}/#business` } };
+  // Main menu, so search engines see which pages matter most (helps Google pick sitelinks).
+  const nav = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Main menu",
+    itemListElement: [
+      ["Our Services", "/services"], ["Our Work", "/work"], ["About Us", "/about"], ["Contact Us", "/contact"],
+      ["Book a Free Call", "/book"], ["Blog", "/blog"], ["Internship", "/internship"], ["Careers", "/careers"],
+    ].map(([name, path], i) => ({ "@type": "SiteNavigationElement", position: i + 1, name, url: `${SITE_URL}${path}` })),
+  };
   const faq = withFaq && content.chatbot.faqs.length
     ? {
         "@context": "https://schema.org",
@@ -51,7 +61,7 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
       }
     : null;
 
-  const data = [business, website, faq].filter(Boolean);
+  const data = [business, website, nav, faq].filter(Boolean);
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
 }
 

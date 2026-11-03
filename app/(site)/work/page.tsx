@@ -7,10 +7,10 @@ import ProjectsShowcase from "@/components/home/ProjectsShowcase";
 import CTA from "@/components/home/CTA";
 
 export const metadata: Metadata = {
-  title: "Work",
+  title: "Our Work",
   description: "Websites, online stores, apps, ad campaigns and videos made by Spinex IT Solutions for businesses in Jaipur and across India. See the projects and results.",
   alternates: { canonical: "/work" },
-  openGraph: { title: "Work | Spinex IT Solutions", description: "Websites, online stores, apps, ad campaigns and videos made by Spinex IT Solutions for businesses in Jaipur and across India. See the projects and results.", url: "/work", type: "website", images: ["/og-image.jpg"] },
+  openGraph: { title: "Our Work | Spinex IT Solutions", description: "Websites, online stores, apps, ad campaigns and videos made by Spinex IT Solutions for businesses in Jaipur and across India. See the projects and results.", url: "/work", type: "website", images: ["/og-image.jpg"] },
 };
 
 export default async function WorkPage() {

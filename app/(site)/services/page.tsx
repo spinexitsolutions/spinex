@@ -9,10 +9,10 @@ import Industries from "@/components/home/Industries";
 import CTA from "@/components/home/CTA";
 
 export const metadata: Metadata = {
-  title: "Services",
+  title: "Our Services",
   description: "Website development, Shopify and WooCommerce stores, on-demand apps, SEO, Google and Meta ads, social media, video editing and graphic design from Jaipur, for all India.",
   alternates: { canonical: "/services" },
-  openGraph: { title: "Services | Spinex IT Solutions", description: "Website development, Shopify and WooCommerce stores, on-demand apps, SEO, Google and Meta ads, social media, video editing and graphic design from Jaipur, for all India.", url: "/services", type: "website", images: ["/og-image.jpg"] },
+  openGraph: { title: "Our Services | Spinex IT Solutions", description: "Website development, Shopify and WooCommerce stores, on-demand apps, SEO, Google and Meta ads, social media, video editing and graphic design from Jaipur, for all India.", url: "/services", type: "website", images: ["/og-image.jpg"] },
 };
 
 export default async function ServicesPage() {

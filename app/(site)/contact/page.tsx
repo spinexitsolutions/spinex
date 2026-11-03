@@ -10,10 +10,10 @@ import { hasDb } from "@/lib/db";
 import { getBookingSettings } from "@/lib/booking-db";
 
 export const metadata: Metadata = {
-  title: "Contact",
+  title: "Contact Us",
   description: "Contact Spinex IT Solutions in Jaipur for a website, online store, app or digital marketing. Call, WhatsApp, email or book a free call; we reply within a day.",
   alternates: { canonical: "/contact" },
-  openGraph: { title: "Contact | Spinex IT Solutions", description: "Contact Spinex IT Solutions in Jaipur for a website, online store, app or digital marketing. Call, WhatsApp, email or book a free call; we reply within a day.", url: "/contact", type: "website", images: ["/og-image.jpg"] },
+  openGraph: { title: "Contact Us | Spinex IT Solutions", description: "Contact Spinex IT Solutions in Jaipur for a website, online store, app or digital marketing. Call, WhatsApp, email or book a free call; we reply within a day.", url: "/contact", type: "website", images: ["/og-image.jpg"] },
 };
 
 export const dynamic = "force-dynamic";

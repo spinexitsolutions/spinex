@@ -7,10 +7,10 @@ import Process from "@/components/home/Process";
 import CTA from "@/components/home/CTA";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: "About Us",
   description: "Spinex IT Solutions is a Jaipur IT company that designs websites, builds online stores and apps, and runs SEO, ads, social media and video for businesses across India.",
   alternates: { canonical: "/about" },
-  openGraph: { title: "About | Spinex IT Solutions", description: "Spinex IT Solutions is a Jaipur IT company that designs websites, builds online stores and apps, and runs SEO, ads, social media and video for businesses across India.", url: "/about", type: "website", images: ["/og-image.jpg"] },
+  openGraph: { title: "About Us | Spinex IT Solutions", description: "Spinex IT Solutions is a Jaipur IT company that designs websites, builds online stores and apps, and runs SEO, ads, social media and video for businesses across India.", url: "/about", type: "website", images: ["/og-image.jpg"] },
 };
 
 export default function AboutPage() {
