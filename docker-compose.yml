@@ -1,0 +1,47 @@
+# Live setup on the VPS: database, website and HTTPS. Settings come from .env (made by deploy/setup.sh).
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ["--wiredTigerCacheSizeGB", "1"]
+    volumes:
+      - mongo-data:/data/db
+    # Not published on the internet: only the website can reach it.
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/spinex
+      MONGODB_DB: spinex
+      NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+    depends_on:
+      - mongo
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/robots.txt"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 600s
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  mongo-data:
+  caddy-data:
+  caddy-config:
