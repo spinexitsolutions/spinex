@@ -113,6 +113,13 @@ Every enquiry lands here: website forms, the project planner, product demo reque
 5. Choose who it is **Given to**, then press **Save**.
 6. When the client is ready, press **Make quotation**. Their details are filled in for you.
 
+**Automatic status changes:**
+
+- Pressing **Call**, **WhatsApp** or **Email** on a *New* lead marks it **Contacted**.
+- Making a quotation from a lead marks it **Quote sent**.
+- When the client accepts the quotation online, or you make an invoice from it, the lead becomes **Won**.
+- **Lost** is always set by you. The panel asks **Why was it lost?** (for example *Price too high* or *Went with someone else*) and **What did they say?**. Open the **Lost** tile to see **Why leads were lost**, with the most common reasons first.
+
 > - Giving a lead to someone sends them an email.
 > - Marking a lead **Won** can automatically ask the client for feedback or a Google review.
 > - The **Notes** box can be read by anyone on the team who can open that lead. Clients never see it.

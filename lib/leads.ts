@@ -32,6 +32,8 @@ export type Lead = {
   assignedTo: string; // team member id ("env" = owner), "" = nobody
   assignedName: string;
   notes: string;
+  lostReason?: string; // why the lead was lost (one of LOST_REASONS)
+  lostNote?: string; // what they said
   track?: LeadTrack; // where the visitor came from (ad, search, Instagram…)
   followups?: { day: number; at: string; ok: boolean; subject: string }[]; // automatic follow-up emails sent
   noFollowups?: boolean; // they (or we) stopped the follow-up emails
@@ -39,10 +41,24 @@ export type Lead = {
   updatedAt: string;
 };
 
-export const LEAD_EDITABLE = ["name", "phone", "email", "services", "budget", "message", "status", "value", "followUp", "followUpNote", "assignedTo", "notes"] as const;
+export const LEAD_EDITABLE = ["name", "phone", "email", "services", "budget", "message", "status", "value", "followUp", "followUpNote", "assignedTo", "notes", "lostReason", "lostNote"] as const;
+
+// Why a lead didn't turn into a client. Asked when a lead is marked Lost.
+export const LOST_REASONS = [
+  "Price too high",
+  "Went with someone else",
+  "No reply / couldn't reach",
+  "Not ready yet / maybe later",
+  "Budget too small",
+  "Only checking prices",
+  "Wanted something we don't do",
+  "Did it themselves / dropped the idea",
+  "Not a real enquiry / spam",
+  "Other",
+] as const;
 
 export function leadsToCSV(leads: Lead[]) {
-  const cols: (keyof Lead)[] = ["createdAt", "name", "phone", "email", "services", "budget", "message", "plan", "source", "status", "value", "assignedName", "followUp", "followUpNote", "notes"];
+  const cols: (keyof Lead)[] = ["createdAt", "name", "phone", "email", "services", "budget", "message", "plan", "source", "status", "value", "assignedName", "followUp", "followUpNote", "notes", "lostReason", "lostNote"];
   // A leading ' stops Excel / Sheets from running a value like =HYPERLINK(...) as a formula.
   const esc = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
   const show = (l: Lead, c: keyof Lead) => (c === "status" ? leadStatusLabel[l.status] : c === "source" ? LEAD_SOURCES[l.source] ?? l.source : l[c]);

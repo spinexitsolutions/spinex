@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, BellRing, MailPlus, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
-import { LEAD_SOURCES, LEAD_STATUSES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
+import { LEAD_SOURCES, LEAD_STATUSES, LOST_REASONS, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
 import AdLeadsSetup from "./AdLeadsSetup";
@@ -55,6 +55,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Lead | null>(null);
+  const [openAsLost, setOpenAsLost] = useState(false);
   const [msg, setMsg] = useState("");
   const [team, setTeam] = useState<Member[]>([]);
   const [channel, setChannel] = useState("all");
@@ -112,6 +113,25 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
       return null;
     }
   };
+
+  // Calling, WhatsApp-ing or emailing a new lead marks it Contacted.
+  const touched = (l: Lead) => {
+    if (!readOnly && l.status === "new") void update(l, { status: "contacted" }, "Marked as Contacted");
+  };
+  // Marking Lost asks why, so open the lead with Lost picked.
+  const pickStatus = (l: Lead, status: LeadStatus) => {
+    if (status === "lost") { setOpenAsLost(true); setOpen(l); return; }
+    void update(l, { status });
+  };
+
+  // Why leads were lost, most common first.
+  const lostWhy = Object.entries(
+    leads.filter((l) => l.status === "lost").reduce<Record<string, number>>((acc, l) => {
+      const r = l.lostReason || "Reason not added";
+      acc[r] = (acc[r] ?? 0) + 1;
+      return acc;
+    }, {}),
+  ).sort((a, b) => b[1] - a[1]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: leads.length, due: leads.filter(isDue).length, mine: leads.filter((l) => myId && l.assignedTo === myId && l.status !== "won" && l.status !== "lost").length };
@@ -172,6 +192,23 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
 
       {wonValue > 0 && <p className="text-sm text-muted">Won so far: <b className="text-ink">₹{wonValue.toLocaleString("en-IN")}</b></p>}
 
+      {filter === "lost" && lostWhy.length > 0 && (
+        <div className="rounded-2xl border border-line bg-white p-4" data-lost-reasons>
+          <p className="text-sm font-semibold">Why leads were lost</p>
+          <ul className="mt-3 space-y-2">
+            {lostWhy.map(([r, n]) => (
+              <li key={r} className="grid grid-cols-[1fr_auto] items-center gap-3 text-sm">
+                <span className="relative overflow-hidden rounded-lg bg-mist px-3 py-1.5">
+                  <span aria-hidden className="absolute inset-y-0 left-0 bg-red-100" style={{ width: `${(n / counts.lost) * 100}%` }} />
+                  <span className="relative">{r}</span>
+                </span>
+                <span className="tabular-nums text-muted">{n} ({Math.round((n / counts.lost) * 100)}%)</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-3">
         <label className="flex min-w-[220px] flex-1 items-center gap-2 rounded-xl bg-mist px-3">
           <Search size={16} className="text-muted" />
@@ -231,33 +268,37 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
                   {l.track?.channel && <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800" title={l.track.utmCampaign ? `Campaign: ${l.track.utmCampaign}` : undefined}><Megaphone size={11} /> {l.track.channel}</span>}
                   {isDue(l) && <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"><BellRing size={11} /> Follow up{l.followUp < today() ? " (late)" : " today"}</span>}
                   {!isDue(l) && l.followUp && l.status !== "won" && l.status !== "lost" && <span className="rounded-full bg-mist px-2 py-0.5 text-[11px] font-medium text-muted">Follow up {formatDate(l.followUp)}</span>}
+                  {l.status === "lost" && l.lostReason && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">{l.lostReason}</span>}
                   {l.assignedName && <span className="flex items-center gap-1 rounded-full bg-lav-100 px-2 py-0.5 text-[11px] font-medium text-lav-700"><UserRound size={11} /> {l.assignedTo === myId ? "You" : l.assignedName}</span>}
                 </span>
                 <span className="mt-0.5 block truncate text-sm text-muted">{isDue(l) && l.followUpNote ? `⏰ ${l.followUpNote}` : [l.services, l.budget, l.message].filter(Boolean).join(" · ") || l.phone}</span>
               </button>
               <span className="text-sm text-muted">{ago(l.createdAt)}</span>
-              <select value={l.status} disabled={readOnly} onChange={(e) => update(l, { status: e.target.value as LeadStatus })} aria-label={`Status for ${l.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none disabled:opacity-100 ${badge[l.status]}`}>
+              <select value={l.status} disabled={readOnly} onChange={(e) => pickStatus(l, e.target.value as LeadStatus)} aria-label={`Status for ${l.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none disabled:opacity-100 ${badge[l.status]}`}>
                 {LEAD_STATUSES.map((s) => <option key={s} value={s}>{leadStatusLabel[s]}</option>)}
               </select>
               <div className="flex items-center gap-1">
-                <a href={`tel:${l.phone}`} aria-label={`Call ${l.name}`} title="Call" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><Phone size={16} /></a>
-                <a href={`https://wa.me/${waNumber(l.phone)}?text=${encodeURIComponent(`Hi ${l.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${l.name}`} title="WhatsApp" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-emerald-50 hover:text-emerald-700"><MessageCircle size={16} /></a>
+                <a href={`tel:${l.phone}`} onClick={() => touched(l)} aria-label={`Call ${l.name}`} title="Call" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><Phone size={16} /></a>
+                <a href={`https://wa.me/${waNumber(l.phone)}?text=${encodeURIComponent(`Hi ${l.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" onClick={() => touched(l)} aria-label={`WhatsApp ${l.name}`} title="WhatsApp" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-emerald-50 hover:text-emerald-700"><MessageCircle size={16} /></a>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      <Modal open={!!open} title={open?.name ?? ""} onClose={() => setOpen(null)} wide>
+      <Modal open={!!open} title={open?.name ?? ""} onClose={() => { setOpen(null); setOpenAsLost(false); }} wide>
         {open && (
           <LeadDetail
+            key={`${open.id}-${openAsLost}`}
             lead={leads.find((x) => x.id === open.id) ?? open}
+            startLost={openAsLost}
+            onTouch={() => touched(leads.find((x) => x.id === open.id) ?? open)}
             team={team}
             myId={myId}
             readOnly={readOnly}
             onSave={async (patch) => {
               const saved = await update(open, patch, "Lead saved");
-              if (saved) setOpen(null);
+              if (saved) { setOpen(null); setOpenAsLost(false); }
             }}
             onDelete={async () => {
               if (!confirm(`Delete the enquiry from ${open.name}? This can't be undone.`)) return;
@@ -291,8 +332,11 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
   );
 }
 
-function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete }: { lead: Lead; team: Member[]; myId: string; readOnly: boolean; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void }) {
-  const [status, setStatus] = useState(lead.status);
+function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = false, onTouch }: { lead: Lead; team: Member[]; myId: string; readOnly: boolean; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void; startLost?: boolean; onTouch?: () => void }) {
+  const [status, setStatus] = useState<LeadStatus>(startLost ? "lost" : lead.status);
+  const [lostReason, setLostReason] = useState(lead.lostReason || "");
+  const [lostNote, setLostNote] = useState(lead.lostNote || "");
+  const needReason = status === "lost" && !lostReason;
   const [value, setValue] = useState(lead.value);
   const [followUp, setFollowUp] = useState(lead.followUp);
   const [notes, setNotes] = useState(lead.notes);
@@ -326,9 +370,9 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete }: { lead: Le
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        <a href={`tel:${lead.phone}`} className="btn-dark px-4 py-2.5 text-sm"><Phone size={15} /> Call {lead.phone}</a>
-        <a href={`https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(`Hi ${lead.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>
-        {lead.email && <a href={`mailto:${lead.email}`} className="btn-ghost px-4 py-2.5 text-sm"><Mail size={15} /> Email</a>}
+        <a href={`tel:${lead.phone}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-dark px-4 py-2.5 text-sm"><Phone size={15} /> Call {lead.phone}</a>
+        <a href={`https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(`Hi ${lead.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>
+        {lead.email && <a href={`mailto:${lead.email}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-ghost px-4 py-2.5 text-sm"><Mail size={15} /> Email</a>}
         {!readOnly && <button onClick={makeQuote} disabled={making} className="btn-ghost px-4 py-2.5 text-sm">{making ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={15} />} Make quotation</button>}
       </div>
       {docs.length > 0 && (
@@ -412,6 +456,22 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete }: { lead: Le
             {assignedTo && !team.some((m) => m.id === assignedTo) && <option value={assignedTo}>{lead.assignedName || "Removed member"}</option>}
           </select>
         </label>
+        {status === "lost" && (
+          <div className="sm:col-span-3 grid gap-4 rounded-2xl border border-red-200 bg-red-50/50 p-4 sm:grid-cols-[260px_1fr]" data-lost-box>
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-semibold">Why was it lost? *</span>
+              <select className="input bg-white" value={lostReason} onChange={(e) => setLostReason(e.target.value)} required>
+                <option value="">Choose a reason</option>
+                {LOST_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                {lostReason && !(LOST_REASONS as readonly string[]).includes(lostReason) && <option value={lostReason}>{lostReason}</option>}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-semibold">What did they say?</span>
+              <textarea className="input min-h-[76px] bg-white" value={lostNote} onChange={(e) => setLostNote(e.target.value)} placeholder="e.g. Got a quote for ₹8,000 from a freelancer, ours was ₹18,000" />
+            </label>
+          </div>
+        )}
         <div className="sm:col-span-3 grid gap-4 rounded-2xl border border-line p-4 sm:grid-cols-[200px_1fr]">
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-semibold">Follow up on</span>
@@ -438,15 +498,16 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete }: { lead: Le
       {!readOnly && <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <button onClick={onDelete} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-red-600 hover:bg-red-50"><Trash2 size={15} /> Delete</button>
         <button
-          disabled={saving}
+          disabled={saving || needReason}
+          title={needReason ? "Choose why it was lost" : undefined}
           onClick={async () => {
             setSaving(true);
-            await onSave({ status, value, followUp, followUpNote, notes, ...(assignedTo !== (lead.assignedTo || "") ? { assignedTo } : {}) });
+            await onSave({ status, value, followUp, followUpNote, notes, ...(status === "lost" ? { lostReason, lostNote } : {}), ...(assignedTo !== (lead.assignedTo || "") ? { assignedTo } : {}) });
             setSaving(false);
           }}
           className="btn-dark disabled:opacity-60"
         >
-          {saving ? <><Loader2 size={16} className="animate-spin" /> Saving</> : "Save"}
+          {saving ? <><Loader2 size={16} className="animate-spin" /> Saving</> : needReason ? "Choose a reason to save" : "Save"}
         </button>
       </div>}
     </div>

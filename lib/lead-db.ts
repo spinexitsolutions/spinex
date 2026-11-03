@@ -18,7 +18,7 @@ export function cleanLead(input: Record<string, unknown>) {
   const out: Record<string, string> = {};
   for (const k of LEAD_EDITABLE) {
     if (input[k] === undefined) continue;
-    let v = String(input[k] ?? "").trim().slice(0, k === "message" || k === "notes" ? 4000 : 300);
+    let v = String(input[k] ?? "").trim().slice(0, k === "message" || k === "notes" || k === "lostNote" ? 4000 : 300);
     if (k === "status" && !LEAD_STATUSES.includes(v as LeadStatus)) v = "new";
     if (k === "followUp" && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) v = "";
     if (k === "value") v = v.replace(/[^\d]/g, "");
