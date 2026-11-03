@@ -2,14 +2,15 @@
 
 export type Uploaded = { id: string; url: string; name: string; size: number; contentType: string; uploadedAt: string };
 
-const MAX_SIDE = 2000;
+const MAX_WIDTH = 2000;
+const MAX_HEIGHT = 12000; // tall full-page screenshots stay sharp
 
-// Shrinks big photos (max 2000px, WebP) before upload. Small images and GIFs are sent as they are.
+// Shrinks big photos (max 2000 px wide, 12000 px high, WebP) before upload. Small images and GIFs are sent as they are.
 export async function compressImage(file: File): Promise<File> {
   if (file.type === "image/gif" || !file.type.startsWith("image/")) return file;
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, MAX_WIDTH / bitmap.width, MAX_HEIGHT / bitmap.height);
     if (scale === 1 && file.size < 600 * 1024) return file;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
