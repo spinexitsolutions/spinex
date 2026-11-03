@@ -6,3 +6,7 @@ node_modules
 *.tsbuildinfo
 .vercel
 .DS_Store
+
+# Deploy markers on the server
+.deployed
+.deploy-failed

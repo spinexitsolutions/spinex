@@ -10,6 +10,7 @@ services:
 
   app:
     build: .
+    image: spinex-app:latest
     restart: unless-stopped
     env_file: .env
     environment:
