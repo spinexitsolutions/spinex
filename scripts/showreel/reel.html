@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Spinex showreel. Every frame is drawn from the time t (seconds) by window.seek(t), so the renderer can
+     step through it frame by frame. ?v=wide (1920x1080) or ?v=tall (1080x1920). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  :root { --ink:#0d0a14; --ink2:#1a1426; --lav:#a595fb; --lav2:#c2b6ff; --lav3:#6e59d9; --white:#f6f4ff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--ink); overflow: hidden; }
+  .display { font-family: "Bricolage Grotesque", "Inter Display", Inter, sans-serif; letter-spacing: -0.035em; }
+  .body { font-family: Manrope, Inter, sans-serif; }
+  #stage { position: relative; overflow: hidden; background: var(--ink); color: var(--white); }
+  .layer { position: absolute; inset: 0; }
+  .center { display: grid; place-items: center; }
+  .abs { position: absolute; }
+  .grad, .grad .ch { color: #cfc6ff; text-shadow: 0 0 40px rgba(165,149,251,.45); }
+  .chip { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); border-radius: 999px; backdrop-filter: blur(6px); }
+  .ch { display: inline-block; white-space: pre; will-change: transform, filter, opacity; }
+  #grain { position: absolute; inset: -50%; opacity: .07; mix-blend-mode: overlay; pointer-events: none; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(120px); }
+  .laptop { position: absolute; border-radius: 22px; background: #0b0910; padding: 14px; box-shadow: 0 40px 120px -30px rgba(110,89,217,.55), 0 0 0 1px rgba(255,255,255,.08); }
+  .laptop .scr, .phone .scr { position: relative; overflow: hidden; background: #fff; }
+  .laptop .scr { border-radius: 8px; height: 100%; }
+  .laptop .base { position: absolute; left: -7%; right: -7%; bottom: -26px; height: 26px; border-radius: 0 0 26px 26px; background: linear-gradient(#2a2433, #15111c); }
+  .phone { position: absolute; border-radius: 44px; background: #0b0910; padding: 11px; box-shadow: 0 30px 90px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.1); }
+  .phone .scr { border-radius: 34px; height: 100%; }
+  .scr img { position: absolute; left: 0; top: 0; width: 100%; height: auto; will-change: transform; }
+  .scr .ph { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, #ece9f7 0 120px, #fff 120px 260px); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+const P = new URLSearchParams(location.search);
+const TALL = P.get('v') === 'tall';
+const W = TALL ? 1080 : 1920, H = TALL ? 1920 : 1080;
+const DUR = 30;
+const ASSET = P.get('assets') || 'assets';
+const stage = document.getElementById('stage');
+stage.style.width = W + 'px'; stage.style.height = H + 'px';
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px';
+
+// ---------- helpers ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const eOut = (k) => 1 - Math.pow(1 - k, 4);
+const eIn = (k) => k * k * k;
+const eIO = (k) => (k < 0.5 ? 8 * k ** 4 : 1 - Math.pow(-2 * k + 2, 4) / 2);
+const el = (tag, cls, html, parent = stage) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; parent.appendChild(e); return e; };
+const css = (e, o) => Object.assign(e.style, o);
+// in/out envelope: 0 → 1 (eased in over `inD`) → hold → 0 (eased out over `outD`)
+const env = (t, a, b, inD = 0.5, outD = 0.45) => ({ i: eOut(prog(t, a, a + inD)), o: eIn(prog(t, b - outD, b)), on: t >= a && t < b });
+// blur-reveal style for a visibility value v (1 = sharp) and direction
+const blurIn = (e, v, { y = 30, blur = 24, scale = 1, extra = '' } = {}) => {
+  e.style.opacity = v;
+  e.style.filter = `blur(${(1 - v) * blur}px)`;
+  e.style.transform = `translateY(${(1 - v) * y}px) scale(${lerp(scale, 1, v)}) ${extra}`;
+};
+// letters wrapped per word, so a word never breaks in the middle
+const splitChars = (e, text) => {
+  e.innerHTML = '';
+  const out = [];
+  text.split(' ').forEach((w, wi, all) => {
+    const word = el('span', null, null, e); word.style.whiteSpace = 'nowrap'; word.style.display = 'inline-block';
+    [...w].forEach((c) => out.push(el('span', 'ch', c, word)));
+    if (wi < all.length - 1) out.push(el('span', 'ch', ' ', e));
+  });
+  return out;
+};
+// per-letter stagger reveal + exit
+const letters = (chars, t, a, b, { stag = 0.035, inD = 0.55, outD = 0.35, y = 50, blur = 22, outY = -30 } = {}) => {
+  chars.forEach((c, i) => {
+    const vi = eOut(prog(t, a + i * stag, a + i * stag + inD));
+    const vo = eIn(prog(t, b - outD + i * stag * 0.4, b + i * stag * 0.4));
+    const v = vi * (1 - vo);
+    c.style.opacity = v;
+    c.style.filter = `blur(${(1 - vi) * blur + vo * blur}px)`;
+    c.style.transform = `translateY(${(1 - vi) * y + vo * outY}px)`;
+  });
+};
+const S = (x) => x * (TALL ? 1 : 1); // sizes are chosen per layout below
+const pos = (wide, tall) => (TALL ? tall : wide);
+
+// ---------- background ----------
+const bg = el('div', 'layer');
+const g1 = el('div', 'glow', null, bg), g2 = el('div', 'glow', null, bg), g3 = el('div', 'glow', null, bg);
+css(g1, { width: '900px', height: '900px', background: '#6e59d9', opacity: .38 });
+css(g2, { width: '700px', height: '700px', background: '#3b82f6', opacity: .22 });
+css(g3, { width: '600px', height: '600px', background: '#c026d3', opacity: .18 });
+const grid = el('div', 'layer', null, bg);
+css(grid, { opacity: .07, backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)', backgroundSize: '80px 80px', maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)' });
+// film grain (static noise, shifted each frame)
+const grain = document.createElement('canvas'); grain.id = 'grain'; grain.width = 512; grain.height = 512; stage.appendChild(grain);
+{ const g = grain.getContext('2d'), d = g.createImageData(512, 512); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } g.putImageData(d, 0, 0); css(grain, { width: (W * 2) + 'px', height: (H * 2) + 'px', imageRendering: 'pixelated' }); }
+// light streak used at cuts
+const streak = el('div', 'abs');
+css(streak, { left: '-30%', top: '0', width: '40%', height: '100%', background: 'linear-gradient(100deg, transparent, rgba(194,182,255,.0) 20%, rgba(194,182,255,.35) 50%, transparent 80%)', mixBlendMode: 'screen', opacity: 0 });
+
+// ---------- scene 1: logo reveal (0–3s) ----------
+const s1 = el('div', 'layer center');
+const s1box = el('div', 'abs', null, s1); css(s1box, { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: pos('34px', '40px') });
+const logo = el('img', null, null, s1box); logo.src = `${ASSET}/logo.png`; css(logo, { width: pos('230px', '300px'), height: 'auto', filter: 'drop-shadow(0 0 60px rgba(165,149,251,.55))' });
+const s1t = el('div', 'body', null, s1box); css(s1t, { fontSize: pos('28px', '34px'), letterSpacing: '0.42em', fontWeight: 600, color: '#d9d3ff' });
+const s1chars = splitChars(s1t, 'SPINEX IT SOLUTIONS');
+const ring = el('div', 'abs', null, s1); css(ring, { width: pos('520px', '640px'), height: pos('520px', '640px'), borderRadius: '50%', border: '1px solid rgba(194,182,255,.35)' });
+
+// ---------- scene 2: kinetic words (3–8s) ----------
+const s2 = el('div', 'layer center');
+const s2box = el('div', 'abs', null, s2); css(s2box, { textAlign: 'center' });
+const s2a = el('div', 'display', null, s2box); css(s2a, { fontSize: pos('92px', '96px'), fontWeight: 600, color: 'rgba(255,255,255,.75)' });
+const s2aChars = splitChars(s2a, 'We build');
+const words = ['Websites', 'Online stores', 'Apps', 'Brands'];
+const s2w = el('div', 'display grad', null, s2box); css(s2w, { fontSize: pos('210px', '150px'), fontWeight: 800, lineHeight: 1.02, marginTop: pos('6px', '18px'), height: pos('230px', '170px'), position: 'relative', minWidth: pos('1500px', '960px') });
+const wordEls = words.map((w) => { const d = el('div', null, null, s2w); css(d, { position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }); return splitChars(d, w); });
+const s2line = el('div', 'abs', null, s2); css(s2line, { height: '2px', background: 'linear-gradient(90deg, transparent, var(--lav), transparent)', width: pos('900px', '700px'), top: pos('68%', '60%') });
+
+// ---------- scene 3: a website building itself (8–16s), no client names ----------
+const s3 = el('div', 'layer');
+const s3kick = el('div', 'body abs', 'Designed · Built · Launched', s3);
+css(s3kick, { fontSize: pos('22px', '26px'), letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--lav2)', left: pos('140px', '90px'), top: pos('150px', '230px') });
+const lw = TALL ? 900 : 1040, lh = Math.round(lw * 0.625);
+const lap = el('div', 'laptop', null, s3);
+css(lap, { width: lw + 'px', height: lh + 'px', left: pos('740px', '90px'), top: pos('190px', '300px') });
+const lscr = el('div', 'scr', null, lap); css(lscr, { background: '#fbfaff' });
+el('div', 'base', null, lap);
+const pw = TALL ? 330 : 290, phh = Math.round(pw * 2.05);
+const ph = el('div', 'phone', null, s3);
+css(ph, { width: pw + 'px', height: phh + 'px', left: pos('1520px', '660px'), top: pos('380px', '500px') });
+const pscr = el('div', 'scr', null, ph); css(pscr, { background: '#fbfaff' });
+// UI blocks: [left, top, width, height] as fractions of the screen, colour, when it appears
+const box = (parent, x, y, w, h, bg, radius = 10) => { const d = el('div', 'abs', null, parent); css(d, { left: x * 100 + '%', top: y * 100 + '%', width: w * 100 + '%', height: h * 100 + '%', background: bg, borderRadius: radius + 'px' }); return d; };
+const INK = '#120f1b', L1 = '#e9e5fb', L2 = '#d6cffa', LAV = '#8873ee';
+const lapUI = [
+  [box(lscr, 0, 0, 1, 0.1, '#fff', 0), 8.5], [box(lscr, 0.04, 0.035, 0.12, 0.035, INK, 6), 8.6], [box(lscr, 0.55, 0.035, 0.3, 0.035, L1, 6), 8.7], [box(lscr, 0.87, 0.025, 0.09, 0.055, INK, 99), 8.8],
+  [box(lscr, 0.06, 0.2, 0.42, 0.075, INK, 8), 9.0], [box(lscr, 0.06, 0.3, 0.34, 0.075, LAV, 8), 9.15], [box(lscr, 0.06, 0.42, 0.38, 0.03, L2, 6), 9.3], [box(lscr, 0.06, 0.47, 0.3, 0.03, L2, 6), 9.38],
+  [box(lscr, 0.06, 0.56, 0.16, 0.07, INK, 99), 9.5], [box(lscr, 0.24, 0.56, 0.14, 0.07, L1, 99), 9.6],
+  [box(lscr, 0.54, 0.17, 0.4, 0.5, 'linear-gradient(135deg,#c2b6ff,#6e59d9)', 14), 9.8],
+  [box(lscr, 0.06, 0.73, 0.27, 0.22, L1, 12), 10.3], [box(lscr, 0.365, 0.73, 0.27, 0.22, L1, 12), 10.45], [box(lscr, 0.67, 0.73, 0.27, 0.22, L1, 12), 10.6],
+];
+const bars = [0.35, 0.55, 0.45, 0.75, 0.9].map((hgt, i) => [box(lscr, 0.6 + i * 0.065, 0.62 - hgt * 0.38, 0.045, hgt * 0.38, '#fff', 4), 10.1 + i * 0.08, hgt]);
+const phUI = [
+  [box(pscr, 0, 0, 1, 0.08, '#fff', 0), 9.2], [box(pscr, 0.08, 0.025, 0.3, 0.03, INK, 6), 9.3], [box(pscr, 0.8, 0.02, 0.12, 0.04, INK, 99), 9.35],
+  [box(pscr, 0.08, 0.13, 0.84, 0.06, INK, 8), 9.6], [box(pscr, 0.08, 0.21, 0.6, 0.06, LAV, 8), 9.7], [box(pscr, 0.08, 0.3, 0.8, 0.022, L2, 6), 9.8], [box(pscr, 0.08, 0.34, 0.6, 0.022, L2, 6), 9.85],
+  [box(pscr, 0.08, 0.4, 0.84, 0.05, INK, 99), 10.0], [box(pscr, 0.08, 0.49, 0.84, 0.24, 'linear-gradient(135deg,#c2b6ff,#6e59d9)', 14), 10.2],
+  [box(pscr, 0.08, 0.76, 0.84, 0.1, L1, 12), 10.5], [box(pscr, 0.08, 0.88, 0.84, 0.1, L1, 12), 10.65],
+];
+const badge = (txt, x, y) => { const d = el('div', 'body chip abs', txt, s3); css(d, { left: x, top: y, padding: pos('14px 22px', '16px 24px'), fontSize: pos('22px', '26px'), fontWeight: 600, background: 'rgba(18,15,27,.85)', color: '#fff' }); return d; };
+const b1 = badge('⚡ Loads in 0.8s', pos('1450px', '600px'), pos('150px', '300px'));
+const b2 = badge('Performance 98/100', pos('690px', '60px'), pos('720px', '950px'));
+const s3txt = el('div', 'abs', null, s3);
+css(s3txt, { left: pos('140px', '90px'), top: pos('330px', '1220px'), width: pos('560px', '900px') });
+const steps = ['Designed.', 'Built.', 'Launched.'].map((w, i) => { const d = el('div', 'display' + (i === 2 ? ' grad' : ''), null, s3txt); css(d, { fontSize: pos('104px', '84px'), fontWeight: 800, lineHeight: 1.04 }); return splitChars(d, w); });
+const s3sub = el('div', 'body', 'Fast, mobile-friendly websites that bring enquiries.', s3txt);
+css(s3sub, { marginTop: pos('26px', '20px'), fontSize: pos('28px', '26px'), color: 'rgba(255,255,255,.65)', maxWidth: pos('520px', '820px') });
+// ---------- scene 4: services rush (16–22s) ----------
+const services = ['Web development', 'E-commerce', 'Digital marketing', 'Social media', 'Video editing', 'Graphic design'];
+const s4 = el('div', 'layer center');
+const s4words = services.map((s) => { const d = el('div', 'display abs', null, s4); css(d, { fontSize: pos('170px', (s.length > 12 ? 118 : 140) + 'px'), fontWeight: 800, textAlign: 'center', width: '100%', lineHeight: 1 }); d.innerHTML = TALL ? s.replace(' ', '<br>') : s; return d; });
+const s4num = el('div', 'body abs', null, s4); css(s4num, { fontSize: pos('24px', '30px'), letterSpacing: '0.3em', color: 'var(--lav2)', top: pos('20%', '24%') });
+const s4bar = el('div', 'abs', null, s4); css(s4bar, { height: '3px', background: 'var(--lav)', bottom: pos('22%', '28%'), left: '50%' });
+
+// ---------- scene 5: promise (22–26s) ----------
+const s5 = el('div', 'layer center');
+const s5box = el('div', 'abs', null, s5); css(s5box, { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: pos('8px', '26px') });
+const promise = ['Fast.', 'Mobile-first.', 'Ready for Google.'].map((s, i) => { const d = el('div', 'display' + (i === 2 ? ' grad' : ''), null, s5box); css(d, { fontSize: pos('128px', '112px'), fontWeight: 800, lineHeight: 1.05 }); return { d, chars: splitChars(d, s) }; });
+
+// ---------- scene 6: CTA (26–30s) ----------
+const s6 = el('div', 'layer center');
+const s6box = el('div', 'abs', null, s6); css(s6box, { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' });
+const s6logo = el('img', null, null, s6box); s6logo.src = `${ASSET}/logo.png`; css(s6logo, { width: pos('110px', '150px'), marginBottom: pos('40px', '56px') });
+const s6h = el('div', 'display', null, s6box); css(s6h, { fontSize: pos('150px', '128px'), fontWeight: 800, lineHeight: 1 });
+const s6hChars = splitChars(s6h, TALL ? "Let's build" : "Let's build yours.");
+let s6h2Chars = [];
+if (TALL) { const h2 = el('div', 'display grad', null, s6box); css(h2, { fontSize: '128px', fontWeight: 800, lineHeight: 1.05 }); s6h2Chars = splitChars(h2, 'yours.'); }
+const s6url = el('div', 'body chip', 'spinexitsolutions.com', s6box); css(s6url, { marginTop: pos('56px', '72px'), padding: pos('18px 36px', '22px 40px'), fontSize: pos('34px', '40px'), fontWeight: 600 });
+const s6city = el('div', 'body', 'Websites · Stores · Apps · Marketing — Jaipur, India', s6box); css(s6city, { marginTop: '28px', fontSize: pos('24px', '27px'), color: 'rgba(255,255,255,.6)', letterSpacing: '0.04em' });
+
+const scenes = [s1, s2, s3, s4, s5, s6];
+
+// ---------- the timeline ----------
+window.seek = (t) => {
+  // background drift
+  css(g1, { left: `${W * 0.15 + Math.sin(t * 0.35) * 200 - 450}px`, top: `${H * 0.2 + Math.cos(t * 0.3) * 160 - 450}px` });
+  css(g2, { left: `${W * 0.8 + Math.cos(t * 0.25) * 220 - 350}px`, top: `${H * 0.75 + Math.sin(t * 0.4) * 140 - 350}px` });
+  css(g3, { left: `${W * 0.5 + Math.sin(t * 0.5) * 260 - 300}px`, top: `${H * 0.55 + Math.cos(t * 0.45) * 200 - 300}px` });
+  grid.style.transform = `translateY(${(t * 20) % 80}px)`;
+  grain.style.transform = `translate(${-((t * 997) % 400)}px, ${-((t * 613) % 400)}px)`;
+  // streak flashes at each cut
+  const cuts = [3, 8, 12, 16, 22, 26];
+  let st = 0, sx = 0;
+  for (const c of cuts) { const k = prog(t, c - 0.25, c + 0.35); if (k > 0 && k < 1) { st = Math.sin(k * Math.PI); sx = k; } }
+  css(streak, { opacity: st, transform: `translateX(${sx * W * 1.6}px) skewX(-18deg)` });
+  scenes.forEach((s) => (s.style.display = 'none'));
+
+  // 1. logo reveal
+  if (t < 3.05) {
+    s1.style.display = '';
+    const v = eOut(prog(t, 0.15, 1.3));
+    const out = eIn(prog(t, 2.55, 3.0));
+    css(logo, { opacity: v * (1 - out), filter: `blur(${(1 - v) * 40 + out * 30}px) drop-shadow(0 0 ${40 + 40 * Math.sin(t * 3)}px rgba(165,149,251,.6))`, transform: `scale(${lerp(1.35, 1, v) + out * 0.4})` });
+    letters(s1chars, t, 1.05, 3.0, { stag: 0.03, inD: 0.6, y: 20, blur: 16 });
+    const r = eOut(prog(t, 0.2, 2.2));
+    css(ring, { opacity: (1 - r) * 0.9 * (1 - out), transform: `scale(${lerp(0.4, 1.9, r)})` });
+  }
+  // 2. kinetic words
+  if (t >= 2.95 && t < 8.05) {
+    s2.style.display = '';
+    letters(s2aChars, t, 3.0, 8.0, { stag: 0.05, inD: 0.6, y: 40, blur: 20 });
+    const spans = [[3.4, 4.6], [4.6, 5.8], [5.8, 6.9], [6.9, 8.0]];
+    wordEls.forEach((chars, i) => letters(chars, t, spans[i][0], spans[i][1], { stag: 0.03, inD: 0.45, outD: 0.3, y: 90, blur: 30, outY: -70 }));
+    const l = eOut(prog(t, 3.3, 4.2)) * (1 - eIn(prog(t, 7.6, 8.0)));
+    css(s2line, { opacity: l, transform: `scaleX(${l})` });
+    s2box.style.transform = `scale(${1 + prog(t, 3, 8) * 0.06})`;
+  }
+  // 3. a website building itself
+  if (t >= 7.95 && t < 16.05) {
+    s3.style.display = '';
+    const out = eIn(prog(t, 15.55, 16.0));
+    blurIn(s3kick, eOut(prog(t, 8.0, 8.6)) * (1 - out), { y: 20, blur: 14 });
+    blurIn(lap, eOut(prog(t, 8.0, 8.7)) * (1 - out), { y: 80, blur: 30, scale: 0.92 });
+    blurIn(ph, eOut(prog(t, 8.6, 9.3)) * (1 - out), { y: 140, blur: 30, scale: 0.9 });
+    for (const [d, at] of [...lapUI, ...phUI]) {
+      const k = eOut(prog(t, at, at + 0.45));
+      d.style.opacity = k; d.style.transform = `translateY(${(1 - k) * 18}px) scale(${lerp(0.96, 1, k)})`; d.style.filter = `blur(${(1 - k) * 6}px)`;
+    }
+    for (const [d, at] of bars) { const k = eOut(prog(t, at, at + 0.6)); d.style.opacity = k * 0.9; d.style.transformOrigin = 'bottom'; d.style.transform = `scaleY(${k})`; }
+    blurIn(b1, eOut(prog(t, 11.0, 11.5)) * (1 - out), { y: 20, blur: 12, scale: 0.85 });
+    blurIn(b2, eOut(prog(t, 11.4, 11.9)) * (1 - out), { y: 20, blur: 12, scale: 0.85 });
+    steps.forEach((chars, i) => letters(chars, t, 9.0 + i * 1.3, 16.0, { stag: 0.035, inD: 0.5, outD: 0.4, y: 50, blur: 22 }));
+    blurIn(s3sub, eOut(prog(t, 12.9, 13.6)) * (1 - out), { y: 20, blur: 12 });
+    // slow push-in on the devices
+    const z = 1 + prog(t, 8, 16) * 0.05;
+    lap.style.transform += ` scale(${z})`; ph.style.transform += ` scale(${z})`;
+  }
+  // 4. services rush
+  if (t >= 15.95 && t < 22.05) {
+    s4.style.display = '';
+    s4words.forEach((d, i) => {
+      const a = 16 + i, b = a + 1;
+      if (t < a - 0.05 || t >= b + 0.05) { d.style.opacity = 0; return; }
+      const vi = eOut(prog(t, a, a + 0.32)), vo = eIn(prog(t, b - 0.28, b));
+      d.style.opacity = vi * (1 - vo);
+      d.style.filter = `blur(${(1 - vi) * 28 + vo * 22}px)`;
+      d.style.transform = `scale(${lerp(1.5, 1, vi) - vo * 0.18}) translateY(${vo * -20}px)`;
+      d.style.color = i % 2 ? '#fff' : '';
+      d.classList.toggle('grad', i % 2 === 0);
+    });
+    const i = clamp(Math.floor(t - 16), 0, 5);
+    s4num.textContent = `0${i + 1} / 06`;
+    blurIn(s4num, eOut(prog(t, 16, 16.4)) * (1 - eIn(prog(t, 21.7, 22))), { y: 10, blur: 10 });
+    const bw = pos(600, 480) * (prog(t, 16, 22));
+    css(s4bar, { width: bw + 'px', marginLeft: -bw / 2 + 'px', opacity: 1 - eIn(prog(t, 21.7, 22)) });
+  }
+  // 5. promise
+  if (t >= 21.95 && t < 26.05) {
+    s5.style.display = '';
+    promise.forEach((p, i) => letters(p.chars, t, 22.1 + i * 0.75, 26.0, { stag: 0.03, inD: 0.5, outD: 0.4, y: 60, blur: 24 }));
+    s5box.style.transform = `scale(${1 + prog(t, 22, 26) * 0.05})`;
+  }
+  // 6. CTA
+  if (t >= 25.95) {
+    s6.style.display = '';
+    blurIn(s6logo, eOut(prog(t, 26.0, 26.7)), { y: 20, blur: 20, scale: 1.3 });
+    letters(s6hChars, t, 26.2, 99, { stag: 0.035, inD: 0.55, y: 60, blur: 24 });
+    letters(s6h2Chars, t, 26.6, 99, { stag: 0.04, inD: 0.55, y: 60, blur: 24 });
+    blurIn(s6url, eOut(prog(t, 27.2, 27.9)), { y: 24, blur: 14, scale: 0.9 });
+    blurIn(s6city, eOut(prog(t, 27.6, 28.3)), { y: 16, blur: 10 });
+    const end = eIn(prog(t, 29.4, 30));
+    s6.style.opacity = 1 - end * 0.15;
+  }
+};
+window.DURATION = DUR;
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => (i.complete ? 1 : new Promise((r) => { i.onload = r; i.addEventListener('error', r); })))]);
+seek(0);
+</script>
+</body>
+</html>
