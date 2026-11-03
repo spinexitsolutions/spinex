@@ -7,25 +7,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600&display=block" rel="stylesheet">
 <style>
-  :root { --ink:#0d0a14; --ink2:#1a1426; --lav:#a595fb; --lav2:#c2b6ff; --lav3:#6e59d9; --white:#f6f4ff; }
+  :root { --ink:#120f1b; --bg:#f8f7fc; --lav:#a595fb; --lav2:#c2b6ff; --lav3:#6e59d9; --muted:rgba(18,15,27,.55); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: var(--ink); overflow: hidden; }
+  html, body { background: var(--bg); overflow: hidden; }
   .display { font-family: "Bricolage Grotesque", "Inter Display", Inter, sans-serif; letter-spacing: -0.035em; }
   .body { font-family: Manrope, Inter, sans-serif; }
-  #stage { position: relative; overflow: hidden; background: var(--ink); color: var(--white); }
+  #stage { position: relative; overflow: hidden; background: var(--bg); color: var(--ink); }
   .layer { position: absolute; inset: 0; }
   .center { display: grid; place-items: center; }
   .abs { position: absolute; }
-  .grad, .grad .ch { color: #cfc6ff; text-shadow: 0 0 40px rgba(165,149,251,.45); }
-  .chip { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); border-radius: 999px; backdrop-filter: blur(6px); }
+  .grad, .grad .ch { color: var(--lav3); }
+  .chip { border: 1px solid rgba(18,15,27,.14); background: #fff; border-radius: 999px; }
   .ch { display: inline-block; white-space: pre; will-change: transform, filter, opacity; }
-  #grain { position: absolute; inset: -50%; opacity: .07; mix-blend-mode: overlay; pointer-events: none; }
+  #grain { position: absolute; inset: -50%; opacity: 0; mix-blend-mode: overlay; pointer-events: none; }
   .glow { position: absolute; border-radius: 50%; filter: blur(120px); }
-  .laptop { position: absolute; border-radius: 22px; background: #0b0910; padding: 14px; box-shadow: 0 40px 120px -30px rgba(110,89,217,.55), 0 0 0 1px rgba(255,255,255,.08); }
+  .laptop { position: absolute; border-radius: 22px; background: #0b0910; padding: 14px; box-shadow: 0 50px 100px -40px rgba(18,15,27,.35), 0 0 0 1px rgba(18,15,27,.06); }
   .laptop .scr, .phone .scr { position: relative; overflow: hidden; background: #fff; }
   .laptop .scr { border-radius: 8px; height: 100%; }
-  .laptop .base { position: absolute; left: -7%; right: -7%; bottom: -26px; height: 26px; border-radius: 0 0 26px 26px; background: linear-gradient(#2a2433, #15111c); }
-  .phone { position: absolute; border-radius: 44px; background: #0b0910; padding: 11px; box-shadow: 0 30px 90px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.1); }
+  .laptop .base { position: absolute; left: -7%; right: -7%; bottom: -26px; height: 26px; border-radius: 0 0 26px 26px; background: linear-gradient(#d9d6e3, #b8b4c4); }
+  .phone { position: absolute; border-radius: 44px; background: #0b0910; padding: 11px; box-shadow: 0 40px 80px -30px rgba(18,15,27,.4), 0 0 0 1px rgba(18,15,27,.08); }
   .phone .scr { border-radius: 34px; height: 100%; }
   .scr img { position: absolute; left: 0; top: 0; width: 100%; height: auto; will-change: transform; }
   .scr .ph { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, #ece9f7 0 120px, #fff 120px 260px); }
@@ -88,11 +88,11 @@ const pos = (wide, tall) => (TALL ? tall : wide);
 // ---------- background ----------
 const bg = el('div', 'layer');
 const g1 = el('div', 'glow', null, bg), g2 = el('div', 'glow', null, bg), g3 = el('div', 'glow', null, bg);
-css(g1, { width: '900px', height: '900px', background: '#6e59d9', opacity: .38 });
-css(g2, { width: '700px', height: '700px', background: '#3b82f6', opacity: .22 });
-css(g3, { width: '600px', height: '600px', background: '#c026d3', opacity: .18 });
+css(g1, { width: '900px', height: '900px', background: '#6e59d9', opacity: 0 });
+css(g2, { width: '700px', height: '700px', background: '#3b82f6', opacity: 0 });
+css(g3, { width: '600px', height: '600px', background: '#c026d3', opacity: 0 });
 const grid = el('div', 'layer', null, bg);
-css(grid, { opacity: .07, backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)', backgroundSize: '80px 80px', maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)' });
+css(grid, { opacity: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)', backgroundSize: '80px 80px', maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)' });
 // film grain (static noise, shifted each frame)
 const grain = document.createElement('canvas'); grain.id = 'grain'; grain.width = 512; grain.height = 512; stage.appendChild(grain);
 { const g = grain.getContext('2d'), d = g.createImageData(512, 512); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } g.putImageData(d, 0, 0); css(grain, { width: (W * 2) + 'px', height: (H * 2) + 'px', imageRendering: 'pixelated' }); }
@@ -103,25 +103,25 @@ css(streak, { left: '-30%', top: '0', width: '40%', height: '100%', background: 
 // ---------- scene 1: logo reveal (0–3s) ----------
 const s1 = el('div', 'layer center');
 const s1box = el('div', 'abs', null, s1); css(s1box, { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: pos('34px', '40px') });
-const logo = el('img', null, null, s1box); logo.src = `${ASSET}/logo.png`; css(logo, { width: pos('230px', '300px'), height: 'auto', filter: 'drop-shadow(0 0 60px rgba(165,149,251,.55))' });
-const s1t = el('div', 'body', null, s1box); css(s1t, { fontSize: pos('28px', '34px'), letterSpacing: '0.42em', fontWeight: 600, color: '#d9d3ff' });
+const logo = el('img', null, null, s1box); logo.src = `${ASSET}/logo.png`; css(logo, { width: pos('230px', '300px'), height: 'auto' });
+const s1t = el('div', 'body', null, s1box); css(s1t, { fontSize: pos('28px', '34px'), letterSpacing: '0.42em', fontWeight: 600, color: 'var(--muted)' });
 const s1chars = splitChars(s1t, 'SPINEX IT SOLUTIONS');
-const ring = el('div', 'abs', null, s1); css(ring, { width: pos('520px', '640px'), height: pos('520px', '640px'), borderRadius: '50%', border: '1px solid rgba(194,182,255,.35)' });
+const ring = el('div', 'abs', null, s1); css(ring, { width: pos('520px', '640px'), height: pos('520px', '640px'), borderRadius: '50%', border: '1px solid rgba(110,89,217,.25)' });
 
 // ---------- scene 2: kinetic words (3–8s) ----------
 const s2 = el('div', 'layer center');
 const s2box = el('div', 'abs', null, s2); css(s2box, { textAlign: 'center' });
-const s2a = el('div', 'display', null, s2box); css(s2a, { fontSize: pos('92px', '96px'), fontWeight: 600, color: 'rgba(255,255,255,.75)' });
+const s2a = el('div', 'display', null, s2box); css(s2a, { fontSize: pos('92px', '96px'), fontWeight: 600, color: 'var(--muted)' });
 const s2aChars = splitChars(s2a, 'We build');
 const words = ['Websites', 'Online stores', 'Apps', 'Brands'];
 const s2w = el('div', 'display grad', null, s2box); css(s2w, { fontSize: pos('210px', '150px'), fontWeight: 800, lineHeight: 1.02, marginTop: pos('6px', '18px'), height: pos('230px', '170px'), position: 'relative', minWidth: pos('1500px', '960px') });
 const wordEls = words.map((w) => { const d = el('div', null, null, s2w); css(d, { position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }); return splitChars(d, w); });
-const s2line = el('div', 'abs', null, s2); css(s2line, { height: '2px', background: 'linear-gradient(90deg, transparent, var(--lav), transparent)', width: pos('900px', '700px'), top: pos('68%', '60%') });
+const s2line = el('div', 'abs', null, s2); css(s2line, { height: '2px', background: 'linear-gradient(90deg, transparent, var(--lav3), transparent)', width: pos('900px', '700px'), top: pos('68%', '60%') });
 
 // ---------- scene 3: a website building itself (8–16s), no client names ----------
 const s3 = el('div', 'layer');
 const s3kick = el('div', 'body abs', 'Designed · Built · Launched', s3);
-css(s3kick, { fontSize: pos('22px', '26px'), letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--lav2)', left: pos('140px', '90px'), top: pos('150px', '230px') });
+css(s3kick, { fontSize: pos('22px', '26px'), letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--lav3)', left: pos('140px', '90px'), top: pos('150px', '230px') });
 const lw = TALL ? 900 : 1040, lh = Math.round(lw * 0.625);
 const lap = el('div', 'laptop', null, s3);
 css(lap, { width: lw + 'px', height: lh + 'px', left: pos('740px', '90px'), top: pos('190px', '300px') });
@@ -148,20 +148,20 @@ const phUI = [
   [box(pscr, 0.08, 0.4, 0.84, 0.05, INK, 99), 10.0], [box(pscr, 0.08, 0.49, 0.84, 0.24, 'linear-gradient(135deg,#c2b6ff,#6e59d9)', 14), 10.2],
   [box(pscr, 0.08, 0.76, 0.84, 0.1, L1, 12), 10.5], [box(pscr, 0.08, 0.88, 0.84, 0.1, L1, 12), 10.65],
 ];
-const badge = (txt, x, y) => { const d = el('div', 'body chip abs', txt, s3); css(d, { left: x, top: y, padding: pos('14px 22px', '16px 24px'), fontSize: pos('22px', '26px'), fontWeight: 600, background: 'rgba(18,15,27,.85)', color: '#fff' }); return d; };
+const badge = (txt, x, y) => { const d = el('div', 'body chip abs', txt, s3); css(d, { left: x, top: y, padding: pos('14px 22px', '16px 24px'), fontSize: pos('22px', '26px'), fontWeight: 600, background: 'var(--ink)', color: '#fff', border: '0' }); return d; };
 const b1 = badge('⚡ Loads in 0.8s', pos('1450px', '600px'), pos('150px', '300px'));
 const b2 = badge('Performance 98/100', pos('690px', '60px'), pos('720px', '950px'));
 const s3txt = el('div', 'abs', null, s3);
 css(s3txt, { left: pos('140px', '90px'), top: pos('330px', '1220px'), width: pos('560px', '900px') });
 const steps = ['Designed.', 'Built.', 'Launched.'].map((w, i) => { const d = el('div', 'display' + (i === 2 ? ' grad' : ''), null, s3txt); css(d, { fontSize: pos('104px', '84px'), fontWeight: 800, lineHeight: 1.04 }); return splitChars(d, w); });
 const s3sub = el('div', 'body', 'Fast, mobile-friendly websites that bring enquiries.', s3txt);
-css(s3sub, { marginTop: pos('26px', '20px'), fontSize: pos('28px', '26px'), color: 'rgba(255,255,255,.65)', maxWidth: pos('520px', '820px') });
+css(s3sub, { marginTop: pos('26px', '20px'), fontSize: pos('28px', '26px'), color: 'var(--muted)', maxWidth: pos('520px', '820px') });
 // ---------- scene 4: services rush (16–22s) ----------
 const services = ['Web development', 'E-commerce', 'Digital marketing', 'Social media', 'Video editing', 'Graphic design'];
 const s4 = el('div', 'layer center');
 const s4words = services.map((s) => { const d = el('div', 'display abs', null, s4); css(d, { fontSize: pos('170px', (s.length > 12 ? 118 : 140) + 'px'), fontWeight: 800, textAlign: 'center', width: '100%', lineHeight: 1 }); d.innerHTML = TALL ? s.replace(' ', '<br>') : s; return d; });
-const s4num = el('div', 'body abs', null, s4); css(s4num, { fontSize: pos('24px', '30px'), letterSpacing: '0.3em', color: 'var(--lav2)', top: pos('20%', '24%') });
-const s4bar = el('div', 'abs', null, s4); css(s4bar, { height: '3px', background: 'var(--lav)', bottom: pos('22%', '28%'), left: '50%' });
+const s4num = el('div', 'body abs', null, s4); css(s4num, { fontSize: pos('24px', '30px'), letterSpacing: '0.3em', color: 'var(--lav3)', top: pos('20%', '24%') });
+const s4bar = el('div', 'abs', null, s4); css(s4bar, { height: '3px', background: 'var(--lav3)', bottom: pos('22%', '28%'), left: '50%' });
 
 // ---------- scene 5: promise (22–26s) ----------
 const s5 = el('div', 'layer center');
@@ -176,8 +176,8 @@ const s6h = el('div', 'display', null, s6box); css(s6h, { fontSize: pos('150px',
 const s6hChars = splitChars(s6h, TALL ? "Let's build" : "Let's build yours.");
 let s6h2Chars = [];
 if (TALL) { const h2 = el('div', 'display grad', null, s6box); css(h2, { fontSize: '128px', fontWeight: 800, lineHeight: 1.05 }); s6h2Chars = splitChars(h2, 'yours.'); }
-const s6url = el('div', 'body chip', 'spinexitsolutions.com', s6box); css(s6url, { marginTop: pos('56px', '72px'), padding: pos('18px 36px', '22px 40px'), fontSize: pos('34px', '40px'), fontWeight: 600 });
-const s6city = el('div', 'body', 'Websites · Stores · Apps · Marketing — Jaipur, India', s6box); css(s6city, { marginTop: '28px', fontSize: pos('24px', '27px'), color: 'rgba(255,255,255,.6)', letterSpacing: '0.04em' });
+const s6url = el('div', 'body chip', 'spinexitsolutions.com', s6box); css(s6url, { marginTop: pos('56px', '72px'), padding: pos('18px 36px', '22px 40px'), fontSize: pos('34px', '40px'), fontWeight: 600, color: 'var(--ink)' });
+const s6city = el('div', 'body', 'Websites · Stores · Apps · Marketing — Jaipur, India', s6box); css(s6city, { marginTop: '28px', fontSize: pos('24px', '27px'), color: 'var(--muted)', letterSpacing: '0.04em' });
 
 const scenes = [s1, s2, s3, s4, s5, s6];
 
@@ -193,7 +193,7 @@ window.seek = (t) => {
   const cuts = [3, 8, 12, 16, 22, 26];
   let st = 0, sx = 0;
   for (const c of cuts) { const k = prog(t, c - 0.25, c + 0.35); if (k > 0 && k < 1) { st = Math.sin(k * Math.PI); sx = k; } }
-  css(streak, { opacity: st, transform: `translateX(${sx * W * 1.6}px) skewX(-18deg)` });
+  css(streak, { opacity: 0, transform: `translateX(${sx * W * 1.6}px) skewX(-18deg)` });
   scenes.forEach((s) => (s.style.display = 'none'));
 
   // 1. logo reveal
@@ -201,7 +201,7 @@ window.seek = (t) => {
     s1.style.display = '';
     const v = eOut(prog(t, 0.15, 1.3));
     const out = eIn(prog(t, 2.55, 3.0));
-    css(logo, { opacity: v * (1 - out), filter: `blur(${(1 - v) * 40 + out * 30}px) drop-shadow(0 0 ${40 + 40 * Math.sin(t * 3)}px rgba(165,149,251,.6))`, transform: `scale(${lerp(1.35, 1, v) + out * 0.4})` });
+    css(logo, { opacity: v * (1 - out), filter: `blur(${(1 - v) * 40 + out * 30}px)`, transform: `scale(${lerp(1.35, 1, v) + out * 0.4})` });
     letters(s1chars, t, 1.05, 3.0, { stag: 0.03, inD: 0.6, y: 20, blur: 16 });
     const r = eOut(prog(t, 0.2, 2.2));
     css(ring, { opacity: (1 - r) * 0.9 * (1 - out), transform: `scale(${lerp(0.4, 1.9, r)})` });
@@ -246,7 +246,7 @@ window.seek = (t) => {
       d.style.opacity = vi * (1 - vo);
       d.style.filter = `blur(${(1 - vi) * 28 + vo * 22}px)`;
       d.style.transform = `scale(${lerp(1.5, 1, vi) - vo * 0.18}) translateY(${vo * -20}px)`;
-      d.style.color = i % 2 ? '#fff' : '';
+      d.style.color = i % 2 ? 'var(--ink)' : '';
       d.classList.toggle('grad', i % 2 === 0);
     });
     const i = clamp(Math.floor(t - 16), 0, 5);
