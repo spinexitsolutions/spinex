@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Copy, KeyRound, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
+import { CheckCircle2, Copy, KeyRound, Loader2, Mail, ShieldCheck, ShieldOff } from "lucide-react";
 
-type Me = { name: string; email: string; role: string; twoStep: boolean; backupLeft: number; canSave: boolean; ownerEnvPassword: boolean };
+type Me = { name: string; email: string; role: string; twoStep: boolean; backupLeft: number; canSave: boolean; ownerEnvPassword: boolean; recoveryEmail: string };
 
 async function post<T>(body: Record<string, unknown>): Promise<T> {
   const res = await fetch("/api/admin/account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -24,6 +24,7 @@ export default function AccountPanel() {
         <p className="text-sm text-muted">Logged in as</p>
         <p className="mt-1 font-display text-xl font-semibold">{me.name} <span className="text-base font-normal text-muted">· {me.email}</span></p>
       </section>
+      <Recovery me={me} reload={load} />
       <TwoStep me={me} reload={load} />
       <Password me={me} />
     </div>
@@ -156,6 +157,45 @@ function Password({ me }: { me: Me }) {
       </div>
       <button onClick={save} disabled={busy || !cur || next.length < 8 || !next2 || !me.canSave} className="btn-dark mt-5 px-5 py-2.5 text-sm disabled:bg-line disabled:text-muted">{busy ? <Loader2 size={15} className="animate-spin" /> : null} Change password</button>
       <p className="mt-2 text-xs text-muted">At least 8 characters. Forgot it? Log out and use &quot;Forgot password?&quot; on the login page.</p>
+      {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>{msg.text}</p>}
+    </section>
+  );
+}
+
+// Recovery email: where "Forgot password?" sends the reset link (useful when the login email is not a real inbox).
+function Recovery({ me, reload }: { me: Me; reload: () => void }) {
+  const [email, setEmail] = useState(me.recoveryEmail);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const changed = email.trim().toLowerCase() !== me.recoveryEmail;
+  const save = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await post({ action: "recovery", email, password });
+      setPassword("");
+      setMsg({ ok: true, text: email.trim() ? "Saved. Password reset links will go to this email." : "Removed. Reset links will go to your login email." });
+      reload();
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Couldn't save it." });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="rounded-3xl border border-line bg-white p-6" data-recovery-email>
+      <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><Mail size={19} className="text-lav-600" /> Recovery email</h3>
+      <p className="mt-1 text-sm text-muted">
+        If you forget your password, &quot;Forgot password?&quot; sends the reset link here. Use a real inbox you check, like your Gmail.
+        {me.recoveryEmail ? <> Now: <b className="text-ink">{me.recoveryEmail}</b></> : <> Not set, so links go to your login email <b className="text-ink">{me.email}</b>.</>}
+      </p>
+      <div className="mt-5 grid max-w-xl gap-4 sm:grid-cols-2">
+        <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">Recovery email</span><input className="input" type="email" autoComplete="email" placeholder="you@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+        <label className="block"><span className="mb-1.5 block text-[13px] font-semibold">Your password (to confirm)</span><input className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+      </div>
+      <button onClick={save} disabled={busy || !changed || !password || !me.canSave} className="btn-dark mt-5 px-5 py-2.5 text-sm disabled:bg-line disabled:text-muted">{busy ? <Loader2 size={15} className="animate-spin" /> : null} Save recovery email</button>
+      <p className="mt-2 text-xs text-muted">On the login page you can type either your login email or this recovery email.</p>
       {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>{msg.text}</p>}
     </section>
   );

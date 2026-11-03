@@ -20,6 +20,7 @@ export type Account = {
   totpPending: string; // decrypted secret waiting for the first code
   backupCodes: string[]; // hashes
   tokenVersion: number;
+  recoveryEmail: string; // where "Forgot password" links go; "" = the login email
 };
 
 const OWNER_DOC = "owner_account";
@@ -41,6 +42,7 @@ function fromDoc(uid: string, d: Record<string, unknown>, base: Partial<Account>
     totpPending: d.totpPending ? decrypt(String(d.totpPending)) : "",
     backupCodes: Array.isArray(d.backupCodes) ? d.backupCodes.map(String) : [],
     tokenVersion: Number(d.tokenVersion) || 0,
+    recoveryEmail: String(d.recoveryEmail ?? "").trim().toLowerCase(),
   };
 }
 
@@ -92,6 +94,18 @@ export const enableTotp = (a: Account, backupHashes: string[]) =>
   update(a, { totpSecret: a.totpPending, totpPending: "", totpEnabled: true, backupCodes: backupHashes, totpLastStep: 0 }, true);
 export const disableTotp = (a: Account) => update(a, { totpSecret: "", totpPending: "", totpEnabled: false, backupCodes: [], totpLastStep: 0 }, true);
 export const setBackupCodes = (a: Account, hashes: string[]) => update(a, { backupCodes: hashes });
+export const setRecoveryEmail = (a: Account, email: string) => update(a, { recoveryEmail: email.trim().toLowerCase() });
+
+// Where a password reset link goes: the recovery email if one is set, else the login email.
+export const resetEmailFor = (a: Account) => a.recoveryEmail || a.email;
+
+// The owner can also type their recovery email on "Forgot password?" (in case they forget the login email).
+export async function ownerByRecoveryEmail(email: string): Promise<Account | null> {
+  const e = email.trim().toLowerCase();
+  if (!e || !hasDb()) return null;
+  const d = await (await ownerCol()).findOne({ _id: OWNER_DOC, recoveryEmail: e });
+  return d ? getAccount("env") : null;
+}
 
 // The document holding this account, for single atomic updates.
 async function accountUpdate(a: Pick<Account, "uid">, filter: Record<string, unknown>, op: Record<string, unknown>) {

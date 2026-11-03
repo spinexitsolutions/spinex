@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { getSession, jsonBody, unauthorized } from "@/lib/admin-guard";
 import { createToken, type Session } from "@/lib/auth";
 import { sessionCookie } from "@/lib/session-cookie";
-import { checkSecondStep, disableTotp, enableTotp, getAccount, passwordMatches, setBackupCodes, setPassword, startTotp, type Account } from "@/lib/account";
+import { checkSecondStep, disableTotp, enableTotp, getAccount, passwordMatches, setBackupCodes, setPassword, setRecoveryEmail, startTotp, type Account } from "@/lib/account";
 import { hashCode, newBackupCodes, newTotpSecret, otpauthUrl, verifyTotp } from "@/lib/totp";
 import { logActivity } from "@/lib/activity";
 import { hasDb } from "@/lib/db";
@@ -19,6 +19,7 @@ export async function GET() {
     backupLeft: a?.backupCodes.length ?? 0,
     canSave: hasDb(),
     ownerEnvPassword: s.uid === "env" && !a?.passwordHash,
+    recoveryEmail: a?.recoveryEmail ?? "",
   });
 }
 
@@ -80,6 +81,15 @@ export async function POST(req: Request) {
     const updated = await setPassword(a, next);
     await logActivity(s, "Login", "Changed own password", "", req);
     return keepLoggedIn(NextResponse.json({ ok: true }), updated, s);
+  }
+
+  if (action === "recovery") {
+    if (!passwordMatches(a, String(b.password ?? ""))) return NextResponse.json({ error: "Your password is wrong." }, { status: 400 });
+    const email = String(b.email ?? "").trim().toLowerCase().slice(0, 200);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: "That email doesn't look right." }, { status: 400 });
+    await setRecoveryEmail(a, email);
+    await logActivity(s, "Login", email ? "Set a recovery email" : "Removed the recovery email", "", req);
+    return NextResponse.json({ ok: true, recoveryEmail: email });
   }
 
   return NextResponse.json({ error: "Unknown action." }, { status: 400 });

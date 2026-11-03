@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { getDb, hasDb } from "@/lib/db";
-import { findAccountByEmail } from "@/lib/account";
+import { findAccountByEmail, ownerByRecoveryEmail, resetEmailFor } from "@/lib/account";
 import { emailPerson } from "@/lib/notify";
 import { clientIp, rateLimited } from "@/lib/antispam";
 import { logActivity } from "@/lib/activity";
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   }
   if (await rateLimited(`forgot-email:${email}`, 3, 60 * 60 * 1000).catch(() => false)) return evenOut().then(() => reply);
 
-  const account = await findAccountByEmail(email).catch(() => null);
+  const account = (await findAccountByEmail(email).catch(() => null)) ?? (await ownerByRecoveryEmail(email).catch(() => null));
   if (!account || !account.active || !account.email) return evenOut().then(() => reply);
   const token = randomBytes(32).toString("base64url");
   const col = (await getDb()).collection("password_resets");
@@ -30,11 +30,11 @@ export async function POST(req: Request) {
   await col.insertOne({ _id: createHash("sha256").update(token).digest("hex") as never, uid: account.uid, exp: new Date(Date.now() + 30 * 60 * 1000) });
   const origin = process.env.NODE_ENV === "production" ? SITE_URL : new URL(req.url).origin;
   await emailPerson(
-    account.email,
+    resetEmailFor(account),
     "Reset your Spinex admin password",
     "Set a new password",
     [
-      "Someone (hopefully you) asked to reset the password for your Spinex admin login.",
+      `Someone (hopefully you) asked to reset the password for your Spinex admin login (${account.email}).`,
       "The button below works once and stops working after 30 minutes. If you didn't ask for this, ignore this email: your password stays the same.",
     ],
     { label: "Set a new password", url: `${origin}/admin/reset?token=${token}` },

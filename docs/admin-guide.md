@@ -10,7 +10,7 @@ version: spinexitsolutions.com/admin · Edition 1 · November 2026
 Open **spinexitsolutions.com/admin** and enter your **Email** and **Password**, then press **Log in**.
 
 - **Two-step login:** if it is on, type the 6-digit code from your authenticator app (Google Authenticator or similar). Lost your phone? Type one of your backup codes instead.
-- **Forgot password?** Type your admin email and you will get a link to set a new password. Changing the password logs you out on all other devices.
+- **Forgot password?** Type your admin email (or your recovery email) and you will get a link to set a new password. The link goes to the **Recovery email** from **My account**, if one is set. Changing the password logs you out on all other devices.
 - If you have 2 or fewer backup codes left, the panel reminds you to make new ones in **My account**.
 
 ## Finding your way around
@@ -694,6 +694,7 @@ Saves or loads the **website content only** (text, images and settings) as `cont
 - **History:** the last 40 saved versions of the website content. Press **Restore** to go back; the current version is kept so you can switch back. Blog posts, leads and interns are not included.
 - **Activity log:** who changed what, newest first. Filter by area. Entries are kept for one year.
 - **My account:** your own login security.
+  - **Recovery email:** the inbox where "Forgot password?" sends the reset link. Set a real Gmail here if your login email is not a real inbox. On the login page you can type either email.
   - Turn on two-step login: scan the QR code with Google Authenticator, type the code, press **Turn on**.
   - Save your backup codes somewhere safe, not on the same phone. **Make codes** creates new ones and stops the old ones working.
   - **Change password.**
@@ -730,6 +731,6 @@ Saves or loads the **website content only** (text, images and settings) as `cont
 - **An image won't upload.** Keep it under about 4 MB and use JPG, PNG or WebP.
 - **Reminders or review requests aren't going out.** Check that **Automation** says the scheduler is **Working**.
 - **Emails aren't arriving.** Check **API keys → Email alerts** and press **Send test email**.
-- **I'm locked out.** Use **Forgot password?** on the login page. For two-step login, use a backup code, or ask the owner to turn it off for you.
+- **I'm locked out.** Use **Forgot password?** on the login page. The link goes to the **Recovery email** set in **My account** (or the login email if none is set). For two-step login, use a backup code, or ask the owner to turn it off for you.
 
 > **Need help?** Contact Spinex IT Solutions at **spinexitsolutions@gmail.com**.
