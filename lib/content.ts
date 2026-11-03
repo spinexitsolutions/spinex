@@ -235,7 +235,7 @@ export type TrustedBy = {
   reviewUrl: string; // link to the reviews
 };
 
-// Email sent to the visitor right after an enquiry, and the WhatsApp alert to you (Admin → Auto-reply and alerts).
+// Email sent to the visitor right after an enquiry, and the WhatsApp alert to you (Admin → Lead emails and alerts).
 export type LeadReplies = {
   autoReply: boolean;
   replySubject: string; // {name} {service} {phone} {email} {company} are filled in

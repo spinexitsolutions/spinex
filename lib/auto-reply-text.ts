@@ -20,7 +20,7 @@ export function fillReply(text: string, v: { name: string; service: string; phon
     .replace(/\{company\}/gi, v.company);
 }
 
-// What the visitor receives, built from Admin → Auto-reply and alerts.
+// What the visitor receives, built from Admin → Lead emails and alerts.
 export function buildAutoReply(content: SiteContent, lead: { name?: string; services?: string; phone?: string; email?: string }) {
   const r = content.leadReplies;
   // Names are typed by the visitor: keep them short and on one line so the email can't be used to carry spam.

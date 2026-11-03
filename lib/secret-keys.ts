@@ -21,7 +21,7 @@ export const KEY_GROUPS: KeyGroup[] = [
   {
     id: "whatsapp",
     title: "WhatsApp alerts",
-    note: "Get a WhatsApp message for every new enquiry. Fill ONE of the three options: (1) your own WhatsApp API panel link, (2) Meta WhatsApp Cloud API, or (3) CallMeBot, free for your own number: follow the 3 steps on callmebot.com (save their number, send them the activation message on WhatsApp) and paste the API key they reply with. Turn alerts on or off in Admin → Auto-reply and alerts.",
+    note: "Get a WhatsApp message for every new enquiry. Fill ONE of the three options: (1) your own WhatsApp API panel link, (2) Meta WhatsApp Cloud API, or (3) CallMeBot, free for your own number: follow the 3 steps on callmebot.com (save their number, send them the activation message on WhatsApp) and paste the API key they reply with. Turn alerts on or off in Admin → Lead emails and alerts.",
     test: "whatsapp",
     keys: [
       { name: "WA_ALERT_TO", label: "Send alerts to (your WhatsApp number)", placeholder: "91 98765 43210", hint: "with country code" },
