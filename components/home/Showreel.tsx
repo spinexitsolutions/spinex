@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Pause, Play } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -21,6 +21,19 @@ function ShowreelInner() {
   const ref = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
+  // Phones get the portrait reel (if one is set), so nothing important is cropped off the sides.
+  const [phone, setPhone] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px), (orientation: portrait) and (max-width: 1024px)");
+    const pick = () => setPhone(mq.matches);
+    pick();
+    mq.addEventListener("change", pick);
+    return () => mq.removeEventListener("change", pick);
+  }, []);
+  const sr = content.showreel;
+  const usePhone = phone === true && !!sr.videoMobile?.trim();
+  const src = phone === null ? undefined : usePhone ? sr.videoMobile : sr.video;
+  const poster = usePhone ? sr.posterMobile || sr.poster : sr.poster;
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
   const maskScale = useTransform(p, [0, 0.5], [1, 8]);
@@ -48,7 +61,7 @@ function ShowreelInner() {
     <section ref={ref} className="relative h-[220vh] bg-ink text-white" aria-label={content.showreel.title}>
       <div className="sticky top-0 isolate h-[100svh] overflow-hidden">
         <motion.div style={{ scale: videoScale, borderRadius: radius }} className="absolute inset-0 overflow-hidden bg-ink-3">
-          <video ref={video} src={content.showreel.video} poster={content.showreel.poster} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+          <video ref={video} key={src ?? "none"} src={src} poster={poster} autoPlay muted loop playsInline preload={src ? "auto" : "none"} className="h-full w-full object-cover" data-showreel={usePhone ? "phone" : "wide"} />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-ink/30" />
         </motion.div>
 

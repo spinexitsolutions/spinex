@@ -311,7 +311,7 @@ export type SiteContent = {
   testimonials: Testimonial[];
   trusted: TrustedBy;
   leadReplies: LeadReplies;
-  showreel: { title: string; video: string; poster: string };
+  showreel: { title: string; video: string; poster: string; videoMobile: string; posterMobile: string }; // *Mobile: portrait 9:16 for phones
   intro: IntroSettings;
   cursor: CursorSettings;
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
@@ -701,6 +701,8 @@ const baseContent: SiteContent = {
     title: "A look at what we make",
     video: "/showreel.mp4",
     poster: "/showreel-poster.jpg",
+    videoMobile: "/showreel-mobile.mp4",
+    posterMobile: "/showreel-mobile-poster.jpg",
   },
   contact: {
     email: "spinexitsolutions@gmail.com",

@@ -986,6 +986,8 @@ function AdminShell() {
                   { key: "title", label: "Heading" },
                   { key: "video", label: "Video URL", hint: "MP4 link, or put showreel.mp4 in the public folder and enter /showreel.mp4" },
                   { key: "poster", label: "Cover image", type: "image", hint: "Shown before the video loads" },
+                  { key: "videoMobile", label: "Phone video URL (portrait 9:16)", hint: "Played on phones instead of the wide video, e.g. /showreel-mobile.mp4. Leave empty to use the wide video everywhere." },
+                  { key: "posterMobile", label: "Phone cover image", type: "image", hint: "Portrait cover shown before the phone video loads" },
                 ]} />
               </Card>
             )}
