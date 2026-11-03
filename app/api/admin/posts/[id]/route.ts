@@ -1,3 +1,5 @@
+import { announce } from "@/lib/seo";
+import { getContent } from "@/lib/content-server";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { revalidateTag } from "next/cache";
@@ -30,6 +32,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const doc = await (await postsCol()).findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Post not found." }, { status: 404 });
   revalidateTag("posts");
+  if (String(doc.status) === "published") void getContent().then((c) => announce([`/blog/${String(doc.slug)}`, "/blog"], c)).catch(() => undefined);
   await logActivity(await getSession(), "Blog", data.status === "published" ? "Published / updated a post" : "Edited a post", String(doc.title ?? ""), req);
   return NextResponse.json(toPost(doc));
 }

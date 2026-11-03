@@ -694,6 +694,30 @@ function AdminShell() {
                     { key: "keywords", label: "Keywords", type: "tags" },
                   ]} />
                 </Card>
+                <Card title="Google, Bing and AI search" note="Connect the website to Google Search Console and Bing Webmaster Tools, and let AI assistants (ChatGPT, Claude, Perplexity, Gemini) read a summary of your business.">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] font-semibold">Google verification code</span>
+                      <input className="input" name="googleVerification" value={draft.seo.googleVerification ?? ""} onChange={(e) => set("seo", { ...draft.seo, googleVerification: e.target.value })} placeholder="Paste the code or the whole <meta> tag" />
+                      <span className="mt-1 block text-xs text-muted">Search Console → Add property → URL prefix → HTML tag.</span>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] font-semibold">Bing verification code</span>
+                      <input className="input" name="bingVerification" value={draft.seo.bingVerification ?? ""} onChange={(e) => set("seo", { ...draft.seo, bingVerification: e.target.value })} placeholder="Paste the code or the whole <meta> tag" />
+                      <span className="mt-1 block text-xs text-muted">Bing Webmaster Tools → Add site → HTML meta tag. Or import from Search Console.</span>
+                    </label>
+                  </div>
+                  <label className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-line p-4">
+                    <span><b>Tell Bing when pages change (IndexNow)</b><span className="block text-sm text-muted">After you save or publish a blog post, Bing and other search engines are told right away. Bing also powers ChatGPT search and Copilot.</span></span>
+                    <input type="checkbox" className="h-5 w-5" checked={draft.seo.indexNow !== false} onChange={(e) => set("seo", { ...draft.seo, indexNow: e.target.checked })} />
+                  </label>
+                  <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                    {[["/sitemap.xml", "Sitemap"], ["/robots.txt", "Robots"], ["/llms.txt", "AI summary (llms.txt)"], ["/llms-full.txt", "AI full details"]].map(([href, label]) => (
+                      <a key={href} href={href} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 font-semibold hover:border-ink">{label} ↗</a>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs text-muted">Submit <b>{SITE_URL}/sitemap.xml</b> in both Google Search Console and Bing Webmaster Tools after the site is live.</p>
+                </Card>
                 <Card title="Home page text for search" note="Shown on the home page above the FAQ. Leave an empty line between paragraphs.">
                   <ObjectEditor value={draft.seo} onChange={(v) => set("seo", v)} fields={[
                     { key: "heading", label: "Heading" },

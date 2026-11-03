@@ -1,3 +1,4 @@
+import { announce, sitePaths } from "@/lib/seo";
 import { NextResponse } from "next/server";
 import { contentChanges, logActivity } from "@/lib/activity";
 import { allowed } from "@/lib/roles";
@@ -53,6 +54,7 @@ export async function PUT(req: Request) {
     throw e;
   }
   revalidateTag("content");
+  void announce(sitePaths(data), data, true); // tell Bing and others the pages changed (in the background)
   const parts = contentChanges(before, data as unknown as Record<string, unknown>);
   if (parts.length) await logActivity(session, "Website content", `Changed ${parts.join(", ")}`, "", req);
   return NextResponse.json(data, { headers: { "x-content-updated": updatedAt } });

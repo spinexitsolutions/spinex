@@ -296,7 +296,12 @@ export type SiteContent = {
   goals: Goal[];
   pages: { about: PageText; services: PageText; products: PageText; work: PageText; contact: PageText; internship: PageText; blog: PageText; careers: PageText };
   homeLayout: HomeBlock[];
-  seo: { metaTitle: string; metaDescription: string; keywords: string[]; heading: string; text: string; areas: string[] };
+  seo: {
+    metaTitle: string; metaDescription: string; keywords: string[]; heading: string; text: string; areas: string[];
+    googleVerification: string; // code from Google Search Console (HTML tag method)
+    bingVerification: string; // code from Bing Webmaster Tools (meta tag method)
+    indexNow: boolean; // tell Bing and others when pages change
+  };
   about: { title: string; body: string; philosophy: string; image: string };
   stats: Stat[];
   services: Service[];
@@ -425,6 +430,9 @@ const baseContent: SiteContent = {
   },
   homeLayout: Object.keys(HOME_BLOCKS).map((id) => ({ id, visible: true })),
   seo: {
+    googleVerification: "",
+    bingVerification: "",
+    indexNow: true,
     metaTitle: "Spinex IT Solutions | IT Company in Jaipur, Serving All India",
     metaDescription:
       "Jaipur-based IT company serving businesses across India: websites, online stores, on-demand apps, SEO, ads, social media, video, design and brand promotion. Get a free quote.",

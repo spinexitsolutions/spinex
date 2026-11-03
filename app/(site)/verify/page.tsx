@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
 import VerifyCertificate from "@/components/VerifyCertificate";
 
-export const metadata: Metadata = { title: "Verify a certificate or letter", description: "Check whether a Spinex IT Solutions certificate or HR letter is genuine." };
+export const metadata: Metadata = { title: "Verify a certificate or letter", description: "Check whether a Spinex IT Solutions certificate or HR letter is genuine.", alternates: { canonical: "/verify" } };
 
 // Heading and intro render on the server so they're in the static HTML; only the
 // form (which reads ?id= from the URL) waits for the client.

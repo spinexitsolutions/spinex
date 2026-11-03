@@ -1,3 +1,5 @@
+import { announce } from "@/lib/seo";
+import { getContent } from "@/lib/content-server";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { revalidateTag } from "next/cache";
@@ -29,6 +31,7 @@ export async function POST(req: Request) {
   };
   const { insertedId } = await (await postsCol()).insertOne(doc);
   revalidateTag("posts");
+  if (String(doc.status) === "published") void getContent().then((c) => announce([`/blog/${String(doc.slug)}`, "/blog"], c)).catch(() => undefined);
   await logActivity(await getSession(), "Blog", "Created a post", title, req);
   return NextResponse.json(toPost({ _id: insertedId, ...doc }), { status: 201 });
 }

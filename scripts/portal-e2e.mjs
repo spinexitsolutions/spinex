@@ -1069,6 +1069,45 @@ try {
     cr = await ap.request.get(`${base}/api/admin/content`); cd = await cr.json();
     await ap.request.put(`${base}/api/admin/content`, { data: { ...cd, cursor: { ...(cd.cursor || {}), enabled: true } }, headers: { "x-base-updated": cr.headers()["x-content-updated"] || "unknown" } });
   }
+  // ---- SEO, AEO and GEO: AI summary files, robots, verification tags, schema, canonicals ----
+  {
+    const txt = async (path) => { const r = await qp.request.get(`${base}${path}`); return { status: r.status(), body: await r.text(), type: r.headers()["content-type"] || "" }; };
+    const llms = await txt("/llms.txt");
+    ok("llms.txt lists the business and its services", llms.status === 200 && llms.type.includes("text/plain") && /^# /.test(llms.body) && llms.body.includes("## Services") && /\/services\//.test(llms.body), `${llms.status} ${llms.body.slice(0, 120)}`);
+    const full = await txt("/llms-full.txt");
+    ok("llms-full.txt has service details and answers", full.status === 200 && full.body.includes("Q: ") && full.body.includes("## Frequently asked questions"), String(full.status));
+    const robots = await txt("/robots.txt");
+    ok("robots.txt welcomes AI crawlers and blocks private areas", robots.status === 200 && /GPTBot/.test(robots.body) && /PerplexityBot/.test(robots.body) && /Disallow: \/portal/.test(robots.body) && /Disallow: \/admin/.test(robots.body) && /Sitemap:/.test(robots.body), robots.body.slice(0, 300));
+    const key = await txt("/indexnow.txt");
+    ok("IndexNow key is served", key.status === 200 && /^[0-9a-f]{32}$/.test(key.body.trim()), `${key.status} ${key.body.slice(0, 40)}`);
+    const r0 = await ap.request.get(`${base}/api/admin/content`); const d0 = await r0.json();
+    const r1 = await ap.request.put(`${base}/api/admin/content`, { data: { ...d0, seo: { ...d0.seo, googleVerification: '<meta name="google-site-verification" content="gTestCode_123" />', bingVerification: "BING0123456789ABCDEF" } }, headers: { "x-base-updated": r0.headers()["x-content-updated"] || "unknown" } });
+    ok("verification codes save", r1.status() === 200);
+    const home = await txt("/");
+    ok("home page has Google and Bing verification tags", /name="google-site-verification" content="gTestCode_123"/.test(home.body) && /name="msvalidate.01" content="BING0123456789ABCDEF"/.test(home.body), (home.body.match(/<meta name="(google-site-verification|msvalidate\.01)"[^>]*>/g) || []).join(" "));
+    const ld = (html) => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => { try { const j = JSON.parse(m[1]); return Array.isArray(j) ? j : [j]; } catch { return [{ bad: true }]; } });
+    const homeLd = ld(home.body);
+    const biz = homeLd.find((x) => x["@type"] === "ProfessionalService");
+    ok("home schema: business with contact point and topics, all valid JSON", !homeLd.some((x) => x.bad) && !!biz?.contactPoint?.length && biz?.knowsAbout?.length > 0, JSON.stringify(homeLd.map((x) => x["@type"])));
+    const pages = [["/about", "AboutPage"], ["/contact", "ContactPage"], ["/services", "CollectionPage"], ["/work", "CollectionPage"], ["/careers", "CollectionPage"], ["/internship", "WebPage"]];
+    const miss = [];
+    for (const [path, type] of pages) {
+      const h = (await txt(path)).body;
+      const j = ld(h);
+      if (!new RegExp(`<link rel="canonical" href="[^"]*${path}"`).test(h)) miss.push(`${path}: no canonical`);
+      if (!j.some((x) => x["@type"] === type)) miss.push(`${path}: no ${type}`);
+      if (!j.some((x) => x["@type"] === "BreadcrumbList")) miss.push(`${path}: no breadcrumb`);
+      if (j.some((x) => x.bad)) miss.push(`${path}: bad JSON`);
+    }
+    const svc = ld((await txt("/services")).body).find((x) => x["@type"] === "CollectionPage");
+    ok("main pages have canonical links, page schema and breadcrumbs", miss.length === 0, miss.join("; "));
+    ok("services page lists every service for answer engines", (svc?.mainEntity?.itemListElement?.length ?? 0) >= 6, String(svc?.mainEntity?.itemListElement?.length));
+    const r2 = await ap.request.get(`${base}/api/admin/content`); const d2 = await r2.json();
+    await ap.request.put(`${base}/api/admin/content`, { data: { ...d2, seo: { ...d2.seo, googleVerification: "", bingVerification: "" } }, headers: { "x-base-updated": r2.headers()["x-content-updated"] || "unknown" } });
+    await ap.goto("about:blank"); await ap.goto(`${base}/admin#seo`); await ap.waitForSelector("input[name='googleVerification']", { timeout: 15000 });
+    await ap.locator("input[name='googleVerification']").scrollIntoViewIfNeeded();
+    await ap.screenshot({ path: `${out}/64-seo-settings.png`, fullPage: false });
+  }
   // ---- Admin menu: grouped categories, search, dashboard shortcuts ----
   {
     await ap.goto("about:blank"); await ap.goto(`${base}/admin#overview`); await ap.waitForSelector("[data-admin-group]", { timeout: 15000 });

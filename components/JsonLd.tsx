@@ -18,8 +18,20 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
     image: `${SITE_URL}/og-image.jpg`,
     telephone: `+91${c.phone}`,
     email: c.email,
+    priceRange: "₹₹",
+    currenciesAccepted: "INR",
+    paymentAccepted: "UPI, bank transfer, card",
+    knowsAbout: [...content.services.map((s) => s.title), ...(content.seo.keywords ?? []).slice(0, 12)],
+    contactPoint: [{
+      "@type": "ContactPoint",
+      contactType: "sales",
+      telephone: `+91${c.phone}`,
+      email: c.email,
+      areaServed: "IN",
+      availableLanguage: ["English", "Hindi"],
+    }],
     address: { "@type": "PostalAddress", addressLocality: "Jaipur", addressRegion: "Rajasthan", addressCountry: "IN" },
-    areaServed: { "@type": "Country", name: "India" },
+    areaServed: [{ "@type": "Country", name: "India" }, ...(content.seo.areas ?? []).slice(0, 20).map((name) => ({ "@type": "City", name }))],
     sameAs: [c.instagram, c.linkedin, c.youtube].filter(Boolean),
     hasOfferCatalog: {
       "@type": "OfferCatalog",
@@ -30,7 +42,7 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
       })),
     },
   };
-  const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: content.brand.name, publisher: { "@id": `${SITE_URL}/#business` } };
+  const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: content.brand.name, inLanguage: "en-IN", publisher: { "@id": `${SITE_URL}/#business` } };
   const faq = withFaq && content.chatbot.faqs.length
     ? {
         "@context": "https://schema.org",
@@ -41,4 +53,33 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
 
   const data = [business, website, faq].filter(Boolean);
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
+}
+
+// Page type plus the "Home › Page" trail, for the main pages (About, Contact, Services, Work, Careers, Internship).
+// `items` lists things shown on the page (e.g. services) so answer engines can read the list.
+export function PageJsonLd({ type = "WebPage", name, path, description, items }: {
+  type?: "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage";
+  name: string; path: string; description?: string; items?: { name: string; path: string; description?: string }[];
+}) {
+  const page = {
+    "@context": "https://schema.org",
+    "@type": type,
+    "@id": `${SITE_URL}${path}#page`,
+    url: `${SITE_URL}${path}`,
+    name,
+    ...(description ? { description } : {}),
+    inLanguage: "en-IN",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    about: { "@id": `${SITE_URL}/#business` },
+    ...(items?.length ? { mainEntity: { "@type": "ItemList", itemListElement: items.map((x, i) => ({ "@type": "ListItem", position: i + 1, name: x.name, url: `${SITE_URL}${x.path}`, ...(x.description ? { description: x.description } : {}) })) } } : {}),
+  };
+  const crumbs = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name, item: `${SITE_URL}${path}` },
+    ],
+  };
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([page, crumbs]).replace(/</g, "\\u003c") }} />;
 }

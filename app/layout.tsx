@@ -11,14 +11,21 @@ const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-disp
 const body = Manrope({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { brand } = await getContent();
+  const { brand, seo } = await getContent();
+  // Owners can paste either the code or the whole <meta> tag from Google / Bing.
+  const code = (v: unknown) => { const t = String(v ?? "").trim(); return (t.match(/content=["']([^"']+)["']/)?.[1] ?? t).replace(/[^A-Za-z0-9_\-]/g, "").slice(0, 120); };
+  const google = code(seo?.googleVerification), bing = code(seo?.bingVerification);
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: "Spinex IT Solutions | IT Company in Jaipur, Serving All India", template: "%s | Spinex IT Solutions" },
     description:
       "Spinex IT Solutions builds websites, online stores and on-demand apps, and runs SEO, ads, social media, video and brand promotion for businesses across India.",
     keywords: ["IT Company Jaipur", "Website Development Jaipur", "Website Development India", "App Development", "Digital Marketing Agency India", "Spinex IT Solutions"],
-    openGraph: { title: "Spinex IT Solutions", description: "Websites, apps and digital marketing from Jaipur, for businesses across India.", type: "website" },
+    openGraph: { title: "Spinex IT Solutions", description: "Websites, apps and digital marketing from Jaipur, for businesses across India.", type: "website", siteName: brand.name || "Spinex IT Solutions", locale: "en_IN", images: ["/og-image.jpg"] },
+    twitter: { card: "summary_large_image" },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+    ...(google || bing ? { verification: { ...(google ? { google } : {}), ...(bing ? { other: { "msvalidate.01": bing } } : {}) } } : {}),
+    alternates: { types: { "text/plain": "/llms.txt" } },
     // Browser tab and phone home-screen icon: the company logo from Admin > Logo and company name
     icons: brand.logo
       ? {
