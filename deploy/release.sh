@@ -11,7 +11,8 @@ docker rm -f "$TMP" > /dev/null 2>&1 || true
 docker compose build -q app
 
 # 2. Production build in a temporary container next to the database (pages are built from the live content).
-if ! docker compose run -T --no-deps --name "$TMP" app npm run build; then
+#    It runs at low priority (nice) so the live site stays fast while it builds.
+if ! docker compose run -T --no-deps --name "$TMP" app nice -n 19 npm run build; then
   docker rm -f "$TMP" > /dev/null 2>&1 || true
   echo "$(date -Is) build failed: the live site was not changed"
   exit 1
