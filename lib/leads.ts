@@ -34,6 +34,7 @@ export type Lead = {
   notes: string;
   lostReason?: string; // why the lead was lost (one of LOST_REASONS)
   lostNote?: string; // what they said
+  history?: LeadNote[]; // every call / message / meeting and what they said, oldest first
   track?: LeadTrack; // where the visitor came from (ad, search, Instagram…)
   followups?: { day: number; at: string; ok: boolean; subject: string }[]; // automatic follow-up emails sent
   noFollowups?: boolean; // they (or we) stopped the follow-up emails
@@ -42,6 +43,21 @@ export type Lead = {
 };
 
 export const LEAD_EDITABLE = ["name", "phone", "email", "services", "budget", "message", "status", "value", "followUp", "followUpNote", "assignedTo", "notes", "lostReason", "lostNote"] as const;
+
+// One contact with the lead: a call, WhatsApp, email or meeting, and what came out of it.
+export type LeadNote = { id: string; at: string; by: string; type: string; outcome: string; note: string };
+export const NOTE_TYPES = ["Call", "WhatsApp", "Email", "Meeting"] as const;
+export const NOTE_OUTCOMES = [
+  "Interested",
+  "Asked for a quote",
+  "Call back later",
+  "Thinking about it",
+  "Didn't pick up",
+  "Busy / no reply",
+  "Negotiating price",
+  "Not interested",
+  "Other",
+] as const;
 
 // Why a lead didn't turn into a client. Asked when a lead is marked Lost.
 export const LOST_REASONS = [
@@ -62,8 +78,9 @@ export function leadsToCSV(leads: Lead[]) {
   // A leading ' stops Excel / Sheets from running a value like =HYPERLINK(...) as a formula.
   const esc = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
   const show = (l: Lead, c: keyof Lead) => (c === "status" ? leadStatusLabel[l.status] : c === "source" ? LEAD_SOURCES[l.source] ?? l.source : l[c]);
-  const extra = ["came via", "campaign", "keyword", "ad", "first found you via", "landing page"];
-  const extraVals = (l: Lead) => [l.track?.channel, l.track?.utmCampaign, l.track?.utmTerm, l.track?.utmContent, l.track?.firstChannel, l.track?.landingPage];
+  const extra = ["conversation history", "came via", "campaign", "keyword", "ad", "first found you via", "landing page"];
+  const history = (l: Lead) => (l.history ?? []).map((h) => `${h.at.slice(0, 10)} ${h.type}${h.outcome ? ` (${h.outcome})` : ""}${h.note ? `: ${h.note}` : ""}${h.by ? ` [${h.by}]` : ""}`).join(" | ");
+  const extraVals = (l: Lead) => [history(l), l.track?.channel, l.track?.utmCampaign, l.track?.utmTerm, l.track?.utmContent, l.track?.firstChannel, l.track?.landingPage];
   return "\uFEFF" + [[...cols, ...extra].join(","), ...leads.map((l) => [...cols.map((c) => esc(show(l, c))), ...extraVals(l).map(esc)].join(","))].join("\n");
 }
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, BellRing, MailPlus, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
-import { LEAD_SOURCES, LEAD_STATUSES, LOST_REASONS, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
+import { LEAD_SOURCES, LEAD_STATUSES, LOST_REASONS, NOTE_OUTCOMES, NOTE_TYPES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
 import AdLeadsSetup from "./AdLeadsSetup";
@@ -271,7 +271,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
                   {l.status === "lost" && l.lostReason && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">{l.lostReason}</span>}
                   {l.assignedName && <span className="flex items-center gap-1 rounded-full bg-lav-100 px-2 py-0.5 text-[11px] font-medium text-lav-700"><UserRound size={11} /> {l.assignedTo === myId ? "You" : l.assignedName}</span>}
                 </span>
-                <span className="mt-0.5 block truncate text-sm text-muted">{isDue(l) && l.followUpNote ? `⏰ ${l.followUpNote}` : [l.services, l.budget, l.message].filter(Boolean).join(" · ") || l.phone}</span>
+                <span className="mt-0.5 block truncate text-sm text-muted">{isDue(l) && l.followUpNote ? `⏰ ${l.followUpNote}` : l.history?.length ? `💬 ${ago(l.history[l.history.length - 1].at)}: ${[l.history[l.history.length - 1].outcome, l.history[l.history.length - 1].note].filter(Boolean).join(" · ")}` : [l.services, l.budget, l.message].filter(Boolean).join(" · ") || l.phone}</span>
               </button>
               <span className="text-sm text-muted">{ago(l.createdAt)}</span>
               <select value={l.status} disabled={readOnly} onChange={(e) => pickStatus(l, e.target.value as LeadStatus)} aria-label={`Status for ${l.name}`} className={`min-h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none disabled:opacity-100 ${badge[l.status]}`}>
@@ -293,6 +293,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
             lead={leads.find((x) => x.id === open.id) ?? open}
             startLost={openAsLost}
             onTouch={() => touched(leads.find((x) => x.id === open.id) ?? open)}
+            onLead={replace}
             team={team}
             myId={myId}
             readOnly={readOnly}
@@ -332,7 +333,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
   );
 }
 
-function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = false, onTouch }: { lead: Lead; team: Member[]; myId: string; readOnly: boolean; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void; startLost?: boolean; onTouch?: () => void }) {
+function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = false, onTouch, onLead }: { lead: Lead; team: Member[]; myId: string; readOnly: boolean; onSave: (patch: Partial<Lead>) => Promise<void>; onDelete: () => void; startLost?: boolean; onTouch?: () => void; onLead?: (l: Lead) => void }) {
   const [status, setStatus] = useState<LeadStatus>(startLost ? "lost" : lead.status);
   const [lostReason, setLostReason] = useState(lead.lostReason || "");
   const [lostNote, setLostNote] = useState(lead.lostNote || "");
@@ -437,6 +438,8 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = 
         </div>
       )}
 
+      <History lead={lead} readOnly={readOnly} onLead={(l) => { onLead?.(l); if (status === "new" && l.status === "contacted") setStatus("contacted"); if (l.followUp !== lead.followUp) { setFollowUp(l.followUp); setFollowUpNote(l.followUpNote || ""); } }} />
+
       <fieldset disabled={readOnly} className="mt-6 grid gap-4 border-t border-line pt-6 sm:grid-cols-3">
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-semibold">Status</span>
@@ -490,7 +493,7 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = 
           </label>
         </div>
         <label className="block sm:col-span-3">
-          <span className="mb-1.5 block text-[13px] font-semibold">Notes (only you see these)</span>
+          <span className="mb-1.5 block text-[13px] font-semibold">Private notes (team only, the client never sees these)</span>
           <textarea className="input min-h-[100px]" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Called on Monday, wants a quote for 8 pages" />
         </label>
       </fieldset>
@@ -519,6 +522,104 @@ function Info({ label, value }: { label: string; value?: string }) {
     <div>
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="mt-0.5 break-words font-medium">{value || "Not given"}</dd>
+    </div>
+  );
+}
+
+// Every call, WhatsApp, email or meeting with the lead and what they said, newest first.
+function History({ lead, readOnly, onLead }: { lead: Lead; readOnly: boolean; onLead: (l: Lead) => void }) {
+  const [type, setType] = useState<string>("Call");
+  const [outcome, setOutcome] = useState("");
+  const [note, setNote] = useState("");
+  const [next, setNext] = useState("");
+  const [nextNote, setNextNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const items = [...(lead.history ?? [])].reverse();
+  const inDays = (days: number) => new Date(Date.now() + 5.5 * 3600 * 1000 + days * 86400000).toISOString().slice(0, 10);
+  const add = async () => {
+    setBusy(true);
+    setErr("");
+    try {
+      const body: Record<string, string> = { action: "log", type, outcome, note };
+      if (next) { body.followUp = next; body.followUpNote = nextNote; }
+      onLead(await api<Lead>(`/api/admin/leads/${lead.id}`, { method: "POST", body: JSON.stringify(body) }));
+      setOutcome(""); setNote(""); setNext(""); setNextNote("");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't add it.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async (entryId: string) => {
+    if (!confirm("Remove this entry from the history?")) return;
+    try {
+      onLead(await api<Lead>(`/api/admin/leads/${lead.id}`, { method: "POST", body: JSON.stringify({ action: "unlog", entryId }) }));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't remove it.");
+    }
+  };
+  return (
+    <div className="mt-6 rounded-2xl border border-line p-5" data-lead-history>
+      <p className="flex items-center gap-2 text-sm font-semibold"><MessageCircle size={15} className="text-lav-700" /> Conversation history {items.length > 0 && <span className="font-normal text-muted">({items.length})</span>}</p>
+      {!readOnly && (
+        <div className="mt-4 space-y-3 rounded-xl bg-mist p-4">
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="How you talked">
+            {NOTE_TYPES.map((t) => (
+              <button key={t} type="button" role="radio" aria-checked={type === t} onClick={() => setType(t)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${type === t ? "bg-ink text-white" : "bg-white text-muted hover:text-ink"}`}>{t}</button>
+            ))}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-[220px_1fr]">
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-semibold">What happened</span>
+              <select className="input bg-white" value={outcome} onChange={(e) => setOutcome(e.target.value)}>
+                <option value="">Choose…</option>
+                {NOTE_OUTCOMES.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-semibold">What did they say?</span>
+              <textarea className="input min-h-[70px] bg-white" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Wants 5 pages, will confirm budget after talking to partner" />
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-[220px_1fr]">
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-semibold">Next follow-up (optional)</span>
+              <input className="input bg-white" type="date" value={next} onChange={(e) => setNext(e.target.value)} />
+              <span className="mt-2 flex flex-wrap gap-1.5">
+                {([["Tomorrow", 1], ["In 3 days", 3], ["Next week", 7]] as const).map(([l, d]) => (
+                  <button key={l} type="button" onClick={() => setNext(inDays(d))} className="rounded-full border border-line bg-white px-2.5 py-1 text-xs hover:border-ink">{l}</button>
+                ))}
+              </span>
+            </label>
+            {next ? (
+              <label className="block">
+                <span className="mb-1.5 block text-[13px] font-semibold">What to do then</span>
+                <input className="input bg-white" value={nextNote} onChange={(e) => setNextNote(e.target.value)} placeholder="e.g. Call back about the budget" />
+              </label>
+            ) : <span />}
+          </div>
+          {err && <p className="text-sm text-red-700">{err}</p>}
+          <button type="button" onClick={add} disabled={busy || (!outcome && !note.trim())} className="btn-dark px-4 py-2 text-sm disabled:bg-line disabled:text-muted">{busy ? <Loader2 size={15} className="animate-spin" /> : null} Add to history</button>
+        </div>
+      )}
+      {items.length > 0 ? (
+        <ol className="mt-4 space-y-3 border-l-2 border-lav-200 pl-4">
+          {items.map((h) => (
+            <li key={h.id} className="relative">
+              <span aria-hidden className="absolute -left-[23px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-lav-500" />
+              <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                <span className="font-semibold text-ink">{h.type}</span>
+                {h.outcome && <span className="rounded-full bg-lav-100 px-2 py-0.5 font-medium text-lav-700">{h.outcome}</span>}
+                <span>{new Date(h.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}</span>
+                {h.by && <span>· {h.by}</span>}
+                {!readOnly && <button type="button" onClick={() => remove(h.id)} aria-label="Remove entry" className="ml-auto text-muted hover:text-red-600"><Trash2 size={13} /></button>}
+              </p>
+              {h.note && <p className="mt-1 whitespace-pre-wrap text-sm">{h.note}</p>}
+            </li>
+          ))}
+        </ol>
+      ) : <p className="mt-3 text-sm text-muted">Nothing yet. After each call or message, add what they said here.</p>}
     </div>
   );
 }

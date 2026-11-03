@@ -5,6 +5,8 @@ import { logActivity } from "@/lib/activity";
 import { guard, jsonBody } from "@/lib/admin-guard";
 import { oid } from "@/lib/intern-db";
 import { cleanLead, leadsCol, toLead } from "@/lib/lead-db";
+import { randomUUID } from "crypto";
+import { NOTE_OUTCOMES, NOTE_TYPES } from "@/lib/leads";
 import { getSession } from "@/lib/admin-guard";
 import { leadTeam } from "@/lib/team";
 import { emailPerson } from "@/lib/notify";
@@ -67,6 +69,41 @@ export async function PATCH(req: Request, { params }: Ctx) {
       { label: "Open leads", url: `${origin}/admin#leads` },
     ).catch(() => false);
   }
+  return NextResponse.json(lead);
+}
+
+// Conversation history: { action: "log", type, outcome, note, followUp?, followUpNote? } adds an entry
+// (a New lead becomes Contacted); { action: "unlog", entryId } removes one.
+export async function POST(req: Request, { params }: Ctx) {
+  const deny = await guard("leads");
+  if (deny) return deny;
+  const _id = oid(params.id);
+  if (!_id) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+  const b = await jsonBody(req);
+  const me = await getSession();
+  const col = await leadsCol();
+  const now = new Date().toISOString();
+  if (b.action === "unlog") {
+    const doc = await col.findOneAndUpdate({ _id }, { $pull: { history: { id: String(b.entryId ?? "") } } as never, $set: { updatedAt: now } }, { returnDocument: "after" });
+    if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+    return NextResponse.json(toLead(doc));
+  }
+  const type = (NOTE_TYPES as readonly string[]).includes(String(b.type)) ? String(b.type) : "Call";
+  const outcome = (NOTE_OUTCOMES as readonly string[]).includes(String(b.outcome)) ? String(b.outcome) : "";
+  const note = String(b.note ?? "").trim().slice(0, 2000);
+  if (!outcome && !note) return NextResponse.json({ error: "Pick what happened or write what they said." }, { status: 400 });
+  const entry = { id: randomUUID(), at: now, by: me?.name || me?.email || "", type, outcome, note };
+  const set: Record<string, string> = { updatedAt: now };
+  const fu = cleanLead({ followUp: b.followUp, followUpNote: b.followUpNote });
+  if (b.followUp !== undefined) set.followUp = fu.followUp ?? "";
+  if (b.followUpNote !== undefined) set.followUpNote = fu.followUpNote ?? "";
+  const before = await col.findOne({ _id }, { projection: { status: 1 } });
+  if (!before) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+  if (before.status === "new") set.status = "contacted";
+  const doc = await col.findOneAndUpdate({ _id }, { $push: { history: entry } as never, $set: set }, { returnDocument: "after" });
+  if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+  const lead = toLead(doc);
+  await logActivity(me, "Leads", `Added to history: ${type}${outcome ? ` (${outcome})` : ""}`, lead.name, req);
   return NextResponse.json(lead);
 }
 

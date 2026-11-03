@@ -113,6 +113,14 @@ Every enquiry lands here: website forms, the project planner, product demo reque
 5. Choose who it is **Given to**, then press **Save**.
 6. When the client is ready, press **Make quotation**. Their details are filled in for you.
 
+**Conversation history:** every lead has a running log, so you never lose what was said.
+
+1. After each call or message, open the lead.
+2. In **Conversation history**, pick how you talked (**Call**, **WhatsApp**, **Email**, **Meeting**) and **What happened** (for example *Call back later* or *Asked for a quote*).
+3. Write **What did they say?**, optionally set the **Next follow-up**, and press **Add to history**.
+
+Entries show newest first, with the date, time and who added them. The latest one also shows under the lead's name in the list, and the whole history is in **Download Excel**.
+
 **Automatic status changes:**
 
 - Pressing **Call**, **WhatsApp** or **Email** on a *New* lead marks it **Contacted**.
@@ -122,7 +130,7 @@ Every enquiry lands here: website forms, the project planner, product demo reque
 
 > - Giving a lead to someone sends them an email.
 > - Marking a lead **Won** can automatically ask the client for feedback or a Google review.
-> - The **Notes** box can be read by anyone on the team who can open that lead. Clients never see it.
+> - **Private notes** can be read by anyone on the team who can open that lead. Clients never see them.
 > - **Delete** can't be undone.
 
 ## Call bookings
