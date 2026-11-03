@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   PiggyBank, Sparkles, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
+  LogOut, LifeBuoy, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -438,7 +438,10 @@ function AdminShell() {
             <p className="truncate text-xs text-white/55">{roleLabel[me.role]} · {me.email}</p>
           </div>
         )}
-        <button onClick={logout} className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/60 hover:bg-white/10 hover:text-white">
+        <a href="/api/admin/guide" target="_blank" rel="noopener" data-admin-guide className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/60 hover:bg-white/10 hover:text-white">
+          <LifeBuoy size={17} /> Help guide (PDF)
+        </a>
+        <button onClick={logout} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/60 hover:bg-white/10 hover:text-white">
           <LogOut size={17} /> Log out
         </button>
       </aside>
