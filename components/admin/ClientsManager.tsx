@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, Loader2, MessageSquare, Plus, RefreshCw, Search, ShieldCheck, UsersRound } from "lucide-react";
+import { AlertTriangle, CalendarClock, FileSpreadsheet, Loader2, MessageSquare, Plus, RefreshCw, Search, ShieldCheck, UsersRound } from "lucide-react";
 import { amcState, amcStateLabel, mainAmc, projectProgress, shortDate, ticketKindLabel, ticketStatusLabel, type PortalClient, type Ticket } from "@/lib/portal";
 import Modal from "./Modal";
 import { useLive } from "./live";
@@ -88,6 +88,7 @@ export default function ClientsManager({ readOnly = false }: { readOnly?: boolea
           <p className="text-sm text-muted">Clients log in at <b>/portal</b> with their email (a 6-digit code, no password) to see project progress, files, invoices and support.</p>
         </div>
         <a href="/portal/login" target="_blank" rel="noreferrer" className="btn-ghost ml-auto bg-white px-4 py-2.5 text-sm">Open portal login</a>
+        <a href="/api/admin/clients/export" className="btn-ghost bg-white px-4 py-2.5 text-sm" data-clients-export><FileSpreadsheet size={16} /> Download Excel</a>
         {!readOnly && <button onClick={() => setAdding(true)} className="btn-dark px-5 py-2.5 text-sm"><Plus size={16} /> Add client</button>}
       </div>
 

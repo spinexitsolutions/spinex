@@ -153,6 +153,8 @@ Manage the clients who log in to `/portal`: their projects, progress, files, inv
 3. Press **Save** at the top. The client sees changes only after you save.
 4. Press **Email portal invite**.
 
+**Download Excel** (next to **Add client**) saves every client in a spreadsheet: contact details, login, projects and their current stage, target dates, AMC plans and open support requests.
+
 **Tabs on a client's page:**
 
 - **Projects:** stages, updates and links for each project.
