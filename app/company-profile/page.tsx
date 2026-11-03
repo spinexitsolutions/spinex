@@ -29,7 +29,7 @@ export default async function CompanyProfilePage() {
   const site = content.profile.website.trim() ? (/^https?:\/\//.test(content.profile.website) ? content.profile.website.trim() : `https://${content.profile.website.trim()}`) : SITE_URL;
   const qr = await QRCode.toDataURL(site, { margin: 0, width: 300, color: { dark: "#14111F", light: "#FFFFFF" } });
   return (
-    <PrintShell fileName={`${content.brand.name} - ${content.profile.title} ${content.profile.year}`.trim()} extra={<Link href="/" className="btn-ghost px-4 py-2.5 text-sm">Visit website</Link>}>
+    <PrintShell fit fileName={`${content.brand.name} - ${content.profile.title} ${content.profile.year}`.trim()} extra={<Link href="/" className="btn-ghost px-4 py-2.5 text-sm">Visit website</Link>}>
       <ProfileDocument content={content} qr={qr} />
     </PrintShell>
   );
