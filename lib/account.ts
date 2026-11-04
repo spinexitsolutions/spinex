@@ -48,7 +48,7 @@ function fromDoc(uid: string, d: Record<string, unknown>, base: Partial<Account>
 
 export async function getAccount(uid: string): Promise<Account | null> {
   if (uid === "env") {
-    const d = hasDb() ? ((await (await ownerCol()).findOne({ _id: OWNER_DOC })) ?? {}) : {};
+    const d: Record<string, unknown> = hasDb() ? ((await (await ownerCol()).findOne({ _id: OWNER_DOC })) ?? {}) : {};
     return fromDoc("env", d, { email: ownerEmail(), name: String(d.displayName || "").trim() || "Owner", role: "owner", active: true });
   }
   if (!hasDb() || !ObjectId.isValid(uid)) return null;
