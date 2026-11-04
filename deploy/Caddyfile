@@ -11,3 +11,16 @@ www.{$DOMAIN} {
 		lb_try_interval 250ms
 	}
 }
+
+# AgencyVault (/opt/agencyvault): its own Docker Compose stack, published on the spinex_default gateway.
+www.agencyvault.tech {
+	redir https://agencyvault.tech{uri} permanent
+}
+
+agencyvault.tech {
+	encode zstd gzip
+	reverse_proxy 172.18.0.1:4000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+}
