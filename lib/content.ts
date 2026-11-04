@@ -409,7 +409,7 @@ const baseContent: SiteContent = {
     why: { heading: "Built like software, not just designed.", intro: "Try it: switch screen sizes, run a speed test, run the code." },
     process: { heading: "From first call to launch.", intro: "Four clear stages. You always know what's next." },
     work: { heading: "Work we're proud of.", intro: "" },
-    industries: { heading: "Who we work with.", intro: "Different businesses need different things. Keep scrolling to see what we build for each." },
+    industries: { heading: "Who we work with.", intro: "Different businesses need different things. Here is what we build for each." },
     goals: { heading: "Not sure where to start?", intro: "" },
     testimonials: { heading: "What our clients say.", intro: "Real words from businesses we've worked with." },
     planner: { heading: "Plan your project in a minute.", intro: "Pick what you need and see the scope and a rough timeline. Send it to us and we'll reply with an exact quote." },
@@ -914,6 +914,9 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
     if (Array.isArray(seo.areas) && seo.areas.join("|") === OLD_SEO_DEFAULTS.areas.join("|")) seo.areas = base.seo.areas;
   }
   out.seo = seo;
+  // The "Who we work with" cards are now a grid, so the old "keep scrolling" line no longer fits.
+  const secs = out.sections as SiteContent["sections"];
+  if (secs?.industries?.intro === "Different businesses need different things. Keep scrolling to see what we build for each.") out.sections = { ...secs, industries: { ...secs.industries, intro: base.sections.industries.intro } };
   out.projects = (out.projects as Project[]).filter((pr) => SAMPLE_PROJECTS[pr.id] !== pr.title);
   // Placeholder numbers from the first version are swapped for honest defaults;
   // stats the admin has edited are kept as they are.
