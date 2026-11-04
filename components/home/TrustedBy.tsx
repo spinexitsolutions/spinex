@@ -56,9 +56,9 @@ function Logo({ name, logo, url }: { name: string; logo: string; url: string }) 
   const inner = (
     <span className="flex h-12 w-[150px] items-center justify-center sm:h-14 sm:w-[170px]">
       {logo ? (
-        <img src={sized(logo, 320)} alt={name || "Client logo"} loading="lazy" className="max-h-full max-w-full object-contain opacity-80 grayscale transition duration-300 group-hover:scale-105 group-hover:opacity-100 group-hover:grayscale-0" />
+        <img src={sized(logo, 320)} alt={name || "Client logo"} loading="lazy" className="max-h-full max-w-full object-contain transition duration-300 group-hover:scale-105" />
       ) : (
-        <span className="line-clamp-2 text-center font-display text-lg font-semibold leading-tight tracking-tight text-ink/70 transition group-hover:text-ink">{name}</span>
+        <span className="line-clamp-2 text-center font-display text-lg font-semibold leading-tight tracking-tight text-ink transition">{name}</span>
       )}
     </span>
   );
