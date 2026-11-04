@@ -23,6 +23,14 @@ export default function CookieBanner() {
     return () => window.removeEventListener(OPEN_EVENT, reopen);
   }, [enabled]);
 
+  // Lets the floating buttons step aside while the banner is open.
+  useEffect(() => {
+    const html = document.documentElement;
+    if (open) html.dataset.cookieOpen = "1";
+    else delete html.dataset.cookieOpen;
+    return () => { delete html.dataset.cookieOpen; };
+  }, [open]);
+
   const choose = (v: "accepted" | "rejected") => {
     saveConsent(v);
     setOpen(false);

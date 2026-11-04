@@ -6,6 +6,7 @@ import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { localAnswer } from "@/lib/chat";
 import { ease } from "./Reveal";
+import { useFloatLift } from "@/lib/useFloatLift";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -13,6 +14,7 @@ export default function Chatbot() {
   const { content } = useContent();
   const bot = content.chatbot;
   const [open, setOpen] = useState(false);
+  const { lift } = useFloatLift();
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -70,12 +72,12 @@ export default function Chatbot() {
       <motion.button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close chat" : "Open chat"}
-        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-ink text-white shadow-[0_14px_40px_-10px_rgb(var(--c-lav-700)/0.7)]"
+        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-lav-600 text-white ring-2 ring-white/70 shadow-[0_14px_40px_-10px_rgb(var(--c-lav-700)/0.7)]"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 1.5, type: "spring" }}
+        animate={{ scale: 1, y: -lift }}
+        transition={{ type: "spring", stiffness: 260, damping: 24 }}
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span key={open ? "x" : "chat"} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>

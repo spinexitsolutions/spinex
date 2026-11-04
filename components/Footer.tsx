@@ -67,7 +67,7 @@ export default function Footer() {
         </motion.p>
       </div>
 
-      <div className="container-x flex flex-col gap-3 border-t border-white/10 py-6 text-sm text-white/55 sm:flex-row sm:justify-between">
+      <div data-footer-bottom className="container-x flex flex-col gap-3 border-t border-white/10 py-6 text-sm text-white/55 sm:flex-row sm:justify-between">
         <p suppressHydrationWarning>© {new Date().getFullYear()} {content.brand.name}. All rights reserved.</p>
         <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>

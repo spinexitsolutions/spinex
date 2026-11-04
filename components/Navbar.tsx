@@ -106,7 +106,7 @@ export default function Navbar() {
             className={`relative flex items-center justify-between gap-4 rounded-full border px-2.5 py-2 transition-[background,box-shadow,border-color] duration-500 ${
               scrolled || mega
                 ? "border-line bg-white/90 shadow-[0_12px_40px_-14px_rgba(18,15,27,0.28)] backdrop-blur-xl"
-                : "border-white/60 bg-white/55 backdrop-blur-md"
+                : "border-white/70 bg-white/85 backdrop-blur-md"
             }`}
             aria-label="Main"
           >

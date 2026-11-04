@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useContent } from "./ContentProvider";
 import { track } from "@/lib/track";
+import { useFloatLift } from "@/lib/useFloatLift";
 
 const Logo = () => (
   <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden>
@@ -13,6 +14,9 @@ const Logo = () => (
 // Green WhatsApp button fixed to the bottom-left of every page (the chat assistant sits bottom-right).
 export default function FloatingWhatsApp() {
   const { content } = useContent();
+  // Steps aside for the cookie banner, rises above the footer's last line, and folds to a round button once
+  // the visitor scrolls, so it never sits on top of text.
+  const { lift, cookieOpen, scrolled } = useFloatLift();
   const on = content.integrations?.whatsappButton ?? true;
   if (!on || !content.contact.whatsapp) return null;
   const href = `https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(content.integrations?.whatsappText || "Hi Spinex!")}`;
@@ -25,15 +29,16 @@ export default function FloatingWhatsApp() {
       onClick={() => track("contact", { method: "whatsapp" })}
       aria-label="Chat with us on WhatsApp"
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ delay: 1.8, type: "spring", stiffness: 260, damping: 18 }}
+      animate={{ scale: cookieOpen ? 0.6 : 1, opacity: cookieOpen ? 0 : 1, y: -lift }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      style={{ pointerEvents: cookieOpen ? "none" : undefined }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="group fixed bottom-5 left-5 z-50 flex h-14 items-center gap-2 rounded-full bg-[#25D366] pl-3.5 pr-3.5 text-white shadow-[0_14px_40px_-10px_rgba(37,211,102,0.8)] sm:pr-5"
+      className={`group fixed bottom-5 left-5 z-50 flex h-14 items-center gap-2 rounded-full bg-[#25D366] pl-3.5 pr-3.5 text-white shadow-[0_14px_40px_-10px_rgba(37,211,102,0.8)] ${scrolled ? "" : "sm:pr-5"}`}
     >
       <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#25D366] opacity-30 [animation-duration:2.5s] motion-reduce:hidden" aria-hidden />
       <Logo />
-      <span className="hidden text-sm font-semibold sm:inline">Chat with us</span>
+      <span className={`hidden text-sm font-semibold ${scrolled ? "" : "sm:inline"}`}>Chat with us</span>
     </motion.a>
   );
 }

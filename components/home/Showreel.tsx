@@ -60,9 +60,12 @@ function ShowreelInner() {
   return (
     <section ref={ref} className="relative h-[220vh] bg-ink text-white" aria-label={content.showreel.title}>
       <div className="sticky top-0 isolate h-[100svh] overflow-hidden">
-        <motion.div style={{ scale: videoScale, borderRadius: radius }} className="absolute inset-0 overflow-hidden bg-ink-3">
-          <video ref={video} key={src ?? "none"} src={src} poster={poster} autoPlay muted loop playsInline preload={src ? "auto" : "none"} className="h-full w-full object-cover" data-showreel={usePhone ? "phone" : "wide"} />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-ink/30" />
+        {/* On phones the whole 9:16 reel is shown (nothing cut at the sides); the space above and below
+            matches the reel's off-white background. */}
+        <motion.div style={{ scale: videoScale, borderRadius: radius }} className={`absolute inset-0 overflow-hidden ${usePhone ? "bg-[#f7f6fb]" : "bg-ink-3"}`}>
+          <video ref={video} key={src ?? "none"} src={src} poster={poster} autoPlay muted loop playsInline preload={src ? "auto" : "none"} className={`h-full w-full ${usePhone ? "object-contain" : "object-cover"}`} data-showreel={usePhone ? "phone" : "wide"} />
+          {/* Shade only at the bottom, and only while the caption shows, so the clean reel isn't dimmed. */}
+          <motion.div style={{ opacity: captionOpacity }} className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink/85 via-ink/40 to-transparent" />
         </motion.div>
 
         {/* Dark layer with the word cut out: multiply blend lets the video show only through the letters */}
