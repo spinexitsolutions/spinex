@@ -255,6 +255,14 @@ function AdminShell() {
     // and a refresh or a shared link (e.g. /admin#leads) opens the same place.
     window.history.pushState(null, "", `#${id}`);
   };
+  // "Add to Home screen" from the admin installs the admin app (opens at /admin), not the website.
+  useEffect(() => {
+    let link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (!link) { link = document.createElement("link"); link.rel = "manifest"; document.head.appendChild(link); }
+    const before = link.href;
+    link.href = "/admin-app.webmanifest";
+    return () => { if (link) link.href = before; };
+  }, []);
   // A ding and a browser notification when a new lead comes in.
   useLeadAlert(badges, () => go("leads"));
   // Back / Forward, or a link to another section on the same page (#billing): follow the address.
