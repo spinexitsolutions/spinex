@@ -66,6 +66,9 @@ export default function Navbar() {
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
+    // The floating WhatsApp and chat buttons hide while the phone menu is open.
+    if (open) document.documentElement.dataset.menuOpen = "1";
+    else delete document.documentElement.dataset.menuOpen;
   }, [open]);
 
   useEffect(() => {

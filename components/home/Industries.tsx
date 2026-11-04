@@ -6,6 +6,7 @@ import { ArrowUpRight, Building2, Check, Rocket, ShoppingBag, Sparkles, Store, t
 import { useContent } from "../ContentProvider";
 import type { Industry } from "@/lib/content";
 import { SplitHeading, ease } from "../Reveal";
+import { sized } from "@/lib/img";
 
 const icons: Record<string, LucideIcon> = { local: Store, ecom: ShoppingBag, creators: Sparkles, startups: Rocket };
 const tones = ["bg-ink", "bg-ink-3", "bg-lav-700", "bg-ink-3"];
@@ -45,7 +46,7 @@ function Card({ ind, i }: { ind: Industry; i: number }) {
       className={`group relative flex flex-col overflow-hidden rounded-[28px] text-white ${tones[i % tones.length]}`}
     >
       <div className="relative h-40 overflow-hidden sm:h-48">
-        <img src={ind.image} alt={ind.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
+        <img src={sized(ind.image, 960)} alt={ind.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         <span className="absolute left-5 top-5 grid h-11 w-11 place-items-center rounded-2xl bg-white/15 backdrop-blur"><Icon size={20} className="text-white" /></span>
       </div>

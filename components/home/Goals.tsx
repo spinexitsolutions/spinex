@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { ease } from "../Reveal";
+import { sized } from "@/lib/img";
 
 
 // Plain-language goal picker: tap what you want, see how we'd help, then plan it.
@@ -96,7 +97,7 @@ export default function Goals() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {services.map((s, i) => (
                   <motion.div key={s.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease }} className="overflow-hidden rounded-[22px] bg-white text-ink">
-                    <img src={s.image} alt="" loading="lazy" className="h-32 w-full object-cover" />
+                    <img src={sized(s.image, 480)} alt="" loading="lazy" className="h-32 w-full object-cover" />
                     <div className="p-5">
                       <h4 className="font-display text-lg font-semibold tracking-tight">{s.title}</h4>
                       <p className="mt-1 text-sm text-muted">{s.short}</p>

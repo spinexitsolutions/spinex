@@ -9,6 +9,7 @@ import LiveBuild from "./LiveBuild";
 import { ease } from "../Reveal";
 import { useIntroDone } from "../Intro";
 import { HERO_DESIGNS, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
+import { sized } from "@/lib/img";
 
 // Saved hero with every field checked, so an old or broken save still draws a hero.
 export function heroSettings(raw: Partial<HeroSettings> | undefined, fallback: HeroSettings): HeroSettings {
@@ -197,7 +198,7 @@ function Split(x: Ctx) {
         <motion.div initial={{ opacity: 0, x: 40 }} animate={x.ready ? { opacity: 1, x: 0 } : undefined} transition={{ duration: 1.1, delay: 0.3, ease }} className="relative">
           <div className="absolute -inset-3 -z-0 rotate-3 rounded-[2.2rem]" style={{ background: x.accent, opacity: 0.18 }} aria-hidden />
           <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-white shadow-[0_40px_80px_-30px_rgba(18,15,27,0.45)] sm:aspect-[5/5] lg:aspect-[4/5] lg:max-h-[70vh]">
-            {x.h.image ? <img src={x.h.image} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-gradient-to-br from-lav-200 to-lav-500" />}
+            {x.h.image ? <img src={sized(x.h.image, 1280)} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-gradient-to-br from-lav-200 to-lav-500" />}
           </div>
           {stat && (
             <motion.div {...fade(x.ready, 1)} className="absolute -left-3 bottom-8 rounded-2xl bg-white px-5 py-4 shadow-xl sm:-left-8">
@@ -222,7 +223,7 @@ function Fullscreen(x: Ctx) {
       {mp4 ? (
         <video src={x.h.video} poster={x.h.image || undefined} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover" />
       ) : x.h.image ? (
-        <motion.img src={x.h.image} alt="" initial={{ scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 2.4, ease }} className="absolute inset-0 h-full w-full object-cover" />
+        <motion.img src={sized(x.h.image, 1600)} alt="" initial={{ scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 2.4, ease }} className="absolute inset-0 h-full w-full object-cover" />
       ) : null}
       <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, rgba(10,8,18,${x.h.overlay / 160}) 0%, rgba(10,8,18,${x.h.overlay / 100}) 100%)` }} aria-hidden />
       <div className="container-x relative">
@@ -256,7 +257,7 @@ function Bento(x: Ctx) {
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:h-[40vh] lg:min-h-[300px] lg:grid-cols-[1.5fr_1fr_1fr]">
           {tiles.map((t, i) => (
             <motion.div key={i} {...fade(x.ready, 0.5 + i * 0.12, 30)} className={`group relative min-h-[220px] overflow-hidden rounded-3xl bg-mist ${i === 0 ? "sm:col-span-2 lg:col-span-1" : ""}`}>
-              <img src={t.img} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={sized(t.img, 640)} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
               <div className="absolute bottom-4 left-5 right-5 text-white">
                 <p className="text-xs uppercase tracking-wider text-white/70">{t.sub}</p>

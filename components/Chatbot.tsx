@@ -14,7 +14,7 @@ export default function Chatbot() {
   const { content } = useContent();
   const bot = content.chatbot;
   const [open, setOpen] = useState(false);
-  const { lift } = useFloatLift();
+  const { lift, menuOpen } = useFloatLift();
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -76,7 +76,8 @@ export default function Chatbot() {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         initial={{ scale: 0 }}
-        animate={{ scale: 1, y: -lift }}
+        animate={{ scale: menuOpen ? 0.6 : 1, opacity: menuOpen ? 0 : 1, y: -lift }}
+        style={{ pointerEvents: menuOpen ? "none" : undefined }}
         transition={{ type: "spring", stiffness: 260, damping: 24 }}
       >
         <AnimatePresence mode="wait" initial={false}>

@@ -5,6 +5,7 @@ import { animate, motion, useInView } from "framer-motion";
 import { Monitor, Tablet, Smartphone, RotateCcw, Play, Check, ShieldCheck, Headphones, MessageCircle } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
+import { sized } from "@/lib/img";
 
 export default function WhySpinex() {
   const { content } = useContent();
@@ -76,7 +77,7 @@ function DevicePreview() {
           <motion.div layout className="space-y-3 p-3">
             <div className="flex items-center justify-between"><div className="h-3 w-14 rounded bg-ink" /><div className="h-3 w-6 rounded bg-line" /></div>
             <div className="relative h-28 overflow-hidden rounded-xl bg-ink">
-              <img loading="lazy" decoding="async" src="/images/stock/photo-1497366216548-37526070297c.jpg" alt="" className="h-full w-full object-cover opacity-50" />
+              <img loading="lazy" decoding="async" src={sized("/images/stock/photo-1497366216548-37526070297c.jpg", 640)} alt="" className="h-full w-full object-cover opacity-50" />
               <div className="absolute bottom-3 left-3 space-y-1.5"><div className="h-2.5 w-24 rounded bg-white" /><div className="h-2.5 w-16 rounded bg-white/70" /></div>
             </div>
             <motion.div layout className="grid gap-2" style={{ gridTemplateColumns: `repeat(${d.cols}, minmax(0, 1fr))` }}>

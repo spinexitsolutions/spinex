@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 export function useFloatLift() {
   const [lift, setLift] = useState(0);
   const [cookieOpen, setCookieOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -21,10 +22,13 @@ export function useFloatLift() {
       io.observe(bar);
     }
     const html = document.documentElement;
-    const readCookie = () => setCookieOpen(html.dataset.cookieOpen === "1");
+    const readCookie = () => {
+      setCookieOpen(html.dataset.cookieOpen === "1");
+      setMenuOpen(html.dataset.menuOpen === "1");
+    };
     readCookie();
     const mo = new MutationObserver(readCookie);
-    mo.observe(html, { attributes: true, attributeFilter: ["data-cookie-open"] });
+    mo.observe(html, { attributes: true, attributeFilter: ["data-cookie-open", "data-menu-open"] });
     const onScroll = () => setScrolled(window.scrollY > 500);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -35,5 +39,5 @@ export function useFloatLift() {
     };
   }, []);
 
-  return { lift, cookieOpen, scrolled };
+  return { lift, cookieOpen, menuOpen, scrolled };
 }

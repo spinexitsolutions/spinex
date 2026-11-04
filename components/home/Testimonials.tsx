@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Quote, Star } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
 import type { Testimonial } from "@/lib/content";
+import { sized } from "@/lib/img";
 
 // Client quotes from Admin → Testimonials. Hidden until at least one is added.
 // One quote: a single large card. Two or more: a row of cards that slides (arrows, swipe or drag).
@@ -102,7 +103,7 @@ function Card({ t, large = false }: { t: Testimonial; large?: boolean }) {
       </blockquote>
       <figcaption className="mt-8 flex items-center gap-3 border-t border-white/10 pt-6">
         {t.photo ? (
-          <img src={t.photo} alt={t.name} loading="lazy" decoding="async" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/10" />
+          <img src={sized(t.photo, 160)} alt={t.name} loading="lazy" decoding="async" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/10" />
         ) : (
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-lav-400 to-lav-700 font-display text-base font-semibold text-white">{initials}</span>
         )}

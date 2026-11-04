@@ -6,6 +6,7 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { serviceSlug } from "@/lib/content";
 import { ease } from "./Reveal";
+import { sized } from "@/lib/img";
 
 export default function ServicesDetail() {
   const { content } = useContent();
@@ -21,7 +22,7 @@ export default function ServicesDetail() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.1, ease }}
             >
-              <motion.img src={s.image} alt={s.title} className="aspect-[5/4] w-full object-cover" initial={{ scale: 1.25 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 1.4, ease }} />
+              <motion.img src={sized(s.image, 960)} alt={s.title} className="aspect-[5/4] w-full object-cover" initial={{ scale: 1.25 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 1.4, ease }} />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.8, delay: 0.2, ease }}>
               <h2 className="h-display text-4xl sm:text-5xl">{s.title}</h2>

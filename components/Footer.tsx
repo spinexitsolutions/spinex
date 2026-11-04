@@ -44,8 +44,8 @@ export default function Footer() {
         />
         <div>
           <h3 className="mb-5 text-sm text-white/55">Get in touch</h3>
-          <a href={`mailto:${c.email}`} className="block break-all text-white/80 hover:text-white">{c.email}</a>
-          <a href={`tel:+91${c.phone}`} className="mt-2 block text-white/80 hover:text-white">+91 {c.phone}</a>
+          <a href={`mailto:${c.email}`} className="flex min-h-10 items-center break-all text-white/80 hover:text-white sm:block sm:min-h-0">{c.email}</a>
+          <a href={`tel:+91${c.phone}`} className="flex min-h-10 items-center text-white/80 hover:text-white sm:mt-2 sm:block sm:min-h-0">+91 {c.phone}</a>
           <p className="mt-2 text-white/50">{c.location}</p>
           <div className="mt-6 flex gap-2">
             {[
@@ -69,11 +69,11 @@ export default function Footer() {
 
       <div data-footer-bottom className="container-x flex flex-col gap-3 border-t border-white/10 py-6 text-sm text-white/55 sm:flex-row sm:justify-between">
         <p suppressHydrationWarning>© {new Date().getFullYear()} {content.brand.name}. All rights reserved.</p>
-        <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-          <Link href="/terms" className="hover:text-white">Terms of Service</Link>
-          <Link href="/refund" className="hover:text-white">Refund Policy</Link>
-          {content.integrations?.cookieBanner && <button type="button" onClick={openCookieSettings} className="text-left hover:text-white">Cookie settings</button>}
+        <nav aria-label="Legal" className="flex flex-wrap gap-x-5 sm:gap-y-2">
+          <Link href="/privacy" className="flex min-h-10 items-center hover:text-white sm:inline sm:min-h-0">Privacy Policy</Link>
+          <Link href="/terms" className="flex min-h-10 items-center hover:text-white sm:inline sm:min-h-0">Terms of Service</Link>
+          <Link href="/refund" className="flex min-h-10 items-center hover:text-white sm:inline sm:min-h-0">Refund Policy</Link>
+          {content.integrations?.cookieBanner && <button type="button" onClick={openCookieSettings} className="flex min-h-10 items-center text-left hover:text-white sm:inline sm:min-h-0">Cookie settings</button>}
         </nav>
       </div>
     </footer>
@@ -84,10 +84,11 @@ function FooterCol({ title, items }: { title: string; items: { label: string; hr
   return (
     <div>
       <h3 className="mb-5 text-sm text-white/55">{title}</h3>
-      <ul className="space-y-2.5">
+      {/* On phones every link gets a 40 px tall touch area so the right one is easy to tap. */}
+      <ul className="sm:space-y-2.5">
         {items.map((i) => (
           <li key={i.label}>
-            <Link href={i.href} className="text-white/80 transition hover:text-lav-300">{i.label}</Link>
+            <Link href={i.href} className="flex min-h-10 items-center text-white/80 transition hover:text-lav-300 sm:inline sm:min-h-0">{i.label}</Link>
           </li>
         ))}
       </ul>

@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { Gauge, LayoutGrid, ShieldCheck, Handshake } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { Reveal, SplitHeading } from "./Reveal";
+import { sized } from "@/lib/img";
 
 const values = [
   { Icon: Gauge, title: "Speed is a feature", text: "Every page is tuned to load fast on mobile data, because slow sites lose customers." },
@@ -24,7 +25,7 @@ export default function AboutIntro() {
       <section className="bg-white py-24 sm:py-32">
         <div className="container-x grid items-center gap-14 lg:grid-cols-2">
           <div ref={ref} className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-mist">
-            <motion.img style={{ y, scale: 1.18 }} src={content.about.image} alt="Working on a client project" className="h-full w-full object-cover" />
+            <motion.img style={{ y, scale: 1.18 }} src={sized(content.about.image, 1280)} alt="Working on a client project" className="h-full w-full object-cover" />
           </div>
           <div>
             <SplitHeading text={content.about.title} className="h-display text-4xl sm:text-6xl" />

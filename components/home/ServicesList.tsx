@@ -7,6 +7,7 @@ import { ArrowUpRight, Plus } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { serviceSlug } from "@/lib/content";
 import { Reveal, SplitHeading, ease } from "../Reveal";
+import { sized } from "@/lib/img";
 
 // Desktop: list on the left, a sticky preview card on the right that changes with the
 // hovered or focused service. Mobile: each row opens in place with its image.
@@ -74,7 +75,7 @@ export default function ServicesList() {
                     {isOpen && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease }} className="overflow-hidden lg:hidden">
                         <div className="pb-8">
-                          <img src={s.image} alt={s.title} loading="lazy" className="aspect-[16/10] w-full rounded-2xl object-cover" />
+                          <img src={sized(s.image, 960)} alt={s.title} loading="lazy" className="aspect-[16/10] w-full rounded-2xl object-cover" />
                           <p className="mt-5 leading-relaxed text-white/75">{s.description}</p>
                           <Tags tags={s.tags} />
                           <Link href={`/services/${serviceSlug(s)}`} className="btn-light mt-6">Learn more <ArrowUpRight size={16} /></Link>
@@ -94,7 +95,7 @@ export default function ServicesList() {
                 <AnimatePresence initial={false}>
                   <motion.img
                     key={current.id}
-                    src={current.image}
+                    src={sized(current.image, 960)}
                     alt={current.title}
                     initial={{ opacity: 0, scale: 1.08 }}
                     animate={{ opacity: 1, scale: 1 }}

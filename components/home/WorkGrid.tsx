@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
+import { sized } from "@/lib/img";
 
 export default function WorkGrid({ limit, showHeading = true }: { limit?: number; showHeading?: boolean }) {
   const { content } = useContent();
@@ -46,7 +47,7 @@ export default function WorkGrid({ limit, showHeading = true }: { limit?: number
                 className={`group relative overflow-hidden rounded-3xl bg-ink ${i % 3 === 1 ? "lg:mt-12" : ""}`}
               >
                 <div className="aspect-[4/5] overflow-hidden">
-                  <img src={p.image} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110" />
+                  <img src={sized(p.image, 960)} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-6 text-white">

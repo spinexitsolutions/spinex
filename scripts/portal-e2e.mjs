@@ -1076,6 +1076,16 @@ try {
     ok("llms.txt lists the business and its services", llms.status === 200 && llms.type.includes("text/plain") && /^# /.test(llms.body) && llms.body.includes("## Services") && /\/services\//.test(llms.body), `${llms.status} ${llms.body.slice(0, 120)}`);
     const full = await txt("/llms-full.txt");
     ok("llms-full.txt has service details and answers", full.status === 200 && full.body.includes("Q: ") && full.body.includes("## Frequently asked questions"), String(full.status));
+    {
+      const big = await qp.request.get(`${base}/images/stock/photo-1497366216548-37526070297c.jpg`);
+      const small = await qp.request.get(`${base}/api/img?src=${encodeURIComponent("/images/stock/photo-1497366216548-37526070297c.jpg")}&w=320`);
+      const sb = await small.body(), bb = await big.body();
+      ok("small copies of photos are WebP and much lighter", small.status() === 200 && (small.headers()["content-type"] || "").includes("image/webp") && sb.length < bb.length / 3, `${small.status()} ${sb.length} vs ${bb.length}`);
+      const bad = await qp.request.get(`${base}/api/img?src=${encodeURIComponent("/../.env")}&w=320`);
+      ok("the photo resizer only opens site photos", bad.status() === 404, String(bad.status()));
+      const man = await txt("/manifest.webmanifest");
+      ok("the site has an app manifest with icons", man.status === 200 && man.body.includes("Spinex") && man.body.includes("brand-icon"), `${man.status} ${man.body.slice(0, 100)}`);
+    }
     const robots = await txt("/robots.txt");
     ok("robots.txt welcomes AI crawlers and blocks private areas", robots.status === 200 && /GPTBot/.test(robots.body) && /PerplexityBot/.test(robots.body) && /Disallow: \/portal/.test(robots.body) && /Disallow: \/admin/.test(robots.body) && /Sitemap:/.test(robots.body), robots.body.slice(0, 300));
     const key = await txt("/indexnow.txt");

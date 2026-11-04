@@ -5,6 +5,7 @@ import { Linkedin } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { SplitHeading, ease } from "./Reveal";
 import type { Founder } from "@/lib/content";
+import { sized } from "@/lib/img";
 
 // "The people behind Spinex" on the About page: photo, name, role, two lines and LinkedIn for each
 // person. Edited and switched on or off in Admin → About and stats → Founders.
@@ -43,7 +44,7 @@ function Person({ p, i }: { p: Founder; i: number }) {
     >
       <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-mist">
         {p.photo ? (
-          <img src={p.photo} alt={p.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
+          <img src={sized(p.photo, 960)} alt={p.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
         ) : (
           <div aria-hidden className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_30%_20%,rgb(var(--c-lav-300)),rgb(var(--c-lav-600))_70%)]">
             <span className="font-display text-7xl font-semibold tracking-tight text-white/90">{initials}</span>

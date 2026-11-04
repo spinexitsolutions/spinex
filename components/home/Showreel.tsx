@@ -21,6 +21,16 @@ function ShowreelInner() {
   const ref = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
+  // The video only starts downloading when the visitor is about a screen away from the showreel,
+  // so people who never scroll that far don't spend 3 MB of mobile data on it.
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || near) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setNear(true); io.disconnect(); } }, { rootMargin: "120% 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
   // Phones get the portrait reel (if one is set), so nothing important is cropped off the sides.
   const [phone, setPhone] = useState<boolean | null>(null);
   useEffect(() => {
@@ -32,7 +42,7 @@ function ShowreelInner() {
   }, []);
   const sr = content.showreel;
   const usePhone = phone === true && !!sr.videoMobile?.trim();
-  const src = phone === null ? undefined : usePhone ? sr.videoMobile : sr.video;
+  const src = phone === null || !near ? undefined : usePhone ? sr.videoMobile : sr.video;
   const poster = usePhone ? sr.posterMobile || sr.poster : sr.poster;
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
 

@@ -16,7 +16,8 @@ export default function FloatingWhatsApp() {
   const { content } = useContent();
   // Steps aside for the cookie banner, rises above the footer's last line, and folds to a round button once
   // the visitor scrolls, so it never sits on top of text.
-  const { lift, cookieOpen, scrolled } = useFloatLift();
+  const { lift, cookieOpen: banner, menuOpen, scrolled } = useFloatLift();
+  const cookieOpen = banner || menuOpen;
   const on = content.integrations?.whatsappButton ?? true;
   if (!on || !content.contact.whatsapp) return null;
   const href = `https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(content.integrations?.whatsappText || "Hi Spinex!")}`;

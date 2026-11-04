@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { SplitHeading, ease } from "./Reveal";
+import { sized } from "@/lib/img";
 
 type Page = "about" | "services" | "products" | "work" | "contact" | "internship" | "blog" | "careers";
 
@@ -52,7 +53,7 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
       {/* Background banner */}
       <motion.div style={{ y: bgY }} className="absolute inset-0">
         <motion.img
-          src={(!own && content.banners?.[page]) || fallbackBanner}
+          src={sized((!own && content.banners?.[page]) || fallbackBanner, 1600)}
           alt=""
           initial={{ scale: 1.25 }}
           animate={{ scale: 1.08 }}

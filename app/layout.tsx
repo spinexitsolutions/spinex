@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Manrope } from "next/font/google";
 import { ContentProvider } from "@/components/ContentProvider";
 import { getContent } from "@/lib/content-server";
@@ -9,6 +9,9 @@ import "./globals.css";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const body = Manrope({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+
+// Colour of the phone browser's address bar (Chrome on Android) and the app window.
+export const viewport: Viewport = { themeColor: "#6e59d9" };
 
 export async function generateMetadata(): Promise<Metadata> {
   const { brand, seo } = await getContent();
