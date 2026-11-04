@@ -741,6 +741,29 @@ function AdminShell() {
                     { key: "image", label: "Image", type: "image" },
                   ]} />
                 </Card>
+                <Card title="Founders" note="The people behind Spinex, shown on the About page under the intro. Use a clear, well-lit photo of each person (portrait, about 800 × 1000). Without a photo their initials are shown.">
+                  <label className="flex items-center gap-3" data-founders-toggle>
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.founders?.show} onChange={(e) => set("founders", { ...draft.founders, show: e.target.checked })} />
+                    <span className="font-medium">Show the founders on the About page</span>
+                  </label>
+                  <div className="mt-5">
+                    <ObjectEditor value={draft.founders} onChange={(v) => set("founders", v)} fields={[
+                      { key: "heading", label: "Heading" },
+                      { key: "intro", label: "Short line", type: "textarea" },
+                    ]} />
+                  </div>
+                  <div className="mt-5">
+                    <ListEditor items={draft.founders?.people ?? []} titleKey="name" addLabel="Add person" onChange={(v) => set("founders", { ...draft.founders, people: v })}
+                      newItem={() => ({ id: uid(), name: "", role: "", bio: "", photo: "", linkedin: "" })}
+                      fields={[
+                        { key: "name", label: "Name" },
+                        { key: "role", label: "Role", hint: "e.g. Founder, Co-Founder, Head of Design" },
+                        { key: "bio", label: "Two lines about them", type: "textarea", hint: "What they do for clients, in one or two short sentences" },
+                        { key: "photo", label: "Photo", type: "image" },
+                        { key: "linkedin", label: "LinkedIn link (optional)" },
+                      ]} />
+                  </div>
+                </Card>
                 <Card title="Numbers">
                   <ListEditor items={draft.stats} titleKey="label" addLabel="Add number" onChange={(v) => set("stats", v)}
                     newItem={() => ({ id: uid(), value: "", label: "" })}

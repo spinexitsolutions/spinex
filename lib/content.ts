@@ -177,6 +177,20 @@ export const heroDefaults: Omit<HeroSettings, "kicker" | "title" | "subtitle" | 
   showStats: true, showLocation: true, showTicker: true,
 };
 
+// "The people behind Spinex" on the About page, set in Admin → About and stats → Founders.
+export type Founder = { id: string; name: string; role: string; bio: string; photo: string; linkedin: string };
+export type Founders = { show: boolean; heading: string; intro: string; people: Founder[] };
+export const foundersDefaults: Founders = {
+  show: true,
+  heading: "The people behind Spinex.",
+  intro: "A small team you can call directly. You talk to the people who build your project.",
+  people: [
+    { id: "palak", name: "Palak Parik", role: "Founder", bio: "Builds websites and runs digital marketing for Spinex clients.", photo: "", linkedin: "https://www.linkedin.com/in/palakparik" },
+    { id: "shiva", name: "Shiva Pareek", role: "Co-Founder", bio: "", photo: "", linkedin: "https://www.linkedin.com/in/shivapareek" },
+    { id: "supriya", name: "Supriya", role: "", bio: "", photo: "", linkedin: "" },
+  ],
+};
+
 // Custom mouse cursor on the website (desktop only; phones and tablets keep the normal touch), set in Admin → Site settings → Intro & cursor.
 export const CURSOR_STYLES = ["ring", "dot", "blend", "glow"] as const;
 export type CursorStyle = (typeof CURSOR_STYLES)[number];
@@ -303,6 +317,7 @@ export type SiteContent = {
     indexNow: boolean; // tell Bing and others when pages change
   };
   about: { title: string; body: string; philosophy: string; image: string };
+  founders: Founders;
   stats: Stat[];
   services: Service[];
   projects: Project[];
@@ -697,6 +712,7 @@ const baseContent: SiteContent = {
   },
   intro: defaultIntro,
   cursor: defaultCursor,
+  founders: foundersDefaults,
   showreel: {
     title: "A look at what we make",
     video: "/showreel.mp4",

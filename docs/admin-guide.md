@@ -425,6 +425,17 @@ The big first block of the home page. A live **Preview** at the top shows your c
 > - Use real numbers only.
 > - The first numbers also appear in the hero (with **Show 2 stats** on) and in the Company profile PDF.
 
+## Founders (in About and stats)
+
+Shows the people behind Spinex on the About page: photo, name, role, two lines and a LinkedIn button.
+
+1. Open **About and stats** and find the **Founders** card.
+2. Tick or untick **Show the founders on the About page** to switch the section on or off.
+3. For each person fill in **Name**, **Role**, **Two lines about them**, upload a **Photo** (portrait, about 800 × 1000) and, if you like, the **LinkedIn link**. Use **Add person** for more people and the arrows to change the order.
+4. Press **Save and publish**.
+
+> Without a photo the person's initials are shown. Founders are also added to the business details Google reads.
+
 ## Careers (jobs)
 
 1. Tick **Accepting job applications**.

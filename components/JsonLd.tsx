@@ -19,6 +19,9 @@ export default function JsonLd({ content, faq: withFaq = true }: { content: Site
     telephone: `+91${c.phone}`,
     email: c.email,
     priceRange: "₹₹",
+    ...(content.founders?.show && content.founders.people.some((x) => /founder/i.test(x.role) && x.name.trim())
+      ? { founder: content.founders.people.filter((x) => /founder/i.test(x.role) && x.name.trim()).map((x) => ({ "@type": "Person", name: x.name, jobTitle: x.role, ...(x.linkedin ? { sameAs: [x.linkedin] } : {}) })) }
+      : {}),
     currenciesAccepted: "INR",
     paymentAccepted: "UPI, bank transfer, card",
     knowsAbout: [...content.services.map((s) => s.title), ...(content.seo.keywords ?? []).slice(0, 12)],
