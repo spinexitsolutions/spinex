@@ -224,15 +224,33 @@ function Secure() {
   );
 }
 
+// Working hours in India time: Monday to Saturday, 10 am to 7 pm.
+function isWorkingHours(d = new Date()) {
+  const ist = new Date(d.getTime() + (5.5 * 60 + d.getTimezoneOffset()) * 60000);
+  const day = ist.getDay();
+  const h = ist.getHours();
+  return day >= 1 && day <= 6 && h >= 10 && h < 19;
+}
+
 function Support() {
   const { content } = useContent();
+  // Decided in the browser (after the first paint) so the badge follows the visitor's real time.
+  const [online, setOnline] = useState<boolean | null>(null);
+  useEffect(() => {
+    const tick = () => setOnline(isWorkingHours());
+    tick();
+    const id = setInterval(tick, 60000);
+    return () => clearInterval(id);
+  }, []);
   return (
     <div className="flex h-full flex-col justify-between gap-6">
       <div className="flex items-center gap-3">
         <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/15"><Headphones size={24} /></span>
-        <span className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm">
-          <span className="h-2 w-2 rounded-full bg-emerald-300" /> Online
-        </span>
+        {online !== null && (
+          <span className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm">
+            <span className={`h-2 w-2 rounded-full ${online ? "bg-emerald-300" : "bg-white/50"}`} /> {online ? "Online now" : "Replies within a day"}
+          </span>
+        )}
       </div>
       <div>
         <h3 className="font-display text-xl font-semibold tracking-tight">Quick WhatsApp support</h3>

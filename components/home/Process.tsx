@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, animate, motion, useInView, useMotionValue, useTransform } from "framer-motion";
 import { Compass, PenTool, Code2, Rocket, Check, MousePointer2 } from "lucide-react";
 import { SplitHeading, ease } from "../Reveal";
 import { useContent } from "../ContentProvider";
@@ -10,41 +10,45 @@ import { useContent } from "../ContentProvider";
 const visuals = [DiscoverVisual, DesignVisual, BuildVisual, LaunchVisual];
 const icons = [Compass, PenTool, Code2, Rocket];
 
-// Compact stepper pinned to the screen: scrolling through the section moves through the steps.
-// Below md the section isn't pinned; every step is shown as a plain list instead.
+// Compact stepper: the steps play one after another on their own (about 5 seconds each, paused while
+// the pointer is over it) and can be clicked. It takes one screen, no long pinned scroll.
+// Below md every step is shown as a plain list instead.
 export default function Process() {
   const { content } = useContent();
   const steps = content.process.map((s, i) => ({ ...s, Icon: icons[i % icons.length], Visual: visuals[i % visuals.length] }));
   const ref = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [paused, setPaused] = useState(false);
+  const inView = useInView(ref, { amount: 0.4 });
   const n = Math.max(1, steps.length);
-  const railFill = useTransform(scrollYProgress, [0, (n - 1) / n], ["0%", "100%"]);
-  const stepFill = useTransform(scrollYProgress, (v) => Math.min(1, Math.max(0, v * n - Math.min(n - 1, Math.floor(v * n)))));
+  const stepFill = useMotionValue(0); // how far the current step's timer has run, 0 to 1
+  const railFill = useTransform(stepFill, (v) => `${Math.min(100, ((active + v) / Math.max(1, n - 1)) * 100)}%`);
   const step = steps[active];
 
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    setActive(Math.min(n - 1, Math.max(0, Math.floor(v * n))));
-  });
+  // Play the current step's timer, then move to the next (back to the first after the last).
+  useEffect(() => {
+    if (!inView || paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const run = animate(stepFill, 1, {
+      duration: 5 * (1 - stepFill.get()),
+      ease: "linear",
+      onComplete: () => {
+        stepFill.set(0);
+        setActive((a) => (a + 1) % n);
+      },
+    });
+    return () => run.stop();
+  }, [active, inView, paused, n, stepFill]);
 
-  // Clicking a step scrolls to the middle of that step's scroll range.
   const goTo = (i: number) => {
-    const el = ref.current;
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    const range = el.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top + range * ((i + 0.5) / n), behavior: "smooth" });
+    stepFill.set(0);
+    setActive(i);
   };
 
   if (!step) return null;
 
   return (
-    <section
-      ref={ref}
-      className="relative border-t border-line bg-white md:h-[var(--process-h)]"
-      style={{ "--process-h": `${Math.max(180, n * 55)}vh` } as React.CSSProperties}
-    >
-      <div className="py-20 md:sticky md:top-0 md:flex md:h-[100svh] md:items-center md:overflow-hidden">
+    <section ref={ref} className="relative border-t border-line bg-white" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div className="py-20 sm:py-28">
       <div className="container-x">
         <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <SplitHeading key={content.sections.process.heading} text={content.sections.process.heading} className="h-display text-4xl sm:text-5xl" />

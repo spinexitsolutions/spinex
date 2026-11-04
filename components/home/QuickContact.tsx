@@ -91,7 +91,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
                   </span>
                   <span className="min-w-0">
                     <span className="block text-sm text-white/55">{label}</span>
-                    <span className="block truncate font-semibold">{value}</span>
+                    <span className="block font-semibold leading-snug [overflow-wrap:anywhere]">{value}</span>
                   </span>
                 </motion.a>
               ))}

@@ -3,6 +3,8 @@
 import { Star } from "lucide-react";
 import { useContent } from "../ContentProvider";
 
+export const MIN_CLIENTS = 4;
+
 // "Trusted by" strip under the hero: client logos (or names when there is no logo) and an
 // optional Google rating line. Both are switched on in Admin → Trusted by; off by default.
 export default function TrustedBy() {
@@ -10,7 +12,8 @@ export default function TrustedBy() {
   const t = content.trusted;
   if (!t) return null;
   const items = (Array.isArray(t.items) ? t.items : []).filter((x) => x && (String(x.name || "").trim() || String(x.logo || "").trim()));
-  const showLogos = !!t.show && items.length > 0;
+  // A strip with only 2 or 3 names looks thin, so it shows from 4 clients on.
+  const showLogos = !!t.show && items.length >= MIN_CLIENTS;
   const rating = String(t.rating || "").trim();
   const showRating = !!t.ratingShow && rating !== "";
   if (!showLogos && !showRating) return null;
@@ -47,10 +50,16 @@ export default function TrustedBy() {
 }
 
 function Logo({ name, logo, url }: { name: string; logo: string; url: string }) {
-  const inner = logo ? (
-    <img src={logo} alt={name || "Client logo"} loading="lazy" className="h-9 w-auto max-w-[150px] object-contain transition duration-300 group-hover:scale-105 sm:h-10" />
-  ) : (
-    <span className="whitespace-nowrap font-display text-xl font-semibold tracking-tight text-ink/80 transition group-hover:text-ink">{name}</span>
+  // Every client gets the same box, so logos of different shapes look the same size; a name without a
+  // logo is set in the same box.
+  const inner = (
+    <span className="flex h-12 w-[150px] items-center justify-center sm:h-14 sm:w-[170px]">
+      {logo ? (
+        <img src={logo} alt={name || "Client logo"} loading="lazy" className="max-h-full max-w-full object-contain opacity-80 grayscale transition duration-300 group-hover:scale-105 group-hover:opacity-100 group-hover:grayscale-0" />
+      ) : (
+        <span className="line-clamp-2 text-center font-display text-lg font-semibold leading-tight tracking-tight text-ink/70 transition group-hover:text-ink">{name}</span>
+      )}
+    </span>
   );
   return url ? (
     <a href={url} target="_blank" rel="noopener noreferrer nofollow" className="group block" title={name}>{inner}</a>
