@@ -11,15 +11,14 @@ import { sized } from "@/lib/img";
 const visuals = [DiscoverVisual, DesignVisual, BuildVisual, LaunchVisual];
 const icons = [Compass, PenTool, Code2, Rocket];
 
-// Compact stepper: the steps play one after another on their own (about 5 seconds each, paused while
-// the pointer is over it) and can be clicked. It takes one screen, no long pinned scroll.
+// Compact stepper: the steps play one after another on their own (about 6 seconds each) while the section
+// is on screen, and any step can be clicked. It takes one screen, no long pinned scroll.
 // Below md every step is shown as a plain list instead.
 export default function Process() {
   const { content } = useContent();
   const steps = content.process.map((s, i) => ({ ...s, Icon: icons[i % icons.length], Visual: visuals[i % visuals.length] }));
   const ref = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
   const inView = useInView(ref, { amount: 0.4 });
   const n = Math.max(1, steps.length);
   const stepFill = useMotionValue(0); // how far the current step's timer has run, 0 to 1
@@ -28,9 +27,9 @@ export default function Process() {
 
   // Play the current step's timer, then move to the next (back to the first after the last).
   useEffect(() => {
-    if (!inView || paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const run = animate(stepFill, 1, {
-      duration: 5 * (1 - stepFill.get()),
+      duration: 6 * (1 - stepFill.get()),
       ease: "linear",
       onComplete: () => {
         stepFill.set(0);
@@ -38,7 +37,7 @@ export default function Process() {
       },
     });
     return () => run.stop();
-  }, [active, inView, paused, n, stepFill]);
+  }, [active, inView, n, stepFill]);
 
   const goTo = (i: number) => {
     stepFill.set(0);
@@ -48,7 +47,7 @@ export default function Process() {
   if (!step) return null;
 
   return (
-    <section ref={ref} className="relative border-t border-line bg-white" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <section ref={ref} className="relative border-t border-line bg-white">
       <div className="py-20 sm:py-28">
       <div className="container-x">
         <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -118,13 +117,13 @@ export default function Process() {
           </div>
 
           {/* Detail panel */}
-          <div id="process-panel" role="tabpanel" className="mt-8 overflow-hidden rounded-[28px] bg-ink text-white">
+          <div id="process-panel" role="tabpanel" className="mt-8 min-h-[340px] overflow-hidden rounded-[28px] bg-ink text-white">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
+                exit={{ opacity: 0, transition: { duration: 0.15 } }}
                 transition={{ duration: 0.45, ease }}
                 className="grid md:grid-cols-[1fr_1.1fr]"
               >
