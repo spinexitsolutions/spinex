@@ -4,8 +4,14 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import ImageField from "./ImageField";
+import { sized } from "@/lib/img";
 
-export type FieldDef = { key: string; label: string; type?: "text" | "textarea" | "tags" | "image" | "url" | "select" | "images" | "lines"; hint?: string; options?: { value: string; label: string }[] };
+export type FieldDef = {
+  key: string; label: string; type?: "text" | "textarea" | "tags" | "image" | "url" | "select" | "images" | "lines"; hint?: string; options?: { value: string; label: string }[];
+  group?: string; // long forms are split into sections with this heading (e.g. "Photos", "Google")
+  suggest?: string[]; // quick-pick values shown under a text field
+  warn?: (value: unknown) => string; // a warning shown under the field when the value looks wrong
+};
 type Rec = Record<string, unknown>;
 
 export function FieldInput({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: unknown) => void }) {
@@ -101,23 +107,70 @@ export function TagInput({ id, value, onChange, className = "input" }: { id?: st
   );
 }
 
+const wide = (f: FieldDef) => f.type === "textarea" || f.type === "image" || f.type === "images" || f.type === "lines";
+
+function FieldCell<T extends object>({ f, rec, onChange }: { f: FieldDef; rec: Rec; onChange: (v: T) => void }) {
+  const v = rec[f.key];
+  const warning = f.warn?.(v) ?? "";
+  return (
+    <div className={wide(f) ? "md:col-span-2" : ""}>
+      <FieldInput def={f} value={v} onChange={(nv) => onChange({ ...rec, [f.key]: nv } as unknown as T)} />
+      {f.suggest && f.suggest.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {f.suggest.map((x) => (
+            <button key={x} type="button" onClick={() => onChange({ ...rec, [f.key]: x } as unknown as T)} className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${String(v ?? "") === x ? "border-ink bg-ink text-white" : "border-line bg-white text-ink/75 hover:border-ink"}`}>{x}</button>
+          ))}
+        </div>
+      )}
+      {warning && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{warning}</p>}
+    </div>
+  );
+}
+
+// Fields with a "group" are shown in sections that open and close; the first section starts open.
 export function ObjectEditor<T extends object>({ value, fields, onChange }: { value: T; fields: FieldDef[]; onChange: (v: T) => void }) {
   const rec = value as unknown as Rec;
+  if (!fields.some((f) => f.group)) {
+    return (
+      <div className="grid gap-5 md:grid-cols-2">
+        {fields.map((f) => <FieldCell key={f.key} f={f} rec={rec} onChange={onChange} />)}
+      </div>
+    );
+  }
+  const groups: { name: string; fields: FieldDef[] }[] = [];
+  for (const f of fields) {
+    const name = f.group || "Details";
+    const g = groups.find((x) => x.name === name);
+    if (g) g.fields.push(f);
+    else groups.push({ name, fields: [f] });
+  }
   return (
-    <div className="grid gap-5 md:grid-cols-2">
-      {fields.map((f) => (
-        <div key={f.key} className={f.type === "textarea" || f.type === "image" || f.type === "images" || f.type === "lines" ? "md:col-span-2" : ""}>
-          <FieldInput def={f} value={rec[f.key]} onChange={(v) => onChange({ ...rec, [f.key]: v } as unknown as T)} />
-        </div>
-      ))}
+    <div className="space-y-3">
+      {groups.map((g, i) => {
+        const filled = g.fields.filter((f) => { const v = rec[f.key]; return Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== ""; }).length;
+        return (
+          <details key={g.name} open={i === 0} className="group/sec rounded-2xl border border-line bg-white">
+            <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
+              <ChevronDown size={16} className="text-muted transition-transform group-open/sec:rotate-180" />
+              <span className="font-semibold">{g.name}</span>
+              <span className="ml-auto rounded-full bg-mist px-2 py-0.5 text-xs text-muted">{filled}/{g.fields.length} filled</span>
+            </summary>
+            <div className="grid gap-5 border-t border-line p-4 md:grid-cols-2">
+              {g.fields.map((f) => <FieldCell key={f.key} f={f} rec={rec} onChange={onChange} />)}
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }
 
 export function ListEditor<T extends { id: string }>({
-  items, fields, onChange, titleKey, newItem, addLabel, max, maxNote,
-}: { items: T[]; fields: FieldDef[]; onChange: (v: T[]) => void; titleKey: keyof T; newItem: () => T; addLabel: string; max?: number; maxNote?: string }) {
+  items, fields, onChange, titleKey, newItem, addLabel, max, maxNote, thumb, subKey,
+}: { items: T[]; fields: FieldDef[]; onChange: (v: T[]) => void; titleKey: keyof T; newItem: () => T; addLabel: string; max?: number; maxNote?: string; thumb?: boolean; subKey?: string }) {
   const [open, setOpen] = useState<string | null>(null);
+  // A small photo next to each item: the first picture field (unless turned off with thumb={false}).
+  const thumbKey = thumb === false ? "" : fields.find((f) => f.type === "image")?.key ?? "";
 
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -137,7 +190,15 @@ export function ListEditor<T extends { id: string }>({
             <div className="flex items-center gap-2 p-3 pl-5">
               <button onClick={() => setOpen(isOpen ? null : item.id)} className="flex flex-1 items-center gap-3 text-left" aria-expanded={isOpen}>
                 <motion.span animate={{ rotate: isOpen ? 180 : 0 }}><ChevronDown size={18} className="text-muted" /></motion.span>
-                <span className="font-semibold">{String(item[titleKey] || "Untitled")}</span>
+                {thumbKey && (
+                  <span className="grid h-10 w-14 shrink-0 place-items-center overflow-hidden rounded-lg bg-mist">
+                    {String((item as Rec)[thumbKey] || "") ? <img src={sized(String((item as Rec)[thumbKey]), 160)} alt="" loading="lazy" className="h-full w-full object-cover" /> : <span className="text-[10px] text-muted">No photo</span>}
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{String(item[titleKey] || "Untitled")}</span>
+                  {subKey && String((item as Rec)[subKey] || "") && <span className="block truncate text-xs text-muted">{String((item as Rec)[subKey])}</span>}
+                </span>
               </button>
               <IconBtn label="Move up" onClick={() => move(i, -1)} disabled={i === 0}><ArrowUp size={15} /></IconBtn>
               <IconBtn label="Move down" onClick={() => move(i, 1)} disabled={i === items.length - 1}><ArrowDown size={15} /></IconBtn>

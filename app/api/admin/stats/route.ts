@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSession, guard } from "@/lib/admin-guard";
 import { getDb } from "@/lib/db";
 import { can } from "@/lib/roles";
+import { billingCol, getProfile, toBill } from "@/lib/billing-db";
+import { computeTotals } from "@/lib/billing";
 
 type Month = { key: string; label: string };
 
@@ -86,6 +88,39 @@ export async function GET() {
       images: await db.collection("uploads.files").countDocuments({}),
     };
   }
+
+  // "Today's work" at the top of the overview: what needs attention now.
+  const todayIst = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+  const work: Record<string, unknown> = {};
+  if (can(s, "leads", "view")) {
+    const leadsCol = db.collection("leads");
+    work.newLeads = await leadsCol.countDocuments({ status: "new" });
+    work.followUps = await leadsCol.countDocuments({ followUp: { $gt: "", $lte: todayIst }, status: { $nin: ["won", "lost"] } });
+  }
+  if (can(s, "bookings", "view")) {
+    const calls = await db.collection("bookings").find({ date: todayIst, status: "confirmed" }, { projection: { time: 1, name: 1 } }).sort({ time: 1 }).limit(20).toArray();
+    work.callsToday = calls.length;
+    work.nextCall = calls[0] ? { time: String(calls[0].time ?? ""), name: String(calls[0].name ?? "") } : null;
+  }
+  if (can(s, "billing", "view")) {
+    const docs = await (await billingCol()).find({ type: "invoice", status: { $in: ["unpaid", "partly-paid"] } }).limit(2000).toArray();
+    const profile = await getProfile();
+    let due = 0;
+    let overdue = 0;
+    for (const d of docs) {
+      const b = toBill(d);
+      const bal = computeTotals(b, profile).balance;
+      due += bal;
+      if (b.dueDate && b.dueDate < todayIst && bal > 0) overdue++;
+    }
+    work.unpaid = Math.round(due);
+    work.unpaidCount = docs.length;
+    work.overdue = overdue;
+  }
+  if (can(s, "clients", "view")) {
+    work.openRequests = await db.collection("portal_tickets").countDocuments({ status: { $ne: "closed" } });
+  }
+  out.today = work;
 
   return NextResponse.json(out);
 }

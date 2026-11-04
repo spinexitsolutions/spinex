@@ -181,11 +181,19 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+      {/* Phones: one row of small chips you swipe sideways, so the list starts right away. */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Filter leads">
+        {tiles.map((t) => (
+          <button key={t.id} role="tab" onClick={() => setFilter(t.id)} aria-selected={filter === t.id} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium ${filter === t.id ? "border-ink bg-ink text-white" : t.id === "due" && counts.due > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-line bg-white"}`}>
+            {t.label} <span className={`rounded-full px-1.5 text-xs font-semibold tabular-nums ${filter === t.id ? "bg-white/20" : "bg-mist"}`}>{counts[t.id]}</span>
+          </button>
+        ))}
+      </div>
+      <div className="hidden grid-cols-4 gap-3 sm:grid xl:grid-cols-8">
         {tiles.map((t) => (
           <button key={t.id} onClick={() => setFilter(t.id)} aria-pressed={filter === t.id} className={`rounded-2xl border p-4 text-left transition-colors ${filter === t.id ? "border-ink bg-ink text-white" : t.id === "due" && counts.due > 0 ? "border-red-200 bg-red-50 hover:border-red-400" : "border-line bg-white hover:border-ink"}`}>
             <p className="font-display text-3xl font-semibold">{counts[t.id]}</p>
-            <p className={`text-sm ${filter === t.id ? "text-white/70" : "text-muted"}`}>{t.label}</p>
+            <p className={`whitespace-nowrap text-sm ${filter === t.id ? "text-white/70" : "text-muted"}`}>{t.label}</p>
           </button>
         ))}
       </div>
@@ -209,7 +217,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-3 max-sm:-order-none">
         <label className="flex min-w-[220px] flex-1 items-center gap-2 rounded-xl bg-mist px-3">
           <Search size={16} className="text-muted" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, phone or message" className="h-11 w-full bg-transparent text-sm outline-none" aria-label="Search leads" />
@@ -218,11 +226,14 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
           <option value="all">All sources</option>
           {bySource.map((r) => <option key={r.name} value={r.name}>{r.name} ({r.total})</option>)}
         </select>
-        <button onClick={() => setShowReport((v) => !v)} aria-pressed={showReport} className="btn-ghost px-4 py-2.5 text-sm"><BarChart3 size={16} /> Where leads come from</button>
-        <button onClick={() => setShowAds(true)} className="btn-ghost px-4 py-2.5 text-sm"><Megaphone size={16} /> Get leads from ads</button>
-        <button onClick={() => setShowFollowups(true)} className="btn-ghost px-4 py-2.5 text-sm"><MailPlus size={16} /> Follow-up emails</button>
-        <a href="/api/admin/leads/export" className="btn-ghost px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
-        <button onClick={() => load()} aria-label="Refresh" className="grid h-11 w-11 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
+        {/* On phones these slide sideways in one row instead of stacking. */}
+        <div className="-mx-3 flex w-[calc(100%+1.5rem)] gap-2 overflow-x-auto px-3 [scrollbar-width:none] sm:contents [&::-webkit-scrollbar]:hidden">
+          <button onClick={() => setShowReport((v) => !v)} aria-pressed={showReport} className="btn-ghost shrink-0 whitespace-nowrap px-4 py-2.5 text-sm"><BarChart3 size={16} /> Where leads come from</button>
+          <button onClick={() => setShowAds(true)} className="btn-ghost shrink-0 whitespace-nowrap px-4 py-2.5 text-sm"><Megaphone size={16} /> Get leads from ads</button>
+          <button onClick={() => setShowFollowups(true)} className="btn-ghost shrink-0 whitespace-nowrap px-4 py-2.5 text-sm"><MailPlus size={16} /> Follow-up emails</button>
+          <a href="/api/admin/leads/export" className="btn-ghost shrink-0 whitespace-nowrap px-4 py-2.5 text-sm"><FileSpreadsheet size={16} /> Download Excel</a>
+          <button onClick={() => load()} aria-label="Refresh" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line hover:border-ink"><RefreshCw size={16} /></button>
+        </div>
       </div>
 
       {showReport && (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BellRing, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
+import { BellRing, CalendarClock, ChevronDown, LifeBuoy, ReceiptIndianRupee, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { leadStatusLabel, LEAD_SOURCES, type LeadStatus } from "@/lib/leads";
 import { statusLabel, type Status } from "@/lib/interns";
@@ -16,6 +16,7 @@ type Stats = {
   };
   people?: { interns: number; jobApplicants: number; byStatus: Record<string, number>; certificates: number; perMonth: number[] };
   content?: { published: number; drafts: number; images: number };
+  today?: { newLeads?: number; followUps?: number; callsToday?: number; nextCall?: { time: string; name: string } | null; unpaid?: number; unpaidCount?: number; overdue?: number; openRequests?: number };
 };
 
 const PALETTE = ["#6E59D9", "#A595FB", "#120F1B", "#34C78C", "#FFBD2E", "#FF7896", "#C2B6FF"];
@@ -43,25 +44,34 @@ export default function Dashboard({ go, name, areas = [] }: { go: (s: string) =>
   if (!stats) return <div className="grid place-items-center rounded-3xl border border-line bg-white p-16 text-muted"><Loader2 className="animate-spin" /></div>;
 
   const { leads, people, content, months } = stats;
+  const t = stats.today ?? {};
+  const work: { key: string; Icon: LucideIcon; label: string; value: string | number; sub?: string; hot: boolean; go: string }[] = [];
+  if (t.newLeads !== undefined) work.push({ key: "new", Icon: Inbox, label: "New leads to call", value: t.newLeads, sub: t.newLeads ? "Not contacted yet" : "All contacted", hot: t.newLeads > 0, go: "leads" });
+  if (t.followUps !== undefined) work.push({ key: "fu", Icon: BellRing, label: "Follow-ups for today", value: t.followUps, sub: t.followUps ? "Due today or late" : "Nothing due", hot: t.followUps > 0, go: "leads" });
+  if (t.callsToday !== undefined) work.push({ key: "calls", Icon: CalendarClock, label: "Calls today", value: t.callsToday, sub: t.nextCall ? `Next: ${t.nextCall.time}${t.nextCall.name ? ` · ${t.nextCall.name}` : ""}` : "No calls booked", hot: t.callsToday > 0, go: "bookings" });
+  if (t.unpaid !== undefined) work.push({ key: "pay", Icon: ReceiptIndianRupee, label: "Payment to collect", value: `₹${t.unpaid.toLocaleString("en-IN")}`, sub: t.unpaidCount ? `${t.unpaidCount} invoice${t.unpaidCount === 1 ? "" : "s"}${t.overdue ? `, ${t.overdue} overdue` : ""}` : "All invoices paid", hot: (t.overdue ?? 0) > 0, go: "billing" });
+  if (t.openRequests !== undefined) work.push({ key: "sup", Icon: LifeBuoy, label: "Open support requests", value: t.openRequests, sub: t.openRequests ? "Clients waiting" : "None open", hot: t.openRequests > 0, go: "clients" });
 
   return (
     <div className="space-y-6">
-      <h2 className="font-display text-2xl font-semibold">{greet}, {name.split(" ")[0]}.</h2>
+      <div>
+        <h2 className="font-display text-2xl font-semibold">{greet}, {name.split(" ")[0]}.</h2>
+        <p className="mt-1 text-sm text-muted">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</p>
+      </div>
 
-      {areas.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-admin-areas>
-          {areas.map((a) => (
-            <section key={a.label} className="rounded-2xl border border-line bg-white p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold"><a.Icon size={16} className="text-lav-600" /> {a.label}</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {a.items.slice(0, 8).map((x) => (
-                  <button key={x.id} type="button" onClick={() => go(x.id)} className="rounded-full bg-mist px-2.5 py-1 text-xs font-medium text-ink/75 hover:bg-ink hover:text-white">{x.label}</button>
-                ))}
-                {a.items.length > 8 && <span className="px-1 py-1 text-xs text-muted">+{a.items.length - 8} more in the menu</span>}
-              </div>
-            </section>
-          ))}
-        </div>
+      {work.length > 0 && (
+        <section className="rounded-3xl bg-ink p-5 text-white sm:p-6" data-today>
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-lav-200">Today&apos;s work</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {work.map((w) => (
+              <button key={w.key} type="button" onClick={() => go(w.go)} className={`group rounded-2xl p-4 text-left transition ${w.hot ? "bg-lav-600 hover:bg-lav-500" : "bg-white/[0.06] hover:bg-white/10"}`}>
+                <span className="flex items-center gap-2 text-sm text-white/75"><w.Icon size={15} /> {w.label}</span>
+                <span className="mt-2 block font-display text-3xl font-semibold tabular-nums">{w.value}</span>
+                {w.sub && <span className={`mt-1 block truncate text-xs ${w.hot ? "text-white/85" : "text-white/50"}`}>{w.sub}</span>}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -122,6 +132,27 @@ export default function Dashboard({ go, name, areas = [] }: { go: (s: string) =>
             <Donut data={Object.entries(people.byStatus).map(([k, v]) => [statusLabel[k as Status] ?? k, v])} />
           </Card>
         </div>
+      )}
+
+      {areas.length > 0 && (
+        <details className="group rounded-2xl border border-line bg-white" data-admin-areas>
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
+            Shortcuts to every section
+            <ChevronDown size={16} className="text-muted transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="grid gap-x-6 gap-y-4 border-t border-line p-5 sm:grid-cols-2 xl:grid-cols-4">
+            {areas.map((a) => (
+              <div key={a.label}>
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted"><a.Icon size={14} className="text-lav-600" /> {a.label}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {a.items.map((x) => (
+                    <button key={x.id} type="button" onClick={() => go(x.id)} className="rounded-full bg-mist px-2.5 py-1 text-xs font-medium text-ink/75 hover:bg-ink hover:text-white">{x.label}</button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );

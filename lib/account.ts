@@ -49,7 +49,7 @@ function fromDoc(uid: string, d: Record<string, unknown>, base: Partial<Account>
 export async function getAccount(uid: string): Promise<Account | null> {
   if (uid === "env") {
     const d = hasDb() ? ((await (await ownerCol()).findOne({ _id: OWNER_DOC })) ?? {}) : {};
-    return fromDoc("env", d, { email: ownerEmail(), name: "Owner", role: "owner", active: true });
+    return fromDoc("env", d, { email: ownerEmail(), name: String(d.displayName || "").trim() || "Owner", role: "owner", active: true });
   }
   if (!hasDb() || !ObjectId.isValid(uid)) return null;
   const d = await (await usersCol()).findOne({ _id: new ObjectId(uid) });
@@ -94,6 +94,8 @@ export const enableTotp = (a: Account, backupHashes: string[]) =>
   update(a, { totpSecret: a.totpPending, totpPending: "", totpEnabled: true, backupCodes: backupHashes, totpLastStep: 0 }, true);
 export const disableTotp = (a: Account) => update(a, { totpSecret: "", totpPending: "", totpEnabled: false, backupCodes: [], totpLastStep: 0 }, true);
 export const setBackupCodes = (a: Account, hashes: string[]) => update(a, { backupCodes: hashes });
+// Name shown in the admin panel ("Good morning, Palak") and on leads given to the owner.
+export const setDisplayName = (a: Account, name: string) => update(a, a.uid === "env" ? { displayName: name.trim() } : { name: name.trim() });
 export const setRecoveryEmail = (a: Account, email: string) => update(a, { recoveryEmail: email.trim().toLowerCase() });
 
 // Where a password reset link goes: the recovery email if one is set, else the login email.

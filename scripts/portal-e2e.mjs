@@ -1124,7 +1124,8 @@ try {
     const groups = await ap.locator("[data-admin-group]").evaluateAll((els) => els.map((e) => e.getAttribute("data-admin-group")));
     ok("admin menu shows the categories", ["CRM", "Sales and accounts", "HR and team", "Website pages", "Website content", "Blog and media", "Site settings", "Admin and security"].every((g) => groups.includes(g)), groups.join(", "));
     await ap.waitForSelector("[data-admin-areas]", { timeout: 15000 }).catch(() => undefined);
-    ok("dashboard shows shortcut cards for each category", (await ap.locator("[data-admin-areas] section").count()) >= 8);
+    ok("dashboard shows shortcuts for each category", (await ap.locator("[data-admin-areas] .grid > div").count()) >= 8);
+    ok("dashboard starts with today's work", (await ap.locator("[data-today] button").count()) >= 4);
     await ap.screenshot({ path: `${out}/62-admin-menu.png`, fullPage: false });
     await ap.fill("[data-admin-find]", "logo");
     const found = await ap.locator('[data-admin-nav="brand"]').count();

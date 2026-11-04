@@ -23,6 +23,7 @@ export default function AccountPanel() {
       <section className="rounded-3xl border border-line bg-white p-6">
         <p className="text-sm text-muted">Logged in as</p>
         <p className="mt-1 font-display text-xl font-semibold">{me.name} <span className="text-base font-normal text-muted">· {me.email}</span></p>
+        <NameForm me={me} />
       </section>
       <Recovery me={me} reload={load} />
       <TwoStep me={me} reload={load} />
@@ -198,5 +199,35 @@ function Recovery({ me, reload }: { me: Me; reload: () => void }) {
       <p className="mt-2 text-xs text-muted">On the login page you can type either your login email or this recovery email.</p>
       {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>{msg.text}</p>}
     </section>
+  );
+}
+
+// "Your name": shown in the greeting, the sidebar and on leads given to you.
+function NameForm({ me }: { me: Me }) {
+  const [name, setName] = useState(me.name === "Owner" ? "" : me.name);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const save = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await post({ action: "name", name });
+      setMsg({ ok: true, text: "Saved. Reloading…" });
+      setTimeout(() => window.location.reload(), 600);
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Couldn't save it." });
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mt-5 flex max-w-xl flex-wrap items-end gap-3" data-display-name>
+      <label className="min-w-[220px] flex-1">
+        <span className="mb-1.5 block text-[13px] font-semibold">Your name</span>
+        <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Palak Parik" maxLength={60} />
+      </label>
+      <button onClick={save} disabled={busy || name.trim().length < 2 || name.trim() === me.name || !me.canSave} className="btn-dark px-5 py-2.5 text-sm disabled:bg-line disabled:text-muted">{busy ? <Loader2 size={15} className="animate-spin" /> : null} Save name</button>
+      <p className="w-full text-xs text-muted">Shown in the greeting (&quot;Good morning, {name.trim().split(" ")[0] || "…"}&quot;), the sidebar and on leads given to you.</p>
+      {msg && <p className={`w-full text-sm ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>{msg.text}</p>}
+    </div>
   );
 }

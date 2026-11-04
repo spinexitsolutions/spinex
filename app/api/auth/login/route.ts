@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Wrong email or password." }, { status: 401 });
   }
 
-  const session: Session = { email, name: account.uid === "env" ? "Owner" : account.name || email, role: account.role as Session["role"], uid: account.uid, tv: account.tokenVersion };
+  const session: Session = { email, name: account.name || email, role: account.role as Session["role"], uid: account.uid, tv: account.tokenVersion };
 
   if (account.totpEnabled && !(account.uid === "env" && ownerTwoStepBypassed())) {
     return NextResponse.json({ needCode: true, ticket: await createTicket(session) });

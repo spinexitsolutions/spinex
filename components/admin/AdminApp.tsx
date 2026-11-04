@@ -251,9 +251,33 @@ function AdminShell() {
     if (section === "blog" && postDirty && !confirm("You have unsaved changes in this post. Leave without saving?")) return;
     setPostDirty(false);
     setSection(id);
-    // Keep the section in the address, so a refresh or a "Back" link opens the same place.
-    window.history.replaceState(null, "", `#${id}`);
+    // Each section gets its own entry in the browser history, so Back and Forward move between sections,
+    // and a refresh or a shared link (e.g. /admin#leads) opens the same place.
+    window.history.pushState(null, "", `#${id}`);
   };
+  // Back / Forward, or a link to another section on the same page (#billing): follow the address.
+  useEffect(() => {
+    const follow = () => {
+      const id = window.location.hash.slice(1);
+      const target = sections.find((x) => x.id === id);
+      if (!target || !me || (target.perm !== "any" && !can(me, target.perm as Perm))) return;
+      setSection((cur) => {
+        if (cur === target.id) return cur;
+        if (cur === "blog" && postDirty && !confirm("You have unsaved changes in this post. Leave without saving?")) {
+          window.history.pushState(null, "", `#${cur}`);
+          return cur;
+        }
+        setPostDirty(false);
+        return target.id;
+      });
+    };
+    window.addEventListener("popstate", follow);
+    window.addEventListener("hashchange", follow);
+    return () => {
+      window.removeEventListener("popstate", follow);
+      window.removeEventListener("hashchange", follow);
+    };
+  }, [me, postDirty]);
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
     window.addEventListener("beforeunload", warn);
@@ -463,7 +487,8 @@ function AdminShell() {
           </button>}
         </header>
 
-        <main className="mx-auto max-w-4xl p-5 sm:p-8">
+        {/* Lists you work through (leads, clients, invoices…) get a wider page than the forms. */}
+        <main className={`mx-auto p-4 sm:p-8 ${(["overview", "leads", "clients", "billing", "bookings", "interns", "accounts", "attendance", "payslips", "letters", "activity"] as string[]).includes(section) ? "max-w-[1240px]" : "max-w-4xl"}`}>
           {loadFailed && !conflict && (
             <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
               <p className="min-w-[200px] flex-1">Couldn&apos;t load the latest saved content. Reload before saving.</p>
@@ -779,15 +804,15 @@ function AdminShell() {
                 }}
                 newItem={() => ({ id: uid(), title: "", short: "", description: "", tags: [], image: "", slug: "", seoTitle: "", seoDescription: "", body: "", features: [], faqs: "" })}
                 fields={[
-                  { key: "title", label: "Name" }, { key: "short", label: "One-line summary" },
-                  { key: "description", label: "Description", type: "textarea" }, { key: "tags", label: "Highlights", type: "tags" },
-                  { key: "image", label: "Image", type: "image" },
-                  { key: "slug", label: "Page address", hint: "/services/… (e.g. website-development)" },
-                  { key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
-                  { key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
-                  { key: "features", label: "What you get (page side box)", type: "lines" },
-                  { key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
-                  { key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },
+                  { group: "Basic", key: "title", label: "Name" }, { group: "Basic", key: "short", label: "One-line summary" },
+                  { group: "Basic", key: "description", label: "Description", type: "textarea" }, { group: "Basic", key: "tags", label: "Highlights", type: "tags" },
+                  { group: "Basic", key: "image", label: "Image", type: "image" },
+                  { group: "Service page", key: "slug", label: "Page address", hint: "/services/… (e.g. website-development)" },
+                  { group: "Google", key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
+                  { group: "Google", key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
+                  { group: "Service page", key: "features", label: "What you get (page side box)", type: "lines" },
+                  { group: "Service page", key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
+                  { group: "Service page", key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },
                 ]} />
             )}
 
@@ -797,23 +822,23 @@ function AdminShell() {
                 <ListEditor items={draft.products} titleKey="name" addLabel="Add product" onChange={(v) => set("products", v)}
                   newItem={() => ({ id: uid(), name: "", slug: "", tagline: "", description: "", category: "", audience: "", status: "Live", image: "", gallery: [], features: [], price: "", demoUrl: "", videoUrl: "", body: "", faqs: "", seoTitle: "", seoDescription: "" })}
                   fields={[
-                    { key: "name", label: "Product name" },
-                    { key: "slug", label: "Page address", hint: "/products/… e.g. waba-panel (leave empty to use the name)" },
-                    { key: "tagline", label: "One-line pitch", hint: "e.g. Send WhatsApp campaigns to thousands in one click" },
-                    { key: "status", label: "Status", type: "select", options: [{ value: "Live", label: "Live" }, { value: "Beta", label: "Beta" }, { value: "Coming soon", label: "Coming soon" }, { value: "", label: "Don't show" }] },
-                    { key: "description", label: "Short description", type: "textarea", hint: "2–3 lines, shown on the card and to Google" },
-                    { key: "category", label: "Category", hint: "e.g. WhatsApp marketing, CRM, Calling" },
-                    { key: "audience", label: "Made for", hint: "e.g. Marketing agencies, Clinics" },
-                    { key: "price", label: "Price", hint: "e.g. ₹2,999/month — empty shows \"Price on request\"" },
-                    { key: "image", label: "Cover screenshot", type: "image" },
-                    { key: "gallery", label: "More screenshots", type: "images" },
-                    { key: "features", label: "Key features", type: "lines" },
-                    { key: "demoUrl", label: "Live demo link", hint: "Optional" },
-                    { key: "videoUrl", label: "YouTube video link", hint: "Optional, shown on the page" },
-                    { key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
-                    { key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },
-                    { key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
-                    { key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
+                    { group: "Basic", key: "name", label: "Product name" },
+                    { group: "Basic", key: "slug", label: "Page address", hint: "/products/… e.g. waba-panel (leave empty to use the name)" },
+                    { group: "Basic", key: "tagline", label: "One-line pitch", hint: "e.g. Send WhatsApp campaigns to thousands in one click" },
+                    { group: "Basic", key: "status", label: "Status", type: "select", options: [{ value: "Live", label: "Live" }, { value: "Beta", label: "Beta" }, { value: "Coming soon", label: "Coming soon" }, { value: "", label: "Don't show" }] },
+                    { group: "Basic", key: "description", label: "Short description", type: "textarea", hint: "2–3 lines, shown on the card and to Google" },
+                    { group: "Basic", key: "category", label: "Category", hint: "e.g. WhatsApp marketing, CRM, Calling" },
+                    { group: "Basic", key: "audience", label: "Made for", hint: "e.g. Marketing agencies, Clinics" },
+                    { group: "Basic", key: "price", label: "Price", hint: "e.g. ₹2,999/month — empty shows \"Price on request\"" },
+                    { group: "Photos and demo", key: "image", label: "Cover screenshot", type: "image" },
+                    { group: "Photos and demo", key: "gallery", label: "More screenshots", type: "images" },
+                    { group: "Product page", key: "features", label: "Key features", type: "lines" },
+                    { group: "Photos and demo", key: "demoUrl", label: "Live demo link", hint: "Optional" },
+                    { group: "Photos and demo", key: "videoUrl", label: "YouTube video link", hint: "Optional, shown on the page" },
+                    { group: "Product page", key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
+                    { group: "Product page", key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },
+                    { group: "Google", key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
+                    { group: "Google", key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
                   ]} />
               </>
             )}
@@ -821,38 +846,39 @@ function AdminShell() {
             {section === "projects" && (
               <>
               <p className="mb-4 text-sm text-muted">Projects show on the home page (first 6), the Work page, and on the matching service page. &quot;Show as&quot; picks the frame: website in a laptop, social media as an Instagram profile, video in a player, ads with results, design as a collage, e-commerce management as a seller dashboard, on-demand apps as customer app + admin + partner app. Fill only the fields that frame uses; the hint on each field says which.</p>
-              <ListEditor items={draft.projects} titleKey="title" addLabel="Add project" onChange={(v) => set("projects", v)}
+              <ListEditor items={draft.projects} titleKey="title" subKey="category" addLabel="Add project" onChange={(v) => set("projects", v)}
                 newItem={() => ({ id: uid(), title: "", type: "client" as const, display: "" as const, category: "", summary: "", image: "", url: "" })}
                 fields={[
-                  { key: "title", label: "Project name" },
-                  { key: "type", label: "Type", type: "select", hint: "Demo = made to show our skills, gets a \"Demo\" label", options: [{ value: "client", label: "Client project" }, { value: "demo", label: "Demo / concept" }] }, { key: "category", label: "Category", hint: `Filter tab. Use a service name to show it on that service page too: ${draft.services.map((x) => x.title).join(", ")}` },
-                  { key: "display", label: "Show as", type: "select", hint: "Auto picks from the category", options: [{ value: "", label: "Auto (from category)" }, ...PROJECT_DISPLAYS] },
-                  { key: "summary", label: "Short description", type: "textarea" }, { key: "url", label: "Live link", hint: "Optional" },
-                  { key: "image", label: "Cover image", type: "image", hint: "All types. Also the video poster and the social profile photo" },
-                  { key: "screen", label: "Full-page screenshot / dashboard", type: "image", hint: "Website: full-page desktop screenshot (scrolls in the laptop). E-commerce: seller dashboard. On-demand: admin panel. Use JPG under 4 MB" },
-                  { key: "mobile", label: "Mobile screenshot", type: "image", hint: "Website: mobile view. On-demand: customer app" },
-                  { key: "partner", label: "Partner app screenshot", type: "image", hint: "On-demand only" },
-                  { key: "video", label: "Video link", hint: "Website or Video: YouTube link or .mp4 link. Plays muted on loop" },
-                  { key: "videoShape", label: "Video shape", type: "select", options: [{ value: "wide", label: "Wide 16:9 (YouTube)" }, { value: "reel", label: "Reel 9:16 (Instagram / Shorts)" }] },
-                  { key: "images", label: "More images", type: "images", hint: "Social: 6–9 posts · Design: 3–6 pieces · Ads: ad creative · E-commerce: product photos (same order as Products below)" },
-                  { key: "results", label: "Results", type: "lines", hint: "Label: value, e.g. Leads per month: 40 → 180 (only real numbers)" },
-                  { key: "handle", label: "Account / brand name", hint: "Social: @handle · Ads: advertiser name · E-commerce: store name" },
-                  { key: "platforms", label: "Marketplaces", type: "tags", hint: "E-commerce: Amazon, Flipkart, Meesho, Shopify" },
-                  { key: "items", label: "Products (e-commerce)", type: "lines", hint: "Name | price | note, e.g. Cotton saree | ₹1,299 | 312 sold" },
-                  { key: "hidePage", label: "Case study page", type: "select", options: [{ value: "", label: "Show a case study page" }, { value: "hide", label: "No page (card only)" }] },
-                  { key: "slug", label: "Page address", hint: "/work/… e.g. sharma-jewellers-website (empty = from the name)" },
-                  { key: "client", label: "Client name", hint: "Leave empty if the client wants to stay private" },
-                  { key: "industry", label: "Industry", hint: "e.g. Jewellery, Healthcare" },
-                  { key: "year", label: "Year", hint: "e.g. 2026" },
-                  { key: "duration", label: "Timeline", hint: "e.g. 6 weeks" },
-                  { key: "services", label: "What we did", type: "tags", hint: "e.g. Website, SEO, Meta ads" },
-                  { key: "challenge", label: "The challenge", type: "textarea", hint: "The client's problem before working with us. ## for headings, - for lists" },
-                  { key: "solution", label: "What we did", type: "textarea", hint: "Our approach and the work, step by step" },
-                  { key: "outcome", label: "The result", type: "textarea", hint: "What changed. Put the big numbers in Results above" },
-                  { key: "quote", label: "Client's words", type: "textarea", hint: "A short real quote from the client (optional)" },
-                  { key: "quoteBy", label: "Quote by", hint: "e.g. Rahul Sharma, Owner" },
-                  { key: "seoTitle", label: "Page title for Google", hint: "under 60 characters (optional)" },
-                  { key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters (optional)" },
+                  { group: "Basic", key: "title", label: "Project name" },
+                  { group: "Basic", key: "type", label: "Type", type: "select", hint: "Demo = made to show our skills, gets a \"Demo\" label", options: [{ value: "client", label: "Client project" }, { value: "demo", label: "Demo / concept" }] }, { group: "Basic", key: "category", label: "Category", hint: "Filter tab on the Work page. Pick a service below so the project also shows on that service's page.", suggest: draft.services.map((x) => x.title),
+                    warn: (v) => { const c = String(v ?? "").trim().toLowerCase(); return c && !draft.services.some((x) => x.title.trim().toLowerCase() === c) ? "This category doesn't match any service, so the project won't show on a service page. Pick one of the services above." : ""; } },
+                  { group: "Basic", key: "display", label: "Show as", type: "select", hint: "Auto picks from the category", options: [{ value: "", label: "Auto (from category)" }, ...PROJECT_DISPLAYS] },
+                  { group: "Basic", key: "summary", label: "Short description", type: "textarea" }, { group: "Basic", key: "url", label: "Live link", hint: "Optional" },
+                  { group: "Photos and video", key: "image", label: "Cover image", type: "image", hint: "All types. Also the video poster and the social profile photo" },
+                  { group: "Photos and video", key: "screen", label: "Full-page screenshot / dashboard", type: "image", hint: "Website: full-page desktop screenshot (scrolls in the laptop). E-commerce: seller dashboard. On-demand: admin panel. Use JPG under 4 MB" },
+                  { group: "Photos and video", key: "mobile", label: "Mobile screenshot", type: "image", hint: "Website: mobile view. On-demand: customer app" },
+                  { group: "Photos and video", key: "partner", label: "Partner app screenshot", type: "image", hint: "On-demand only" },
+                  { group: "Photos and video", key: "video", label: "Video link", hint: "Website or Video: YouTube link or .mp4 link. Plays muted on loop" },
+                  { group: "Photos and video", key: "videoShape", label: "Video shape", type: "select", options: [{ value: "wide", label: "Wide 16:9 (YouTube)" }, { value: "reel", label: "Reel 9:16 (Instagram / Shorts)" }] },
+                  { group: "Photos and video", key: "images", label: "More images", type: "images", hint: "Social: 6–9 posts · Design: 3–6 pieces · Ads: ad creative · E-commerce: product photos (same order as Products below)" },
+                  { group: "Results and details", key: "results", label: "Results", type: "lines", hint: "Label: value, e.g. Leads per month: 40 → 180 (only real numbers)" },
+                  { group: "Results and details", key: "handle", label: "Account / brand name", hint: "Social: @handle · Ads: advertiser name · E-commerce: store name" },
+                  { group: "Results and details", key: "platforms", label: "Marketplaces", type: "tags", hint: "E-commerce: Amazon, Flipkart, Meesho, Shopify" },
+                  { group: "Results and details", key: "items", label: "Products (e-commerce)", type: "lines", hint: "Name | price | note, e.g. Cotton saree | ₹1,299 | 312 sold" },
+                  { group: "Case study page", key: "hidePage", label: "Case study page", type: "select", options: [{ value: "", label: "Show a case study page" }, { value: "hide", label: "No page (card only)" }] },
+                  { group: "Case study page", key: "slug", label: "Page address", hint: "/work/… e.g. sharma-jewellers-website (empty = from the name)" },
+                  { group: "Case study page", key: "client", label: "Client name", hint: "Leave empty if the client wants to stay private" },
+                  { group: "Case study page", key: "industry", label: "Industry", hint: "e.g. Jewellery, Healthcare" },
+                  { group: "Case study page", key: "year", label: "Year", hint: "e.g. 2026" },
+                  { group: "Case study page", key: "duration", label: "Timeline", hint: "e.g. 6 weeks" },
+                  { group: "Case study page", key: "services", label: "What we did", type: "tags", hint: "e.g. Website, SEO, Meta ads" },
+                  { group: "Case study page", key: "challenge", label: "The challenge", type: "textarea", hint: "The client's problem before working with us. ## for headings, - for lists" },
+                  { group: "Case study page", key: "solution", label: "What we did", type: "textarea", hint: "Our approach and the work, step by step" },
+                  { group: "Case study page", key: "outcome", label: "The result", type: "textarea", hint: "What changed. Put the big numbers in Results above" },
+                  { group: "Case study page", key: "quote", label: "Client's words", type: "textarea", hint: "A short real quote from the client (optional)" },
+                  { group: "Case study page", key: "quoteBy", label: "Quote by", hint: "e.g. Rahul Sharma, Owner" },
+                  { group: "Google", key: "seoTitle", label: "Page title for Google", hint: "under 60 characters (optional)" },
+                  { group: "Google", key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters (optional)" },
                 ]} />
               </>
             )}

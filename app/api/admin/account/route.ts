@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { getSession, jsonBody, unauthorized } from "@/lib/admin-guard";
 import { createToken, type Session } from "@/lib/auth";
 import { sessionCookie } from "@/lib/session-cookie";
-import { checkSecondStep, disableTotp, enableTotp, getAccount, passwordMatches, setBackupCodes, setPassword, setRecoveryEmail, startTotp, type Account } from "@/lib/account";
+import { checkSecondStep, disableTotp, enableTotp, getAccount, passwordMatches, setBackupCodes, setDisplayName, setPassword, setRecoveryEmail, startTotp, type Account } from "@/lib/account";
 import { hashCode, newBackupCodes, newTotpSecret, otpauthUrl, verifyTotp } from "@/lib/totp";
 import { logActivity } from "@/lib/activity";
 import { hasDb } from "@/lib/db";
@@ -14,7 +14,7 @@ export async function GET() {
   if (!s) return unauthorized();
   const a = hasDb() ? await getAccount(s.uid) : null;
   return NextResponse.json({
-    name: s.name, email: s.email, role: s.role,
+    name: a?.name || s.name, email: s.email, role: s.role,
     twoStep: !!a?.totpEnabled,
     backupLeft: a?.backupCodes.length ?? 0,
     canSave: hasDb(),
@@ -81,6 +81,17 @@ export async function POST(req: Request) {
     const updated = await setPassword(a, next);
     await logActivity(s, "Login", "Changed own password", "", req);
     return keepLoggedIn(NextResponse.json({ ok: true }), updated, s);
+  }
+
+  if (action === "name") {
+    const name = String(b.name ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+    if (name.length < 2) return NextResponse.json({ error: "Type your name (at least 2 letters)." }, { status: 400 });
+    const updated = await setDisplayName(a, name);
+    await logActivity({ ...s, name }, "Login", "Changed own display name", "", req);
+    const res = NextResponse.json({ ok: true, name });
+    // Re-issue this browser's login with the new name so the greeting changes right away.
+    if (updated) res.cookies.set(sessionCookie(await createToken({ email: s.email, name, role: s.role, uid: s.uid, tv: updated.tokenVersion })));
+    return res;
   }
 
   if (action === "recovery") {
