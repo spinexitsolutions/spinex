@@ -12,12 +12,15 @@ Open **spinexitsolutions.com/admin** and enter your **Email** and **Password**, 
 - **Two-step login:** if it is on, type the 6-digit code from your authenticator app (Google Authenticator or similar). Lost your phone? Type one of your backup codes instead.
 - **Forgot password?** Type your admin email (or your recovery email) and you will get a link to set a new password. The link goes to the **Recovery email** from **My account**, if one is set. Changing the password logs you out on all other devices.
 - If you have 2 or fewer backup codes left, the panel reminds you to make new ones in **My account**.
+- **New device alert:** when your account logs in from a phone or browser it hasn't used before, you get an email with the device, IP address and time. If it wasn't you, change your password at once (that logs out every other device).
+- **Admin app on your phone:** open the admin in Chrome (Android) or Safari (iPhone), then choose **Add to Home screen**. A **Spinex Admin** icon appears and opens straight into the admin.
 
 ## Finding your way around
 
 - **Sidebar:** **Overview** is at the top. Everything else is in groups: **CRM**, **Sales and accounts**, **HR and team**, **Website pages**, **Website content**, **Blog and media**, **Site settings**, **Admin and security**. Click a group name to open or close it.
-- **Find a section…** at the top of the sidebar searches every section by name. Type "invoice" or "logo" and jump straight there.
+- **Search** at the top of the sidebar finds sections by name *and* your data: type a name, phone number, company or invoice number to see matching **Leads**, **Clients** and **Quotes / invoices**. Click a result to open it.
 - **Purple numbers** next to a section mean something new arrived since you last opened it (new leads, bookings, client messages, leave requests, accepted quotes, feedback, applications). They refresh every 20 seconds.
+- **New-lead sound** (bottom of the sidebar): plays a short ding and shows a browser notification when a new lead arrives while the admin is open, even in a background tab. Turn it on once and allow notifications when the browser asks.
 - **View site** (top right) opens the live website. **Help guide (PDF)** at the bottom of the sidebar opens this guide.
 - On a phone, use the menu button at the top left to open the sidebar.
 
@@ -104,10 +107,12 @@ Every enquiry lands here: website forms, the project planner, product demo reque
 - **Download Excel** of all leads.
 - Set up **Get leads from ads** (Meta and Google Ads) and the automatic **Follow-up emails** (up to 4 emails, each after a set number of days).
 
+**Add a lead by hand:** for enquiries that came by phone call, WhatsApp, Instagram, Facebook, a referral or a walk-in, press **Add lead**. Pick where it **Came from**, fill in the name and phone (or email), what they need, and optionally a status, deal value, who it is given to and a follow-up date. If the number is already in Leads, the panel tells you and offers **Open that lead** or **Add anyway**.
+
 **Work a new lead:**
 
 1. Click the lead's name to open it.
-2. Press **Call**, **WhatsApp** or **Email**.
+2. Press **Call**, **WhatsApp** or **Email**. **WhatsApp** opens a list of ready messages (First reply, Quotation sent, Follow-up, Missed your call, Our work) with the client's name and service already filled in. Edit these messages in **Lead emails and alerts → Ready WhatsApp messages**; you can use {name}, {service}, {phone} and {company}.
 3. Set **Status** (for example Contacted) and **Deal value (₹)**.
 4. Set **Follow up on** (Tomorrow, In 3 days or Next week) and write **What to do**.
 5. Choose who it is **Given to**, then press **Save**.
@@ -131,7 +136,9 @@ Entries show newest first, with the date, time and who added them. The latest on
 > - Giving a lead to someone sends them an email.
 > - Marking a lead **Won** can automatically ask the client for feedback or a Google review.
 > - **Private notes** can be read by anyone on the team who can open that lead. Clients never see them.
-> - **Delete** can't be undone.
+> - After **Delete**, an **Undo** button shows for a few seconds. Once it goes, the delete can't be undone.
+
+**Many leads at once:** tick the boxes next to leads (or the box at the top to select all on screen). A bar appears where you can change their **Status**, give them to someone, or **Delete** them together.
 
 ## Call bookings
 

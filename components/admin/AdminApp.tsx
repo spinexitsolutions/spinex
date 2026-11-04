@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   PiggyBank, Sparkles, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
-  LogOut, LifeBuoy, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
+  LogOut, LifeBuoy, Bell, BellOff, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
@@ -43,7 +43,7 @@ import AutomationPanel from "./AutomationPanel";
 import AccountPanel from "./AccountPanel";
 import ActivityPanel from "./ActivityPanel";
 import { can, roleLabel, type Access, type Perm, type Role } from "@/lib/roles";
-import { LiveProvider, useBadges } from "./live";
+import { LEAD_ALERT_KEY, LiveProvider, ding, leadAlertOn, useBadges, useLeadAlert } from "./live";
 import { SITE_URL } from "@/lib/site";
 
 const sections = [
@@ -255,6 +255,8 @@ function AdminShell() {
     // and a refresh or a shared link (e.g. /admin#leads) opens the same place.
     window.history.pushState(null, "", `#${id}`);
   };
+  // A ding and a browser notification when a new lead comes in.
+  useLeadAlert(badges, () => go("leads"));
   // Back / Forward, or a link to another section on the same page (#billing): follow the address.
   useEffect(() => {
     const follow = () => {
@@ -413,7 +415,7 @@ function AdminShell() {
         </div>
         <div className="relative mb-3">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-          <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a section…" aria-label="Find a section" data-admin-find
+          <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search leads, clients, invoices…" aria-label="Search the admin" data-admin-find
             className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/30" />
         </div>
         <nav className="-mx-1 flex-1 space-y-0.5 overflow-y-auto px-1 [scrollbar-width:thin]" aria-label="Admin sections">
@@ -422,7 +424,7 @@ function AdminShell() {
               {allowed.filter((x) => `${x.label} ${x.group}`.toLowerCase().includes(find.trim().toLowerCase())).map((x) => (
                 <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} sub={x.group} onClick={() => { go(x.id); setNav(false); setFind(""); }} />
               ))}
-              {!allowed.some((x) => `${x.label} ${x.group}`.toLowerCase().includes(find.trim().toLowerCase())) && <p className="px-3 py-2 text-sm text-white/50">Nothing found.</p>}
+              <SearchHits q={find} onLead={(id) => { const w = window as Window & { __spxOpenLead?: string }; w.__spxOpenLead = id; go("leads"); setNav(false); setFind(""); setTimeout(() => window.dispatchEvent(new Event("spx-open-lead")), 50); }} />
             </>
           ) : (
             <>
@@ -462,6 +464,7 @@ function AdminShell() {
             <p className="truncate text-xs text-white/55">{roleLabel[me.role]} · {me.email}</p>
           </div>
         )}
+        {me && can(me, "leads", "view") && <LeadAlertToggle />}
         <a href="/api/admin/guide" target="_blank" rel="noopener" data-admin-guide className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/60 hover:bg-white/10 hover:text-white">
           <LifeBuoy size={17} /> Help guide (PDF)
         </a>
@@ -946,6 +949,11 @@ function AdminShell() {
                     Your number and the WhatsApp service are set in {me && can(me, "users") ? <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys → WhatsApp alerts</button> : <b>API keys → WhatsApp alerts</b>} (owner only). There is a &quot;Send test WhatsApp&quot; button there. Until it is set up, nothing is sent.
                   </p>
                 </Card>
+                <Card title="Ready WhatsApp messages" note="When the team presses WhatsApp on a lead, they pick one of these and it opens WhatsApp with the message typed in. {name}, {service}, {company} and {phone} are filled in with the lead's details.">
+                  <ListEditor items={draft.leadReplies.waTemplates ?? []} titleKey="label" addLabel="Add message" onChange={(v) => set("leadReplies", { ...draft.leadReplies, waTemplates: v })}
+                    newItem={() => ({ id: uid(), label: "", text: "" })}
+                    fields={[{ key: "label", label: "Button name", hint: "e.g. Quotation sent" }, { key: "text", label: "Message", type: "textarea" }]} />
+                </Card>
               </div>
             )}
 
@@ -1172,6 +1180,60 @@ function Backup({ draft, onImport, onReset }: { draft: SiteContent; onImport: (c
       <Card title="Restore defaults" note="Replaces the live website content with the original built-in content.">
         <button onClick={() => { if (confirm("Replace the live website content with the original content? This can't be undone unless you have a backup.")) onReset(); }} className="btn border border-red-200 text-red-600 hover:bg-red-50"><RotateCcw size={17} /> Restore defaults</button>
       </Card>
+    </div>
+  );
+}
+
+// Sidebar switch for the new-lead sound and notification (remembered on this computer).
+function LeadAlertToggle() {
+  const [on, setOn] = useState(true);
+  useEffect(() => setOn(leadAlertOn()), []);
+  const flip = async () => {
+    const next = !on;
+    setOn(next);
+    try { localStorage.setItem(LEAD_ALERT_KEY, next ? "on" : "off"); } catch {}
+    if (next) {
+      ding();
+      try { if ("Notification" in window && Notification.permission === "default") await Notification.requestPermission(); } catch {}
+    }
+  };
+  return (
+    <button type="button" onClick={flip} data-lead-alert={on ? "on" : "off"} title="Plays a sound and shows a notification when a new lead arrives while the admin is open" className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-white/60 hover:bg-white/10 hover:text-white">
+      {on ? <Bell size={17} /> : <BellOff size={17} />} New-lead sound: {on ? "On" : "Off"}
+    </button>
+  );
+}
+
+// Results from leads, clients and quotes/invoices under the sidebar search box.
+function SearchHits({ q, onLead }: { q: string; onLead: (id: string) => void }) {
+  const [hits, setHits] = useState<{ kind: "lead" | "client" | "bill"; id: string; title: string; sub: string; href: string }[] | null>(null);
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) { setHits(null); return; }
+    let stop = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/admin/search?q=${encodeURIComponent(term)}`, { cache: "no-store" });
+        const d = r.ok ? await r.json() : [];
+        if (!stop) setHits(Array.isArray(d) ? d : []);
+      } catch {
+        if (!stop) setHits([]);
+      }
+    }, 250);
+    return () => { stop = true; clearTimeout(t); };
+  }, [q]);
+  if (q.trim().length < 2) return null;
+  if (hits === null) return <p className="px-3 py-2 text-xs text-white/40">Searching…</p>;
+  if (!hits.length) return <p className="px-3 py-2 text-sm text-white/50">No lead, client or invoice found.</p>;
+  const label = { lead: "Lead", client: "Client", bill: "Quote / invoice" } as const;
+  return (
+    <div className="mt-2 border-t border-white/10 pt-2" data-search-hits>
+      {hits.map((h) => (
+        <a key={`${h.kind}${h.id}`} href={h.href} onClick={(e) => { if (h.kind === "lead") { e.preventDefault(); onLead(h.id); } }} className="block rounded-xl px-3 py-2 hover:bg-white/10">
+          <span className="flex items-center gap-2"><span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/60">{label[h.kind]}</span><span className="truncate text-sm font-medium">{h.title}</span></span>
+          {h.sub && <span className="mt-0.5 block truncate text-xs text-white/45">{h.sub}</span>}
+        </a>
+      ))}
     </div>
   );
 }

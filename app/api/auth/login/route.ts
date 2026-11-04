@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { noteLoginDevice } from "@/lib/login-devices";
 import { createTicket, createToken, type Session } from "@/lib/auth";
 import { sessionCookie } from "@/lib/session-cookie";
 import { DUMMY_HASH, findAccountByEmail, getAccount, ownerTwoStepBypassed, passwordMatches } from "@/lib/account";
@@ -74,5 +75,6 @@ export async function POST(req: Request) {
   await logActivity(session, "Login", "Logged in", "", req);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(sessionCookie(await createToken(session)));
+  await noteLoginDevice(req, res, account);
   return res;
 }

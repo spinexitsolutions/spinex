@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart3, BellRing, MailPlus, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
+import { BarChart3, BellRing, Plus, Undo2, X as XIcon, MailPlus, FilePlus2, Megaphone, FileSpreadsheet, FileText, Inbox, Loader2, Mail, MessageCircle, Phone, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
 import { LEAD_SOURCES, LEAD_STATUSES, LOST_REASONS, NOTE_OUTCOMES, NOTE_TYPES, leadStatusLabel, type Lead, type LeadStatus } from "@/lib/leads";
 import { formatDate } from "@/lib/interns";
 import Modal from "./Modal";
 import AdLeadsSetup from "./AdLeadsSetup";
 import LeadFollowupsSetup from "./LeadFollowupsSetup";
 import { useLive } from "./live";
+import { AddLeadForm, WaPicker } from "./LeadTools";
 
 const badge: Record<LeadStatus, string> = {
   new: "bg-lav-600 text-white",
@@ -22,10 +23,7 @@ const badge: Record<LeadStatus, string> = {
 const today = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
 
 type Member = { id: string; name: string; role: string };
-const waNumber = (phone: string) => {
-  const d = phone.replace(/\D/g, "");
-  return d.length === 10 ? `91${d}` : d;
-};
+
 function ago(iso: string) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
   if (s < 60) return "just now";
@@ -56,6 +54,11 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Lead | null>(null);
   const [openAsLost, setOpenAsLost] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  // Deleted leads wait 6 seconds before they are really deleted, so "Undo" can bring them back.
+  const [undo, setUndo] = useState<{ leads: Lead[]; timer: ReturnType<typeof setTimeout> } | null>(null);
   const [msg, setMsg] = useState("");
   const [team, setTeam] = useState<Member[]>([]);
   const [channel, setChannel] = useState("all");
@@ -95,6 +98,61 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
   useEffect(() => {
     onNewCount?.(leads.filter((l) => l.status === "new").length);
   }, [leads, onNewCount]);
+
+  // The admin search can ask for a lead to be opened (it may arrive before or after the list loads).
+  useEffect(() => {
+    const tryOpen = () => {
+      const w = window as Window & { __spxOpenLead?: string };
+      const id = w.__spxOpenLead;
+      if (!id || !leads.length) return;
+      const l = leads.find((x) => x.id === id);
+      if (l) { setOpen(l); w.__spxOpenLead = undefined; }
+    };
+    tryOpen();
+    window.addEventListener("spx-open-lead", tryOpen);
+    return () => window.removeEventListener("spx-open-lead", tryOpen);
+  }, [leads]);
+
+  const removeLater = (gone: Lead[]) => {
+    if (undo) {
+      // The previous delete goes ahead now.
+      clearTimeout(undo.timer);
+      void api("/api/admin/leads/bulk", { method: "POST", body: JSON.stringify({ ids: undo.leads.map((x) => x.id), delete: true }) }).catch(() => undefined);
+    }
+    setLeads((all) => all.filter((x) => !gone.some((g) => g.id === x.id)));
+    setPicked([]);
+    const timer = setTimeout(async () => {
+      setUndo(null);
+      try {
+        await api("/api/admin/leads/bulk", { method: "POST", body: JSON.stringify({ ids: gone.map((x) => x.id), delete: true }) });
+      } catch (e) {
+        setLeads((all) => [...gone, ...all]);
+        flash(e instanceof Error ? e.message : "Couldn't delete.");
+      }
+    }, 6000);
+    setUndo({ leads: gone, timer });
+  };
+  const undoDelete = () => {
+    if (!undo) return;
+    clearTimeout(undo.timer);
+    const back = undo.leads;
+    setLeads((all) => [...back, ...all].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
+    setUndo(null);
+  };
+  const bulk = async (body: Record<string, unknown>, done: string) => {
+    setBulkBusy(true);
+    try {
+      await api("/api/admin/leads/bulk", { method: "POST", body: JSON.stringify({ ids: picked, ...body }) });
+      await load({ silent: true });
+      setPicked([]);
+      flash(done);
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Couldn't update.");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
 
   const isDue = (l: Lead) => !!l.followUp && l.followUp <= today() && l.status !== "won" && l.status !== "lost";
   const replace = (l: Lead) => setLeads((all) => all.map((x) => (x.id === l.id ? l : x)));
@@ -217,7 +275,8 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-3 max-sm:-order-none">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-3">
+        {!readOnly && <button onClick={() => setAdding(true)} className="btn-dark shrink-0 px-4 py-2.5 text-sm" data-add-lead-btn><Plus size={16} /> Add lead</button>}
         <label className="flex min-w-[220px] flex-1 items-center gap-2 rounded-xl bg-mist px-3">
           <Search size={16} className="text-muted" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, phone or message" className="h-11 w-full bg-transparent text-sm outline-none" aria-label="Search leads" />
@@ -258,8 +317,34 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
         </div>
       )}
 
+      {!readOnly && picked.length > 0 && (
+        <div className="sticky top-[76px] z-10 flex flex-wrap items-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm text-white shadow-lg" data-bulk-bar>
+          <span className="mr-1 font-semibold">{picked.length} selected</span>
+          <select disabled={bulkBusy} value="" onChange={(e) => { const v = e.target.value; if (!v) return; if (v === "spam") void bulk({ status: "lost", lostReason: "Not a real enquiry / spam" }, "Marked as lost (spam)"); else void bulk({ status: v }, "Status changed"); }} className="h-9 rounded-full border border-white/20 bg-white/10 px-3 text-white" aria-label="Change status">
+            <option value="" className="text-ink">Change status…</option>
+            {LEAD_STATUSES.filter((x) => x !== "lost").map((x) => <option key={x} value={x} className="text-ink">{leadStatusLabel[x]}</option>)}
+            <option value="spam" className="text-ink">Lost: not real / spam</option>
+          </select>
+          <select disabled={bulkBusy} value="" onChange={(e) => { const v = e.target.value; if (v) void bulk({ assignedTo: v === "-" ? "" : v }, "Leads given"); }} className="h-9 rounded-full border border-white/20 bg-white/10 px-3 text-white" aria-label="Give to">
+            <option value="" className="text-ink">Give to…</option>
+            {team.map((m) => <option key={m.id} value={m.id} className="text-ink">{m.id === myId ? `${m.name} (you)` : m.name}</option>)}
+            <option value="-" className="text-ink">Nobody</option>
+          </select>
+          <button disabled={bulkBusy} onClick={() => removeLater(leads.filter((x) => picked.includes(x.id)))} className="flex h-9 items-center gap-1.5 rounded-full bg-red-500/90 px-3 font-semibold hover:bg-red-500"><Trash2 size={14} /> Delete</button>
+          <button onClick={() => setPicked([])} className="ml-auto flex h-9 items-center gap-1 rounded-full px-3 text-white/70 hover:text-white"><XIcon size={14} /> Clear</button>
+          {bulkBusy && <Loader2 size={16} className="animate-spin" />}
+        </div>
+      )}
+
       <div className="space-y-2">
+        {!readOnly && list.length > 1 && (
+          <label className="flex w-fit items-center gap-2 px-1 text-sm text-muted">
+            <input type="checkbox" className="h-4 w-4 accent-lav-600" checked={list.length > 0 && list.every((l) => picked.includes(l.id))} onChange={(e) => setPicked(e.target.checked ? list.map((l) => l.id) : [])} />
+            Select all {list.length}
+          </label>
+        )}
         {leads.length === 0 && (
+
           <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center">
             <Inbox className="mx-auto text-lav-600" size={32} />
             <p className="mt-3 font-semibold">No enquiries yet</p>
@@ -271,7 +356,8 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
         <AnimatePresence initial={false}>
           {list.map((l) => (
             <motion.div key={l.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className={`flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border bg-white p-4 ${l.status === "new" ? "border-lav-300" : "border-line"}`}>
-              <button onClick={() => setOpen(l)} className="min-w-[220px] flex-1 text-left">
+              {!readOnly && <input type="checkbox" aria-label={`Select ${l.name}`} className="h-4 w-4 shrink-0 accent-lav-600" checked={picked.includes(l.id)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, l.id] : p.filter((x) => x !== l.id)))} />}
+              <button onClick={() => setOpen(l)} className="min-w-[200px] flex-1 text-left">
                 <span className="flex flex-wrap items-center gap-2 font-semibold">
                   {l.status === "new" && <span className="h-2 w-2 rounded-full bg-lav-600" aria-label="New" />}
                   {l.name}
@@ -290,7 +376,7 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
               </select>
               <div className="flex items-center gap-1">
                 <a href={`tel:${l.phone}`} onClick={() => touched(l)} aria-label={`Call ${l.name}`} title="Call" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-mist hover:text-ink"><Phone size={16} /></a>
-                <a href={`https://wa.me/${waNumber(l.phone)}?text=${encodeURIComponent(`Hi ${l.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" onClick={() => touched(l)} aria-label={`WhatsApp ${l.name}`} title="WhatsApp" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-emerald-50 hover:text-emerald-700"><MessageCircle size={16} /></a>
+                <WaPicker lead={l} compact onSent={() => touched(l)} />
               </div>
             </motion.div>
           ))}
@@ -312,16 +398,10 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
               const saved = await update(open, patch, "Lead saved");
               if (saved) { setOpen(null); setOpenAsLost(false); }
             }}
-            onDelete={async () => {
-              if (!confirm(`Delete the enquiry from ${open.name}? This can't be undone.`)) return;
-              try {
-                await api(`/api/admin/leads/${open.id}`, { method: "DELETE" });
-                setLeads((all) => all.filter((x) => x.id !== open.id));
-                setOpen(null);
-                flash("Lead deleted");
-              } catch (e) {
-                flash(e instanceof Error ? e.message : "Couldn't delete.");
-              }
+            onDelete={() => {
+              const l = leads.find((x) => x.id === open.id) ?? open;
+              setOpen(null);
+              removeLater([l]);
             }}
           />
         )}
@@ -334,7 +414,25 @@ export default function LeadsManager({ onNewCount, readOnly = false, goApiKeys }
           </div>
         )}
       </AnimatePresence>
+      <Modal open={adding} title="Add a lead" onClose={() => setAdding(false)} wide>
+        {adding && (
+          <AddLeadForm team={team} myId={myId}
+            onAdded={(l) => { setLeads((all) => [l, ...all]); setAdding(false); flash("Lead added"); }}
+            onOpenExisting={(id) => { const l = leads.find((x) => x.id === id); setAdding(false); if (l) setOpen(l); }} />
+        )}
+      </Modal>
+      <AnimatePresence>
+        {undo && (
+          <div className="fixed inset-x-0 bottom-6 z-[85] flex justify-center px-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} role="status" className="flex items-center gap-4 rounded-full bg-ink py-2 pl-5 pr-2 text-sm font-medium text-white shadow-xl" data-undo>
+              {undo.leads.length === 1 ? `Deleted ${undo.leads[0].name}` : `Deleted ${undo.leads.length} leads`}
+              <button onClick={undoDelete} className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 font-semibold text-ink hover:bg-lav-100"><Undo2 size={14} /> Undo</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <Modal open={showAds} title="Get leads from ads" onClose={() => setShowAds(false)}>
+
         {showAds && <AdLeadsSetup goApiKeys={goApiKeys} />}
       </Modal>
       <Modal open={showFollowups} title="Automatic follow-up emails" onClose={() => setShowFollowups(false)}>
@@ -383,7 +481,7 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = 
     <div>
       <div className="flex flex-wrap gap-2">
         <a href={`tel:${lead.phone}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-dark px-4 py-2.5 text-sm"><Phone size={15} /> Call {lead.phone}</a>
-        <a href={`https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(`Hi ${lead.name}, this is Spinex IT Solutions. Thanks for your enquiry!`)}`} target="_blank" rel="noreferrer" onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>
+        <WaPicker lead={lead} onSent={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} />
         {lead.email && <a href={`mailto:${lead.email}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-ghost px-4 py-2.5 text-sm"><Mail size={15} /> Email</a>}
         {!readOnly && <button onClick={makeQuote} disabled={making} className="btn-ghost px-4 py-2.5 text-sm">{making ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={15} />} Make quotation</button>}
       </div>

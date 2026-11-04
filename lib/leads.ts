@@ -13,7 +13,15 @@ export const leadStatusLabel: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 
-export const LEAD_SOURCES = { contact: "Contact page", home: "Home page", planner: "Project planner", product: "Product demo request", city: "City page", meta: "Meta lead ad (Facebook / Instagram)", google: "Google Ads lead form", booking: "Call booking" } as const;
+// Where an enquiry came in. The website forms set the first ones; the team picks one of MANUAL_SOURCES
+// when adding a lead by hand (a phone call, a WhatsApp message, a walk-in…).
+export const LEAD_SOURCES = {
+  contact: "Contact page", home: "Home page", planner: "Project planner", product: "Product demo request", city: "City page",
+  meta: "Meta lead ad (Facebook / Instagram)", google: "Google Ads lead form", booking: "Call booking",
+  call: "Phone call", whatsapp: "WhatsApp", instagram: "Instagram DM", facebook: "Facebook", referral: "Referral", walkin: "Walk-in", other: "Other",
+} as const;
+export const MANUAL_SOURCES = ["call", "whatsapp", "instagram", "facebook", "referral", "walkin", "other"] as const;
+export type ManualSource = (typeof MANUAL_SOURCES)[number];
 export type LeadSource = keyof typeof LEAD_SOURCES;
 
 export type Lead = {

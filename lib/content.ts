@@ -257,7 +257,18 @@ export type LeadReplies = {
   replyBody: string; // blank line = new paragraph
   replyWhatsappButton: boolean; // "Chat with us on WhatsApp" button (number from Contact details)
   whatsappAlert: boolean; // WhatsApp message to you for every new enquiry (set up in API keys)
+  waTemplates: WaTemplate[]; // ready WhatsApp messages for the team to send to leads
 };
+
+// A ready WhatsApp message picked from a lead ({name} {service} {company} {phone} are filled in).
+export type WaTemplate = { id: string; label: string; text: string };
+export const defaultWaTemplates: WaTemplate[] = [
+  { id: "hello", label: "First reply", text: "Namaste {name}! This is {company}. Thank you for your enquiry about {service}. When is a good time to call you for 5 minutes?" },
+  { id: "quote", label: "Quotation sent", text: "Hi {name}, we have sent you the quotation for {service}. Please have a look and tell us if you would like any changes." },
+  { id: "follow", label: "Follow-up", text: "Hi {name}, just checking in. Did you get a chance to look at our proposal for {service}? Happy to answer any questions." },
+  { id: "missed", label: "Missed your call", text: "Hi {name}, we tried calling you about {service} but couldn't reach you. Please tell us a good time to call back." },
+  { id: "work", label: "Our work", text: "Hi {name}, here are some of the websites and projects we have built: https://spinexitsolutions.com/work" },
+];
 
 export type Signer = { id: string; name: string; title: string; image: string };
 
@@ -655,6 +666,7 @@ const baseContent: SiteContent = {
     replyBody: "We've received your enquiry about {service}. Someone from our team will call you on {phone} within 24 hours.\n\nIf it's urgent, just reply to this email or message us on WhatsApp.\n\nTeam {company}",
     replyWhatsappButton: true,
     whatsappAlert: true,
+    waTemplates: defaultWaTemplates,
   },
   banners: {
     about: img("photo-1556761175-5973dc0f32e7", 1600),

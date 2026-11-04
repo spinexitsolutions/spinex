@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { noteLoginDevice } from "@/lib/login-devices";
 import { ObjectId } from "mongodb";
 import { createToken, verifyTicket } from "@/lib/auth";
 import { checkSecondStep, getAccount } from "@/lib/account";
@@ -34,5 +35,6 @@ export async function POST(req: Request) {
   await logActivity(ticket, "Login", used === "backup" ? `Logged in with a backup code (${account.backupCodes.length - 1} left)` : "Logged in (two-step)", "", req);
   const res = NextResponse.json({ ok: true, backupLeft: used === "backup" ? account.backupCodes.length - 1 : undefined });
   res.cookies.set(sessionCookie(await createToken(ticket)));
+  await noteLoginDevice(req, res, account);
   return res;
 }
