@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Play, Send } from "lucide-react";
 import type { Project } from "@/lib/content";
 import { projectDisplay } from "@/lib/project-display";
 import { ease } from "../Reveal";
+import { sized } from "@/lib/img";
 
 // Picks the right frame for a project: websites in a laptop, social media as an
 // Instagram profile, videos in a player, ads with results, design as a collage,
@@ -137,12 +138,13 @@ function ScrollShot({ src, alt = "", play, frameRatio }: { src: string; alt?: st
     <div className="absolute inset-0 overflow-hidden bg-white">
       <motion.img
         ref={img}
-        src={src}
+        src={sized(src, 1280)}
         alt={alt}
         onLoad={measure}
         className="block w-full"
         animate={moving ? { y: ["0%", "0%", `-${travel}%`, `-${travel}%`] } : { y: "0%" }}
-        transition={moving ? { duration: Math.min(28, 6 + travel / 5), times: [0, 0.1, 0.9, 1], repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } : { duration: 0.4 }}
+        // Starts moving almost at once (short pause at the top and bottom only), at an even speed.
+        transition={moving ? { duration: Math.min(28, 6 + travel / 5), times: [0, 0.03, 0.97, 1], repeat: Infinity, repeatType: "reverse", ease: ["linear", [0.45, 0, 0.55, 1], "linear"] } : { duration: 0.4 }}
       />
     </div>
   );
