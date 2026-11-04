@@ -186,8 +186,8 @@ export const foundersDefaults: Founders = {
   intro: "A small team you can call directly. You talk to the people who build your project.",
   people: [
     { id: "palak", name: "Palak Parik", role: "Founder", bio: "Builds websites and runs digital marketing for Spinex clients.", photo: "", linkedin: "https://www.linkedin.com/in/palakparik" },
-    { id: "shiva", name: "Shiva Pareek", role: "Co-Founder", bio: "", photo: "", linkedin: "https://www.linkedin.com/in/shivapareek" },
-    { id: "supriya", name: "Supriya", role: "", bio: "", photo: "", linkedin: "" },
+    { id: "shiva", name: "Shiva Pareek", role: "Co-Founder", bio: "Works with clients from the first call to launch, so every project is delivered on time.", photo: "", linkedin: "https://www.linkedin.com/in/shivapareek" },
+    { id: "supriya", name: "Supriya", role: "Co-Founder", bio: "Looks after design and client support, so every brand looks right and gets quick help.", photo: "", linkedin: "" },
   ],
 };
 
