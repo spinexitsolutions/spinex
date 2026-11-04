@@ -76,7 +76,6 @@ export default function Dashboard({ go, name, areas = [] }: { go: (s: string) =>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {leads && <Kpi Icon={Inbox} label="New leads this week" value={leads.newThisWeek} onClick={() => go("leads")} />}
-        {leads && <Kpi Icon={BellRing} label="Follow-ups due" value={leads.followUpsDue} tone={leads.followUpsDue ? "red" : undefined} onClick={() => go("leads")} />}
         {leads && <Kpi Icon={IndianRupee} label="Won so far" value={`₹${leads.wonValue.toLocaleString("en-IN")}`} />}
         {leads && <Kpi Icon={TrendingUp} label="Win rate" value={`${leads.total ? Math.round(((leads.byStatus.won ?? 0) / leads.total) * 100) : 0}%`} />}
         {people && <Kpi Icon={GraduationCap} label="Interns" value={people.interns} onClick={() => go("interns")} />}
