@@ -18,6 +18,16 @@ if ! docker compose run -T --no-deps --name "$TMP" app nice -n 19 npm run build;
   exit 1
 fi
 
+# 2b. Keep the previous version's page files (JS/CSS chunks) for two weeks, so a visitor who opened the site
+#     before this update can still use it (send a form, open a page) without a "failed to load" error.
+OLD=$(docker compose ps -q app 2>/dev/null || true)
+PREV=$(mktemp -d)
+if [ -n "$OLD" ] && docker cp "$OLD":/app/.next/static/. "$PREV" > /dev/null 2>&1; then
+  find "$PREV" -type f -mtime +14 -delete 2>/dev/null || true
+  docker cp "$PREV"/. "$TMP":/app/.next/static > /dev/null 2>&1 || true
+fi
+rm -rf "$PREV"
+
 # 3. Save the built app as the image. Settings from .env are blanked in the image; the container gets them
 #    from .env when it starts, so no secrets are kept in the image.
 changes=(--change 'CMD ["sh", "-c", "[ -f .next/BUILD_ID ] || npm run build; exec npx next start -p 3000"]')

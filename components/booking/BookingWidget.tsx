@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Loader2, Video } from "lucide-react";
 import { dateLabel, timeLabel } from "@/lib/booking";
 import HumanCheck from "../HumanCheck";
+import { attributionForLead } from "@/lib/attribution";
 
 type Day = { date: string; slots: string[] };
 
@@ -52,7 +53,6 @@ export default function BookingWidget({ topics, duration, moveToken, onMoved }: 
     setError("");
     setErrors({});
     try {
-      const { attributionForLead } = await import("@/lib/attribution");
       const r = await fetch("/api/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, date, time, startedAt: String(startedAt.current), cfToken, website, track: attributionForLead() }) });
       const d = await r.json().catch(() => ({}));
       if (r.status === 409 && d.taken) return taken(d.error);

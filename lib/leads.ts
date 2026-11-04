@@ -1,5 +1,6 @@
 // Shared lead (enquiry) types and helpers.
-import type { LeadTrack } from "./attribution";
+import { attributionForLead, type LeadTrack } from "./attribution";
+import { track } from "./track";
 
 export const LEAD_STATUSES = ["new", "contacted", "quote", "won", "lost"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
@@ -86,17 +87,33 @@ export function leadsToCSV(leads: Lead[]) {
 
 // Used by the public forms.
 export async function submitLead(data: Record<string, string>): Promise<{ ok: boolean; error?: string; errors?: Record<string, string> }> {
+  // Sent with plain (non-lazy) code, so a page left open while the website was updated still sends.
+  // A dropped connection is tried once more before giving up.
+  let track_: ReturnType<typeof attributionForLead> | undefined;
   try {
-    const { attributionForLead } = await import("./attribution");
-    const res = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...data, track: attributionForLead() }) });
-    const body = await res.json().catch(() => ({}));
-    if (res.ok) {
-      const { track } = await import("./track");
-      track("generate_lead", { source: data.source || "form" });
-      return { ok: true };
-    }
-    return { ok: false, error: body.error || "Couldn't send. Please try WhatsApp.", errors: body.errors };
+    track_ = attributionForLead();
   } catch {
-    return { ok: false, error: "No internet connection. Please try again or use WhatsApp." };
+    track_ = undefined;
   }
+  const send = () => fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...data, track: track_ }) });
+  let res: Response;
+  try {
+    res = await send().catch(async () => {
+      await new Promise((r) => setTimeout(r, 1200));
+      return send();
+    });
+  } catch {
+    const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+    return { ok: false, error: offline ? "No internet connection. Please try again or use WhatsApp." : "Couldn't reach our server just now. Please try again in a minute or message us on WhatsApp." };
+  }
+  const body = await res.json().catch(() => ({}));
+  if (res.ok) {
+    try {
+      track("generate_lead", { source: data.source || "form" });
+    } catch {
+      // analytics must never block the enquiry
+    }
+    return { ok: true };
+  }
+  return { ok: false, error: body.error || "Couldn't send. Please try WhatsApp.", errors: body.errors };
 }
