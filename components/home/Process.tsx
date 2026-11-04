@@ -11,7 +11,7 @@ import { sized } from "@/lib/img";
 const visuals = [DiscoverVisual, DesignVisual, BuildVisual, LaunchVisual];
 const icons = [Compass, PenTool, Code2, Rocket];
 
-// Compact stepper: the steps play one after another on their own (about 6 seconds each) while the section
+// Compact stepper: the steps play one after another on their own (about 4 seconds each) while the section
 // is on screen, and any step can be clicked. It takes one screen, no long pinned scroll.
 // Below md every step is shown as a plain list instead.
 export default function Process() {
@@ -29,7 +29,7 @@ export default function Process() {
   useEffect(() => {
     if (!inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const run = animate(stepFill, 1, {
-      duration: 6 * (1 - stepFill.get()),
+      duration: 4 * (1 - stepFill.get()),
       ease: "linear",
       onComplete: () => {
         stepFill.set(0);

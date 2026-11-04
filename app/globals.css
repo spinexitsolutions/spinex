@@ -84,3 +84,6 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
 .spx-cursor-glow[data-hover="1"] { width: 340px; height: 340px; }
 .spx-cursor-glow-dot { width: 8px; height: 8px; background: var(--cur); box-shadow: 0 0 12px var(--cur); }
 .spx-cursor-glow-dot[data-hover="1"] { width: 22px; height: 22px; background: color-mix(in srgb, var(--cur) 40%, transparent); }
+
+/* Chat assistant icon: sparkles gently grow and shrink. */
+@keyframes spx-twinkle { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.82); opacity: 0.85; } }

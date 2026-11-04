@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { Send, Sparkles, X } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { localAnswer } from "@/lib/chat";
 import { ease } from "./Reveal";
@@ -71,8 +71,9 @@ export default function Chatbot() {
     <>
       <motion.button
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? "Close chat" : "Open chat"}
-        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-lav-600 text-white ring-2 ring-white/70 shadow-[0_14px_40px_-10px_rgb(var(--c-lav-700)/0.7)]"
+        aria-label={open ? "Close chat" : "Ask our AI assistant"}
+        title={open ? undefined : "Ask our AI assistant"}
+        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-lav-400 via-lav-600 to-lav-700 text-white ring-2 ring-white/70 shadow-[0_14px_40px_-10px_rgb(var(--c-lav-700)/0.7)]"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         initial={{ scale: 0 }}
@@ -82,10 +83,10 @@ export default function Chatbot() {
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span key={open ? "x" : "chat"} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-            {open ? <X size={22} /> : <MessageCircle size={22} />}
+            {open ? <X size={22} /> : <AiSparkle />}
           </motion.span>
         </AnimatePresence>
-        {!open && <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-white bg-lav-400" />}
+        {!open && <span className="absolute -right-1 -top-1 rounded-full border-2 border-white bg-ink px-1.5 py-px text-[9px] font-bold leading-tight tracking-wide text-white">AI</span>}
       </motion.button>
 
       <AnimatePresence>
@@ -148,5 +149,15 @@ export default function Chatbot() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+// The assistant's button icon: a large and a small four-point sparkle that gently twinkle.
+function AiSparkle() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
+      <path className="origin-center motion-safe:animate-[spx-twinkle_2.8s_ease-in-out_infinite]" style={{ transformBox: "fill-box" }} d="M10 2.5c.5 3.9 1.9 5.9 5.9 6.6-4 .7-5.4 2.7-5.9 6.6-.5-3.9-1.9-5.9-5.9-6.6 4-.7 5.4-2.7 5.9-6.6Z" />
+      <path className="origin-center motion-safe:animate-[spx-twinkle_2.8s_ease-in-out_1.4s_infinite]" style={{ transformBox: "fill-box" }} d="M17.5 13.5c.3 2 1 3 3 3.4-2 .3-2.7 1.3-3 3.4-.3-2.1-1-3.1-3-3.4 2-.4 2.7-1.4 3-3.4Z" />
+    </svg>
   );
 }
