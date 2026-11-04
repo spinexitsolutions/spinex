@@ -155,7 +155,7 @@ export default function Chatbot() {
 // The assistant's button icon: a large and a small four-point sparkle that gently twinkle.
 function AiSparkle() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden>
       <path className="origin-center motion-safe:animate-[spx-twinkle_2.8s_ease-in-out_infinite]" style={{ transformBox: "fill-box" }} d="M10 2.5c.5 3.9 1.9 5.9 5.9 6.6-4 .7-5.4 2.7-5.9 6.6-.5-3.9-1.9-5.9-5.9-6.6 4-.7 5.4-2.7 5.9-6.6Z" />
       <path className="origin-center motion-safe:animate-[spx-twinkle_2.8s_ease-in-out_1.4s_infinite]" style={{ transformBox: "fill-box" }} d="M17.5 13.5c.3 2 1 3 3 3.4-2 .3-2.7 1.3-3 3.4-.3-2.1-1-3.1-3-3.4 2-.4 2.7-1.4 3-3.4Z" />
     </svg>
