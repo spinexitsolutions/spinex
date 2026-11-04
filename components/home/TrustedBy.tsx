@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { sized } from "@/lib/img";
 
-export const MIN_CLIENTS = 4;
+export const MIN_CLIENTS = 1;
 
 // "Trusted by" strip under the hero: client logos (or names when there is no logo) and an
 // optional Google rating line. Both are switched on in Admin → Trusted by; off by default.
@@ -13,7 +13,7 @@ export default function TrustedBy() {
   const t = content.trusted;
   if (!t) return null;
   const items = (Array.isArray(t.items) ? t.items : []).filter((x) => x && (String(x.name || "").trim() || String(x.logo || "").trim()));
-  // A strip with only 2 or 3 names looks thin, so it shows from 4 clients on.
+  // Shows as soon as the strip is switched on and has at least one client.
   const showLogos = !!t.show && items.length >= MIN_CLIENTS;
   const rating = String(t.rating || "").trim();
   const showRating = !!t.ratingShow && rating !== "";

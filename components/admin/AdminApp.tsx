@@ -930,7 +930,8 @@ function AdminShell() {
                     <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.trusted.show} onChange={(e) => set("trusted", { ...draft.trusted, show: e.target.checked })} />
                     <span className="font-medium">Show the client logo strip</span>
                   </label>
-                  {draft.trusted.show && draft.trusted.items.length < 4 && <p className="mt-3 text-sm text-amber-700">Add at least 4 clients below; the strip stays hidden until then (2 or 3 names look thin). For the neatest look use transparent PNG logos.</p>}
+                  {draft.trusted.show && draft.trusted.items.length === 0 && <p className="mt-3 text-sm text-amber-700">Add at least one client below; the strip stays hidden until then.</p>}
+                  {draft.trusted.items.length > 0 && draft.trusted.items.length < 4 && <p className="mt-3 text-sm text-muted">Tip: 4–6 clients with transparent PNG logos look best.</p>}
                   <div className="mt-5">
                     <ObjectEditor value={draft.trusted} onChange={(v) => set("trusted", v)} fields={[{ key: "title", label: "Line above the logos", hint: "e.g. Trusted by businesses across India" }]} />
                   </div>
