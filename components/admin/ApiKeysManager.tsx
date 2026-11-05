@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Code2, Eye, EyeOff, Loader2, Plus, Save, ShieldCheck, Trash2, Zap } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Code2, Copy, Eye, EyeOff, KeyRound, Loader2, Lock, Plus, Save, ShieldCheck, Trash2, X, Zap } from "lucide-react";
 import { KEY_GROUPS, validCustomName, type KeyDef, type KeyStatus, type SecretsView } from "@/lib/secret-keys";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -13,7 +13,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 type Edits = Record<string, string | null>; // value to save, or null to remove
 
-// Admin → API keys (owner only). Saved values are never shown again, only "•••• last 4".
+// Admin → API keys (owner only). Saved values show as "•••• last 4"; the full values only after "Show saved keys" + password.
 export default function ApiKeysManager() {
   const [view, setView] = useState<SecretsView | null>(null);
   const [error, setError] = useState("");
@@ -25,6 +25,14 @@ export default function ApiKeysManager() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [tests, setTests] = useState<Record<string, { busy: boolean; ok?: boolean; message?: string }>>({});
+  // "Show saved keys": full values, only after the password is typed again. Hidden again after 2 minutes.
+  const [revealed, setRevealed] = useState<{ keys: Record<string, string>; custom: Record<string, string> } | null>(null);
+  const [askReveal, setAskReveal] = useState(false);
+  useEffect(() => {
+    if (!revealed) return;
+    const t = setTimeout(() => setRevealed(null), 120000);
+    return () => clearTimeout(t);
+  }, [revealed]);
 
   const load = useCallback(async () => {
     try {
@@ -90,6 +98,17 @@ export default function ApiKeysManager() {
           Keys are saved encrypted in your database and never sent to visitors. After saving, a key is shown only as its last 4 characters. A key saved here is used instead of the same key in <code>.env.local</code>. Only the owner can see this page.
         </p>
       </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white p-4" data-reveal-keys>
+        <p className="text-sm text-muted">
+          {revealed ? "Saved keys are showing below. They hide again by themselves in 2 minutes." : "Need a key again (for another website or app)? Show the full saved keys after typing your password again. Each view is written to the Activity log."}
+        </p>
+        {revealed ? (
+          <button type="button" onClick={() => setRevealed(null)} className="btn-ghost px-4 py-2 text-sm"><EyeOff size={15} /> Hide keys</button>
+        ) : (
+          <button type="button" onClick={() => setAskReveal(true)} className="btn-dark px-4 py-2 text-sm"><KeyRound size={15} /> Show saved keys</button>
+        )}
+      </div>
+      {askReveal && <RevealDialog onClose={() => setAskReveal(false)} onDone={(v) => { setRevealed(v); setAskReveal(false); }} />}
       {!view.canEncrypt && (
         <p className="flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900"><AlertTriangle size={18} className="mt-0.5 shrink-0" /> AUTH_SECRET in .env.local must be at least 32 characters before keys can be saved here.</p>
       )}
@@ -114,7 +133,7 @@ export default function ApiKeysManager() {
           )}
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             {g.keys.map((k) => (
-              <KeyField key={k.name} def={k} status={status(k.name)} value={edits[k.name]} onChange={(v) => setEdits((e) => {
+              <KeyField key={k.name} def={k} status={status(k.name)} revealed={revealed?.keys[k.name]} value={edits[k.name]} onChange={(v) => setEdits((e) => {
                 const next = { ...e };
                 if (v === undefined) delete next[k.name];
                 else next[k.name] = v;
@@ -136,7 +155,7 @@ export default function ApiKeysManager() {
             return (
               <li key={c.name} className="flex flex-wrap items-center gap-3 p-4">
                 <code className={`font-semibold ${removing ? "text-muted line-through" : ""}`}>{c.name}</code>
-                <span className="text-sm text-muted">{c.preview}</span>
+                {revealed?.custom[c.name] ? <SavedValue value={revealed.custom[c.name]} /> : <span className="text-sm text-muted">{c.preview}</span>}
                 <button type="button" onClick={() => setCustom((x) => { const n = { ...x }; if (removing) delete n[c.name]; else n[c.name] = null; return n; })} className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted hover:bg-red-50 hover:text-red-600">
                   <Trash2 size={14} /> {removing ? "Undo" : "Remove"}
                 </button>
@@ -186,7 +205,61 @@ export default function ApiKeysManager() {
   );
 }
 
-function KeyField({ def, status, value, onChange }: { def: KeyDef; status?: KeyStatus; value: string | null | undefined; onChange: (v: string | null | undefined) => void }) {
+// Asks for the password again (and the two-step code if that is on) before showing saved keys.
+function RevealDialog({ onClose, onDone }: { onClose: () => void; onDone: (v: { keys: Record<string, string>; custom: Record<string, string> }) => void }) {
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [needCode, setNeedCode] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setErr("");
+    try {
+      const res = await fetch("/api/admin/secrets/reveal", { method: "POST", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ password, code }) });
+      const d = await res.json().catch(() => ({}));
+      if (d.needCode) setNeedCode(true);
+      if (!res.ok) throw new Error(d.error || "Couldn't show the keys.");
+      setPassword("");
+      onDone({ keys: d.keys ?? {}, custom: d.custom ?? {} });
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : "Couldn't show the keys.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4" role="dialog" aria-modal="true" aria-label="Show saved keys">
+      <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl" data-reveal-dialog>
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><Lock size={18} /> Confirm it's you</h3>
+          <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full hover:bg-mist"><X size={16} /></button>
+        </div>
+        <p className="mt-2 text-sm text-muted">Type your admin password to see the saved keys.</p>
+        <input className="input mt-4" type="password" autoComplete="current-password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" />
+        {needCode && <input className="input mt-3" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="6-digit code from your app" />}
+        {err && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
+        <button type="submit" disabled={busy || !password} className="btn-dark mt-5 w-full justify-center disabled:bg-line disabled:text-muted">{busy ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />} Show keys</button>
+      </form>
+    </div>
+  );
+}
+
+// A revealed key with a Copy button.
+function SavedValue({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-amber-50 px-3 py-2" data-saved-value>
+      <code className="min-w-0 flex-1 break-all text-[13px] text-ink">{value}</code>
+      <button type="button" onClick={() => { navigator.clipboard?.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => undefined); }} className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100">
+        <Copy size={13} /> {copied ? "Copied" : "Copy"}
+      </button>
+    </span>
+  );
+}
+
+function KeyField({ def, status, value, revealed, onChange }: { def: KeyDef; status?: KeyStatus; value: string | null | undefined; revealed?: string; onChange: (v: string | null | undefined) => void }) {
   const [show, setShow] = useState(false);
   const removing = value === null;
   const badge = removing ? (
@@ -231,6 +304,7 @@ function KeyField({ def, status, value, onChange }: { def: KeyDef; status?: KeyS
           </button>
         )}
       </div>
+      {revealed && <div className="mt-2 flex"><SavedValue value={revealed} /></div>}
     </div>
   );
 }

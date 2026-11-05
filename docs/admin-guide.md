@@ -698,6 +698,8 @@ Connect outside services:
 
 Most of these have a **Send test** button. Press **Save keys** when done.
 
+**See a saved key again:** saved keys show only their last 4 characters. To copy a full key (for example for another website), press **Show saved keys**, type your admin password (and the 6-digit code if two-step login is on). The keys show with a **Copy** button and hide again by themselves after 2 minutes. Every view, and every wrong password, is written to the **Activity log**.
+
 > - Keys are stored encrypted. Only the last 4 characters are shown after saving.
 > - **Custom code on every page:** paste code here only from services you trust.
 

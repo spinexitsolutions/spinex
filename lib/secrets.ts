@@ -123,3 +123,18 @@ export async function saveSecrets(updates: Record<string, string | null>, custom
   await col.updateOne({ _id: "keys" }, { $set: { values, updatedAt: new Date() } }, { upsert: true });
   cache = null;
 }
+
+// Owner-only "Show saved keys": the full value of every secret key that is set (admin panel first,
+// then .env.local), plus custom keys. Only called after the owner re-entered their password.
+export async function revealSecrets(): Promise<{ keys: Record<string, string>; custom: Record<string, string> }> {
+  const saved = await readAll();
+  const keys: Record<string, string> = {};
+  for (const k of KNOWN_KEYS) {
+    if (!k.secret) continue;
+    const v = tidy(saved[k.name]) || fromEnv(k.name);
+    if (v) keys[k.name] = v;
+  }
+  const custom: Record<string, string> = {};
+  for (const [k, v] of Object.entries(saved)) if (k.startsWith(CUSTOM_PREFIX) && v) custom[k.slice(CUSTOM_PREFIX.length)] = v;
+  return { keys, custom };
+}
