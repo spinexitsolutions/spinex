@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { sized } from "@/lib/img";
@@ -10,6 +11,15 @@ export const MIN_CLIENTS = 1;
 // optional Google rating line. Both are switched on in Admin → Trusted by; off by default.
 export default function TrustedBy() {
   const { content } = useContent();
+  // Phones fit 3 logos in one line; with more, the line scrolls by itself instead of stacking down the page.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const pick = () => setPhone(mq.matches);
+    pick();
+    mq.addEventListener("change", pick);
+    return () => mq.removeEventListener("change", pick);
+  }, []);
   const t = content.trusted;
   if (!t) return null;
   const items = (Array.isArray(t.items) ? t.items : []).filter((x) => x && (String(x.name || "").trim() || String(x.logo || "").trim()));
@@ -19,17 +29,17 @@ export default function TrustedBy() {
   const showRating = !!t.ratingShow && rating !== "";
   if (!showLogos && !showRating) return null;
 
-  // Many logos scroll slowly; a few stay still and centred.
-  const moving = items.length > 6;
+  // Many logos scroll slowly in one line; a few stay still and centred (up to 3 on phones, 6 on bigger screens).
+  const moving = items.length > (phone ? 3 : 6);
   const row = moving ? [...items, ...items] : items;
 
   return (
-    <section className="border-b border-line bg-white py-12 sm:py-14" aria-label={t.title || "Our clients"}>
+    <section className="border-b border-line bg-white py-9 sm:py-14" aria-label={t.title || "Our clients"}>
       <div className="container-x">
         {showLogos && t.title && <p className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-muted">{t.title}</p>}
         {showLogos && (
-          <div className={`relative mt-8 ${moving ? "overflow-hidden" : ""}`}>
-            <ul className={moving ? "flex w-max animate-marquee items-center gap-14 hover:[animation-play-state:paused]" : "flex flex-wrap items-center justify-center gap-x-14 gap-y-8"}>
+          <div className={`relative mt-6 sm:mt-8 ${moving ? "overflow-hidden" : ""}`}>
+            <ul className={moving ? "flex w-max animate-marquee items-center gap-8 hover:[animation-play-state:paused] sm:gap-14" : "flex flex-wrap items-center justify-center gap-x-5 gap-y-6 sm:gap-x-14 sm:gap-y-8"}>
               {row.map((c, i) => (
                 <li key={`${c.id}-${i}`} aria-hidden={moving && i >= items.length ? true : undefined}>
                   <Logo name={String(c.name || "")} logo={String(c.logo || "")} url={String(c.url || "")} />
@@ -38,8 +48,8 @@ export default function TrustedBy() {
             </ul>
             {moving && (
               <>
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-white" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r sm:w-20 from-white" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l sm:w-20 from-white" />
               </>
             )}
           </div>
@@ -54,11 +64,11 @@ function Logo({ name, logo, url }: { name: string; logo: string; url: string }) 
   // Every client gets the same box, so logos of different shapes look the same size; a name without a
   // logo is set in the same box.
   const inner = (
-    <span className="flex h-12 w-[150px] items-center justify-center sm:h-14 sm:w-[170px]">
+    <span className="flex h-11 w-[98px] items-center justify-center sm:h-14 sm:w-[170px]">
       {logo ? (
         <img src={sized(logo, 320)} alt={name || "Client logo"} loading="lazy" className="max-h-full max-w-full object-contain transition duration-300 group-hover:scale-105" />
       ) : (
-        <span className="line-clamp-2 text-center font-display text-lg font-semibold leading-tight tracking-tight text-ink transition">{name}</span>
+        <span className="line-clamp-2 text-center font-display text-sm font-semibold sm:text-lg leading-tight tracking-tight text-ink transition">{name}</span>
       )}
     </span>
   );
