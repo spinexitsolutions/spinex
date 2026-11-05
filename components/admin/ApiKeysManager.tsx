@@ -233,7 +233,7 @@ function RevealDialog({ onClose, onDone }: { onClose: () => void; onDone: (v: { 
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4" role="dialog" aria-modal="true" aria-label="Show saved keys">
       <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl" data-reveal-dialog>
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><Lock size={18} /> Confirm it's you</h3>
+          <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><Lock size={18} /> Confirm it&apos;s you</h3>
           <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full hover:bg-mist"><X size={16} /></button>
         </div>
         <p className="mt-2 text-sm text-muted">Type your admin password to see the saved keys.</p>
