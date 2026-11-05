@@ -831,7 +831,7 @@ function AdminShell() {
               <>
                 <p className="mb-4 text-sm text-muted">Your own software and SaaS. Each product gets its own page at /products/… with a &quot;Book a demo&quot; form; requests arrive in Leads as &quot;Product demo request&quot;. The Products link appears in the menu once you add the first product.</p>
                 <ListEditor items={draft.products} titleKey="name" addLabel="Add product" onChange={(v) => set("products", v)}
-                  newItem={() => ({ id: uid(), name: "", slug: "", tagline: "", description: "", category: "", audience: "", status: "Live", image: "", gallery: [], features: [], price: "", demoUrl: "", videoUrl: "", body: "", faqs: "", seoTitle: "", seoDescription: "" })}
+                  newItem={() => ({ id: uid(), name: "", slug: "", tagline: "", description: "", category: "", audience: "", status: "Live", image: "", gallery: [], features: [], price: "", demoUrl: "", buy: "", videoUrl: "", body: "", faqs: "", seoTitle: "", seoDescription: "" })}
                   fields={[
                     { group: "Basic", key: "name", label: "Product name" },
                     { group: "Basic", key: "slug", label: "Page address", hint: "/products/… e.g. waba-panel (leave empty to use the name)" },
@@ -844,7 +844,8 @@ function AdminShell() {
                     { group: "Photos and demo", key: "image", label: "Cover screenshot", type: "image" },
                     { group: "Photos and demo", key: "gallery", label: "More screenshots", type: "images" },
                     { group: "Product page", key: "features", label: "Key features", type: "lines" },
-                    { group: "Photos and demo", key: "demoUrl", label: "Live demo link", hint: "Optional" },
+                    { group: "Basic", key: "buy", label: "Buy now button", type: "select", options: [{ value: "", label: "No (only Book a free demo)" }, { value: "whatsapp", label: "Yes, Buy now on WhatsApp" }], hint: "Opens your WhatsApp with \"I want to buy …\" ready to send. Good for one-time products." },
+                    { group: "Photos and demo", key: "demoUrl", label: "Live demo link", hint: "Optional. Anyone can open it, so don't put a paid download link here." },
                     { group: "Photos and demo", key: "videoUrl", label: "YouTube video link", hint: "Optional, shown on the page" },
                     { group: "Product page", key: "body", label: "Page text", type: "textarea", hint: "## for headings, - for lists, **bold**" },
                     { group: "Product page", key: "faqs", label: "FAQs", type: "textarea", hint: "Question on one line, answer on the next, blank line between" },

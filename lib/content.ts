@@ -289,6 +289,7 @@ export type Product = {
   features: string[];
   price: string; // e.g. "₹2,999/month" or "Price on request"
   demoUrl: string; // live demo link (optional)
+  buy?: string; // "whatsapp" shows a "Buy now" button that opens WhatsApp with a ready message
   videoUrl: string; // YouTube link (optional)
   body: string; // Markdown, page text
   faqs: string; // Q line, A line, blank line between
