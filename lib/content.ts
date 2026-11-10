@@ -313,7 +313,8 @@ export type Product = {
   price: string; // e.g. "₹2,999/month" or "Price on request"
   demoUrl: string; // live demo link (optional)
   buy?: string; // "whatsapp" shows a "Buy now" button that opens WhatsApp with a ready message
-  home?: string; // "hide" keeps it off the home page "Our products" section
+  home?: string; // home page "Our products": "featured" = big card, "" = small card, "hide" = not shown
+  homePoints?: string[]; // short points for the home page cards (falls back to the first features)
   videoUrl: string; // YouTube link (optional)
   body: string; // Markdown, page text
   faqs: string; // Q line, A line, blank line between
