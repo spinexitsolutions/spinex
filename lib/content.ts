@@ -32,6 +32,7 @@ export type Project = {
   display?: ProjectDisplay | "";
   screen?: string; // website: full-page screenshot · e-commerce: seller dashboard · on-demand: admin panel
   mobile?: string; // website: mobile screenshot · on-demand: customer app
+  home?: string; // home page "Our work": "featured" = big card, "" = small card, "hide" = not shown
   partner?: string; // on-demand: partner app
   video?: string; // YouTube or .mp4 link
   videoShape?: "wide" | "reel";

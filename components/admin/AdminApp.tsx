@@ -947,7 +947,7 @@ function AdminShell() {
 
             {section === "projects" && (
               <>
-              <p className="mb-4 text-sm text-muted">Projects show on the home page (first 6), the Work page, and on the matching service page. &quot;Show as&quot; picks the frame: website in a laptop, social media as an Instagram profile, video in a player, ads with results, design as a collage, e-commerce management as a seller dashboard, on-demand apps as customer app + admin + partner app. Fill only the fields that frame uses; the hint on each field says which.</p>
+              <p className="mb-4 text-sm text-muted">Projects show on the home page (5: one big, four small), the Work page, and on the matching service page. &quot;Show as&quot; picks the frame: website in a laptop, social media as an Instagram profile, video in a player, ads with results, design as a collage, e-commerce management as a seller dashboard, on-demand apps as customer app + admin + partner app. Fill only the fields that frame uses; the hint on each field says which.</p>
               <ListEditor items={draft.projects} titleKey="title" subKey="category" addLabel="Add project" onChange={(v) => set("projects", v)}
                 newItem={() => ({ id: uid(), title: "", type: "client" as const, display: "" as const, category: "", summary: "", image: "", url: "" })}
                 fields={[
@@ -955,11 +955,12 @@ function AdminShell() {
                   { group: "Basic", key: "type", label: "Type", type: "select", hint: "Demo = made to show our skills, gets a \"Demo\" label", options: [{ value: "client", label: "Client project" }, { value: "demo", label: "Demo / concept" }] }, { group: "Basic", key: "category", label: "Category", hint: "Filter tab on the Work page. Pick a service below so the project also shows on that service's page.", suggest: draft.services.map((x) => x.title),
                     warn: (v) => { const c = String(v ?? "").trim().toLowerCase(); return c && !draft.services.some((x) => x.title.trim().toLowerCase() === c) ? "This category doesn't match any service, so the project won't show on a service page. Pick one of the services above." : ""; } },
                   { group: "Basic", key: "display", label: "Show as", type: "select", hint: "Auto picks from the category", options: [{ value: "", label: "Auto (from category)" }, ...PROJECT_DISPLAYS] },
+                  { group: "Basic", key: "home", label: "On the home page", type: "select", options: [{ value: "", label: "Small card" }, { value: "featured", label: "Big card (main project)" }, { value: "hide", label: "Don't show" }], hint: "The home page shows 5 projects: one big card and 4 small ones. If none is set as big, the first client project is." },
                   { group: "Basic", key: "summary", label: "Short description", type: "textarea" }, { group: "Basic", key: "url", label: "Live link", hint: "Optional" },
                   { group: "Photos and video", key: "image", label: "Cover image", type: "image", hint: "All types. Also the video poster and the social profile photo" },
-                  { group: "Photos and video", key: "screen", label: "Full-page screenshot / dashboard", type: "image", hint: "Website: full-page desktop screenshot (scrolls in the laptop). E-commerce: seller dashboard. On-demand: admin panel. Use JPG under 4 MB" },
-                  { group: "Photos and video", key: "mobile", label: "Mobile screenshot", type: "image", hint: "Website: mobile view. On-demand: customer app" },
-                  { group: "Photos and video", key: "partner", label: "Partner app screenshot", type: "image", hint: "On-demand only" },
+                  { group: "Photos and video", key: "screen", label: "Full-page screenshot / dashboard", type: "image", hint: "Website: full-page desktop screenshot (scrolls in the laptop). Custom software: dashboard screenshot. E-commerce: seller dashboard. On-demand: admin panel. Use JPG under 4 MB" },
+                  { group: "Photos and video", key: "mobile", label: "Mobile screenshot", type: "image", hint: "Website: mobile view. Mobile app or on-demand: main app screen" },
+                  { group: "Photos and video", key: "partner", label: "Partner app screenshot", type: "image", hint: "Mobile app or on-demand: a second app screen" },
                   { group: "Photos and video", key: "video", label: "Video link", hint: "Website or Video: YouTube link or .mp4 link. Plays muted on loop" },
                   { group: "Photos and video", key: "videoShape", label: "Video shape", type: "select", options: [{ value: "wide", label: "Wide 16:9 (YouTube)" }, { value: "reel", label: "Reel 9:16 (Instagram / Shorts)" }] },
                   { group: "Photos and video", key: "images", label: "More images", type: "images", hint: "Social: 6–9 posts · Design: 3–6 pieces · Ads: ad creative · E-commerce: product photos (same order as Products below)" },

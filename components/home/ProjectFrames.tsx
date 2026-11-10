@@ -12,7 +12,9 @@ import { sized } from "@/lib/img";
 // Instagram profile, videos in a player, ads with results, design as a collage,
 // e-commerce management as a seller dashboard, on-demand apps as three screens.
 export default function ProjectStage({ project, open, play }: { project: Project; open: boolean; play: boolean }) {
-  const display = projectDisplay(project);
+  const raw = projectDisplay(project);
+  // Custom software shows in the laptop like a website; a mobile app like the on-demand phones.
+  const display = raw === "software" ? "website" : raw === "app" ? "ondemand" : raw;
 
   if (display === "website") {
     return (
