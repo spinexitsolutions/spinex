@@ -115,7 +115,7 @@ function Facts({ h, c, ready, light, center, accent }: Ctx & { light?: boolean; 
   if (!h.showStats && !h.showLocation) return null;
   return (
     <motion.div initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : undefined} transition={{ delay: 1.1, duration: 0.8 }}
-      className={`mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm lg:[@media(max-height:760px)]:hidden ${light ? "text-white/70" : "text-muted"} ${center ? "justify-center" : ""}`}>
+      className={`mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm lg:[@media(max-height:760px)]:mt-5 ${light ? "text-white/70" : "text-muted"} ${center ? "justify-center" : ""}`}>
       {h.showStats && c.stats.slice(0, 2).map((s) => (
         <div key={s.id}>
           <p className={`font-display text-2xl font-semibold ${light ? "text-white" : "text-ink"}`}>{s.value}</p>
