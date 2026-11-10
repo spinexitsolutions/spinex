@@ -602,10 +602,18 @@ function AdminShell() {
                     ] as const).map(([key, label]) => (
                       <div key={key} className="rounded-2xl border border-line p-4">
                         <p className="mb-3 text-sm font-semibold text-lav-700">{label}</p>
-                        <ObjectEditor value={draft.sections[key]} onChange={(v) => set("sections", { ...draft.sections, [key]: v })} fields={[
-                          { key: "heading", label: "Heading" },
-                          { key: "intro", label: "Short line" },
-                        ]} />
+                        <ObjectEditor
+                          value={key === "contact" ? { eyebrow: draft.sections.contact.eyebrow ?? "Start a project", ...draft.sections.contact } : draft.sections[key]}
+                          onChange={(v) => set("sections", { ...draft.sections, [key]: v })}
+                          fields={key === "contact" ? [
+                            { key: "eyebrow", label: "Small line above the heading", hint: "Leave empty to hide it" },
+                            { key: "heading", label: "Heading", hint: "Put words between * to colour them, e.g. Let's build what your business *needs next.*" },
+                            { key: "intro", label: "Short line" },
+                          ] : [
+                            { key: "heading", label: "Heading" },
+                            { key: "intro", label: "Short line" },
+                          ]}
+                        />
                       </div>
                     ))}
                   </div>

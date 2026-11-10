@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, Mail, MapPin, Phone, Send } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Loader2, Mail, MapPin, Phone, Send } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { submitLead } from "@/lib/leads";
 import HumanCheck from "../HumanCheck";
 import { useContent } from "../ContentProvider";
-import { SplitHeading, ease } from "../Reveal";
+import { ease } from "../Reveal";
 
 // Home page contact: one-tap ways to reach us, plus a short form that opens WhatsApp or email.
 export default function QuickContact({ source = "home", note = "" }: { source?: "home" | "city"; note?: string } = {}) {
@@ -25,13 +25,14 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
   const [cfToken, setCfToken] = useState("");
   const [hcKey, setHcKey] = useState(0);
 
+  // One-tap ways to reach us, shown as tiles under the heading.
   const methods = [
-    { Icon: Phone, label: "Call us", value: `+91 ${c.phone}`, href: `tel:+91${c.phone}` },
-    { Icon: WhatsAppIcon, label: "WhatsApp", value: "Chat now", href: `https://wa.me/${c.whatsapp}` },
-    // Email and address get a full-width row so a long email address never breaks in the middle.
-    { Icon: Mail, label: "Email", value: c.email, href: `mailto:${c.email}`, wide: true },
-    { Icon: MapPin, label: "Visit", value: c.location, href: `https://maps.google.com/?q=${encodeURIComponent(c.location)}`, wide: true },
+    { Icon: WhatsAppIcon, label: "WhatsApp", value: "Chat with us now", href: `https://wa.me/${c.whatsapp}`, tone: "bg-[#25D366] text-white" },
+    { Icon: Phone, label: "Call us", value: `+91 ${c.phone}`, href: `tel:+91${c.phone}`, tone: "bg-lav-600 text-white" },
+    { Icon: MapPin, label: "Visit", value: c.location, href: `https://maps.google.com/?q=${encodeURIComponent(c.location)}`, tone: "bg-white/10 text-white" },
   ];
+  const sec = content.sections.contact;
+  const eyebrow = sec.eyebrow ?? "Start a project";
 
   const text = () =>
     [
@@ -70,13 +71,19 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
     <section id="contact" className="scroll-mt-24 bg-white px-3 py-3 sm:px-5 sm:py-5">
       <div className="relative overflow-hidden rounded-[32px] bg-ink px-5 py-16 text-white sm:px-10 sm:py-24 grain">
         <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-lav-600/30 blur-[120px]" />
-        <div className="relative mx-auto grid w-full max-w-[1180px] gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
-          <div>
-            <SplitHeading key={c.email + content.sections.contact.heading} text={content.sections.contact.heading} className="h-display text-4xl sm:text-6xl" />
-            <p className="mt-5 max-w-md text-lg text-white/65">{content.sections.contact.intro}</p>
+        <div className="relative mx-auto grid w-full max-w-[1180px] gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-stretch lg:gap-16">
+          <div className="flex flex-col">
+            {eyebrow && <p className="text-[13px] font-medium uppercase tracking-[0.16em] text-lav-300">{eyebrow}</p>}
+            <ContactHeading key={sec.heading} text={sec.heading} />
+            {sec.intro && <p className="mt-5 max-w-md text-lg text-white/65">{sec.intro}</p>}
 
-            <div className="mt-10 grid gap-3 sm:grid-cols-2">
-              {methods.map(({ Icon, label, value, href, wide }, i) => (
+            <a href={`mailto:${c.email}`} className="group mt-8 inline-flex max-w-full items-center gap-3 self-start border-b-2 border-white/25 pb-1.5 font-display text-xl font-medium transition-colors hover:border-lav-300 sm:text-2xl [overflow-wrap:anywhere]">
+              {c.email}
+              <ArrowUpRight size={20} className="shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </a>
+
+            <div className="mt-auto grid gap-3 pt-10" data-contact-tiles>
+              {methods.map(({ Icon, label, value, href, tone }, i) => (
                 <motion.a
                   key={label}
                   href={href}
@@ -86,15 +93,16 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.07, duration: 0.6, ease }}
-                  className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-colors hover:border-lav-400 hover:bg-white/10 ${wide ? "sm:col-span-2" : ""}`}
+                  className="group flex items-center gap-4 rounded-[20px] border border-white/10 bg-white/[0.05] p-4 transition-colors hover:border-white/25 hover:bg-white/10"
                 >
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-lav-600 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
-                    <Icon size={20} />
+                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[14px] transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 ${tone}`}>
+                    <Icon size={label === "WhatsApp" ? 24 : 19} />
                   </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm text-white/55">{label}</span>
-                    <span className="block font-semibold leading-snug [overflow-wrap:break-word]">{value}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] text-white/55">{label}</span>
+                    <span className="block font-medium leading-snug [overflow-wrap:break-word]">{value}</span>
                   </span>
+                  <ArrowUpRight size={18} className="shrink-0 text-white/50 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
                 </motion.a>
               ))}
             </div>
@@ -110,7 +118,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
               send(((e.currentTarget as HTMLFormElement).elements.namedItem("website") as HTMLInputElement | null)?.value ?? "");
             }}
             noValidate
-            className="rounded-[28px] bg-white p-6 text-ink sm:p-8"
+            className="flex flex-col rounded-[28px] bg-white p-6 text-ink sm:p-8"
           >
             <h3 className="font-display text-2xl font-semibold tracking-tight">Send a quick message</h3>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -144,9 +152,9 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
               </div>
             </fieldset>
 
-            <label className="mt-5 block">
+            <label className="mt-5 flex flex-1 flex-col">
               <span className="mb-1.5 block text-sm font-medium">Message (optional)</span>
-              <textarea className="input min-h-[100px] resize-y" value={message} onChange={(e) => setMessage(e.target.value)} />
+              <textarea className="input min-h-[100px] flex-1 resize-y" value={message} onChange={(e) => setMessage(e.target.value)} />
             </label>
 
             <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
@@ -176,5 +184,36 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
         </div>
       </div>
     </section>
+  );
+}
+
+// Big heading; words between * get the soft gradient (e.g. "Let's build what your business *needs next.*").
+function ContactHeading({ text }: { text: string }) {
+  const parts = text.split("*");
+  let n = 0;
+  return (
+    <motion.h2
+      className="h-display mt-4 text-4xl sm:text-6xl"
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-60px" }}
+      aria-label={text.replace(/\*/g, "")}
+    >
+      {parts.map((part, pi) =>
+        part.split(" ").filter(Boolean).map((w) => {
+          const i = n++;
+          return (
+            <span key={`${pi}-${i}`} className="inline-block overflow-hidden pb-[0.08em] align-top" aria-hidden>
+              <motion.span
+                className={`inline-block ${pi % 2 ? "bg-gradient-to-r from-[#b9acf5] to-[#f0abfc] bg-clip-text text-transparent" : ""}`}
+                variants={{ hidden: { y: "110%" }, show: { y: 0, transition: { delay: i * 0.05, duration: 0.8, ease } } }}
+              >
+                {w}&nbsp;
+              </motion.span>
+            </span>
+          );
+        })
+      )}
+    </motion.h2>
   );
 }

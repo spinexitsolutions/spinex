@@ -207,7 +207,7 @@ export type CursorSettings = { enabled: boolean; style: CursorStyle; color: stri
 export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false };
 
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
-export type Heading = { heading: string; intro: string };
+export type Heading = { heading: string; intro: string; eyebrow?: string };
 export type PageText = { title: string; intro: string };
 export type HomeBlock = { id: string; visible: boolean };
 
@@ -456,7 +456,7 @@ const baseContent: SiteContent = {
     products: { heading: "Software we built.", intro: "Ready-made tools from the Spinex team. Buy once, or ask for a free demo." },
     blog: { heading: "Ideas and guides.", intro: "Practical tips on websites, online stores and marketing for growing businesses." },
     faq: { heading: "Questions we get asked.", intro: "Don't see yours? Ask our assistant and get an answer right away." },
-    contact: { heading: "Let's talk about your project.", intro: "Pick whatever is easiest for you. We usually reply within a day." },
+    contact: { eyebrow: "Start a project", heading: "Let's build what your business *needs next.*", intro: "Tell us what you need. The first call and the quote are free." },
     tools: ["Next.js", "React", "WordPress", "Shopify", "WooCommerce", "Figma", "Meta Ads", "Google Ads", "Premiere Pro", "After Effects", "Razorpay", "Google Analytics"],
   },
   processExtras: defaultProcessExtras,
