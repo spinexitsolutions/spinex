@@ -73,7 +73,8 @@ export default function Chatbot() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close chat" : "Ask our AI assistant"}
         title={open ? undefined : "Ask our AI assistant"}
-        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-lav-400 via-lav-600 to-lav-700 text-white ring-2 ring-white/70 shadow-[0_14px_40px_-10px_rgb(var(--c-lav-700)/0.7)]"
+        className={`fixed bottom-5 right-5 z-50 flex h-14 items-center rounded-full border border-white/15 bg-ink text-white shadow-[0_14px_40px_-12px_rgba(18,15,27,0.6)] ${open ? "w-14 justify-center" : "gap-2.5 p-1.5 sm:pr-5"}`}
+        data-chat-launcher
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         initial={{ scale: 0 }}
@@ -82,11 +83,22 @@ export default function Chatbot() {
         transition={{ type: "spring", stiffness: 260, damping: 24 }}
       >
         <AnimatePresence mode="wait" initial={false}>
-          <motion.span key={open ? "x" : "chat"} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-            {open ? <X size={22} /> : <AiSparkle />}
-          </motion.span>
+          {open ? (
+            <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+              <X size={22} />
+            </motion.span>
+          ) : (
+            <motion.span key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2.5">
+              {/* Glowing orb: a slowly turning colour ring around the sparkle */}
+              <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full">
+                <span aria-hidden className="absolute inset-0 rounded-full bg-[conic-gradient(from_200deg,#8b7bff,#c56cf0,#5ec8ff,#8b7bff)] motion-safe:animate-[spin_6s_linear_infinite]" />
+                <span className="relative grid h-[34px] w-[34px] place-items-center rounded-full bg-ink"><AiSparkle /></span>
+              </span>
+              <span className="hidden whitespace-nowrap text-[15px] font-semibold sm:inline">Ask Spinex AI</span>
+              <span aria-hidden className="hidden h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(34,197,94,0.25)] sm:inline-block" />
+            </motion.span>
+          )}
         </AnimatePresence>
-        {!open && <span className="absolute -right-1 -top-1 rounded-full border-2 border-white bg-ink px-1.5 py-px text-[9px] font-bold leading-tight tracking-wide text-white">AI</span>}
       </motion.button>
 
       <AnimatePresence>
@@ -155,7 +167,7 @@ export default function Chatbot() {
 // The assistant's button icon: a large and a small four-point sparkle that gently twinkle.
 function AiSparkle() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
       <path className="origin-center motion-safe:animate-[spx-twinkle_2.8s_ease-in-out_infinite]" style={{ transformBox: "fill-box" }} d="M10 2.5c.5 3.9 1.9 5.9 5.9 6.6-4 .7-5.4 2.7-5.9 6.6-.5-3.9-1.9-5.9-5.9-6.6 4-.7 5.4-2.7 5.9-6.6Z" />
       <path className="origin-center motion-safe:animate-[spx-twinkle_2.8s_ease-in-out_1.4s_infinite]" style={{ transformBox: "fill-box" }} d="M17.5 13.5c.3 2 1 3 3 3.4-2 .3-2.7 1.3-3 3.4-.3-2.1-1-3.1-3-3.4 2-.4 2.7-1.4 3-3.4Z" />
     </svg>
