@@ -4,7 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { Monitor } from "lucide-react";
 import Hero, { heroSettings } from "../home/Hero";
 import ImageField from "./ImageField";
-import { HERO_DESIGNS, heroDefaults, type HeroDesign, type HeroSettings } from "@/lib/content";
+import { HERO_BGS, HERO_DESIGNS, heroDefaults, type HeroBg, type HeroDesign, type HeroSettings } from "@/lib/content";
+
+const BGS: Record<HeroBg, { name: string; about: string }> = {
+  dots: { name: "Dots", about: "Dot grid that moves away from the mouse. The current one." },
+  aurora: { name: "Aurora", about: "Soft purple, pink and blue light that follows the mouse." },
+  wave: { name: "Wave", about: "A field of dots that waves, with ripples under the mouse." },
+  trail: { name: "Glow trail", about: "Grid squares light up where the mouse passes." },
+  icons: { name: "Floating icons", about: "Service icons float in small cards and move out of the way." },
+  torch: { name: "Torch", about: "A round light around the mouse shows hidden service names." },
+  orb: { name: "Liquid orb", about: "A glossy purple ball that wobbles and leans to the mouse. Looks best with Centred." },
+  india: { name: "India map", about: "Lines go out from Jaipur HQ to big cities across India. Looks best with Centred." },
+  none: { name: "None", about: "Plain white background." },
+};
 
 const DESIGNS: Record<HeroDesign, { name: string; about: string; uses: string }> = {
   classic: { name: "Live build", about: "Text on the left, an animated browser building websites, stores, social and video on the right.", uses: "" },
@@ -46,6 +58,20 @@ export default function HeroEditor({ value, onChange, readOnly }: { value: HeroS
                 <span className="mt-2 block text-sm font-semibold">{DESIGNS[id].name}</span>
                 <span className="mt-0.5 block text-[11px] leading-snug text-muted">{DESIGNS[id].about}</span>
                 {DESIGNS[id].uses && <span className="mt-1 block text-[11px] font-semibold text-lav-700">{DESIGNS[id].uses}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-hero-bg-picker>
+          <p className="font-semibold">Background effect</p>
+          <p className="mt-0.5 text-sm text-muted">The moving background behind the text. Move your mouse over the preview above to try it. On phones it moves on its own. Shows with the Classic and Centred designs.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {HERO_BGS.map((id) => (
+              <button type="button" key={id} data-hero-bg-option={id} onClick={() => set({ bg: id })}
+                className={`rounded-2xl border p-3 text-left transition ${v.bg === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                <span className="block text-sm font-semibold">{BGS[id].name}</span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-muted">{BGS[id].about}</span>
               </button>
             ))}
           </div>

@@ -173,9 +173,13 @@ export const defaultIntro: IntroSettings = {
 // Homepage hero: one of several designs, picked and customised in Admin → Homepage hero.
 export const HERO_DESIGNS = ["classic", "centered", "split", "fullscreen", "bento", "aurora", "type"] as const;
 export type HeroDesign = (typeof HERO_DESIGNS)[number];
+// Moving background behind the Classic and Centered hero designs (components/home/HeroBackground.tsx).
+export const HERO_BGS = ["dots", "aurora", "wave", "trail", "icons", "torch", "orb", "india", "none"] as const;
+export type HeroBg = (typeof HERO_BGS)[number];
 export type HeroSettings = {
   kicker: string; title: string; subtitle: string; primaryCta: string; secondaryCta: string;
   design: HeroDesign;
+  bg?: HeroBg; // background effect, "dots" when not set
   highlight: string; // words of the headline shown in the highlight colour ("" = none)
   primaryLink: string; secondaryLink: string;
   image: string; // split and full-screen designs
@@ -185,7 +189,7 @@ export type HeroSettings = {
   showStats: boolean; showLocation: boolean; showTicker: boolean;
 };
 export const heroDefaults: Omit<HeroSettings, "kicker" | "title" | "subtitle" | "primaryCta" | "secondaryCta"> = {
-  design: "classic", highlight: "", primaryLink: "/contact", secondaryLink: "/work",
+  design: "classic", bg: "dots", highlight: "", primaryLink: "/contact", secondaryLink: "/work",
   image: "/images/stock/photo-1522071820081-009f0129c71c.jpg", video: "", overlay: 55, accent: "",
   showStats: true, showLocation: true, showTicker: true,
 };

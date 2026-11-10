@@ -4,11 +4,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, MapPin, Sparkles } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import DotField from "./DotField";
+import HeroBackground from "./HeroBackground";
 import LiveBuild from "./LiveBuild";
 import { ease } from "../Reveal";
 import { useIntroDone } from "../Intro";
-import { HERO_DESIGNS, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
+import { HERO_BGS, HERO_DESIGNS, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
 import { sized } from "@/lib/img";
 
 // Saved hero with every field checked, so an old or broken save still draws a hero.
@@ -19,6 +19,7 @@ export function heroSettings(raw: Partial<HeroSettings> | undefined, fallback: H
   return {
     ...v,
     design: (HERO_DESIGNS as readonly string[]).includes(v.design) ? v.design : heroDefaults.design,
+    bg: v.bg && (HERO_BGS as readonly string[]).includes(v.bg) ? v.bg : "dots",
     highlight: String(v.highlight ?? "").slice(0, 80),
     primaryLink: link(v.primaryLink, heroDefaults.primaryLink),
     secondaryLink: link(v.secondaryLink, heroDefaults.secondaryLink),
@@ -150,7 +151,7 @@ function Ticker({ h, c, light }: Ctx & { light?: boolean }) {
 function Classic(x: Ctx) {
   return (
     <section className={`relative flex items-center overflow-hidden bg-white pb-16 pt-28 sm:pt-32 lg:pb-6 lg:pt-24 ${x.preview ? "min-h-[760px]" : "lg:h-[100svh] lg:min-h-[620px]"}`}>
-      <DotField className="[mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
+      <HeroBackground kind={x.h.bg} />
       <div className="container-x relative grid items-center gap-12 lg:grid-cols-[1.08fr_1fr] lg:gap-14">
         <div>
           <Headline {...x} />
@@ -170,7 +171,7 @@ function Classic(x: Ctx) {
 function Centered(x: Ctx) {
   return (
     <section className={`relative flex flex-col justify-between overflow-hidden bg-white pt-32 sm:pt-36 ${tall(x.preview)}`}>
-      <DotField className="[mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_80%)]" />
+      <HeroBackground kind={x.h.bg} center />
       <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[420px] -translate-x-1/2 rounded-full opacity-25 blur-3xl" style={{ background: x.accent }} aria-hidden />
       <div className="container-x relative mx-auto max-w-5xl pb-14 text-center">
         <Headline {...x} center size="text-[2.6rem] sm:text-6xl lg:text-7xl" />
