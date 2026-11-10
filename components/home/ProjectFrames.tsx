@@ -432,7 +432,7 @@ function DesignFrame({ project }: { project: Project }) {
         const c = collage[i];
         return (
           <motion.img
-            key={src + i}
+            key={`${i}:${src}`}
             src={src}
             alt=""
             initial={{ opacity: 0, y: 30, rotate: 0 }}

@@ -185,7 +185,7 @@ export default async function ProjectPage({ params }: Props) {
             <h2 className="h-display text-3xl sm:text-4xl">Gallery</h2>
             <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {gallery.map((src, n) => (
-                <li key={src + n}>
+                <li key={`${n}:${src}`}>
                   <a href={src} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-[20px] border border-line bg-white">
                     <img src={src} alt={`${p.title} image ${n + 1}`} loading="lazy" className="aspect-[4/3] w-full object-cover object-top transition duration-500 group-hover:scale-[1.03]" />
                   </a>

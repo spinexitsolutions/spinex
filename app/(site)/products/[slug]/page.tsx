@@ -170,7 +170,7 @@ export default async function ProductPage({ params }: Props) {
             {shots.length > 0 && (
               <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {shots.map((src, i) => (
-                  <li key={src + i}>
+                  <li key={`${i}:${src}`}>
                     <a href={src} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-[20px] border border-line bg-white">
                       <img src={src} alt={`${p.name} screenshot ${i + 1}`} loading="lazy" className="aspect-[16/10] w-full object-cover object-top transition duration-500 group-hover:scale-[1.03]" />
                     </a>
