@@ -611,7 +611,7 @@ function AdminShell() {
                   </div>
                 </Card>
                 <Card title="Tools strip" note="The moving line of tool names under the hero.">
-                  <ObjectEditor value={{ tools: draft.sections.tools }} onChange={(v) => set("sections", { ...draft.sections, tools: v.tools })} fields={[{ key: "tools", label: "Tools", type: "tags" }]} />
+                  <ObjectEditor value={{ toolsTitle: draft.sections.toolsTitle ?? "Tools and platforms we work with", tools: draft.sections.tools }} onChange={(v) => set("sections", { ...draft.sections, tools: v.tools, toolsTitle: v.toolsTitle })} fields={[{ key: "toolsTitle", label: "Small heading above the logos", hint: "Leave empty to hide it" }, { key: "tools", label: "Tools", type: "tags", hint: "Next.js, React, WordPress, Shopify, Figma, Meta Ads, Google Ads, Premiere Pro, After Effects, Razorpay and Google Analytics show their logo; others get a letter badge" }]} />
                 </Card>
               </div>
             )}

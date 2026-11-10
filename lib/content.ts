@@ -334,7 +334,7 @@ export type SiteContent = {
   hero: HeroSettings;
   sections: {
     services: Heading; why: Heading; process: Heading; work: Heading; industries: Heading; goals: Heading;
-    planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; products: Heading; tools: string[];
+    planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; products: Heading; tools: string[]; toolsTitle?: string;
   };
   process: ProcessStep[];
   goals: Goal[];
