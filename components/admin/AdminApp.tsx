@@ -1142,8 +1142,10 @@ function AdminShell() {
 
             {section === "showreel" && (
               <Card title="Showreel">
-                <ObjectEditor value={draft.showreel} onChange={(v) => set("showreel", v)} fields={[
-                  { key: "title", label: "Heading" },
+                <ObjectEditor value={{ eyebrow: "", intro: "", ...draft.showreel }} onChange={(v) => set("showreel", v)} fields={[
+                  { key: "eyebrow", label: "Small line above the heading", hint: "e.g. Our story in 30 seconds. Leave empty to hide it" },
+                  { key: "title", label: "Heading", hint: "Put words between * to colour them, e.g. One team. *Everything online.*" },
+                  { key: "intro", label: "Short line under the heading" },
                   { key: "video", label: "Video URL", hint: "MP4 link, or put showreel.mp4 in the public folder and enter /showreel.mp4" },
                   { key: "poster", label: "Cover image", type: "image", hint: "Shown before the video loads" },
                   { key: "videoMobile", label: "Phone video URL (portrait 9:16)", hint: "Played on phones instead of the wide video, e.g. /showreel-mobile.mp4. Leave empty to use the wide video everywhere." },

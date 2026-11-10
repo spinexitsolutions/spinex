@@ -1,110 +1,141 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Pause, Play } from "lucide-react";
+import { motion } from "framer-motion";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useContent } from "../ContentProvider";
+import { ease } from "../Reveal";
 
-const tags = ["Websites", "Online stores", "Reels", "Ad films", "Brand design"];
-
-// Scroll story: the reel first plays inside giant letters, then the letters zoom past
-// and the full video settles into a framed player.
+// Brand video: heading on top and the video in a glowing frame below. It scrolls like any other
+// section. The video plays muted while on screen; "Watch with sound" restarts it with sound.
 export default function Showreel() {
   const { content } = useContent();
-  // Nothing to show without a video.
   if (!content.showreel.video?.trim()) return null;
   return <ShowreelInner />;
 }
 
+function Heading({ text }: { text: string }) {
+  const parts = text.split("*");
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 ? <span key={i} className="bg-gradient-to-r from-[#b9acf5] to-[#f0abfc] bg-clip-text text-transparent">{p}</span> : <span key={i}>{p}</span>
+      )}
+    </>
+  );
+}
+
 function ShowreelInner() {
   const { content } = useContent();
+  const sr = content.showreel;
   const ref = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(true);
-  // The video only starts downloading when the visitor is about a screen away from the showreel,
-  // so people who never scroll that far don't spend 3 MB of mobile data on it.
   const [near, setNear] = useState(false);
+  const [phone, setPhone] = useState<boolean | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [sound, setSound] = useState(false);
+
+  // Start downloading only when the visitor is about a screen away, to save mobile data.
   useEffect(() => {
     const el = ref.current;
     if (!el || near) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setNear(true); io.disconnect(); } }, { rootMargin: "120% 0px" });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setNear(true); io.disconnect(); } }, { rootMargin: "100% 0px" });
     io.observe(el);
     return () => io.disconnect();
   }, [near]);
-  // Phones get the portrait reel (if one is set), so nothing important is cropped off the sides.
-  const [phone, setPhone] = useState<boolean | null>(null);
+
+  // Phones get the portrait 9:16 video when one is set.
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px), (orientation: portrait) and (max-width: 1024px)");
+    const mq = window.matchMedia("(max-width: 767px)");
     const pick = () => setPhone(mq.matches);
     pick();
     mq.addEventListener("change", pick);
     return () => mq.removeEventListener("change", pick);
   }, []);
-  const sr = content.showreel;
+
+  // Plays only while on screen.
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) v.play().then(() => setPlaying(true)).catch(() => {});
+      else { v.pause(); setPlaying(false); }
+    }, { threshold: 0.35 });
+    io.observe(v);
+    return () => io.disconnect();
+  }, [near, phone]);
+
   const usePhone = phone === true && !!sr.videoMobile?.trim();
   const src = phone === null || !near ? undefined : usePhone ? sr.videoMobile : sr.video;
   const poster = usePhone ? sr.posterMobile || sr.poster : sr.poster;
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const eyebrow = sr.eyebrow ?? "Our story in 30 seconds";
+  const title = sr.title?.trim() || "One team. *Everything online.*";
 
-  const maskScale = useTransform(p, [0, 0.5], [1, 8]);
-  const maskOpacity = useTransform(p, [0.3, 0.5], [1, 0]);
-  const kickerOpacity = useTransform(p, [0, 0.15], [1, 0]);
-  const videoScale = useTransform(p, [0.5, 0.85], [1, 0.86]);
-  const radius = useTransform(p, [0.5, 0.85], [0, 32]);
-  const captionOpacity = useTransform(p, [0.7, 0.88], [0, 1]);
-  const captionY = useTransform(p, [0.7, 0.88], [24, 0]);
-  const captionPointer = useTransform(p, (v) => (v > 0.72 ? "auto" : "none"));
-
-  const toggle = () => {
+  const withSound = () => {
     const v = video.current;
     if (!v) return;
-    if (v.paused) {
-      v.play();
-      setPlaying(true);
-    } else {
-      v.pause();
-      setPlaying(false);
-    }
+    v.currentTime = 0;
+    v.muted = false;
+    setSound(true);
+    v.play().then(() => setPlaying(true)).catch(() => {});
+  };
+  const togglePlay = () => {
+    const v = video.current;
+    if (!v) return;
+    if (v.paused) v.play().then(() => setPlaying(true)).catch(() => {});
+    else { v.pause(); setPlaying(false); }
+  };
+  const toggleSound = () => {
+    const v = video.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setSound(!v.muted);
   };
 
   return (
-    <section ref={ref} className="relative h-[220vh] bg-ink text-white" aria-label={content.showreel.title}>
-      <div className="sticky top-0 isolate h-[100svh] overflow-hidden">
-        {/* On phones the whole 9:16 reel is shown (nothing cut at the sides); the space above and below
-            matches the reel's off-white background. */}
-        <motion.div style={{ scale: videoScale, borderRadius: radius }} className={`absolute inset-0 overflow-hidden ${usePhone ? "bg-[#f7f6fb]" : "bg-ink-3"}`}>
-          <video ref={video} key={src ?? "none"} src={src} poster={poster} autoPlay muted loop playsInline preload={src ? "auto" : "none"} className={`h-full w-full ${usePhone ? "object-contain" : "object-cover"}`} data-showreel={usePhone ? "phone" : "wide"} />
-          {/* Shade only at the bottom, and only while the caption shows, so the clean reel isn't dimmed. */}
-          <motion.div style={{ opacity: captionOpacity }} className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink/85 via-ink/40 to-transparent" />
-        </motion.div>
+    <section ref={ref} className="relative overflow-hidden bg-ink py-16 text-center text-white sm:py-28" aria-label={title.replace(/\*/g, "")} data-showreel-section>
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] h-[700px] w-[1100px] max-w-[160vw] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(110,89,217,0.45),transparent)]" />
+      <div className="container-x relative">
+        {eyebrow && <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-lav-300 sm:text-[13px]">{eyebrow}</p>}
+        <h2 className="h-display mx-auto mt-3 max-w-4xl text-4xl sm:mt-4 sm:text-6xl"><Heading text={title} /></h2>
+        {sr.intro && <p className="mx-auto mt-3 max-w-xl text-[15px] text-white/60 sm:mt-4 sm:text-lg">{sr.intro}</p>}
 
-        {/* Dark layer with the word cut out: multiply blend lets the video show only through the letters */}
-        <motion.div aria-hidden style={{ scale: maskScale, opacity: maskOpacity }} className="pointer-events-none absolute inset-0 grid place-items-center bg-ink mix-blend-multiply [will-change:transform,opacity]">
-          <span className="select-none font-display text-[19vw] font-bold leading-none tracking-tightest text-white">Showreel</span>
-        </motion.div>
-
-        <motion.p style={{ opacity: kickerOpacity }} className="absolute inset-x-0 top-[18%] text-center text-lg text-white/70">
-          {content.showreel.title}
-        </motion.p>
-        <motion.p style={{ opacity: kickerOpacity }} className="absolute inset-x-0 bottom-[12%] text-center text-sm text-white/55">
-          Keep scrolling
-        </motion.p>
-
-        {/* Caption and controls once the video is framed */}
-        <motion.div style={{ opacity: captionOpacity, y: captionY, pointerEvents: captionPointer }} className="absolute inset-x-0 bottom-[10%] px-[10%]">
-          <div className="mx-auto flex max-w-[1100px] flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <h2 className="h-display text-3xl sm:text-5xl">{content.showreel.title}</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {tags.map((t) => (
-                  <span key={t} className="rounded-full border border-white/25 bg-ink/40 px-3 py-1 text-sm backdrop-blur">{t}</span>
-                ))}
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.8, ease }}
+          className={`relative mx-auto mt-8 rounded-[30px] bg-gradient-to-br from-[#b9acf5]/60 via-white/[0.06] to-[#f0abfc]/45 p-[7px] shadow-[0_60px_120px_-40px_rgba(110,89,217,0.6)] sm:mt-14 sm:rounded-[34px] sm:p-[10px] ${usePhone ? "w-[min(300px,82vw)]" : "max-w-[1040px]"}`}
+        >
+          <div className={`relative overflow-hidden rounded-[24px] bg-[#f7f6fb] sm:rounded-[26px] ${usePhone ? "aspect-[9/16]" : "aspect-video"}`}>
+            <video
+              ref={video}
+              key={src ?? "none"}
+              src={src}
+              poster={poster}
+              muted={!sound}
+              loop
+              playsInline
+              preload={src ? "auto" : "none"}
+              className="absolute inset-0 h-full w-full object-cover"
+              data-showreel={usePhone ? "phone" : "wide"}
+            />
+            <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 sm:inset-x-5 sm:bottom-5">
+              {!sound ? (
+                <button type="button" onClick={withSound} className="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-1 pr-4 text-[13px] font-semibold text-ink shadow-lg transition hover:bg-lav-100 sm:text-sm">
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-white sm:h-10 sm:w-10"><Play size={15} className="ml-0.5" /></span>
+                  Watch with sound
+                </button>
+              ) : <span />}
+              <span className="flex gap-2">
+                <button type="button" onClick={toggleSound} aria-label={sound ? "Mute" : "Turn sound on"} className="grid h-9 w-9 place-items-center rounded-full bg-ink/75 text-white backdrop-blur transition hover:bg-ink sm:h-11 sm:w-11">
+                  {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
+                </button>
+                <button type="button" onClick={togglePlay} aria-label={playing ? "Pause video" : "Play video"} className="grid h-9 w-9 place-items-center rounded-full bg-ink/75 text-white backdrop-blur transition hover:bg-ink sm:h-11 sm:w-11">
+                  {playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+                </button>
+              </span>
             </div>
-            <button onClick={toggle} aria-label={playing ? "Pause video" : "Play video"} className="flex h-12 shrink-0 items-center gap-3 rounded-full bg-white py-1 pl-1 pr-5 text-sm font-semibold text-ink transition hover:bg-lav-100">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-ink text-white">{playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}</span>
-              {playing ? "Pause reel" : "Play reel"}
-            </button>
           </div>
         </motion.div>
       </div>

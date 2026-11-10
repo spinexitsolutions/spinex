@@ -370,7 +370,7 @@ export type SiteContent = {
   testimonials: Testimonial[];
   trusted: TrustedBy;
   leadReplies: LeadReplies;
-  showreel: { title: string; video: string; poster: string; videoMobile: string; posterMobile: string }; // *Mobile: portrait 9:16 for phones
+  showreel: { title: string; video: string; poster: string; videoMobile: string; posterMobile: string; eyebrow?: string; intro?: string }; // *Mobile: portrait 9:16 for phones
   intro: IntroSettings;
   cursor: CursorSettings;
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
@@ -747,7 +747,9 @@ const baseContent: SiteContent = {
   cursor: defaultCursor,
   founders: foundersDefaults,
   showreel: {
-    title: "A look at what we make",
+    eyebrow: "Our story in 30 seconds",
+    title: "One team. *Everything online.*",
+    intro: "Websites, stores, marketing and video, built by one team in Jaipur.",
     video: "/showreel.mp4",
     poster: "/showreel-poster.jpg",
     videoMobile: "/showreel-mobile.mp4",
