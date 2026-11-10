@@ -100,7 +100,7 @@ function Win({ src, label, auto = false, className = "" }: { src: string; label:
       <div className="relative flex-1 overflow-hidden">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={sized(src, 1280)} alt="" loading="lazy" decoding="async" className={`block w-full ${auto ? "animate-[shot_22s_ease-in-out_infinite_alternate]" : "transition-transform duration-[6s] ease-linear group-hover:[transform:translateY(calc(-100%+100cqh))]"}`} />
+          <img src={sized(src, 1280)} alt="" loading="lazy" decoding="async" className={`block w-full ${auto ? "animate-[shot_22s_ease-in-out_infinite_alternate]" : "transition-transform duration-[6s] ease-linear group-hover:[transform:translateY(calc(-100%_+_100cqh))]"}`} />
         ) : <div className="h-full bg-mist" />}
       </div>
     </div>

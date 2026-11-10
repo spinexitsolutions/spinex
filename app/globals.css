@@ -92,3 +92,7 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
 @media (max-width: 767px) {
   html[data-mobile-bar="1"] body { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
 }
+
+/* Home "Our work": a tall screenshot slowly scrolling inside its window (the window is a size container). */
+@keyframes shot { 0%, 6% { transform: translateY(0); } 94%, 100% { transform: translateY(calc(-100% + 100cqh)); } }
+@media (prefers-reduced-motion: reduce) { .animate-\[shot_22s_ease-in-out_infinite_alternate\] { animation: none; } }

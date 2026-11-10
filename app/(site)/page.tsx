@@ -6,7 +6,7 @@ import TrustedBy from "@/components/home/TrustedBy";
 import ServicesList from "@/components/home/ServicesList";
 import WhySpinex from "@/components/home/WhySpinex";
 import Process from "@/components/home/Process";
-import ProjectsShowcase from "@/components/home/ProjectsShowcase";
+import HomeWork from "@/components/home/HomeWork";
 import Showreel from "@/components/home/Showreel";
 import Industries from "@/components/home/Industries";
 import Goals from "@/components/home/Goals";
@@ -52,7 +52,7 @@ export default async function HomePage() {
     services: <ServicesList />,
     why: <WhySpinex />,
     process: <Process />,
-    work: <ProjectsShowcase />,
+    work: <HomeWork />,
     products: <HomeProducts content={content} />,
     showreel: <Showreel />,
     industries: <Industries />,
