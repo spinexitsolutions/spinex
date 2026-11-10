@@ -253,6 +253,8 @@ export function homeOrder(layout: HomeBlock[] | undefined): HomeBlock[] {
 
 // Bar fixed to the bottom of the screen on phones: Call, WhatsApp and Get a quote.
 export type MobileBar = { show: boolean; call: boolean; whatsapp: boolean; quote: boolean; quoteLabel: string; quoteLink: string };
+export type FooterSettings = { wordmark: string; animate: boolean; products: boolean };
+export const defaultFooter: FooterSettings = { wordmark: "SPINEX", animate: true, products: true };
 export const defaultMobileBar: MobileBar = { show: false, call: true, whatsapp: true, quote: true, quoteLabel: "Get a quote", quoteLink: "/contact" };
 
 // "Trusted by" strip: client logos (or names) and an optional Google rating line.
@@ -372,7 +374,7 @@ export type SiteContent = {
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
-  integrations: { whatsappButton: boolean; whatsappText: string; mobileBar?: MobileBar; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
+  integrations: { whatsappButton: boolean; whatsappText: string; mobileBar?: MobileBar; footer?: FooterSettings; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
   internship: { open: boolean; intro: string; modes: string[]; durations: string[]; perks: string[]; roles: InternRole[] };
   contact: {
     email: string;
@@ -732,6 +734,7 @@ const baseContent: SiteContent = {
   integrations: {
     whatsappButton: true,
     mobileBar: defaultMobileBar,
+    footer: defaultFooter,
     whatsappText: "Hi Spinex, I found you on your website and want to know more.",
     gaId: "",
     clarityId: "",

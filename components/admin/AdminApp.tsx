@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import { defaultContent, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
+import { defaultContent, defaultFooter, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type FooterSettings, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -750,6 +750,28 @@ function AdminShell() {
                           { key: "quoteLink", label: "Third button opens", hint: "e.g. /contact or /book" },
                         ]} />
                         <p className="text-sm text-muted">Phone and WhatsApp numbers come from Contact details.</p>
+                      </div>
+                    );
+                  })()}
+                </Card>
+                <Card title="Footer" note="The big word at the bottom of the footer and the products column.">
+                  {(() => {
+                    const ft = { ...defaultFooter, ...(draft.integrations.footer ?? {}) };
+                    const setFt = (v: Partial<FooterSettings>) => set("integrations", { ...draft.integrations, footer: { ...ft, ...v } });
+                    return (
+                      <div className="space-y-4" data-footer-settings>
+                        <ObjectEditor value={ft} onChange={(v) => setFt(v as Partial<FooterSettings>)} fields={[
+                          { key: "wordmark", label: "Big word at the bottom", hint: "Shown with wide letter spacing, e.g. SPINEX. Leave empty to hide it" },
+                        ]} />
+                        <label className="flex items-center gap-3">
+                          <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={ft.animate} onChange={(e) => setFt({ animate: e.target.checked })} />
+                          <span className="font-medium">Animate the big word (letters open up from a soft blur when the footer comes into view)</span>
+                        </label>
+                        <label className="flex items-center gap-3">
+                          <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={ft.products} onChange={(e) => setFt({ products: e.target.checked })} />
+                          <span className="font-medium">Show the &quot;Our products&quot; column with pictures</span>
+                        </label>
+                        <p className="text-sm text-muted">Email, phone, address and social links come from Contact details. The short line under the logo is the brand tagline.</p>
                       </div>
                     );
                   })()}
