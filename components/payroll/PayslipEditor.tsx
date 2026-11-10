@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
-import { ArrowLeft, Ban, CheckCircle2, Copy, Eye, FileDown, Loader2, Mail, MessageCircle, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, Copy, Eye, FileDown, Loader2, Mail, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { PAY_MODES, monthLabel, recalc, slipStatusLabel, slipTotals, type Payslip, type SlipDeduction, type SlipEarning } from "@/lib/payroll";
 import { verifyLabel, verifyLink, type Letterhead } from "@/lib/letters";
 import PayslipDocument from "./PayslipDocument";
@@ -151,7 +152,7 @@ export default function PayslipEditor({ id, logo, verifyBase, readOnly }: { id: 
               {slip.status === "issued" && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button onClick={() => navigator.clipboard?.writeText(shareLink).then(() => flash("Link copied"))} className="btn-ghost px-4 py-2 text-sm"><Copy size={14} /> Copy employee link</button>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Hi ${slip.emp.name.split(" ")[0]}, your payslip for ${monthLabel(slip.month)} from ${head.legalName}: ${shareLink}`)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2 text-sm"><MessageCircle size={14} /> WhatsApp</a>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`Hi ${slip.emp.name.split(" ")[0]}, your payslip for ${monthLabel(slip.month)} from ${head.legalName}: ${shareLink}`)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2 text-sm"><WhatsAppIcon size={14} /> WhatsApp</a>
                   <a href={`/p/${slip.token}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2 text-sm"><Eye size={14} /> Open as employee</a>
                 </div>
               )}

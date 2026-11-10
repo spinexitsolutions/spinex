@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, Check, ChevronRight, ExternalLink, MessageCircle, Play, Plus, Users } from "lucide-react";
+import { ArrowUpRight, Check, ChevronRight, ExternalLink, Play, Plus, Users } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { getContent } from "@/lib/content-server";
 import { productBuyLink, productSlug, type Product } from "@/lib/content";
 import { renderMarkdown } from "@/lib/posts";
@@ -108,7 +109,7 @@ export default async function ProductPage({ params }: Props) {
             {p.tagline && <p className="mt-4 font-display text-xl text-lav-200 sm:text-2xl">{p.tagline}</p>}
             {p.description && <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">{p.description}</p>}
             <div className="mt-8 flex flex-wrap gap-3">
-              {buyLink && <a href={buyLink} target="_blank" rel="noreferrer" className="btn-light" data-buy-now><MessageCircle size={17} /> Buy now{p.price ? ` · ${p.price}` : ""}</a>}
+              {buyLink && <a href={buyLink} target="_blank" rel="noreferrer" className="btn-light" data-buy-now><WhatsAppIcon size={17} /> Buy now{p.price ? ` · ${p.price}` : ""}</a>}
               <a href="#demo" className={buyLink ? "btn-ghost-dark" : "btn-light"}>Book a free demo <ArrowUpRight size={17} /></a>
               {p.demoUrl && <a href={p.demoUrl} target="_blank" rel="noreferrer" className="btn-ghost-dark">Try live demo <ExternalLink size={16} /></a>}
             </div>

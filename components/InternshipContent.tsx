@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, Check, Code2, Megaphone, Palette, Clapperboard, Heart, Briefcase, MessageCircle, Sparkles, Upload, Loader2, PartyPopper, type LucideIcon } from "lucide-react";
+import { ArrowDown, Check, Code2, Megaphone, Palette, Clapperboard, Heart, Briefcase, Sparkles, Upload, Loader2, PartyPopper, type LucideIcon } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "./ContentProvider";
 import HumanCheck from "./HumanCheck";
 import { track } from "@/lib/track";
@@ -271,7 +272,7 @@ export default function InternshipContent() {
                   {submitting ? <><Loader2 size={18} className="animate-spin" /> Sending</> : <>Submit application</>}
                 </button>
                 <a href={`https://wa.me/${content.contact.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted hover:text-ink">
-                  <MessageCircle size={16} /> Questions? Ask on WhatsApp
+                  <WhatsAppIcon size={16} /> Questions? Ask on WhatsApp
                 </a>
               </div>
               <p className="mt-4 text-xs text-muted">By applying you agree to our <Link href="/privacy" className="underline hover:text-ink">Privacy Policy</Link>. If you are under 18, a parent or guardian must apply with you.</p>

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUpRight, Check, MessageCircle } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Check } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "../ContentProvider";
 import { ease } from "../Reveal";
 import { sized } from "@/lib/img";
@@ -88,7 +89,7 @@ export default function Goals() {
                 ) : (
                   <Link href="/contact#planner" className="btn-light">Plan this project <ArrowUpRight size={16} /></Link>
                 )}
-                <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost-dark"><MessageCircle size={16} /> Ask on WhatsApp</a>
+                <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost-dark"><WhatsAppIcon size={16} /> Ask on WhatsApp</a>
               </div>
             </div>
 

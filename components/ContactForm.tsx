@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Loader2, MessageCircle, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Send } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "./ContentProvider";
 import { submitLead } from "@/lib/leads";
 import { ease } from "./Reveal";
@@ -67,7 +68,7 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
             <h3 className="mt-5 font-display text-3xl font-semibold tracking-tight">Thanks, {done.name.split(" ")[0]}!</h3>
             <p className="mx-auto mt-2 max-w-sm text-muted">We&apos;ve got your enquiry and will call you on {done.phone} within a day.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <a href={whatsapp(done)} target="_blank" rel="noreferrer" className="btn-dark"><MessageCircle size={17} /> Chat on WhatsApp now</a>
+              <a href={whatsapp(done)} target="_blank" rel="noreferrer" className="btn-dark"><WhatsAppIcon size={17} /> Chat on WhatsApp now</a>
               <button onClick={() => setDone(null)} className="btn-ghost">Send another</button>
             </div>
           </motion.div>
@@ -110,7 +111,7 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
                 {sending ? <><Loader2 size={18} className="animate-spin" /> Sending</> : <><Send size={18} /> Send enquiry</>}
               </button>
               <a href={`https://wa.me/${content.contact.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted hover:text-ink">
-                <MessageCircle size={16} /> Or chat on WhatsApp
+                <WhatsAppIcon size={16} /> Or chat on WhatsApp
               </a>
             </div>
             <p className="mt-4 text-xs text-muted">By sending this form you agree to our <Link href="/privacy" className="underline hover:text-ink">Privacy Policy</Link>.</p>

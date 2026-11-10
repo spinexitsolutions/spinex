@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight, MessageCircle, Package } from "lucide-react";
+import { ArrowUpRight, Package } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { productBuyLink, productSlug, type SiteContent } from "@/lib/content";
 import { sized } from "@/lib/img";
 
@@ -40,7 +41,7 @@ export default function HomeProducts({ content }: { content: SiteContent }) {
                   <p className="mt-5 text-sm"><span className="text-muted">Price </span><span className="font-semibold">{p.price || "Price on request"}</span></p>
                   <div className="mt-auto flex flex-wrap gap-2 pt-6">
                     {buy ? (
-                      <a href={buy} target="_blank" rel="noreferrer" className="btn-dark px-5 py-2.5 text-sm" data-buy-now><MessageCircle size={16} /> Buy now</a>
+                      <a href={buy} target="_blank" rel="noreferrer" className="btn-dark px-5 py-2.5 text-sm" data-buy-now><WhatsAppIcon size={16} /> Buy now</a>
                     ) : (
                       <Link href={`${href}#demo`} className="btn-dark px-5 py-2.5 text-sm">Free demo <ArrowUpRight size={16} /></Link>
                     )}

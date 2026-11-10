@@ -1,8 +1,6 @@
 import Link from "next/link";
-import {
-  ArrowUpRight, MapPin, Globe, ShoppingBag, TrendingUp, Heart, Clapperboard, PenTool, Smartphone, Megaphone, Sparkles,
-  Video, MessageCircle, BadgeCheck, type LucideIcon,
-} from "lucide-react";
+import { ArrowUpRight, MapPin, Globe, ShoppingBag, TrendingUp, Heart, Clapperboard, PenTool, Smartphone, Megaphone, Sparkles, Video, BadgeCheck, type LucideIcon } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { serviceSlug, type SiteContent } from "@/lib/content";
 import { Reveal } from "../Reveal";
 
@@ -13,7 +11,7 @@ const icons: Record<string, LucideIcon> = {
 
 const remote = [
   { Icon: Video, title: "Video calls", text: "Plan and review together, wherever you are." },
-  { Icon: MessageCircle, title: "WhatsApp updates", text: "Progress and previews shared as we go." },
+  { Icon: WhatsAppIcon, title: "WhatsApp updates", text: "Progress and previews shared as we go." },
   { Icon: BadgeCheck, title: "Same team, same quality", text: "Jaipur or anywhere else in India." },
 ];
 

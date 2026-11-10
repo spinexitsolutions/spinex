@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText, MessageCircle, Phone } from "lucide-react";
+import { FileText, Phone } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "./ContentProvider";
 import { track } from "@/lib/track";
 import { defaultMobileBar } from "@/lib/content";
@@ -17,9 +18,9 @@ export default function MobileBar() {
   const wa = String(c.whatsapp || "").replace(/\D/g, "");
   const items = [
     mb.call && phone ? { key: "call", label: "Call", href: `tel:+91${phone.slice(-10)}`, Icon: Phone, external: false } : null,
-    mb.whatsapp && wa ? { key: "whatsapp", label: "WhatsApp", href: `https://wa.me/${wa}?text=${encodeURIComponent(content.integrations?.whatsappText || "Hi Spinex!")}`, Icon: MessageCircle, external: true } : null,
+    mb.whatsapp && wa ? { key: "whatsapp", label: "WhatsApp", href: `https://wa.me/${wa}?text=${encodeURIComponent(content.integrations?.whatsappText || "Hi Spinex!")}`, Icon: WhatsAppIcon, external: true } : null,
     mb.quote ? { key: "quote", label: mb.quoteLabel || "Get a quote", href: mb.quoteLink || "/contact", Icon: FileText, external: false } : null,
-  ].filter(Boolean) as { key: string; label: string; href: string; Icon: typeof Phone; external: boolean }[];
+  ].filter(Boolean) as { key: string; label: string; href: string; Icon: React.ComponentType<{ size?: number }>; external: boolean }[];
   const on = mb.show && items.length > 0;
 
   // Hidden while the cookie banner or the phone menu is open.

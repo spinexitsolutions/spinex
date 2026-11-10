@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Loader2, MessageCircle } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "../ContentProvider";
 import { LEAD_SOURCES, MANUAL_SOURCES, type Lead, type ManualSource } from "@/lib/leads";
 import { defaultWaTemplates, type WaTemplate } from "@/lib/content";
@@ -38,9 +39,9 @@ export function WaPicker({ lead, onSent, compact = false }: { lead: Lead; onSent
   return (
     <div ref={box} className="relative" data-wa-picker>
       {compact ? (
-        <button type="button" onClick={() => setOpen((v) => !v)} aria-label={`WhatsApp ${lead.name}`} title="WhatsApp" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-emerald-50 hover:text-emerald-700"><MessageCircle size={16} /></button>
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-label={`WhatsApp ${lead.name}`} title="WhatsApp" className="grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-emerald-50 hover:text-emerald-700"><WhatsAppIcon size={16} /></button>
       ) : (
-        <button type="button" onClick={() => setOpen((v) => !v)} className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp <ChevronDown size={14} /></button>
+        <button type="button" onClick={() => setOpen((v) => !v)} className="btn-ghost px-4 py-2.5 text-sm"><WhatsAppIcon size={15} /> WhatsApp <ChevronDown size={14} /></button>
       )}
       <AnimatePresence>
         {open && (

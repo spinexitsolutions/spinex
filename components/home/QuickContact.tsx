@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, MapPin, Phone, Send } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { submitLead } from "@/lib/leads";
 import HumanCheck from "../HumanCheck";
 import { useContent } from "../ContentProvider";
@@ -26,7 +27,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
 
   const methods = [
     { Icon: Phone, label: "Call us", value: `+91 ${c.phone}`, href: `tel:+91${c.phone}` },
-    { Icon: MessageCircle, label: "WhatsApp", value: "Chat now", href: `https://wa.me/${c.whatsapp}` },
+    { Icon: WhatsAppIcon, label: "WhatsApp", value: "Chat now", href: `https://wa.me/${c.whatsapp}` },
     // Email and address get a full-width row so a long email address never breaks in the middle.
     { Icon: Mail, label: "Email", value: c.email, href: `mailto:${c.email}`, wide: true },
     { Icon: MapPin, label: "Visit", value: c.location, href: `https://maps.google.com/?q=${encodeURIComponent(c.location)}`, wide: true },

@@ -1,6 +1,7 @@
 "use client";
 
-import { Mail, MapPin, Phone, MessageCircle } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "./ContentProvider";
 
 export default function ContactInfo() {
@@ -9,7 +10,7 @@ export default function ContactInfo() {
   const items = [
     { Icon: Mail, label: "Email", value: c.email, href: `mailto:${c.email}` },
     { Icon: Phone, label: "Phone", value: `+91 ${c.phone}`, href: `tel:+91${c.phone}` },
-    { Icon: MessageCircle, label: "WhatsApp", value: "Chat with us", href: `https://wa.me/${c.whatsapp}` },
+    { Icon: WhatsAppIcon, label: "WhatsApp", value: "Chat with us", href: `https://wa.me/${c.whatsapp}` },
     { Icon: MapPin, label: "Office", value: c.location, href: `https://maps.google.com/?q=${encodeURIComponent(c.location)}` },
   ];
   return (

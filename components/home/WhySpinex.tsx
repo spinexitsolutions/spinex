@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView } from "framer-motion";
-import { Monitor, Tablet, Smartphone, RotateCcw, Play, Check, ShieldCheck, Headphones, MessageCircle } from "lucide-react";
+import { Monitor, Tablet, Smartphone, RotateCcw, Play, Check, ShieldCheck, Headphones } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
 import { sized } from "@/lib/img";
@@ -257,7 +258,7 @@ function Support() {
         <h3 className="font-display text-xl font-semibold tracking-tight">Quick WhatsApp support</h3>
         <p className="mt-1 text-white/80">A real person replies, not a ticket queue.</p>
         <a href={`https://wa.me/${content.contact.whatsapp}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink">
-          <MessageCircle size={15} /> Message us
+          <WhatsAppIcon size={15} /> Message us
         </a>
       </div>
     </div>

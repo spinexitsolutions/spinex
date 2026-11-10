@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, MessageCircle, Clock, Loader2, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock, Loader2, Send } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { submitLead } from "@/lib/leads";
 import HumanCheck from "../HumanCheck";
 import { useContent } from "../ContentProvider";
@@ -184,7 +185,7 @@ export default function Planner() {
             {sent && (
               <p className="mt-4 flex items-start gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
                 <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> Thanks {name.split(" ")[0]}! We got your plan and will call you on {phone} with a quote, usually within a day.
-                <a href={`https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(message())}`} target="_blank" rel="noreferrer" className="ml-auto inline-flex shrink-0 items-center gap-1 font-semibold underline"><MessageCircle size={14} /> WhatsApp</a>
+                <a href={`https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(message())}`} target="_blank" rel="noreferrer" className="ml-auto inline-flex shrink-0 items-center gap-1 font-semibold underline"><WhatsAppIcon size={14} /> WhatsApp</a>
               </p>
             )}
 

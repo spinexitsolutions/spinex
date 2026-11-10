@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Copy, FileCheck2, FileText, Loader2, Mail, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, FileCheck2, FileText, Loader2, Mail, Plus, Save, Trash2 } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import {
   GST_RATES, INDIAN_STATES, docSigners, INVOICE_STATUSES, QUOTE_STATUSES, blankItem, computeTotals, docTitle, inr, stateFromGstin, statusLabel, validGstin,
   type BillDoc, type BillingProfile,
@@ -194,7 +195,7 @@ export default function BillingEditor({ id, logo, readOnly = false }: { id: stri
           <Box title="Share">
             <div className="flex flex-wrap gap-2">
               {!readOnly && <button onClick={send} disabled={busy === "send"} className="btn-dark px-4 py-2.5 text-sm"><Mail size={15} /> {busy === "send" ? "Sending…" : "Email to client"}</button>}
-              {doc.client.phone && <a href={`https://wa.me/${waNumber(doc.client.phone)}?text=${encodeURIComponent(waText)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><MessageCircle size={15} /> WhatsApp</a>}
+              {doc.client.phone && <a href={`https://wa.me/${waNumber(doc.client.phone)}?text=${encodeURIComponent(waText)}`} target="_blank" rel="noreferrer" className="btn-ghost px-4 py-2.5 text-sm"><WhatsAppIcon size={15} /> WhatsApp</a>}
               <button onClick={() => navigator.clipboard?.writeText(shareLink).then(() => flash("Client link copied"))} className="btn-ghost px-4 py-2.5 text-sm"><Copy size={15} /> Copy client link</button>
               {!readOnly && doc.type === "quote" && !doc.invoiceId && <button onClick={toInvoice} disabled={busy === "invoice"} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Make invoice</button>}
               {doc.type === "quote" && doc.invoiceId && doc.invoiceId !== "pending" && <Link href={`/admin/billing/${doc.invoiceId}`} className="btn-ghost px-4 py-2.5 text-sm"><FileCheck2 size={15} /> Open invoice</Link>}
