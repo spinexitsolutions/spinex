@@ -3,12 +3,16 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Sparkles } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
+import { FAQ_HELP } from "@/lib/content";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
 
 // Uses the same Q&A list as the chatbot, so both are edited in one place in the admin panel.
 export default function Faq() {
   const { content } = useContent();
+  const sec = content.sections.faq;
+  const help = { title: sec.helpTitle ?? FAQ_HELP.helpTitle, text: sec.helpText ?? FAQ_HELP.helpText, note: sec.helpNote ?? FAQ_HELP.helpNote };
   const [open, setOpen] = useState<string | null>(content.chatbot.faqs[0]?.id ?? null);
 
   return (
@@ -16,10 +20,27 @@ export default function Faq() {
       <div className="container-x grid gap-12 lg:grid-cols-[1fr_1.5fr]">
         <div>
           <SplitHeading key={content.sections.faq.heading} text={content.sections.faq.heading} className="h-display text-4xl sm:text-6xl" />
-          <p className="mt-6 max-w-sm text-muted">{content.sections.faq.intro}</p>
-          <button onClick={() => window.dispatchEvent(new Event("spinex:open-chat"))} className="btn-dark mt-8">
-            <Sparkles size={17} /> Ask the assistant
-          </button>
+          {sec.intro && <p className="mt-6 max-w-sm text-lg text-muted">{sec.intro}</p>}
+          {help.title && (
+            <div className="relative mt-9 max-w-md overflow-hidden rounded-[26px] bg-ink p-6 text-white sm:p-7" data-faq-help>
+              <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-[radial-gradient(circle,rgba(110,89,217,0.5),transparent_65%)]" />
+              <h3 className="relative font-display text-xl font-semibold tracking-tight sm:text-2xl">{help.title}</h3>
+              {help.text && <p className="relative mt-2 text-[15px] leading-relaxed text-white/65">{help.text}</p>}
+              <div className="relative mt-5 flex flex-wrap gap-2.5">
+                <a href={`https://wa.me/${content.contact.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-white transition hover:brightness-105">
+                  <WhatsAppIcon size={18} /> WhatsApp us
+                </a>
+                <button type="button" onClick={() => window.dispatchEvent(new Event("spinex:open-chat"))} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink transition hover:bg-lav-100">
+                  <Sparkles size={16} /> Ask Spinex AI
+                </button>
+              </div>
+              {help.note && (
+                <p className="relative mt-5 flex items-center gap-2 text-[13px] text-white/60">
+                  <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" /> {help.note}
+                </p>
+              )}
+            </div>
+          )}
         </div>
         <ul className="border-t border-line">
           {content.chatbot.faqs.map((f) => {

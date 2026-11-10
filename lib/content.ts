@@ -207,7 +207,7 @@ export type CursorSettings = { enabled: boolean; style: CursorStyle; color: stri
 export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false };
 
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
-export type Heading = { heading: string; intro: string; eyebrow?: string };
+export type Heading = { heading: string; intro: string; eyebrow?: string; helpTitle?: string; helpText?: string; helpNote?: string };
 export type PageText = { title: string; intro: string };
 export type HomeBlock = { id: string; visible: boolean };
 
@@ -253,6 +253,7 @@ export function homeOrder(layout: HomeBlock[] | undefined): HomeBlock[] {
 
 // Bar fixed to the bottom of the screen on phones: Call, WhatsApp and Get a quote.
 export type MobileBar = { show: boolean; call: boolean; whatsapp: boolean; quote: boolean; quoteLabel: string; quoteLink: string };
+export const FAQ_HELP = { helpTitle: "Still have a question?", helpText: "Talk to a real person, or get an instant answer from our assistant.", helpNote: "We usually reply within an hour, Mon–Sat" };
 export type FooterSettings = { wordmark: string; animate: boolean; products: boolean };
 export const defaultFooter: FooterSettings = { wordmark: "SPINEX", animate: true, products: true };
 export const defaultMobileBar: MobileBar = { show: false, call: true, whatsapp: true, quote: true, quoteLabel: "Get a quote", quoteLink: "/contact" };
@@ -457,7 +458,7 @@ const baseContent: SiteContent = {
     planner: { heading: "Plan your project in a minute.", intro: "Pick what you need and see the scope and a rough timeline. Send it to us and we'll reply with an exact quote." },
     products: { heading: "Software we built.", intro: "Ready-made tools from the Spinex team. Buy once, or ask for a free demo." },
     blog: { heading: "Ideas and guides.", intro: "Practical tips on websites, online stores and marketing for growing businesses." },
-    faq: { heading: "Questions we get asked.", intro: "Don't see yours? Ask our assistant and get an answer right away." },
+    faq: { heading: "Questions we get asked.", intro: "Short, honest answers. Don't see yours? Ask us directly.", helpTitle: "Still have a question?", helpText: "Talk to a real person, or get an instant answer from our assistant.", helpNote: "We usually reply within an hour, Mon–Sat" },
     contact: { eyebrow: "Start a project", heading: "Let's build what your business *needs next.*", intro: "Tell us what you need. The first call and the quote are free." },
     tools: ["Next.js", "React", "WordPress", "Shopify", "WooCommerce", "Figma", "Meta Ads", "Google Ads", "Premiere Pro", "After Effects", "Razorpay", "Google Analytics"],
   },

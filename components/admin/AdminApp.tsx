@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import { defaultContent, defaultFooter, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type FooterSettings, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
+import { FAQ_HELP, defaultContent, defaultFooter, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type FooterSettings, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -603,12 +603,18 @@ function AdminShell() {
                       <div key={key} className="rounded-2xl border border-line p-4">
                         <p className="mb-3 text-sm font-semibold text-lav-700">{label}</p>
                         <ObjectEditor
-                          value={key === "contact" ? { eyebrow: draft.sections.contact.eyebrow ?? "Start a project", ...draft.sections.contact } : draft.sections[key]}
+                          value={key === "contact" ? { eyebrow: draft.sections.contact.eyebrow ?? "Start a project", ...draft.sections.contact } : key === "faq" ? { helpTitle: FAQ_HELP.helpTitle, helpText: FAQ_HELP.helpText, helpNote: FAQ_HELP.helpNote, ...draft.sections.faq } : draft.sections[key]}
                           onChange={(v) => set("sections", { ...draft.sections, [key]: v })}
                           fields={key === "contact" ? [
                             { key: "eyebrow", label: "Small line above the heading", hint: "Leave empty to hide it" },
                             { key: "heading", label: "Heading", hint: "Put words between * to colour them, e.g. Let's build what your business *needs next.*" },
                             { key: "intro", label: "Short line" },
+                          ] : key === "faq" ? [
+                            { key: "heading", label: "Heading" },
+                            { key: "intro", label: "Short line" },
+                            { key: "helpTitle", label: "Card heading", hint: "The dark card under the heading. Leave empty to hide the card" },
+                            { key: "helpText", label: "Card text" },
+                            { key: "helpNote", label: "Small line at the bottom of the card", hint: "Leave empty to hide it" },
                           ] : [
                             { key: "heading", label: "Heading" },
                             { key: "intro", label: "Short line" },
