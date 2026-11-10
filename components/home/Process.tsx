@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, animate, motion, useInView, useMotionValue, useTransform } from "framer-motion";
-import { Compass, PenTool, Code2, Rocket, Check, MousePointer2 } from "lucide-react";
+import { animate, motion, useInView, useMotionValue, useTransform } from "framer-motion";
+import Link from "next/link";
+import { ArrowUpRight, Compass, PenTool, Code2, Rocket, Check, MousePointer2 } from "lucide-react";
+import { defaultProcessExtras } from "@/lib/content";
 import { SplitHeading, ease } from "../Reveal";
 import { useContent } from "../ContentProvider";
 import { sized } from "@/lib/img";
@@ -11,8 +13,9 @@ import { sized } from "@/lib/img";
 const visuals = [DiscoverVisual, DesignVisual, BuildVisual, LaunchVisual];
 const icons = [Compass, PenTool, Code2, Rocket];
 
-// Compact stepper: the steps play one after another on their own (about 4 seconds each) while the section
-// is on screen, and any step can be clicked. It takes one screen, no long pinned scroll.
+// Compact stepper: four step cards on top, the current step's details and animation below. The steps play
+// one after another on their own (seconds set in Admin → Process steps, 3 by default) while the section is on
+// screen, and any card can be clicked. A strip with points and a button closes the section.
 // Below md every step is shown as a plain list instead.
 export default function Process() {
   const { content } = useContent();
@@ -22,14 +25,16 @@ export default function Process() {
   const inView = useInView(ref, { amount: 0.4 });
   const n = Math.max(1, steps.length);
   const stepFill = useMotionValue(0); // how far the current step's timer has run, 0 to 1
-  const railFill = useTransform(stepFill, (v) => `${Math.min(100, ((active + v) / Math.max(1, n - 1)) * 100)}%`);
+  const cardFill = useTransform(stepFill, (v) => `${Math.min(100, v * 100)}%`);
+  const px = { ...defaultProcessExtras, ...(content.processExtras ?? {}) };
+  const secs = Math.min(10, Math.max(2, Number(px.seconds) || 3));
   const step = steps[active];
 
   // Play the current step's timer, then move to the next (back to the first after the last).
   useEffect(() => {
     if (!inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const run = animate(stepFill, 1, {
-      duration: 4 * (1 - stepFill.get()),
+      duration: secs * (1 - stepFill.get()),
       ease: "linear",
       onComplete: () => {
         stepFill.set(0);
@@ -37,7 +42,7 @@ export default function Process() {
       },
     });
     return () => run.stop();
-  }, [active, inView, n, stepFill]);
+  }, [active, inView, n, stepFill, secs]);
 
   const goTo = (i: number) => {
     stepFill.set(0);
@@ -78,11 +83,8 @@ export default function Process() {
         </ol>
 
         <div className="hidden md:block">
-          {/* Step rail */}
-          <div className="relative grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }} role="tablist" aria-label="Project stages">
-            <div aria-hidden className="absolute top-6 h-px bg-line" style={{ left: `${50 / n}%`, right: `${50 / n}%` }}>
-              <motion.div className="h-full bg-lav-600" style={{ width: railFill }} />
-            </div>
+          {/* Step cards */}
+          <div className="grid gap-3.5" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }} role="tablist" aria-label="Project stages">
             {steps.map((s, i) => {
               const on = i === active;
               const done = i < active;
@@ -93,23 +95,22 @@ export default function Process() {
                   aria-selected={on}
                   aria-controls="process-panel"
                   onClick={() => goTo(i)}
-                  className="group relative flex flex-col items-center gap-3 pb-2 text-center"
+                  className={`group flex flex-col rounded-[20px] border bg-white p-4 text-left transition-all duration-300 lg:p-5 ${on ? "border-lav-600 bg-[#faf9ff] shadow-[0_18px_40px_-26px_rgb(var(--c-lav-600)/0.8)]" : "border-line hover:border-ink"}`}
                 >
-                  <motion.span
-                    animate={{ scale: on ? 1.1 : 1 }}
-                    transition={{ duration: 0.35 }}
-                    className={`relative z-10 grid h-12 w-12 place-items-center rounded-full border border-line transition-colors duration-300 group-hover:border-ink ${on || done ? "bg-ink text-lav-300" : "bg-white text-muted"}`}
-                  >
-                    {done ? <Check size={18} /> : <s.Icon size={19} />}
-                    {on && (
-                      <svg className="absolute -inset-1 h-14 w-14 -rotate-90" viewBox="0 0 56 56" aria-hidden>
-                        <motion.circle cx="28" cy="28" r="26" fill="none" className="stroke-lav-500" strokeWidth="2" style={{ pathLength: stepFill }} />
-                      </svg>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className={`grid h-8 w-8 place-items-center rounded-[10px] text-[13px] font-bold transition-colors ${on ? "bg-lav-600 text-white" : done ? "bg-ink text-white" : "bg-lav-100 text-lav-700"}`}>
+                      {done ? <Check size={15} /> : String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="text-xs text-muted">{s.time}</span>
+                  </span>
+                  <span className="mt-3 font-display text-lg font-semibold tracking-tight">{s.title}</span>
+                  <span className="mt-0.5 line-clamp-1 text-[13px] text-muted">{s.short || s.text}</span>
+                  <span aria-hidden className="mt-3 block h-[3px] overflow-hidden rounded-full bg-line">
+                    {on ? (
+                      <motion.span className="block h-full rounded-full bg-gradient-to-r from-lav-600 to-[#c56cf0]" style={{ width: cardFill }} />
+                    ) : (
+                      <span className={`block h-full rounded-full bg-gradient-to-r from-lav-600 to-[#c56cf0] ${done ? "w-full" : "w-0"}`} />
                     )}
-                  </motion.span>
-                  <span>
-                    <span className={`block text-[15px] font-semibold transition-colors sm:text-base ${on ? "text-ink" : "text-muted group-hover:text-ink"}`}>{s.title}</span>
-                    <span className="hidden text-xs text-muted sm:block">{s.time}</span>
                   </span>
                 </button>
               );
@@ -117,14 +118,13 @@ export default function Process() {
           </div>
 
           {/* Detail panel */}
-          <div id="process-panel" role="tabpanel" className="mt-8 min-h-[340px] overflow-hidden rounded-[28px] bg-ink text-white">
-            <AnimatePresence mode="wait">
+          <div id="process-panel" role="tabpanel" className="mt-4 min-h-[340px] overflow-hidden rounded-[28px] bg-ink text-white">
+            {/* A fresh panel for each step (no exit wait), so it is never left empty while switching. */}
               <motion.div
                 key={step.id}
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                transition={{ duration: 0.45, ease }}
+                transition={{ duration: 0.35, ease }}
                 className="grid md:grid-cols-[1fr_1.1fr]"
               >
                 <div className="p-7 sm:p-9">
@@ -144,9 +144,20 @@ export default function Process() {
                   <step.Visual play />
                 </div>
               </motion.div>
-            </AnimatePresence>
           </div>
         </div>
+
+        {/* Strip under the steps (all screen sizes) */}
+        {px.ctaShow && (px.ctaPoints.some((t) => t.trim()) || px.ctaLabel) && (
+          <div className="mt-4 flex flex-col gap-4 rounded-[20px] border border-line bg-[#f7f6fb] p-5 md:flex-row md:items-center md:justify-between md:px-6" data-process-cta>
+            <ul className="flex flex-col gap-2 text-sm font-medium sm:flex-row sm:flex-wrap sm:gap-x-7">
+              {px.ctaPoints.filter((t) => t.trim()).map((t) => (
+                <li key={t} className="flex items-center gap-2"><Check size={15} className="text-emerald-600" /> {t}</li>
+              ))}
+            </ul>
+            {px.ctaLabel && <Link href={px.ctaLink || "/contact"} className="btn-dark w-fit shrink-0">{px.ctaLabel} <ArrowUpRight size={16} /></Link>}
+          </div>
+        )}
       </div>
       </div>
     </section>

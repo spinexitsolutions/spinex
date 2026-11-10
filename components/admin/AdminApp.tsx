@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import { defaultContent, defaultMobileBar, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type SiteContent } from "@/lib/content";
+import { defaultContent, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -634,7 +634,32 @@ function AdminShell() {
                 <p className="mb-4 text-sm text-muted">The stages shown in the home page Process section, in order. Each step keeps its picture by position.</p>
                 <ListEditor items={draft.process} titleKey="title" addLabel="Add step" onChange={(v) => set("process", v)}
                   newItem={() => ({ id: uid(), title: "", time: "", text: "", gets: [] })}
-                  fields={[{ key: "title", label: "Name" }, { key: "time", label: "Time", hint: "e.g. 3–5 days" }, { key: "text", label: "Description", type: "textarea" }, { key: "gets", label: "What the client gets", type: "lines" }]} />
+                  fields={[{ key: "title", label: "Name" }, { key: "time", label: "Time", hint: "e.g. 3–5 days" }, { key: "short", label: "Short line on the step card", hint: "3–5 words, e.g. Short call about your goals. Empty uses the description." }, { key: "text", label: "Description", type: "textarea" }, { key: "gets", label: "What the client gets", type: "lines" }]} />
+                <div className="mt-6">
+                  <Card title="Timing and the strip under the steps" note="The steps play one after another while the section is on screen.">
+                    {(() => {
+                      const px = { ...defaultProcessExtras, ...(draft.processExtras ?? {}) };
+                      const setPx = (v: Partial<ProcessExtras>) => set("processExtras", { ...px, ...v });
+                      return (
+                        <div className="space-y-4" data-process-extras>
+                          <label className="block max-w-xs">
+                            <span className="mb-1.5 block text-[13px] font-semibold">Seconds per step</span>
+                            <input className="input" type="number" min={2} max={10} step={0.5} value={px.seconds} onChange={(e) => setPx({ seconds: Math.min(10, Math.max(2, Number(e.target.value) || 3)) })} />
+                          </label>
+                          <label className="flex items-center gap-3">
+                            <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={px.ctaShow} onChange={(e) => setPx({ ctaShow: e.target.checked })} />
+                            <span className="font-medium">Show the strip under the steps</span>
+                          </label>
+                          <ObjectEditor value={px} onChange={(v) => setPx(v as Partial<ProcessExtras>)} fields={[
+                            { key: "ctaPoints", label: "Points (one per line)", type: "lines" },
+                            { key: "ctaLabel", label: "Button text" },
+                            { key: "ctaLink", label: "Button opens", hint: "e.g. /contact" },
+                          ]} />
+                        </div>
+                      );
+                    })()}
+                  </Card>
+                </div>
               </>
             )}
 

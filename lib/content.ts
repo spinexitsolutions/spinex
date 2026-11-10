@@ -116,7 +116,16 @@ export const cityPath = (c: Pick<CityPage, "slug" | "city">) => `/website-develo
 
 export type Stat = { id: string; value: string; label: string };
 
-export type ProcessStep = { id: string; title: string; time: string; text: string; gets: string[] };
+export type ProcessStep = { id: string; title: string; time: string; text: string; gets: string[]; short?: string };
+// Extras for the home page Process section: seconds per step and the strip under it.
+export type ProcessExtras = { seconds: number; ctaShow: boolean; ctaPoints: string[]; ctaLabel: string; ctaLink: string };
+export const defaultProcessExtras: ProcessExtras = {
+  seconds: 3,
+  ctaShow: true,
+  ctaPoints: ["First call is free", "Written quote within a day", "Most websites live in 2–4 weeks"],
+  ctaLabel: "Start your project",
+  ctaLink: "/contact",
+};
 // Opening animation of the website (and the short transition between pages), set in Admin → Intro animation.
 export const INTRO_STYLES = ["logo", "counter", "letters", "split", "circle", "typing", "stripes", "minimal"] as const;
 export type IntroStyle = (typeof INTRO_STYLES)[number];
@@ -337,6 +346,7 @@ export type SiteContent = {
     planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; products: Heading; tools: string[]; toolsTitle?: string;
   };
   process: ProcessStep[];
+  processExtras?: ProcessExtras;
   goals: Goal[];
   pages: { about: PageText; services: PageText; products: PageText; work: PageText; contact: PageText; internship: PageText; blog: PageText; careers: PageText };
   homeLayout: HomeBlock[];
@@ -449,6 +459,7 @@ const baseContent: SiteContent = {
     contact: { heading: "Let's talk about your project.", intro: "Pick whatever is easiest for you. We usually reply within a day." },
     tools: ["Next.js", "React", "WordPress", "Shopify", "WooCommerce", "Figma", "Meta Ads", "Google Ads", "Premiere Pro", "After Effects", "Razorpay", "Google Analytics"],
   },
+  processExtras: defaultProcessExtras,
   process: [
     { id: "discover", title: "Discover", time: "1–2 days", text: "A short call to understand your business, customers and goals.", gets: ["Clear scope", "Timeline", "Written quote"] },
     { id: "design", title: "Design", time: "3–5 days", text: "We design the key screens and share them. Changes happen here, before any code.", gets: ["Key screen designs", "Mobile layouts", "Your feedback built in"] },
