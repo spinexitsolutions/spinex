@@ -15,7 +15,7 @@ export default function Marquee() {
     <section aria-label={title || "Tools we use"} className="relative border-b border-line bg-white pb-12 pt-7 sm:pb-14 sm:pt-8" data-tools-strip>
       {title && <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-muted sm:mb-5 sm:text-[13px]">{title}</p>}
       {/* Moves the other way to the client logos above, so the two lines read as separate. */}
-      <div className="mx-auto max-w-[1240px] overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_7%,#000_93%,transparent)]">
+      <div className="overflow-hidden">
       <div className="flex w-max animate-marquee gap-3 whitespace-nowrap [animation-direction:reverse] hover:[animation-play-state:paused] sm:gap-3.5">
         {row.map((t, i) => (
           <span key={i} aria-hidden={i >= tools.length || undefined} className="inline-flex items-center gap-2.5 rounded-full border border-line bg-white py-2 pl-2.5 pr-4 sm:py-2.5 sm:pr-5">

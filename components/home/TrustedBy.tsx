@@ -29,22 +29,20 @@ export default function TrustedBy() {
   const showRating = !!t.ratingShow && rating !== "";
   if (!showLogos && !showRating) return null;
 
-  // Logos always scroll slowly in their own line under the title. With only a few clients the list is
-  // repeated so the line is always full; the second half makes the loop seamless.
-  const reps = Math.max(1, Math.ceil((phone ? 6 : 10) / Math.max(items.length, 1)));
-  const base = Array.from({ length: reps }, () => items).flat();
-  const row = [...base, ...base];
-  const fade = "[mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]";
+  // A few logos sit still and centred under the title; with more (over 3 on phones, 5 on bigger
+  // screens) they scroll slowly in one line. The second half of the row makes the loop seamless.
+  const moving = items.length > (phone ? 3 : 5);
+  const row = moving ? [...items, ...items] : items;
 
   return (
-    <section className="bg-white pt-12 sm:pt-16" aria-label={t.title || "Our clients"} data-trusted>
+    <section className="overflow-x-clip bg-white pt-12 sm:pt-16" aria-label={t.title || "Our clients"} data-trusted>
       <div className="container-x">
         {showLogos && t.title && <p className="text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-[13px]">{t.title}</p>}
         {showLogos && (
-          <div className={`mx-auto mt-5 max-w-[1240px] overflow-hidden sm:mt-6 ${fade}`}>
-            <ul className="flex w-max animate-marquee items-center gap-12 hover:[animation-play-state:paused] sm:gap-16">
+          <div className={`mt-5 sm:mt-6 ${moving ? "relative left-1/2 w-screen -translate-x-1/2 overflow-hidden" : ""}`}>
+            <ul className={moving ? "flex w-max animate-marquee items-center gap-12 hover:[animation-play-state:paused] sm:gap-16" : "flex flex-wrap items-center justify-center gap-x-10 gap-y-5 sm:gap-x-16"}>
               {row.map((c, i) => (
-                <li key={`${c.id}-${i}`} aria-hidden={i >= items.length ? true : undefined}>
+                <li key={`${c.id}-${i}`} aria-hidden={moving && i >= items.length ? true : undefined}>
                   <Logo name={String(c.name || "")} logo={String(c.logo || "")} url={String(c.url || "")} />
                 </li>
               ))}
