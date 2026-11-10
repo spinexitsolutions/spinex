@@ -210,6 +210,7 @@ export const HOME_BLOCKS: Record<string, string> = {
   why: "Why Spinex",
   process: "Process",
   work: "Projects",
+  products: "Our products",
   showreel: "Showreel video",
   industries: "Who we work with",
   goals: "Goal picker",
@@ -228,13 +229,22 @@ export function homeOrder(layout: HomeBlock[] | undefined): HomeBlock[] {
   const saved = (layout ?? []).filter((b) => b && b.id in HOME_BLOCKS);
   const missing = Object.keys(HOME_BLOCKS).filter((id) => !saved.some((b) => b.id === id)).map((id) => ({ id, visible: true }));
   // Google reviews (added later) go right after Testimonials.
-  const out = [...missing.filter((b) => b.id === "trusted"), ...saved, ...missing.filter((b) => b.id !== "trusted" && b.id !== "reviews")];
+  const out = [...missing.filter((b) => b.id === "trusted"), ...saved, ...missing.filter((b) => b.id !== "trusted" && b.id !== "reviews" && b.id !== "products")];
+  // "Our products" (added later) goes right after Projects.
+  if (missing.some((b) => b.id === "products")) {
+    const at = out.findIndex((b) => b.id === "work");
+    out.splice(at >= 0 ? at + 1 : out.length, 0, { id: "products", visible: true });
+  }
   if (missing.some((b) => b.id === "reviews")) {
     const at = out.findIndex((b) => b.id === "testimonials");
     out.splice(at >= 0 ? at + 1 : out.length, 0, { id: "reviews", visible: true });
   }
   return out;
 }
+
+// Bar fixed to the bottom of the screen on phones: Call, WhatsApp and Get a quote.
+export type MobileBar = { show: boolean; call: boolean; whatsapp: boolean; quote: boolean; quoteLabel: string; quoteLink: string };
+export const defaultMobileBar: MobileBar = { show: false, call: true, whatsapp: true, quote: true, quoteLabel: "Get a quote", quoteLink: "/contact" };
 
 // "Trusted by" strip: client logos (or names) and an optional Google rating line.
 export type ClientLogo = { id: string; name: string; logo: string; url: string };
@@ -290,12 +300,20 @@ export type Product = {
   price: string; // e.g. "₹2,999/month" or "Price on request"
   demoUrl: string; // live demo link (optional)
   buy?: string; // "whatsapp" shows a "Buy now" button that opens WhatsApp with a ready message
+  home?: string; // "hide" keeps it off the home page "Our products" section
   videoUrl: string; // YouTube link (optional)
   body: string; // Markdown, page text
   faqs: string; // Q line, A line, blank line between
   seoTitle: string;
   seoDescription: string;
 };
+
+// "Buy now" link: opens WhatsApp with a ready message (Admin → Products → Buy now button).
+export function productBuyLink(p: Pick<Product, "name" | "price" | "buy">, whatsapp: string) {
+  const to = String(whatsapp || "").replace(/\D/g, "");
+  if (p.buy !== "whatsapp" || !to) return "";
+  return `https://wa.me/${to}?text=${encodeURIComponent(`Hi, I want to buy ${p.name}${p.price ? ` (${p.price})` : ""}. Please share the payment details.`)}`;
+}
 
 export const productSlug = (p: Pick<Product, "slug" | "name" | "id">) =>
   String(p.slug || p.name || p.id || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || p.id;
@@ -316,7 +334,7 @@ export type SiteContent = {
   hero: HeroSettings;
   sections: {
     services: Heading; why: Heading; process: Heading; work: Heading; industries: Heading; goals: Heading;
-    planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; tools: string[];
+    planner: Heading; blog: Heading; faq: Heading; contact: Heading; testimonials: Heading; products: Heading; tools: string[];
   };
   process: ProcessStep[];
   goals: Goal[];
@@ -344,7 +362,7 @@ export type SiteContent = {
   banners: { about: string; services: string; products: string; work: string; contact: string; internship: string; blog: string; careers: string; blogCover: string };
   certificate: { title: string; body: string; verifyUrl: string; signers: Signer[] };
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
-  integrations: { whatsappButton: boolean; whatsappText: string; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
+  integrations: { whatsappButton: boolean; whatsappText: string; mobileBar?: MobileBar; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
   internship: { open: boolean; intro: string; modes: string[]; durations: string[]; perks: string[]; roles: InternRole[] };
   contact: {
     email: string;
@@ -425,6 +443,7 @@ const baseContent: SiteContent = {
     goals: { heading: "Not sure where to start?", intro: "" },
     testimonials: { heading: "What our clients say.", intro: "Real words from businesses we've worked with." },
     planner: { heading: "Plan your project in a minute.", intro: "Pick what you need and see the scope and a rough timeline. Send it to us and we'll reply with an exact quote." },
+    products: { heading: "Software we built.", intro: "Ready-made tools from the Spinex team. Buy once, or ask for a free demo." },
     blog: { heading: "Ideas and guides.", intro: "Practical tips on websites, online stores and marketing for growing businesses." },
     faq: { heading: "Questions we get asked.", intro: "Don't see yours? Ask our assistant and get an answer right away." },
     contact: { heading: "Let's talk about your project.", intro: "Pick whatever is easiest for you. We usually reply within a day." },
@@ -701,6 +720,7 @@ const baseContent: SiteContent = {
   },
   integrations: {
     whatsappButton: true,
+    mobileBar: defaultMobileBar,
     whatsappText: "Hi Spinex, I found you on your website and want to know more.",
     gaId: "",
     clarityId: "",

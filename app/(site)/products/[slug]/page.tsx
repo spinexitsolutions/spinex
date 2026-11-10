@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Check, ChevronRight, ExternalLink, MessageCircle, Play, Plus, Users } from "lucide-react";
 import { getContent } from "@/lib/content-server";
-import { productSlug, type Product } from "@/lib/content";
+import { productBuyLink, productSlug, type Product } from "@/lib/content";
 import { renderMarkdown } from "@/lib/posts";
 import { SITE_URL } from "@/lib/site";
 import ContactForm from "@/components/ContactForm";
@@ -51,8 +51,7 @@ export default async function ProductPage({ params }: Props) {
   const faqs = parseFaqs(p.faqs || "");
   const video = p.videoUrl ? youtubeEmbed(p.videoUrl) : "";
   // "Buy now" opens WhatsApp with a ready message (Admin → Products → Buy now button).
-  const waTo = String(content.contact.whatsapp || "").replace(/\D/g, "");
-  const buyLink = p.buy === "whatsapp" && waTo ? `https://wa.me/${waTo}?text=${encodeURIComponent(`Hi, I want to buy ${p.name}${p.price ? ` (${p.price})` : ""}. Please share the payment details.`)}` : "";
+  const buyLink = productBuyLink(p, content.contact.whatsapp);
   const shots = p.gallery.filter(Boolean);
   const others = content.products.filter((x) => x.id !== p.id);
   const wa = `https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(`Hi Spinex, I want a demo of ${p.name}.`)}`;

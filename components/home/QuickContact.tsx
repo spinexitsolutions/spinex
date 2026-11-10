@@ -27,8 +27,9 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
   const methods = [
     { Icon: Phone, label: "Call us", value: `+91 ${c.phone}`, href: `tel:+91${c.phone}` },
     { Icon: MessageCircle, label: "WhatsApp", value: "Chat now", href: `https://wa.me/${c.whatsapp}` },
-    { Icon: Mail, label: "Email", value: c.email, href: `mailto:${c.email}` },
-    { Icon: MapPin, label: "Visit", value: c.location, href: `https://maps.google.com/?q=${encodeURIComponent(c.location)}` },
+    // Email and address get a full-width row so a long email address never breaks in the middle.
+    { Icon: Mail, label: "Email", value: c.email, href: `mailto:${c.email}`, wide: true },
+    { Icon: MapPin, label: "Visit", value: c.location, href: `https://maps.google.com/?q=${encodeURIComponent(c.location)}`, wide: true },
   ];
 
   const text = () =>
@@ -74,7 +75,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
             <p className="mt-5 max-w-md text-lg text-white/65">{content.sections.contact.intro}</p>
 
             <div className="mt-10 grid gap-3 sm:grid-cols-2">
-              {methods.map(({ Icon, label, value, href }, i) => (
+              {methods.map(({ Icon, label, value, href, wide }, i) => (
                 <motion.a
                   key={label}
                   href={href}
@@ -84,14 +85,14 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.07, duration: 0.6, ease }}
-                  className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-colors hover:border-lav-400 hover:bg-white/10"
+                  className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-colors hover:border-lav-400 hover:bg-white/10 ${wide ? "sm:col-span-2" : ""}`}
                 >
                   <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-lav-600 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
                     <Icon size={20} />
                   </span>
                   <span className="min-w-0">
                     <span className="block text-sm text-white/55">{label}</span>
-                    <span className="block font-semibold leading-snug [overflow-wrap:anywhere]">{value}</span>
+                    <span className="block font-semibold leading-snug [overflow-wrap:break-word]">{value}</span>
                   </span>
                 </motion.a>
               ))}

@@ -6,6 +6,7 @@ import ScrollProgress from "@/components/ScrollProgress";
 import { IntroProvider, IntroCover } from "@/components/Intro";
 import { SiteCursor } from "@/components/CustomCursor";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import MobileBar from "@/components/MobileBar";
 import Analytics from "@/components/Analytics";
 import CookieBanner from "@/components/CookieBanner";
 import AttributionTracker from "@/components/AttributionTracker";
@@ -26,6 +27,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <Footer />
         <Chatbot />
         <FloatingWhatsApp />
+        <MobileBar />
         <Analytics />
         <CookieBanner />
         <AttributionTracker />

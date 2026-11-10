@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import { defaultContent, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type SiteContent } from "@/lib/content";
+import { defaultContent, defaultMobileBar, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -598,7 +598,7 @@ function AdminShell() {
                   <div className="space-y-6">
                     {([
                       ["services", "Services"], ["why", "Why Spinex"], ["process", "Process"], ["work", "Projects"], ["industries", "Who we work with"],
-                      ["goals", "Goal picker (small line above the sentence)"], ["planner", "Project planner"], ["testimonials", "Testimonials"], ["blog", "Latest articles"], ["faq", "FAQ"], ["contact", "Contact section"],
+                      ["goals", "Goal picker (small line above the sentence)"], ["planner", "Project planner"], ["testimonials", "Testimonials"], ["products", "Our products"], ["blog", "Latest articles"], ["faq", "FAQ"], ["contact", "Contact section"],
                     ] as const).map(([key, label]) => (
                       <div key={key} className="rounded-2xl border border-line p-4">
                         <p className="mb-3 text-sm font-semibold text-lav-700">{label}</p>
@@ -694,6 +694,32 @@ function AdminShell() {
                     <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[{ key: "whatsappText", label: "Message filled in for the visitor", type: "textarea" }]} />
                   </div>
                   <p className="mt-3 text-sm text-muted">The number comes from Contact details.</p>
+                </Card>
+                <Card title="Bottom bar on phones" note="A slim bar fixed to the bottom of the screen on phones with Call, WhatsApp and Get a quote buttons. It doesn't show on computers. While it is on, the floating WhatsApp button is hidden on phones (the bar already has WhatsApp).">
+                  {(() => {
+                    const mb = { ...defaultMobileBar, ...(draft.integrations.mobileBar ?? {}) };
+                    const setMb = (v: Partial<MobileBar>) => set("integrations", { ...draft.integrations, mobileBar: { ...mb, ...v } });
+                    return (
+                      <div className="space-y-4" data-mobile-bar-settings>
+                        <label className="flex items-center gap-3">
+                          <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={mb.show} onChange={(e) => setMb({ show: e.target.checked })} />
+                          <span className="font-medium">Show the bottom bar on phones</span>
+                        </label>
+                        <div className="flex flex-wrap gap-x-6 gap-y-3 pl-8">
+                          {([["call", "Call"], ["whatsapp", "WhatsApp"], ["quote", "Get a quote"]] as const).map(([k, l]) => (
+                            <label key={k} className="flex items-center gap-2 text-sm">
+                              <input type="checkbox" className="h-4 w-4 accent-lav-600" checked={mb[k]} onChange={(e) => setMb({ [k]: e.target.checked } as Partial<MobileBar>)} /> {l}
+                            </label>
+                          ))}
+                        </div>
+                        <ObjectEditor value={mb} onChange={(v) => setMb(v as Partial<MobileBar>)} fields={[
+                          { key: "quoteLabel", label: "Third button text", hint: "e.g. Get a quote, Free consultation" },
+                          { key: "quoteLink", label: "Third button opens", hint: "e.g. /contact or /book" },
+                        ]} />
+                        <p className="text-sm text-muted">Phone and WhatsApp numbers come from Contact details.</p>
+                      </div>
+                    );
+                  })()}
                 </Card>
                 <Card title="Cookie banner" note="Asks visitors to accept or reject cookies. While it is on, Google Analytics, Clarity, Meta Pixel and Tag Manager run only for visitors who press Accept. Visitors can change their choice from 'Cookie settings' in the footer.">
                   <label className="flex items-center gap-3">
@@ -831,7 +857,7 @@ function AdminShell() {
               <>
                 <p className="mb-4 text-sm text-muted">Your own software and SaaS. Each product gets its own page at /products/… with a &quot;Book a demo&quot; form; requests arrive in Leads as &quot;Product demo request&quot;. The Products link appears in the menu once you add the first product.</p>
                 <ListEditor items={draft.products} titleKey="name" addLabel="Add product" onChange={(v) => set("products", v)}
-                  newItem={() => ({ id: uid(), name: "", slug: "", tagline: "", description: "", category: "", audience: "", status: "Live", image: "", gallery: [], features: [], price: "", demoUrl: "", buy: "", videoUrl: "", body: "", faqs: "", seoTitle: "", seoDescription: "" })}
+                  newItem={() => ({ id: uid(), name: "", slug: "", tagline: "", description: "", category: "", audience: "", status: "Live", image: "", gallery: [], features: [], price: "", demoUrl: "", buy: "", home: "", videoUrl: "", body: "", faqs: "", seoTitle: "", seoDescription: "" })}
                   fields={[
                     { group: "Basic", key: "name", label: "Product name" },
                     { group: "Basic", key: "slug", label: "Page address", hint: "/products/… e.g. waba-panel (leave empty to use the name)" },
@@ -844,6 +870,7 @@ function AdminShell() {
                     { group: "Photos and demo", key: "image", label: "Cover screenshot", type: "image" },
                     { group: "Photos and demo", key: "gallery", label: "More screenshots", type: "images" },
                     { group: "Product page", key: "features", label: "Key features", type: "lines" },
+                    { group: "Basic", key: "home", label: "Show on home page", type: "select", options: [{ value: "", label: "Yes, in \"Our products\"" }, { value: "hide", label: "No" }], hint: "The home page shows up to 3 products. Turn the whole section on or off in Home page → Sections." },
                     { group: "Basic", key: "buy", label: "Buy now button", type: "select", options: [{ value: "", label: "No (only Book a free demo)" }, { value: "whatsapp", label: "Yes, Buy now on WhatsApp" }], hint: "Opens your WhatsApp with \"I want to buy …\" ready to send. Good for one-time products." },
                     { group: "Photos and demo", key: "demoUrl", label: "Live demo link", hint: "Optional. Anyone can open it, so don't put a paid download link here." },
                     { group: "Photos and demo", key: "videoUrl", label: "YouTube video link", hint: "Optional, shown on the page" },

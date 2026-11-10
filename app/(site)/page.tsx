@@ -18,6 +18,7 @@ import Faq from "@/components/home/Faq";
 import QuickContact from "@/components/home/QuickContact";
 import JsonLd from "@/components/JsonLd";
 import LatestPosts from "@/components/home/LatestPosts";
+import HomeProducts from "@/components/home/HomeProducts";
 import { getPublishedPosts } from "@/lib/post-db";
 import { getContent } from "@/lib/content-server";
 import { homeOrder } from "@/lib/content";
@@ -52,6 +53,7 @@ export default async function HomePage() {
     why: <WhySpinex />,
     process: <Process />,
     work: <ProjectsShowcase />,
+    products: <HomeProducts content={content} />,
     showreel: <Showreel />,
     industries: <Industries />,
     goals: <Goals />,

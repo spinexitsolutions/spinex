@@ -87,3 +87,8 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
 
 /* Chat assistant icon: sparkles gently grow and shrink. */
 @keyframes spx-twinkle { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.82); opacity: 0.85; } }
+
+/* Phone bottom bar (Call / WhatsApp / Get a quote): keep the page end clear of it. */
+@media (max-width: 767px) {
+  html[data-mobile-bar="1"] body { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+}

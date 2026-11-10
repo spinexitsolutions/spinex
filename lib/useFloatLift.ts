@@ -10,6 +10,8 @@ export function useFloatLift() {
   const [cookieOpen, setCookieOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  // The phone bottom bar (Call / WhatsApp / Get a quote) is showing.
+  const [bar, setBar] = useState(false);
 
   useEffect(() => {
     const bar = document.querySelector<HTMLElement>("[data-footer-bottom]");
@@ -25,10 +27,12 @@ export function useFloatLift() {
     const readCookie = () => {
       setCookieOpen(html.dataset.cookieOpen === "1");
       setMenuOpen(html.dataset.menuOpen === "1");
+      setBar(html.dataset.mobileBar === "1" && window.matchMedia("(max-width: 767px)").matches);
     };
     readCookie();
     const mo = new MutationObserver(readCookie);
-    mo.observe(html, { attributes: true, attributeFilter: ["data-cookie-open", "data-menu-open"] });
+    mo.observe(html, { attributes: true, attributeFilter: ["data-cookie-open", "data-menu-open", "data-mobile-bar"] });
+    window.addEventListener("resize", readCookie);
     const onScroll = () => setScrolled(window.scrollY > 500);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -36,8 +40,10 @@ export function useFloatLift() {
       io?.disconnect();
       mo.disconnect();
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", readCookie);
     };
   }, []);
 
-  return { lift, cookieOpen, menuOpen, scrolled };
+  // With the phone bottom bar on, the floating buttons sit above it.
+  return { lift: lift + (bar ? 68 : 0), cookieOpen, menuOpen, scrolled, bar };
 }

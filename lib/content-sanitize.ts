@@ -82,6 +82,7 @@ export function sanitizeUrls(c: SiteContent): SiteContent {
         id: String(x?.id ?? ""), name: String(x?.name ?? ""), logo: safeUrl(x?.logo), url: safeUrl(x?.url),
       })),
     },
+    ...(c.integrations?.mobileBar ? { integrations: { ...c.integrations, mobileBar: { ...c.integrations.mobileBar, quoteLink: safeUrl(c.integrations.mobileBar.quoteLink) || "/contact" } } } : {}),
     contact: { ...c.contact, instagram: safeUrl(c.contact.instagram), linkedin: safeUrl(c.contact.linkedin), youtube: safeUrl(c.contact.youtube) },
   };
 }
