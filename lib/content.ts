@@ -14,6 +14,8 @@ export type Service = {
   body: string; // Markdown
   features: string[];
   faqs: string; // "Question" line, "Answer" line, blank line between pairs
+  badge?: string; // small label on the home page card, e.g. New or Popular
+  anim?: string; // home page card animation (a service id like "web"); empty = its own, or an icon
 };
 
 export type Job = { id: string; title: string; type: string; location: string; experience: string; salary: string; description: string; requirements: string[] };
@@ -411,6 +413,8 @@ const baseContent: SiteContent = {
   theme: { preset: "lavender", accent: "#6E59D9", dark: "#120F1B" },
   planner: {
     times: [
+      { id: "ai", min: 7, max: 21, monthly: false },
+      { id: "saas", min: 30, max: 70, monthly: false },
       { id: "web", min: 7, max: 14, monthly: false },
       { id: "ecommerce", min: 0, max: 0, monthly: true },
       { id: "marketing", min: 0, max: 0, monthly: true },
@@ -533,6 +537,38 @@ const baseContent: SiteContent = {
   ],
   services: [
     {
+      id: "ai",
+      title: "AI automation",
+      badge: "New",
+      short: "AI chatbots and workflows that reply, sort leads and save hours.",
+      description:
+        "AI chatbots for WhatsApp and your website, and automations that connect your forms, CRM, sheets and messages, so routine work happens on its own.",
+      tags: ["AI chatbots", "WhatsApp automation", "Workflow automation"],
+      image: img("photo-1551288049-bebda4e38f71"),
+      slug: "ai-automation",
+      seoTitle: "AI Automation and Chatbot Company in Jaipur | Spinex IT Solutions",
+      seoDescription: "AI automation in Jaipur: WhatsApp and website chatbots, lead follow-ups and workflows that connect your CRM, forms and sheets. Get a free consultation.",
+      features: ["AI chatbot for WhatsApp and website", "Instant replies to enquiries, day and night", "Leads saved to your CRM or Google Sheet", "Automatic follow-ups and reminders", "Reports and alerts sent to your phone", "Connected to the tools you already use"],
+      body: "Most businesses lose time on the same tasks every day: answering the same questions, copying leads into a sheet, sending reminders. AI automation does this work for you, so your team can focus on customers.\n\n## What we automate\n\n- AI chatbots on WhatsApp and your website that answer questions and collect details\n- Lead capture from ads, forms and calls straight into your CRM or Google Sheet\n- Follow-up messages, payment reminders and appointment confirmations\n- Daily and weekly reports sent to your phone\n- Order, invoice and stock updates between your tools\n\n## How we work\n\nWe start by looking at where your team spends the most time. Then we build small automations that save real hours, test them with you, and add more as you see results. Your data stays in your own accounts.",
+      faqs: "Do I need technical knowledge to use it?\nNo. We set everything up and show you how it works. Most automations run on their own.\n\nCan the chatbot reply in Hindi?\nYes. It can reply in English, Hindi or Hinglish, based on how the customer writes.\n\nWill it work with my current tools?\nUsually yes. We connect WhatsApp, Google Sheets, CRMs, forms, email and most popular tools.",
+    },
+    {
+      id: "saas",
+      title: "SaaS software development",
+      badge: "Popular",
+      short: "Subscription software, dashboards and portals, built to scale.",
+      description:
+        "Custom software and SaaS products: CRMs, dashboards, client portals and subscription platforms with logins, payments and an admin panel.",
+      tags: ["SaaS products", "CRM and dashboards", "Client portals"],
+      image: img("photo-1460925895917-afdab827c52f"),
+      slug: "saas-software-development",
+      seoTitle: "SaaS and Custom Software Development in Jaipur | Spinex IT Solutions",
+      seoDescription: "SaaS and custom software development in Jaipur: CRMs, dashboards, client portals and subscription products with secure logins, payments and admin panel.",
+      features: ["Custom CRM, ERP and dashboards", "Subscription plans and online payments", "Secure logins, roles and two-step login", "Admin panel and reports", "Web app that works on phone and computer", "Hosting, backups and support"],
+      body: "Spreadsheets and WhatsApp groups work until the business grows. Then you need software built around how you actually work. We build custom software and SaaS products that are fast, secure and easy for your team to use.\n\n## What we build\n\n- CRMs and lead management systems\n- Dashboards and reports for your business data\n- Client and partner portals\n- SaaS products with subscription plans and payments\n- Internal tools for staff, stock, billing and approvals\n\n## Built like a product\n\nWe plan the first version with you, build it in short steps you can test, and launch it on fast, secure hosting. Logins, roles, backups and an admin panel are included. We have built and run our own SaaS, AgencyVault, so we know what a real product needs.",
+      faqs: "How long does custom software take?\nA first version usually takes 4 to 10 weeks, depending on features.\n\nWho owns the software and data?\nYou do. The code and data are yours.\n\nCan you turn my idea into a SaaS product?\nYes. We help with planning, pricing plans, payments and launch, not just the code.",
+    },
+    {
       id: "web",
       title: "Web development",
       short: "Custom-coded and WordPress sites that load fast and rank.",
@@ -579,7 +615,7 @@ const baseContent: SiteContent = {
     },
     {
       id: "social",
-      title: "Social media",
+      title: "Social media management",
       short: "Instagram, LinkedIn and Facebook, handled end to end.",
       description:
         "Content calendars, posting, community replies and growth for Instagram, LinkedIn and Facebook. Your brand stays active and consistent without taking your time.",
@@ -624,8 +660,8 @@ const baseContent: SiteContent = {
     },
     {
       id: "ondemand",
-      title: "On-demand solutions",
-      short: "Booking, delivery and service apps built around your business.",
+      title: "App development",
+      short: "Android and iOS apps, from booking and delivery apps to custom business apps.",
       description:
         "Custom on-demand platforms like food delivery, home services, taxi or appointment booking. Customer app, partner app and admin panel, built to work together.",
       tags: ["Booking apps", "Delivery apps", "Admin panel"],
@@ -926,7 +962,7 @@ const OLD_ECOMMERCE: Partial<Service> = {
   faqs: "Shopify or WooCommerce, which is better?\nShopify is simpler to run and has monthly fees. WooCommerce has no platform fee and more control. We help you choose based on your products and budget.\n\nCan you add cash on delivery?\nYes. We set up COD along with Razorpay, UPI and cards.\n\nHow long does an online store take?\nUsually 2 to 4 weeks, depending on the number of products and integrations.",
 };
 
-export const LATER_SERVICES = ["ondemand", "promotion"];
+export const LATER_SERVICES = ["ondemand", "promotion", "ai", "saas"];
 
 export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): SiteContent {
   const out = { ...base } as Record<string, unknown>;

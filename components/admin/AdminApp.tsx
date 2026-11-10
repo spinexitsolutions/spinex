@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { INDUSTRY_ICONS } from "@/lib/industry-icons";
+import { SERVICE_ANIMS } from "@/lib/service-anims";
 import { FAQ_HELP, defaultContent, defaultFooter, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type FooterSettings, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
@@ -906,6 +907,8 @@ function AdminShell() {
                   { group: "Basic", key: "title", label: "Name" }, { group: "Basic", key: "short", label: "One-line summary" },
                   { group: "Basic", key: "description", label: "Description", type: "textarea" }, { group: "Basic", key: "tags", label: "Highlights", type: "tags" },
                   { group: "Basic", key: "image", label: "Image", type: "image" },
+                  { group: "Home page card", key: "badge", label: "Badge", hint: "Small label on the home page card, e.g. New or Popular. Leave empty for none" },
+                  { group: "Home page card", key: "anim", label: "Animation", type: "select", options: [{ value: "", label: "Auto (its own, or an icon)" }, ...SERVICE_ANIMS], hint: "The moving picture on the home page card. The order of cards is the order of this list (use the arrows)." },
                   { group: "Service page", key: "slug", label: "Page address", hint: "/services/… (e.g. website-development)" },
                   { group: "Google", key: "seoTitle", label: "Page title for Google", hint: "under 60 characters" },
                   { group: "Google", key: "seoDescription", label: "Description for Google", type: "textarea", hint: "140–160 characters" },
