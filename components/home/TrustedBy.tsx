@@ -29,31 +29,45 @@ export default function TrustedBy() {
   const showRating = !!t.ratingShow && rating !== "";
   if (!showLogos && !showRating) return null;
 
-  // Many logos scroll slowly in one line; a few stay still and centred (up to 3 on phones, 6 on bigger screens).
-  const moving = items.length > (phone ? 3 : 6);
+  // A few logos sit in one still line next to the title; with more (over 3 on phones, 5 on bigger
+  // screens) the title moves above and the logos scroll slowly in their own line.
+  const moving = items.length > (phone ? 3 : 5);
   const row = moving ? [...items, ...items] : items;
+  const fade = "[mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]";
 
   return (
-    <section className="border-b border-line bg-white py-9 sm:py-14" aria-label={t.title || "Our clients"}>
+    <section className="bg-white pb-5 pt-10 sm:pb-6 sm:pt-12" aria-label={t.title || "Our clients"} data-trusted>
       <div className="container-x">
-        {showLogos && t.title && <p className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-muted">{t.title}</p>}
-        {showLogos && (
-          <div className={`relative mt-6 sm:mt-8 ${moving ? "overflow-hidden" : ""}`}>
-            <ul className={moving ? "flex w-max animate-marquee items-center gap-8 hover:[animation-play-state:paused] sm:gap-14" : "flex flex-wrap items-center justify-center gap-x-5 gap-y-6 sm:gap-x-14 sm:gap-y-8"}>
-              {row.map((c, i) => (
-                <li key={`${c.id}-${i}`} aria-hidden={moving && i >= items.length ? true : undefined}>
+        {showLogos && (moving ? (
+          <>
+            {t.title && <p className="text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs">{t.title}</p>}
+            <div className={`mx-auto mt-5 max-w-[1240px] overflow-hidden ${fade}`}>
+              <ul className="flex w-max animate-marquee items-center gap-10 hover:[animation-play-state:paused] sm:gap-16">
+                {row.map((c, i) => (
+                  <li key={`${c.id}-${i}`} aria-hidden={i >= items.length ? true : undefined}>
+                    <Logo name={String(c.name || "")} logo={String(c.logo || "")} url={String(c.url || "")} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-9 sm:gap-y-4">
+            {t.title && (
+              <>
+                <p className="text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs">{t.title}</p>
+                <span aria-hidden className="hidden h-7 w-px bg-line sm:block" />
+              </>
+            )}
+            <ul className="flex flex-wrap items-center justify-center gap-x-7 gap-y-4 sm:gap-x-9">
+              {items.map((c) => (
+                <li key={c.id}>
                   <Logo name={String(c.name || "")} logo={String(c.logo || "")} url={String(c.url || "")} />
                 </li>
               ))}
             </ul>
-            {moving && (
-              <>
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r sm:w-20 from-white" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l sm:w-20 from-white" />
-              </>
-            )}
           </div>
-        )}
+        ))}
         {showRating && <Rating rating={rating} count={String(t.reviewCount || "").trim()} source={String(t.ratingSource || "Google").trim() || "Google"} url={String(t.reviewUrl || "")} spaced={showLogos} />}
       </div>
     </section>
@@ -61,14 +75,14 @@ export default function TrustedBy() {
 }
 
 function Logo({ name, logo, url }: { name: string; logo: string; url: string }) {
-  // Every client gets the same box, so logos of different shapes look the same size; a name without a
-  // logo is set in the same box.
+  // Logos share one small height so wide and square logos look balanced; a name without a logo is set
+  // in small type at the same height.
   const inner = (
-    <span className="flex h-11 w-[98px] items-center justify-center sm:h-14 sm:w-[170px]">
+    <span className="flex h-8 max-w-[110px] items-center justify-center sm:h-9 sm:max-w-[150px]">
       {logo ? (
-        <img src={sized(logo, 320)} alt={name || "Client logo"} loading="lazy" className="max-h-full max-w-full object-contain transition duration-300 group-hover:scale-105" />
+        <img src={sized(logo, 320)} alt={name || "Client logo"} loading="lazy" className="h-full w-auto max-w-full object-contain transition duration-300 group-hover:scale-105" />
       ) : (
-        <span className="line-clamp-2 text-center font-display text-sm font-semibold sm:text-lg leading-tight tracking-tight text-ink transition">{name}</span>
+        <span className="line-clamp-2 text-center font-display text-sm font-semibold leading-tight tracking-tight text-ink transition sm:text-base">{name}</span>
       )}
     </span>
   );
