@@ -1,70 +1,108 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Building2, Check, Rocket, ShoppingBag, Sparkles, Store, type LucideIcon } from "lucide-react";
+import {
+  ArrowUpRight, BedDouble, Briefcase, Building2, Camera, Car, ChevronDown, Dumbbell, Factory, Gem, GraduationCap,
+  HeartHandshake, Hospital, Landmark, PartyPopper, Plane, Rocket, Scale, Scissors, Shirt, ShoppingCart, Sparkles,
+  Stethoscope, Store, Truck, UtensilsCrossed, Wrench, type LucideIcon,
+} from "lucide-react";
 import { useContent } from "../ContentProvider";
 import type { Industry } from "@/lib/content";
 import { SplitHeading, ease } from "../Reveal";
-import { sized } from "@/lib/img";
 
-const icons: Record<string, LucideIcon> = { local: Store, ecom: ShoppingBag, creators: Sparkles, startups: Rocket };
-const tones = ["bg-ink", "bg-ink-3", "bg-lav-700", "bg-ink-3"];
+const icons: Record<string, LucideIcon> = {
+  government: Landmark, hospital: Hospital, doctor: Stethoscope, building: Building2, education: GraduationCap,
+  cart: ShoppingCart, store: Store, hotel: BedDouble, food: UtensilsCrossed, corporate: Briefcase, salon: Scissors,
+  factory: Factory, startup: Rocket, creator: Sparkles, gym: Dumbbell, law: Scale, jewellery: Gem, fashion: Shirt,
+  travel: Plane, auto: Car, events: PartyPopper, ngo: HeartHandshake, photo: Camera, logistics: Truck, services: Wrench,
+  // Older saved industries without an icon key
+  local: Store, ecom: ShoppingCart, creators: Sparkles, startups: Rocket,
+};
 
-// "Who we work with": compact cards, four in one row on big screens, two on tablets, and a
-// side-swipe row on phones, so the whole section takes about half a screen.
+// On phones only the first few show, with a button to open the rest.
+const PHONE_LIMIT = 6;
+
+// "Who we work with": one dark box split into cells (4 across on computers, 2 on phones). Each cell has
+// an icon, the industry and one line on what we do for it. Industries are added in Admin → Industries.
 export default function Industries() {
   const { content } = useContent();
-  const list = content.industries;
+  const list = content.industries.filter((x) => x && String(x.title || "").trim());
+  const [all, setAll] = useState(false);
   if (!list.length) return null;
+  const sec = content.sections.industries;
+  const more = list.length > PHONE_LIMIT;
+  // Empty cells finish the last row, so the grid lines stay even.
+  const fill4 = (4 - (list.length % 4)) % 4;
+  const fill2 = (all || !more ? list.length : PHONE_LIMIT) % 2;
 
   return (
-    <section className="bg-white py-20 sm:py-24" data-industries>
-      <div className="container-x">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <SplitHeading key={content.sections.industries.heading} text={content.sections.industries.heading} className="h-display text-4xl sm:text-5xl" />
-          <p className="max-w-sm text-muted">{content.sections.industries.intro}</p>
+    <section className="relative overflow-hidden bg-ink py-20 text-white sm:py-28" data-industries>
+      <div aria-hidden className="pointer-events-none absolute -right-52 -top-64 h-[700px] w-[700px] rounded-full bg-[radial-gradient(circle,rgba(110,89,217,0.32),transparent_65%)]" />
+      <div className="container-x relative">
+        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.16em] text-lav-300 sm:text-[13px]">Industries</p>
+            <SplitHeading key={sec.heading} text={sec.heading} className="h-display text-4xl sm:text-6xl" />
+          </div>
+          {sec.intro && <p className="max-w-md text-white/60 sm:text-lg">{sec.intro}</p>}
         </div>
-        <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+
+        <div className="mt-9 grid grid-cols-2 gap-px overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.08] sm:mt-12 sm:rounded-[28px] lg:grid-cols-4">
           {list.map((ind, i) => (
-            <Card key={ind.id} ind={ind} i={i} />
+            <Cell key={ind.id} ind={ind} i={i} hidden={!all && more && i >= PHONE_LIMIT} />
           ))}
+          {/* fillers: one on phones when the visible count is odd, the rest on computers */}
+          {fill2 === 1 && <div aria-hidden className="bg-ink lg:hidden" />}
+          {Array.from({ length: fill4 }).map((_, i) => (
+            <div key={i} aria-hidden className="hidden bg-ink lg:block" />
+          ))}
+        </div>
+
+        {more && !all && (
+          <button type="button" onClick={() => setAll(true)} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm font-semibold text-white transition hover:bg-white/10 lg:hidden">
+            See all {list.length} industries <ChevronDown size={16} />
+          </button>
+        )}
+
+        <div className="mt-5 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:px-1">
+          <p className="text-[15px] text-white/60">Don&apos;t see your industry? We have probably worked with it.</p>
+          <Link href="/contact" className="btn-light w-full justify-center sm:w-auto">Tell us about your business <ArrowUpRight size={16} /></Link>
         </div>
       </div>
     </section>
   );
 }
 
-function Card({ ind, i }: { ind: Industry; i: number }) {
-  const Icon = icons[ind.id] ?? Building2;
+function Cell({ ind, i, hidden }: { ind: Industry; i: number; hidden: boolean }) {
+  const Icon = icons[ind.icon || ""] ?? icons[ind.id] ?? Building2;
+  const desc = String(ind.description || "");
+  const short = desc.split(",")[0].replace(/\.$/, "");
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.7, ease, delay: (i % 2) * 0.08 }}
-      className={`group relative flex w-[78%] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] text-white sm:w-auto ${tones[i % tones.length]}`}
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.6, ease, delay: (i % 4) * 0.06 }}
+      className={`${hidden ? "hidden lg:block" : ""} bg-ink`}
     >
-      <div className="relative h-28 overflow-hidden">
-        <img src={sized(ind.image, 960)} alt={ind.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl bg-white/15 backdrop-blur"><Icon size={17} className="text-white" /></span>
-      </div>
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-display text-xl font-semibold tracking-tight">{ind.title}</h3>
-        <p className="mt-1.5 line-clamp-2 text-sm text-white/70">{ind.description}</p>
-        <ul className="mt-4 space-y-1.5">
-          {ind.points.slice(0, 3).map((pt) => (
-            <li key={pt} className="flex items-start gap-2 text-[13px] leading-snug">
-              <span className="mt-px grid h-4 w-4 shrink-0 place-items-center rounded-full bg-white text-ink"><Check size={10} /></span>
-              {pt}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-auto pt-5">
-          <Link href="/contact" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white underline-offset-4 hover:underline">Talk to us <ArrowUpRight size={15} /></Link>
-        </div>
-      </div>
-    </motion.article>
+      <Link
+        href="/contact"
+        className="group relative flex h-full flex-col p-4 transition-colors duration-300 hover:bg-[radial-gradient(120%_120%_at_0%_0%,rgba(110,89,217,0.35),rgba(110,89,217,0.08)_60%,transparent)] sm:p-7 lg:p-8"
+      >
+        <ArrowUpRight size={16} className="absolute right-5 top-6 hidden text-white/25 transition group-hover:text-white sm:block" />
+        <span className="grid h-10 w-10 place-items-center rounded-xl border border-lav-400/30 bg-gradient-to-br from-lav-400/30 to-lav-400/5 text-lav-200 transition-colors group-hover:border-lav-600 group-hover:bg-lav-600 group-hover:bg-none group-hover:text-white sm:h-[52px] sm:w-[52px] sm:rounded-2xl">
+          <Icon size={20} strokeWidth={1.7} />
+        </span>
+        <h3 className="mt-3 font-display text-[15px] font-semibold leading-snug tracking-tight sm:mt-5 sm:text-lg lg:text-[19px]">{ind.title}</h3>
+        {desc && (
+          <>
+            <p className="mt-1 text-xs leading-relaxed text-white/55 sm:hidden">{short}</p>
+            <p className="mt-2 hidden text-[14.5px] leading-relaxed text-white/60 sm:block">{desc}</p>
+          </>
+        )}
+      </Link>
+    </motion.div>
   );
 }

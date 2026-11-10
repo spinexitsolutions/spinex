@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
+import { INDUSTRY_ICONS } from "@/lib/industry-icons";
 import { FAQ_HELP, defaultContent, defaultFooter, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type FooterSettings, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
@@ -989,10 +990,11 @@ function AdminShell() {
 
             {section === "industries" && (
               <ListEditor items={draft.industries} titleKey="title" addLabel="Add industry" onChange={(v) => set("industries", v)}
-                newItem={() => ({ id: uid(), title: "", description: "", image: "", points: [] })}
+                newItem={() => ({ id: uid(), title: "", description: "", image: "", points: [], icon: "building" })}
                 fields={[
-                  { key: "title", label: "Name" }, { key: "description", label: "Description" },
-                  { key: "points", label: "Key points", type: "lines" }, { key: "image", label: "Image", type: "image" },
+                  { key: "title", label: "Name", hint: "e.g. Hospitals and clinics" },
+                  { key: "description", label: "What we do for them", hint: "One short sentence. On phones only the part before the first comma shows" },
+                  { key: "icon", label: "Icon", type: "select", options: INDUSTRY_ICONS },
                 ]} />
             )}
 

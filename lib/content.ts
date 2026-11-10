@@ -65,6 +65,7 @@ export type Industry = {
   description: string;
   image: string;
   points: string[];
+  icon?: string; // a key from lib/industry-icons.ts
 };
 
 // photo: client's photo (optional; initials are shown without it). rating: "5", "4" or "" (no stars).
@@ -452,7 +453,7 @@ const baseContent: SiteContent = {
     why: { heading: "Built like software, not just designed.", intro: "Try it: switch screen sizes, run a speed test, run the code." },
     process: { heading: "From first call to launch.", intro: "Four clear stages. You always know what's next." },
     work: { heading: "Work we're proud of.", intro: "" },
-    industries: { heading: "Who we work with.", intro: "Different businesses need different things. Here is what we build for each." },
+    industries: { heading: "Who we work with.", intro: "From local shops to leaders and large companies. Here is what we build for each." },
     goals: { heading: "Not sure where to start?", intro: "" },
     testimonials: { heading: "What our clients say.", intro: "Real words from businesses we've worked with." },
     planner: { heading: "Plan your project in a minute.", intro: "Pick what you need and see the scope and a rough timeline. Send it to us and we'll reply with an exact quote." },
@@ -653,34 +654,18 @@ const baseContent: SiteContent = {
   projects: [], // Real projects are added in Admin → Projects.
   products: [], // Our own software, added in Admin → Products.
   industries: [
-    {
-      id: "local",
-      title: "Local business",
-      description: "Show up when people nearby search, and turn those searches into calls.",
-      image: "/images/industries/local-business.webp",
-      points: ["Local SEO and Google Business Profile", "WhatsApp and call buttons", "Reviews shown where they help"],
-    },
-    {
-      id: "ecom",
-      title: "E-commerce",
-      description: "Sellers on Amazon, Flipkart, Meesho and their own online stores.",
-      image: "/images/industries/ecommerce.webp",
-      points: ["Marketplace account management", "Listings, ads and orders", "Shopify stores and payments"],
-    },
-    {
-      id: "creators",
-      title: "Creators and coaches",
-      description: "Portfolios and landing pages for influencers, coaches and artists.",
-      image: "/images/industries/creators-coaches.webp",
-      points: ["Personal brand sites", "Course and booking pages", "Reels and YouTube editing"],
-    },
-    {
-      id: "startups",
-      title: "Startups",
-      description: "MVP launches and company sites that look ready from day one.",
-      image: "/images/industries/startups.webp",
-      points: ["Fast MVP websites", "Pitch-ready brand design", "Analytics from launch"],
-    },
+    { id: "government", title: "Politicians and government", description: "Election campaigns, political branding and social media for leaders.", image: "", points: [], icon: "government" },
+    { id: "health", title: "Hospitals and clinics", description: "Appointment booking, online reputation and healthcare marketing.", image: "", points: [], icon: "hospital" },
+    { id: "realestate", title: "Real estate", description: "Property websites, lead generation, virtual tours and CRM.", image: "", points: [], icon: "building" },
+    { id: "education", title: "Schools and coaching", description: "Admissions campaigns, institute branding and course websites.", image: "", points: [], icon: "education" },
+    { id: "ecom", title: "E-commerce and retail", description: "Online stores, plus Amazon, Flipkart and Meesho account management.", image: "", points: [], icon: "cart" },
+    { id: "hotels", title: "Hotels and hospitality", description: "Direct booking websites, review management and travel marketing.", image: "", points: [], icon: "hotel" },
+    { id: "food", title: "Restaurants and cafes", description: "QR menus, Google reviews and social media for food brands.", image: "", points: [], icon: "food" },
+    { id: "corporate", title: "Corporate and enterprise", description: "Company websites, B2B marketing and corporate communication.", image: "", points: [], icon: "corporate" },
+    { id: "salons", title: "Salons and spas", description: "Booking pages, Instagram content and local offers.", image: "", points: [], icon: "salon" },
+    { id: "manufacturers", title: "Manufacturers and exporters", description: "B2B catalogues, IndiaMART listings and export websites.", image: "", points: [], icon: "factory" },
+    { id: "startups", title: "Startups", description: "MVP websites, pitch-ready branding and launch campaigns.", image: "", points: [], icon: "startup" },
+    { id: "creators", title: "Creators and coaches", description: "Personal brand websites, reels and YouTube editing.", image: "", points: [], icon: "creator" },
   ],
   testimonials: [],
   trusted: {
