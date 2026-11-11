@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CURSOR_STYLES, CURSOR_TRAILS, defaultCursor, type CursorSettings, type SiteContent } from "@/lib/content";
+import { BUTTON_HOVERS, BUTTON_STYLES, CURSOR_STYLES, CURSOR_TRAILS, defaultCursor, type CursorSettings, type SiteContent } from "@/lib/content";
 import CursorTrail from "./CursorTrail";
 import { useContent } from "./ContentProvider";
 import { sized } from "@/lib/img";
@@ -14,6 +14,8 @@ export function cursorSettings(raw: Partial<CursorSettings> | undefined): Cursor
     color: typeof v.color === "string" && /^#[0-9a-f]{6}$/i.test(v.color) ? v.color : "",
     admin: !!v.admin,
     trail: v.trail && (CURSOR_TRAILS as readonly string[]).includes(v.trail) ? v.trail : "none",
+    btnStyle: v.btnStyle && (BUTTON_STYLES as readonly string[]).includes(v.btnStyle) ? v.btnStyle : "default",
+    btnHover: v.btnHover && (BUTTON_HOVERS as readonly string[]).includes(v.btnHover) ? v.btnHover : "default",
   };
 }
 

@@ -217,8 +217,16 @@ export const CURSOR_TRAILS = [
   "gooey", "pixels", "ribbon", "rings", "neon", "orbit", "comet", "lightning", "glitch",
 ] as const;
 export type CursorTrail = (typeof CURSOR_TRAILS)[number];
-export type CursorSettings = { enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean; trail?: CursorTrail };
-export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none" };
+// Look and hover effect of the website's buttons (app/button-fx.css), set in the same admin section.
+export const BUTTON_STYLES = ["default", "split", "glass", "sticker", "ring", "keycap", "minimal", "techcut", "beam", "mesh"] as const;
+export type ButtonStyle = (typeof BUTTON_STYLES)[number];
+export const BUTTON_HOVERS = ["default", "liquid", "roll", "glow", "spotlight", "burst", "lift", "follow", "aurora", "holo", "draw", "spark", "doors", "wave", "magnet", "flip"] as const;
+export type ButtonHover = (typeof BUTTON_HOVERS)[number];
+export type CursorSettings = {
+  enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean; trail?: CursorTrail;
+  btnStyle?: ButtonStyle; btnHover?: ButtonHover;
+};
+export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none", btnStyle: "default", btnHover: "default" };
 
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
 export type Heading = { heading: string; intro: string; eyebrow?: string; helpTitle?: string; helpText?: string; helpNote?: string };

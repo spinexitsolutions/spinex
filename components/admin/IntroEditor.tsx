@@ -2,12 +2,13 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Play, RotateCcw } from "lucide-react";
+import { ArrowUpRight, Play, RotateCcw } from "lucide-react";
 import IntroAnimation, { STYLE_INFO, introLength } from "../intro/IntroAnimation";
 import { INTRO_STYLES, defaultIntro, type IntroSettings, type PageTransition } from "@/lib/content";
 import { introSettings } from "../Intro";
 import CustomCursor, { CursorMarks, SiteTrail, cursorSettings } from "../CustomCursor";
-import { CURSOR_STYLES, CURSOR_TRAILS, type CursorSettings, type CursorStyle, type CursorTrail, type SiteContent } from "@/lib/content";
+import ButtonFx from "../ButtonFx";
+import { BUTTON_HOVERS, BUTTON_STYLES, CURSOR_STYLES, CURSOR_TRAILS, type ButtonHover, type ButtonStyle, type CursorSettings, type CursorStyle, type CursorTrail, type SiteContent } from "@/lib/content";
 
 const TRAILS: Record<CursorTrail, { name: string; about: string; dark?: boolean }> = {
   none: { name: "No trail", about: "Just the cursor, nothing behind it." },
@@ -36,6 +37,37 @@ const CURSORS: Record<CursorStyle, { name: string; about: string }> = {
   dot: { name: "Soft dot", about: "One coloured dot that grows over links and buttons." },
   blend: { name: "Invert", about: "A white circle that flips the colours under it." },
   glow: { name: "Glow", about: "A small dot with a soft light following it." },
+};
+
+const BTN_STYLES: Record<ButtonStyle, { name: string; about: string }> = {
+  default: { name: "Current", about: "The buttons the website has now." },
+  split: { name: "Split arrow", about: "The arrow sits in its own gradient circle." },
+  glass: { name: "Gradient glass", about: "Rainbow border with a soft glow inside." },
+  sticker: { name: "Bold sticker", about: "Thick border and a hard shadow." },
+  ring: { name: "AI ring", about: "A colour border that keeps turning." },
+  keycap: { name: "3D keycap", about: "Like a keyboard key, presses down." },
+  minimal: { name: "Minimal line", about: "Bold text with a line that draws under it." },
+  techcut: { name: "Tech cut", about: "Cut corners and capital letters." },
+  beam: { name: "Light beam", about: "A ray of light runs round the border." },
+  mesh: { name: "Living mesh", about: "Colours keep flowing inside the button." },
+};
+const BTN_HOVERS: Record<ButtonHover, { name: string; about: string }> = {
+  default: { name: "Current", about: "Colour change, as now." },
+  liquid: { name: "Liquid fill", about: "Wavy purple-pink liquid fills it." },
+  roll: { name: "Text roll", about: "Text rolls up, a coloured copy rolls in." },
+  glow: { name: "Glowing border", about: "Colour border turns, a shine passes." },
+  spotlight: { name: "Spotlight", about: "A glow inside follows the mouse." },
+  burst: { name: "Arrow burst", about: "A circle grows from the arrow and fills it." },
+  lift: { name: "3D lift", about: "Rises with a purple layer under it." },
+  follow: { name: "Follow fill", about: "Fills from where the mouse comes in." },
+  aurora: { name: "Aurora glass", about: "Purple, pink and blue light flows inside." },
+  holo: { name: "Holographic", about: "Rainbow foil that shifts with the mouse." },
+  draw: { name: "Border draw", about: "A gradient line draws round the button." },
+  spark: { name: "Spark pop", about: "Pops into gradient, small stars fly out." },
+  doors: { name: "Door open", about: "Two halves slide apart to show a gradient." },
+  wave: { name: "Wave + bubbles", about: "Wavy colour rises with little bubbles." },
+  magnet: { name: "Magnet", about: "The button leans toward the mouse." },
+  flip: { name: "3D flip", about: "Flips over and comes back in gradient." },
 };
 
 const TRANSITIONS: Record<PageTransition, { name: string; about: string }> = {
@@ -220,6 +252,50 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
             </div>
             {trying && cur.enabled && <CustomCursor cfg={{ ...cur, enabled: true }} />}
             {trying && site && <SiteTrail content={site} kind={cur.trail} area={tryBox} />}
+          </div>
+        )}
+        {/* Buttons */}
+        {onCursor && (
+          <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-button-editor>
+            <p className="font-semibold">Buttons</p>
+            <p className="text-sm text-muted">How the buttons on the website look, and what they do when the mouse goes over them. Pick any look with any hover, then try them in the box below.</p>
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+              <div>
+                <p className="mb-2 text-sm font-semibold">Look</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {BUTTON_STYLES.map((id) => (
+                    <button type="button" key={id} data-btn-style-option={id} onClick={() => setCur({ btnStyle: id })}
+                      className={`rounded-2xl border p-3 text-left transition ${cur.btnStyle === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                      <span className="block text-sm font-semibold">{BTN_STYLES[id].name}</span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-muted">{BTN_STYLES[id].about}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 text-sm font-semibold">Hover effect</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {BUTTON_HOVERS.map((id) => (
+                    <button type="button" key={id} data-btn-hover-option={id} onClick={() => setCur({ btnHover: id })}
+                      className={`rounded-2xl border p-3 text-left transition ${cur.btnHover === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                      <span className="block text-sm font-semibold">{BTN_HOVERS[id].name}</span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-muted">{BTN_HOVERS[id].about}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="sticky bottom-3 mt-4 grid overflow-hidden rounded-2xl border border-line sm:grid-cols-2" data-btn-style={cur.btnStyle} data-btn-hover={cur.btnHover} data-button-try>
+              <div className="flex flex-wrap items-center justify-center gap-3 bg-white p-6">
+                <a href="#try" onClick={(e) => e.preventDefault()} className="btn-dark">Start your project <ArrowUpRight size={16} /></a>
+                <a href="#try" onClick={(e) => e.preventDefault()} className="btn-ghost">See our work <ArrowUpRight size={16} /></a>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 bg-ink p-6">
+                <a href="#try" onClick={(e) => e.preventDefault()} className="btn-light">Get a free quote <ArrowUpRight size={16} /></a>
+                <a href="#try" onClick={(e) => e.preventDefault()} className="btn-ghost-dark">WhatsApp us</a>
+              </div>
+            </div>
+            <ButtonFx />
           </div>
         )}
       </fieldset>

@@ -6,6 +6,7 @@ import { getSecret } from "@/lib/secrets";
 import { themeCss } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
+import "./button-fx.css";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const body = Manrope({ subsets: ["latin"], variable: "--font-body", display: "swap" });
