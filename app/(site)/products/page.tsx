@@ -4,7 +4,7 @@ import { ArrowUpRight, Package } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import CTA from "@/components/home/CTA";
 import { getContent } from "@/lib/content-server";
-import { productSlug } from "@/lib/content";
+import ProductsGrid from "@/components/ProductsGrid";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { pages, brand } = await getContent();
@@ -35,36 +35,7 @@ export default async function ProductsPage() {
               <Link href="/contact" className="btn-dark mt-8 inline-flex">Ask for a demo <ArrowUpRight size={17} /></Link>
             </div>
           ) : (
-            <ul className="grid gap-6 md:grid-cols-2">
-              {products.map((p) => (
-                <li key={p.id}>
-                  <Link href={`/products/${productSlug(p)}`} className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-line bg-white transition duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-[0_24px_50px_-30px_rgba(20,16,40,0.4)]">
-                    <div className="relative aspect-[16/10] overflow-hidden bg-mist">
-                      {p.image ? (
-                        <img src={p.image} alt={`${p.name} screenshot`} loading="lazy" className="h-full w-full object-cover object-top transition duration-700 group-hover:scale-[1.03]" />
-                      ) : (
-                        <div className="grid h-full place-items-center text-lav-300"><Package size={48} /></div>
-                      )}
-                      {p.status && <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{p.status}</span>}
-                    </div>
-                    <div className="flex flex-1 flex-col p-7">
-                      {p.category && <p className="text-sm font-medium text-lav-700">{p.category}</p>}
-                      <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight sm:text-3xl">{p.name}</h2>
-                      <p className="mt-2 text-muted">{p.tagline || p.description}</p>
-                      {p.features.length > 0 && (
-                        <ul className="mt-5 flex flex-wrap gap-2">
-                          {p.features.slice(0, 4).map((f) => <li key={f} className="rounded-full bg-mist px-3 py-1 text-xs text-ink/80">{f}</li>)}
-                        </ul>
-                      )}
-                      <div className="mt-auto flex items-center justify-between gap-4 pt-7">
-                        <span className="text-sm font-semibold">{p.price || "Price on request"}</span>
-                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:text-lav-700">View product <ArrowUpRight size={15} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></span>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ProductsGrid products={products} whatsapp={content.contact.whatsapp} />
           )}
         </div>
       </section>

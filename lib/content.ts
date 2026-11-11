@@ -353,6 +353,9 @@ export type Product = {
   buy?: string; // "whatsapp" shows a "Buy now" button that opens WhatsApp with a ready message
   home?: string; // home page "Our products": "featured" = big card, "" = small card, "hide" = not shown
   homePoints?: string[]; // short points for the home page cards (falls back to the first features)
+  page?: string; // Products page: "featured" = the big card at the top, "" = normal card
+  cardImage?: string; // Products page card picture (Spinex-style design); falls back to the cover screenshot in a frame
+  cardTone?: string; // colour behind the card picture: purple, orange, pink, blue, green
   videoUrl: string; // YouTube link (optional)
   body: string; // Markdown, page text
   faqs: string; // Q line, A line, blank line between
