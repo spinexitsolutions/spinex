@@ -376,10 +376,12 @@ export type PlanExtra = { id: string; label: string; days: number };
 export type PlannerSettings = { times: PlanTime[]; sizes: PlanSize[]; extras: PlanExtra[]; note: string };
 
 import type { ThemeSettings } from "./theme";
+import { defaultType, type TypeSettings } from "./typography";
 
 export type SiteContent = {
   contentVersion: number; // format of the saved data; one-time upgrades of old defaults run only below CONTENT_VERSION
   theme: ThemeSettings;
+  typography: TypeSettings; // fonts and text animation (Admin → Fonts & text)
   planner: PlannerSettings;
   removedServices: string[]; // built-in service ids the admin deleted on purpose
   brand: { name: string; logo: string; tagline: string };
@@ -446,6 +448,7 @@ const CHAT_TIME_OLD = "A business website usually takes 1 to 2 weeks. Online sto
 const baseContent: SiteContent = {
   contentVersion: CONTENT_VERSION,
   theme: { preset: "lavender", accent: "#6E59D9", dark: "#120F1B" },
+  typography: defaultType,
   planner: {
     times: [
       { id: "ai", min: 7, max: 21, monthly: false },

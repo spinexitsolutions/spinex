@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  PiggyBank, Sparkles, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
+  PiggyBank, Sparkles, CaseSensitive, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
   LogOut, LifeBuoy, Bell, BellOff, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -24,6 +24,7 @@ import Dashboard from "./Dashboard";
 import UsersManager from "./UsersManager";
 import ApiKeysManager from "./ApiKeysManager";
 import ThemeEditor from "./ThemeEditor";
+import TypeEditor from "./TypeEditor";
 import ReplyPreview from "./ReplyPreview";
 import BillingManager from "./BillingManager";
 import LettersManager from "./LettersManager";
@@ -88,6 +89,7 @@ const sections = [
   { id: "brand", label: "Logo and company name", Icon: BadgeCheck, group: "Site settings" , perm: "content" },
   { id: "contact", label: "Contact details", Icon: Phone, group: "Site settings" , perm: "content" },
   { id: "theme", label: "Colour theme", Icon: Palette, group: "Site settings" , perm: "content" },
+  { id: "fonts", label: "Fonts & text", Icon: CaseSensitive, group: "Site settings" , perm: "content" },
   { id: "intro", label: "Intro & cursor", Icon: Sparkles, group: "Site settings" , perm: "content" },
   { id: "seo", label: "SEO", Icon: Search, group: "Site settings" , perm: "content" },
   { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Site settings" , perm: "integrations" },
@@ -536,6 +538,7 @@ function AdminShell() {
             {section === "activity" && <ActivityPanel all={!!me && can(me, "activity")} />}
 
             {section === "theme" && <ThemeEditor value={draft.theme} onChange={(v) => set("theme", v)} />}
+            {section === "fonts" && <TypeEditor value={draft.typography} onChange={(v) => set("typography", v)} hero={draft.hero} accent={draft.hero.accent || draft.theme.accent} />}
 
             {section === "leads" && <LeadsManager onNewCount={setNewLeads} readOnly={readOnly} goApiKeys={() => go("apikeys")} />}
 

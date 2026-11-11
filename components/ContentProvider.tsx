@@ -24,3 +24,8 @@ export function useContent() {
   if (!ctx) throw new Error("useContent must be used inside ContentProvider");
   return ctx;
 }
+
+// Same as useContent, but gives null instead of failing outside the provider.
+export function useContentMaybe() {
+  return useContext(ContentContext);
+}

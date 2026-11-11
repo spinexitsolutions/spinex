@@ -119,3 +119,9 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
 @media (prefers-reduced-motion: reduce) {
   .svc-stage * { animation: none !important; opacity: 1 !important; stroke-dashoffset: 0 !important; }
 }
+
+/* Heading text effects (components/AnimText.tsx, Admin → Fonts & text) */
+@keyframes tx-grad { to { background-position: -200% 0; } }
+@keyframes tx-blink { 50% { opacity: 0; } }
+.tx-caret { animation: tx-blink 0.9s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) { .tx-caret { animation: none; } }

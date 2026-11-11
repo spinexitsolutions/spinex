@@ -60,7 +60,7 @@ export async function listActivity(opts: { area?: string; uid?: string; before?:
 
 // Names of the website content parts, for "Changed Services, Projects".
 const PART_NAMES: Record<string, string> = {
-  theme: "Colour theme", planner: "Project planner", brand: "Brand", hero: "Hero", sections: "Section headings", process: "Process steps",
+  theme: "Colour theme", typography: "Fonts and text", planner: "Project planner", brand: "Brand", hero: "Hero", sections: "Section headings", process: "Process steps",
   goals: "Goal picker", pages: "Page headers", homeLayout: "Home page layout", seo: "SEO", about: "About", stats: "Stats",
   services: "Services", projects: "Projects", products: "Products", industries: "Industries", testimonials: "Testimonials",
   trusted: "Trusted by", leadReplies: "Lead emails and alerts", showreel: "Showreel", banners: "Page banners", certificate: "Certificate settings",

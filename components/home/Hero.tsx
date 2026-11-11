@@ -7,6 +7,8 @@ import { useContent } from "../ContentProvider";
 import HeroBackground from "./HeroBackground";
 import HeroPattern from "./HeroPattern";
 import LiveBuild from "./LiveBuild";
+import AnimText from "../AnimText";
+import { speedFactor, typeSettings } from "@/lib/typography";
 import { ease } from "../Reveal";
 import { useIntroDone } from "../Intro";
 import { HERO_BGS, HERO_DESIGNS, HERO_PATTERNS, HERO_SCENES, HERO_SCENES_DEFAULT, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
@@ -76,7 +78,10 @@ function words(title: string, highlight: string) {
   });
 }
 
-function Headline({ h, ready, accent, light, center, size = "text-[2.6rem] sm:text-6xl lg:text-[clamp(2.4rem,6.4vh,4.4rem)]", gradient }: Ctx & { light?: boolean; center?: boolean; size?: string; gradient?: boolean }) {
+function Headline({ h, c, ready, accent, light, center, size = "text-[2.6rem] sm:text-6xl lg:text-[clamp(2.4rem,6.4vh,4.4rem)]", gradient }: Ctx & { light?: boolean; center?: boolean; size?: string; gradient?: boolean }) {
+  const t = typeSettings(c.typography);
+  // Marks are drawn as pictures, so they need a real colour: the hero colour, else the theme colour.
+  const hex = h.accent || (/^#[0-9a-f]{6}$/i.test(c.theme?.accent ?? "") ? c.theme.accent : "#6E59D9");
   return (
     // One H1: the keyword line (for search) plus the headline.
     <h1 className={center ? "text-center" : ""}>
@@ -89,14 +94,8 @@ function Headline({ h, ready, accent, light, center, size = "text-[2.6rem] sm:te
       </motion.span>
       <span className="sr-only"> – </span>
       <span className={`h-display block ${size} ${light ? "text-white" : ""}`}>
-        {words(h.title, h.highlight).map(({ w, on }, i) => (
-          <span key={i} className="inline-block overflow-hidden pb-[0.1em] align-top">
-            <motion.span className="inline-block" initial={{ y: "110%", rotate: 4 }} animate={ready ? { y: "0%", rotate: 0 } : undefined} transition={{ duration: 1, delay: 0.15 + i * 0.055, ease }}
-              style={on ? (gradient ? { backgroundImage: `linear-gradient(90deg, ${accent}, rgb(var(--c-lav-300)))`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" } : { color: accent }) : undefined}>
-              {w}&nbsp;
-            </motion.span>
-          </span>
-        ))}
+        <AnimText words={words(h.title, h.highlight)} anim={t.heroAnim} play={ready} speed={speedFactor(t.speed)} delay={0.15}
+          highlight={gradient && t.highlight === "color" ? "gradient" : t.highlight} color={hex} light={light} />
       </span>
     </h1>
   );
