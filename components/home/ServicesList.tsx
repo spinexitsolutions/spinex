@@ -71,7 +71,7 @@ function Card({ s, i }: { s: Service; i: number }) {
 
 const d = (s: number) => ({ animationDelay: `${s}s` });
 
-function Stage({ kind, badge }: { kind: string; badge: boolean }) {
+export function Stage({ kind, badge }: { kind: string; badge: boolean }) {
   const top = badge ? "top-7" : "top-3";
   switch (kind) {
     case "ai":

@@ -4,15 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { SCENES } from "./home/LiveBuild";
-import type { HeroScene } from "@/lib/content";
+import { Stage } from "./home/ServicesList";
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { serviceSlug } from "@/lib/content";
 import { ease } from "./Reveal";
 
-// Service id → its scene in the hero box (the ids differ only for app development).
-const SERVICE_SCENE: Record<string, HeroScene> = { ondemand: "app" };
 
 const links = [
   { href: "/", label: "Home" },
@@ -105,8 +102,9 @@ export default function Navbar() {
 
   return (
     <>
-      <motion.header animate={{ y: hidden ? -120 : 0 }} transition={{ duration: 0.45, ease }} className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-4">
-        <div className="relative w-full" style={{ maxWidth: scrolled ? 1080 : 1240, transition: "max-width .6s cubic-bezier(.22,1,.36,1)" }} onMouseLeave={hideMega}>
+      {/* The logo and the button stay put while scrolling; only the links pill slides away on the way down and comes back on the way up. */}
+      <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-4">
+        <div className="relative w-full max-w-[1240px]" onMouseLeave={hideMega}>
           <motion.nav
             initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -124,7 +122,11 @@ export default function Navbar() {
               <span className="font-display text-[20px] font-semibold tracking-tight">Spinex</span>
             </Link>
 
-            <ul
+            <motion.ul
+              animate={{ y: hidden ? -90 : 0, opacity: hidden ? 0 : 1 }}
+              transition={{ duration: 0.45, ease }}
+              style={{ pointerEvents: hidden ? "none" : undefined }}
+              aria-hidden={hidden || undefined}
               className={`hidden items-center rounded-full border p-1.5 transition-[background,box-shadow,border-color] duration-500 lg:flex ${
                 scrolled || mega
                   ? "border-line bg-white/90 shadow-[0_12px_40px_-14px_rgba(18,15,27,0.3)] backdrop-blur-xl"
@@ -164,7 +166,7 @@ export default function Navbar() {
                   </li>
                 );
               })}
-            </ul>
+            </motion.ul>
 
             <div className="flex items-center gap-2">
               <Link href="/contact" className="group relative inline-flex h-12 shrink-0 items-center whitespace-nowrap gap-2 overflow-hidden rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-[0_12px_30px_-12px_rgba(18,15,27,0.55)] sm:h-[54px] sm:pl-6 sm:pr-2">
@@ -224,15 +226,21 @@ export default function Navbar() {
                     ))}
                   </ul>
                   <div className="flex flex-col overflow-hidden rounded-[20px] border border-line bg-white" data-mega-scene={previewService.id}>
-                    {/* The same moving scene as the box in the hero, for the service under the mouse. */}
-                    <div className="relative h-[300px] p-4">
+                    {/* The same little animation as the service's card in the Services section, shown larger. */}
+                    <div className="relative h-[230px] overflow-hidden bg-ink bg-[radial-gradient(80%_90%_at_50%_20%,rgba(110,89,217,0.35),transparent)] text-white">
                       <AnimatePresence mode="wait" initial={false}>
-                        <motion.div key={previewService.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} className="h-full">
-                          {(() => { const View = (SCENES[SERVICE_SCENE[previewService.id] ?? (previewService.id as HeroScene)] ?? SCENES.web).View; return <View />; })()}
+                        <motion.div key={previewService.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} className="absolute inset-0">
+                          <div className="absolute left-1/2 top-1/2 h-[124px] w-[260px] -translate-x-1/2 -translate-y-1/2 scale-[1.45]">
+                            <Stage kind={previewService.anim || previewService.id} badge={false} />
+                          </div>
                         </motion.div>
                       </AnimatePresence>
                     </div>
-                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-line bg-mist px-4 py-3">
+                    <div className="px-4 pt-3">
+                      <p className="font-semibold">{previewService.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[13px] text-muted">{previewService.short}</p>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between gap-3 px-4 pb-4 pt-3">
                       <p className="line-clamp-2 text-[13px] text-muted">{previewService.tags.join(", ")}</p>
                       <Link href="/services" onClick={() => setMega(false)} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white transition hover:bg-lav-700">
                         All services <ArrowUpRight size={15} />
@@ -244,7 +252,7 @@ export default function Navbar() {
             )}
           </AnimatePresence>
         </div>
-      </motion.header>
+      </header>
 
       {/* Mobile menu */}
       <AnimatePresence>
