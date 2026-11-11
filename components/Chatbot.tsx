@@ -73,7 +73,7 @@ export default function Chatbot() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close chat" : "Ask our AI assistant"}
         title={open ? undefined : "Ask our AI assistant"}
-        className={`fixed bottom-5 right-5 z-50 flex h-14 items-center rounded-full border border-white/15 bg-ink text-white shadow-[0_14px_40px_-12px_rgba(18,15,27,0.6)] ${open ? "w-14 justify-center" : "gap-2.5 p-1.5 sm:pr-5"}`}
+        className={`fixed bottom-5 right-5 z-50 flex h-14 items-center rounded-full border border-white/15 bg-ink text-white shadow-[0_14px_40px_-12px_rgba(18,15,27,0.6)] ${open ? "w-14 justify-center max-sm:hidden" : "gap-2.5 p-1.5 sm:pr-5"}`}
         data-chat-launcher
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
@@ -111,7 +111,8 @@ export default function Chatbot() {
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
             transition={{ duration: 0.4, ease }}
             style={{ transformOrigin: "bottom right" }}
-            className="fixed bottom-24 right-3 z-50 flex h-[min(600px,calc(100dvh-8rem))] w-[calc(100vw-1.5rem)] max-w-[390px] flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(18,15,27,0.45)] sm:right-5"
+            // Phones: almost full screen, above the bottom bar, with its own close button in the header.
+            className="fixed inset-2 z-[60] flex flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(18,15,27,0.45)] sm:inset-auto sm:bottom-24 sm:right-5 sm:z-50 sm:h-[min(600px,calc(100dvh-8rem))] sm:w-[390px]"
             data-lenis-prevent
           >
             <div className="flex items-center gap-3 bg-ink px-5 py-4 text-white">
@@ -120,6 +121,10 @@ export default function Chatbot() {
                 <p className="font-semibold">{bot.name}</p>
                 <p className="flex items-center gap-1.5 text-xs text-white/60"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Replies instantly</p>
               </div>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close chat" data-chat-close
+                className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20">
+                <X size={20} />
+              </button>
             </div>
 
             <div ref={list} className="flex-1 space-y-3 overflow-y-auto bg-mist p-4">
