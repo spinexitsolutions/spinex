@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CURSOR_STYLES, defaultCursor, type CursorSettings } from "@/lib/content";
+import { CURSOR_STYLES, CURSOR_TRAILS, defaultCursor, type CursorSettings, type SiteContent } from "@/lib/content";
+import CursorTrail from "./CursorTrail";
 import { useContent } from "./ContentProvider";
+import { sized } from "@/lib/img";
 
 export function cursorSettings(raw: Partial<CursorSettings> | undefined): CursorSettings {
   const v = { ...defaultCursor, ...(raw ?? {}) };
@@ -11,6 +13,7 @@ export function cursorSettings(raw: Partial<CursorSettings> | undefined): Cursor
     style: (CURSOR_STYLES as readonly string[]).includes(v.style) ? v.style : defaultCursor.style,
     color: typeof v.color === "string" && /^#[0-9a-f]{6}$/i.test(v.color) ? v.color : "",
     admin: !!v.admin,
+    trail: v.trail && (CURSOR_TRAILS as readonly string[]).includes(v.trail) ? v.trail : "none",
   };
 }
 
@@ -122,5 +125,29 @@ export function CursorMarks({ style, color, dotRef, ringRef, still }: {
 // Website: reads the setting saved in Admin → Intro & cursor.
 export function SiteCursor() {
   const { content } = useContent();
-  return <CustomCursor cfg={content.cursor} />;
+  return (
+    <>
+      <CustomCursor cfg={content.cursor} />
+      <SiteTrail content={content} />
+    </>
+  );
+}
+
+// What the cursor trails show: pictures of your products and projects, your service names, your brand name.
+export function trailData(content: SiteContent) {
+  const images = [
+    ...content.products.filter((p) => p.name && p.image && p.home !== "hide").map((p) => p.image),
+    ...content.projects.filter((p) => p.image && p.home !== "hide").map((p) => p.image),
+  ].map((src) => sized(src, 400));
+  return {
+    images: Array.from(new Set(images)),
+    words: content.services.map((s) => s.title).filter(Boolean),
+    brand: (content.brand.name || "Spinex").split(/\s+/)[0],
+  };
+}
+
+export function SiteTrail({ content, area, kind }: { content: SiteContent; area?: React.RefObject<HTMLElement | null>; kind?: CursorSettings["trail"] }) {
+  const cfg = cursorSettings(content.cursor);
+  const d = trailData(content);
+  return <CursorTrail kind={kind ?? cfg.trail} images={d.images} words={d.words} brand={d.brand} area={area} />;
 }

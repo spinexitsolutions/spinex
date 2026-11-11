@@ -1,13 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Play, RotateCcw } from "lucide-react";
 import IntroAnimation, { STYLE_INFO, introLength } from "../intro/IntroAnimation";
 import { INTRO_STYLES, defaultIntro, type IntroSettings, type PageTransition } from "@/lib/content";
 import { introSettings } from "../Intro";
-import CustomCursor, { CursorMarks, cursorSettings } from "../CustomCursor";
-import { CURSOR_STYLES, type CursorSettings, type CursorStyle } from "@/lib/content";
+import CustomCursor, { CursorMarks, SiteTrail, cursorSettings } from "../CustomCursor";
+import { CURSOR_STYLES, CURSOR_TRAILS, type CursorSettings, type CursorStyle, type CursorTrail, type SiteContent } from "@/lib/content";
+
+const TRAILS: Record<CursorTrail, { name: string; about: string; dark?: boolean }> = {
+  none: { name: "No trail", about: "Just the cursor, nothing behind it." },
+  fluid: { name: "Fluid smoke", about: "Real swirling colour smoke that follows the mouse." },
+  work: { name: "Our work trail", about: "Pictures of your products and projects pop out behind the mouse." },
+  pills: { name: "Service pills", about: "Your service names pop out as small tags and float up." },
+  letters: { name: "Brand letters", about: "The letters of your name (S P I N E X) pop out and fall." },
+  ink: { name: "Liquid ink", about: "Soft colour smoke that spreads and changes colour." },
+  shards: { name: "3D glass shards", about: "Shiny triangles that spin and fall." },
+  mosaic: { name: "Pixel mosaic", about: "Coloured squares appear where the mouse passes." },
+  sparkles: { name: "AI sparkles", about: "Small four-point stars that twinkle." },
+  code: { name: "Code trail", about: "Code signs like { } </> ; float up and fade." },
+  gooey: { name: "Gooey blobs", about: "Purple drops that stick together and break off." },
+  pixels: { name: "Pixel sparks", about: "Tiny purple squares fall like sparks." },
+  ribbon: { name: "Ribbon", about: "A smooth purple-to-pink line behind the mouse." },
+  rings: { name: "Ripple rings", about: "Thin circles spread out as the mouse moves." },
+  neon: { name: "Neon tail", about: "A glowing tail that swings like a spring.", dark: true },
+  orbit: { name: "Orbit + stardust", about: "Three glowing dots circle the mouse.", dark: true },
+  comet: { name: "Comet", about: "A soft glowing tail with star dust.", dark: true },
+  lightning: { name: "Lightning", about: "A purple bolt crackles behind the mouse." },
+  glitch: { name: "Glitch RGB", about: "Red, green and blue rings with glitch lines." },
+};
 
 const CURSORS: Record<CursorStyle, { name: string; about: string }> = {
   ring: { name: "Dot and ring", about: "A small dot with a ring that follows. The ring grows over links." },
@@ -25,14 +47,15 @@ const TRANSITIONS: Record<PageTransition, { name: string; about: string }> = {
 };
 
 // Admin → Intro animation: pick a style, see it play, and set text, colours, speed and when it shows.
-export default function IntroEditor({ value, onChange, cursor, onCursor, logo, readOnly }: {
-  value: IntroSettings; onChange: (v: IntroSettings) => void;
+export default function IntroEditor({ value, onChange, cursor, onCursor, site, logo, readOnly }: {
+  value: IntroSettings; onChange: (v: IntroSettings) => void; site?: SiteContent;
   cursor?: Partial<CursorSettings>; onCursor?: (v: CursorSettings) => void;
   logo: string; readOnly?: boolean;
 }) {
   const cur = cursorSettings(cursor);
   const setCur = (patch: Partial<CursorSettings>) => onCursor?.({ ...cur, ...patch });
   const [trying, setTrying] = useState(false);
+  const tryBox = useRef<HTMLDivElement>(null);
   const v = introSettings(value);
   const set = (patch: Partial<IntroSettings>) => onChange({ ...v, ...patch });
   const [run, setRun] = useState(0);
@@ -170,14 +193,33 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, logo, r
                 <input type="checkbox" checked={cur.admin} onChange={(e) => setCur({ admin: e.target.checked })} /> Use it in the admin panel too
               </label>
             </div>
-            <div onMouseEnter={() => setTrying(true)} onMouseLeave={() => setTrying(false)} data-cursor-try
-              className="mt-4 grid h-36 place-items-center rounded-2xl border border-dashed border-line bg-mist text-center text-sm text-muted">
-              <div>
-                <p className="font-semibold text-ink">Move your mouse here to try it</p>
-                <p className="mt-2 flex justify-center gap-2"><a href="#cursor" onClick={(e) => e.preventDefault()} className="btn-dark px-4 py-2 text-xs">A button</a><span className="rounded-full bg-ink px-4 py-2 text-xs text-white">Dark area</span></p>
+
+            <div className="mt-6 border-t border-line pt-5" data-cursor-trail-editor>
+              <p className="font-semibold">Cursor trail</p>
+              <p className="text-sm text-muted">Something that moves behind the mouse. Works with or without the custom cursor. Pick one and move your mouse in the box below to try it.</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {CURSOR_TRAILS.map((id) => (
+                  <button type="button" key={id} data-cursor-trail-option={id} onClick={() => setCur({ trail: id })}
+                    className={`rounded-2xl border p-3 text-left transition ${cur.trail === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                    <span className="block text-sm font-semibold">{TRAILS[id].name}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-muted">{TRAILS[id].about}{TRAILS[id].dark ? " Best on dark parts." : ""}</span>
+                  </button>
+                ))}
               </div>
             </div>
-            {trying && <CustomCursor cfg={{ ...cur, enabled: true }} />}
+
+            <div ref={tryBox} onMouseEnter={() => setTrying(true)} onMouseLeave={() => setTrying(false)} data-cursor-try
+              className="mt-4 grid h-64 grid-cols-2 overflow-hidden rounded-2xl border border-dashed border-line text-center text-sm">
+              <div className="grid place-items-center bg-mist p-4 text-muted">
+                <div>
+                  <p className="font-semibold text-ink">Move your mouse here to try it</p>
+                  <p className="mt-2"><a href="#cursor" onClick={(e) => e.preventDefault()} className="btn-dark px-4 py-2 text-xs">A button</a></p>
+                </div>
+              </div>
+              <div className="grid place-items-center bg-ink p-4 text-white/70"><p>And on a dark part</p></div>
+            </div>
+            {trying && cur.enabled && <CustomCursor cfg={{ ...cur, enabled: true }} />}
+            {trying && site && <SiteTrail content={site} kind={cur.trail} area={tryBox} />}
           </div>
         )}
       </fieldset>

@@ -211,8 +211,14 @@ export const foundersDefaults: Founders = {
 // Custom mouse cursor on the website (desktop only; phones and tablets keep the normal touch), set in Admin → Site settings → Intro & cursor.
 export const CURSOR_STYLES = ["ring", "dot", "blend", "glow"] as const;
 export type CursorStyle = (typeof CURSOR_STYLES)[number];
-export type CursorSettings = { enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean };
-export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false };
+// Moving trail drawn behind the mouse (components/CursorTrail.tsx). Works with or without the custom cursor.
+export const CURSOR_TRAILS = [
+  "none", "fluid", "work", "pills", "letters", "ink", "shards", "mosaic", "sparkles", "code",
+  "gooey", "pixels", "ribbon", "rings", "neon", "orbit", "comet", "lightning", "glitch",
+] as const;
+export type CursorTrail = (typeof CURSOR_TRAILS)[number];
+export type CursorSettings = { enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean; trail?: CursorTrail };
+export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none" };
 
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
 export type Heading = { heading: string; intro: string; eyebrow?: string; helpTitle?: string; helpText?: string; helpNote?: string };

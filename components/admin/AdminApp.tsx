@@ -1143,7 +1143,7 @@ function AdminShell() {
               </Card>
             )}
 
-            {section === "intro" && <IntroEditor value={draft.intro} onChange={(v) => set("intro", v)} cursor={draft.cursor} onCursor={(v) => set("cursor", v)} logo={draft.brand.logo} readOnly={readOnly} />}
+            {section === "intro" && <IntroEditor value={draft.intro} onChange={(v) => set("intro", v)} cursor={draft.cursor} onCursor={(v) => set("cursor", v)} site={draft} logo={draft.brand.logo} readOnly={readOnly} />}
 
             {section === "showreel" && (
               <Card title="Showreel">
