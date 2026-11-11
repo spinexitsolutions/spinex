@@ -6,7 +6,7 @@ import { useContent } from "./ContentProvider";
 import { CONSENT_EVENT, readConsent } from "@/lib/consent";
 
 // Google Analytics 4, Microsoft Clarity, Meta Pixel and Google Tag Manager.
-// Each loads only when its ID is set in Admin > WhatsApp and analytics.
+// Each loads only when its ID is set in Admin > Site settings > Analytics and cookies.
 // When the cookie banner is on, nothing loads until the visitor presses Accept.
 export default function Analytics() {
   const { content } = useContent();

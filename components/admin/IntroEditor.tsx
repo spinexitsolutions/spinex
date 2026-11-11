@@ -96,11 +96,16 @@ const TRANSITIONS: Record<PageTransition, { name: string; about: string }> = {
 };
 
 // Admin → Intro animation: pick a style, see it play, and set text, colours, speed and when it shows.
-export default function IntroEditor({ value, onChange, cursor, onCursor, site, logo, readOnly }: {
+export type IntroPart = "intro" | "transitions" | "cursor" | "navbar" | "buttons";
+
+// One editor, shown a part at a time: each part has its own entry in Admin → Site settings.
+export default function IntroEditor({ value, onChange, cursor, onCursor, site, logo, readOnly, part }: {
+  part?: IntroPart;
   value: IntroSettings; onChange: (v: IntroSettings) => void; site?: SiteContent;
   cursor?: Partial<CursorSettings>; onCursor?: (v: CursorSettings) => void;
   logo: string; readOnly?: boolean;
 }) {
+  const P = (x: IntroPart) => !part || part === x;
   const cur = cursorSettings(cursor);
   const setCur = (patch: Partial<CursorSettings>) => onCursor?.({ ...cur, ...patch });
   const [trying, setTrying] = useState(false);
@@ -115,6 +120,7 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
   return (
     <div className="space-y-6">
       {/* Live preview */}
+      {P("intro") && (
       <div className="rounded-3xl border border-line bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <div className="mr-auto">
@@ -134,8 +140,10 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
         </div>
         {!v.enabled && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">The intro is switched off, so visitors won&apos;t see it. Switch it on below.</p>}
       </div>
+      )}
 
       <fieldset disabled={readOnly} className="space-y-6">
+        {P("intro") && <>
         <label className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-white p-4">
           <span><b>Show the intro</b><span className="block text-sm text-muted">Plays when someone opens the website.</span></span>
           <input type="checkbox" name="introOn" className="h-5 w-5" checked={v.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
@@ -176,15 +184,17 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
         {/* Colours */}
         <div className="rounded-3xl border border-line bg-white p-5 sm:p-6">
           <p className="font-semibold">Colours</p>
-          <p className="text-sm text-muted">Leave on “Brand” to follow Colour theme.</p>
+          <p className="text-sm text-muted">Leave on “Brand” to follow Colours.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <ColourPick label="Background" value={v.background} fallback="#120F1B" onChange={(x) => set({ background: x })} />
             <ColourPick label="Highlight" value={v.accent} fallback="#9C8CF0" onChange={(x) => set({ accent: x })} />
             <ColourPick label="Text" value={v.text} fallback="#FFFFFF" onChange={(x) => set({ text: x })} />
           </div>
         </div>
+        </>}
 
         {/* Between pages */}
+        {P("transitions") && (
         <div className="rounded-3xl border border-line bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-3">
             <div className="mr-auto">
@@ -207,15 +217,18 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
             {tx > 0 && <TransitionDemo key={tx} kind={v.pageTransition} cfg={v} logo={logo} />}
           </div>
         </div>
+        )}
 
+        {P("intro") && <>
         <label className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-white p-4">
           <span><b>Play it when the admin panel opens</b><span className="block text-sm text-muted">Once per visit, for everyone who signs in.</span></span>
           <input type="checkbox" className="h-5 w-5" checked={v.admin} onChange={(e) => set({ admin: e.target.checked })} />
         </label>
         <button type="button" onClick={() => { onChange({ ...defaultIntro }); replay(); }} className="text-sm font-semibold text-muted underline hover:text-ink">Reset intro to the default</button>
+        </>}
 
         {/* Custom cursor */}
-        {onCursor && (
+        {onCursor && P("cursor") && (
           <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-cursor-editor>
             <p className="font-semibold">Mouse cursor</p>
             <p className="text-sm text-muted">A custom cursor on the website. Only on computers (mouse or trackpad). Phones and tablets never show it.</p>
@@ -272,7 +285,7 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
           </div>
         )}
         {/* Navbar */}
-        {onCursor && (
+        {onCursor && P("navbar") && (
           <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-nav-style-editor>
             <p className="font-semibold">Navbar</p>
             <p className="text-sm text-muted">How the navbar links show the page you are on, and what happens when the mouse goes over a link. Try it in the sample below.</p>
@@ -308,7 +321,7 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
         )}
 
         {/* Buttons */}
-        {onCursor && (
+        {onCursor && P("buttons") && (
           <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-button-editor>
             <p className="font-semibold">Buttons</p>
             <p className="text-sm text-muted">How the buttons on the website look, and what they do when the mouse goes over them. Pick any look with any hover, then try them in the box below.</p>

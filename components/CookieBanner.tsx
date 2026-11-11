@@ -8,7 +8,7 @@ import { useContent } from "./ContentProvider";
 import { OPEN_EVENT, readConsent, saveConsent } from "@/lib/consent";
 import { ease } from "./Reveal";
 
-// Cookie banner, switched on in Admin → WhatsApp and analytics (off by default).
+// Cookie banner, switched on in Admin → Site settings → Analytics and cookies (off by default).
 // While it is on, analytics and ad tags load only after the visitor presses Accept.
 export default function CookieBanner() {
   const { content } = useContent();

@@ -126,7 +126,7 @@ export function CursorMarks({ style, color, dotRef, ringRef, still }: {
   );
 }
 
-// Website: reads the setting saved in Admin → Intro & cursor.
+// Website: reads the setting saved in Admin → Site settings → Cursor.
 export function SiteCursor() {
   const { content } = useContent();
   return (

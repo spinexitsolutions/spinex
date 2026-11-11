@@ -19,7 +19,7 @@ import PreviewBar, { ClearStalePreview } from "@/components/PreviewBar";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [customCode, previewing, content] = await Promise.all([getHeadCode(), isPreviewing(), getContent()]);
-  // Button look and hover chosen in Admin → Intro & cursor (styles in app/button-fx.css).
+  // Button look and hover chosen in Admin → Site settings → Buttons (styles in app/button-fx.css).
   const pick = <T extends string>(list: readonly T[], v: unknown): T => ((list as readonly unknown[]).includes(v) ? (v as T) : list[0]);
   const btnStyle = pick(BUTTON_STYLES, content.cursor?.btnStyle);
   const btnHover = pick(BUTTON_HOVERS, content.cursor?.btnHover);

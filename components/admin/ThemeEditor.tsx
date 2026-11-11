@@ -79,7 +79,7 @@ export default function ThemeEditor({ value, onChange }: { value: ThemeSettings;
             <span className="btn-light mt-5 px-5 py-2.5 text-sm">Start a project</span>
           </div>
         </div>
-        <p className="mt-4 text-xs text-muted">The logo keeps its own colours. Upload a matching logo in Logo and company name if you change the theme a lot.</p>
+        <p className="mt-4 text-xs text-muted">The logo keeps its own colours. Upload a matching logo in Logo and name if you change the theme a lot.</p>
       </section>
     </div>
   );

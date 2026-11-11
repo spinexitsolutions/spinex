@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BellRing, CalendarClock, ChevronDown, LifeBuoy, ReceiptIndianRupee, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
+import { BellRing, CalendarClock, LifeBuoy, ReceiptIndianRupee, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { leadStatusLabel, LEAD_SOURCES, type LeadStatus } from "@/lib/leads";
 import { statusLabel, type Status } from "@/lib/interns";
@@ -21,9 +21,9 @@ type Stats = {
 
 const PALETTE = ["#6E59D9", "#A595FB", "#120F1B", "#34C78C", "#FFBD2E", "#FF7896", "#C2B6FF"];
 
-type Area = { label: string; Icon: LucideIcon; items: { id: string; label: string }[] };
+type Shortcut = { id: string; label: string; where: string; Icon: LucideIcon };
 
-export default function Dashboard({ go, name, areas = [] }: { go: (s: string) => void; name: string; areas?: Area[] }) {
+export default function Dashboard({ go, name, shortcuts = [] }: { go: (s: string) => void; name: string; shortcuts?: Shortcut[] }) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState("");
 
@@ -68,6 +68,21 @@ export default function Dashboard({ go, name, areas = [] }: { go: (s: string) =>
                 <span className="flex items-center gap-2 text-sm text-white/75"><w.Icon size={15} /> {w.label}</span>
                 <span className="mt-2 block font-display text-3xl font-semibold tabular-nums">{w.value}</span>
                 {w.sub && <span className={`mt-1 block truncate text-xs ${w.hot ? "text-white/85" : "text-white/50"}`}>{w.sub}</span>}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {shortcuts.length > 0 && (
+        <section data-admin-shortcuts>
+          <p className="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.1em] text-muted">What do you want to change?</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            {shortcuts.map((x) => (
+              <button key={x.id} type="button" onClick={() => go(x.id)} className="rounded-2xl border border-line bg-white p-4 text-left transition hover:border-lav-300 hover:shadow-[0_16px_30px_-22px_rgba(87,69,181,0.5)]">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-lav-100 text-lav-600"><x.Icon size={19} /></span>
+                <span className="mt-3 block text-[14.5px] font-semibold">{x.label}</span>
+                <span className="block truncate text-xs text-muted">{x.where}</span>
               </button>
             ))}
           </div>
@@ -133,26 +148,6 @@ export default function Dashboard({ go, name, areas = [] }: { go: (s: string) =>
         </div>
       )}
 
-      {areas.length > 0 && (
-        <details className="group rounded-2xl border border-line bg-white" data-admin-areas>
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
-            Shortcuts to every section
-            <ChevronDown size={16} className="text-muted transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="grid gap-x-6 gap-y-4 border-t border-line p-5 sm:grid-cols-2 xl:grid-cols-4">
-            {areas.map((a) => (
-              <div key={a.label}>
-                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted"><a.Icon size={14} className="text-lav-600" /> {a.label}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {a.items.map((x) => (
-                    <button key={x.id} type="button" onClick={() => go(x.id)} className="rounded-full bg-mist px-2.5 py-1 text-xs font-medium text-ink/75 hover:bg-ink hover:text-white">{x.label}</button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
     </div>
   );
 }

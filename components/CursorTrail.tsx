@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CursorTrail as TrailKind } from "@/lib/content";
 
-// A moving trail behind the mouse, chosen in Admin → Site settings → Intro & cursor → Cursor trail.
+// A moving trail behind the mouse, chosen in Admin → Site settings → Cursor.
 // Only on computers with a mouse; phones, tablets and "reduce motion" never get it.
 // It draws on one see-through canvas over the page and stops drawing as soon as the trail has faded.
 export default function CursorTrail({ kind, images = [], words = [], brand = "SPINEX", area }: {

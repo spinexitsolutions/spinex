@@ -64,7 +64,7 @@ const PART_NAMES: Record<string, string> = {
   goals: "Goal picker", pages: "Page headers", homeLayout: "Home page layout", seo: "SEO", about: "About", stats: "Stats",
   services: "Services", projects: "Projects", products: "Products", industries: "Industries", testimonials: "Testimonials",
   trusted: "Trusted by", leadReplies: "Lead emails and alerts", showreel: "Showreel", banners: "Page banners", certificate: "Certificate settings",
-  careers: "Careers", integrations: "WhatsApp and analytics", internship: "Internship", contact: "Contact details", chatbot: "Chatbot",
+  careers: "Careers", integrations: "Footer, floating buttons and analytics", internship: "Internship", contact: "Contact details", chatbot: "Chatbot",
   removedServices: "Services",
 };
 

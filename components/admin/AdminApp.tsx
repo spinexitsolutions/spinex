@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  PiggyBank, Sparkles, CaseSensitive, Handshake, Contact, Settings, ShieldCheck, ChevronDown, LayoutDashboard, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
+  PiggyBank, Sparkles, CaseSensitive, Handshake, Settings, ShieldCheck, ChevronRight, LayoutDashboard, RectangleHorizontal, PanelBottom, MessageCircle, ArrowLeftRight, MousePointer2, Type, Info, Layers, Briefcase, Building2, Quote, Film, Phone, Bot, DatabaseBackup,
   LogOut, LifeBuoy, Bell, BellOff, ExternalLink, Plug, UserCog, Image as ImageIcon, Images, Search, Newspaper, LayoutTemplate, PanelTop, ListOrdered, Target, CalendarClock, Package, KeyRound, Palette, History, GraduationCap, Check, BadgeCheck, MailCheck, ReceiptIndianRupee, FileSignature, MapPin, BookOpen, UsersRound, Timer, UserRound, ScrollText, Eye, Download, Upload, RotateCcw, Menu, X, Users, Award, Loader2, Inbox, Wallet, CalendarCheck, Video, Star, MessageSquareHeart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -86,13 +86,19 @@ const sections = [
   { id: "chatbot", label: "Chatbot and FAQ", Icon: Bot, group: "Website content" , perm: "content" },
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Blog and media" , perm: "blog" },
   { id: "media", label: "Media", Icon: Images, group: "Blog and media" , perm: "media" },
-  { id: "brand", label: "Logo and company name", Icon: BadgeCheck, group: "Site settings" , perm: "content" },
-  { id: "contact", label: "Contact page and details", Icon: Phone, group: "Site settings" , perm: "content" },
-  { id: "theme", label: "Colour theme", Icon: Palette, group: "Site settings" , perm: "content" },
-  { id: "fonts", label: "Fonts & text", Icon: CaseSensitive, group: "Site settings" , perm: "content" },
-  { id: "intro", label: "Intro & cursor", Icon: Sparkles, group: "Site settings" , perm: "content" },
+  { id: "brand", label: "Logo and name", Icon: BadgeCheck, group: "Site settings" , perm: "content" },
+  { id: "contact", label: "Contact details and page", Icon: Phone, group: "Site settings" , perm: "content" },
+  { id: "theme", label: "Colours", Icon: Palette, group: "Site settings" , perm: "content" },
+  { id: "fonts", label: "Fonts and text", Icon: CaseSensitive, group: "Site settings" , perm: "content" },
+  { id: "intro", label: "Intro screen", Icon: Sparkles, group: "Site settings" , perm: "content" },
+  { id: "buttons", label: "Buttons", Icon: RectangleHorizontal, group: "Site settings" , perm: "content" },
+  { id: "navbar", label: "Navbar", Icon: PanelTop, group: "Site settings" , perm: "content" },
+  { id: "footer", label: "Footer", Icon: PanelBottom, group: "Site settings" , perm: "integrations" },
+  { id: "floating", label: "Floating buttons", Icon: MessageCircle, group: "Site settings" , perm: "integrations" },
+  { id: "transitions", label: "Page transitions", Icon: ArrowLeftRight, group: "Site settings" , perm: "content" },
+  { id: "cursor", label: "Cursor", Icon: MousePointer2, group: "Site settings" , perm: "content" },
   { id: "seo", label: "SEO", Icon: Search, group: "Site settings" , perm: "content" },
-  { id: "integrations", label: "WhatsApp and analytics", Icon: Plug, group: "Site settings" , perm: "integrations" },
+  { id: "integrations", label: "Analytics and cookies", Icon: Plug, group: "Site settings" , perm: "integrations" },
   { id: "team", label: "Team and roles", Icon: UserCog, group: "Admin and security" , perm: "users" },
   { id: "apikeys", label: "API keys", Icon: KeyRound, group: "Admin and security" , perm: "users" },
   { id: "automation", label: "Automation", Icon: Timer, group: "Admin and security" , perm: "users" },
@@ -102,17 +108,62 @@ const sections = [
   { id: "account", label: "My account", Icon: UserRound, group: "Admin and security" , perm: "any" },
 ] as const;
 
-// Sidebar groups, in order. A group shows only if this person can open something in it.
-const GROUPS = [
-  { label: "CRM", Icon: Contact },
-  { label: "Sales and accounts", Icon: ReceiptIndianRupee },
-  { label: "HR and team", Icon: Users },
-  { label: "Website pages", Icon: LayoutTemplate },
-  { label: "Website content", Icon: Layers },
-  { label: "Blog and media", Icon: Newspaper },
-  { label: "Site settings", Icon: Settings },
-  { label: "Admin and security", Icon: ShieldCheck },
-] as const;
+// The sidebar: ten plain entries, always visible, no drop-downs. An entry with several screens opens a
+// page of cards (one card per screen, with a line saying what is inside), grouped under small headings.
+type Area = { id: string; label: string; Icon: LucideIcon; head: string; about: string; groups: { label: string; ids: string[] }[] };
+const AREAS: Area[] = [
+  { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, head: "", about: "", groups: [{ label: "", ids: ["overview"] }] },
+  { id: "crm", label: "Leads and clients", Icon: Inbox, head: "Business", about: "Enquiries, calls and the clients you work with.", groups: [
+    { label: "Enquiries", ids: ["leads", "bookings", "replies"] },
+    { label: "Clients", ids: ["clients", "feedback", "reviews"] },
+  ] },
+  { id: "sales", label: "Sales and accounts", Icon: ReceiptIndianRupee, head: "Business", about: "Quotes, invoices, expenses and profit.", groups: [{ label: "", ids: ["billing", "accounts"] }] },
+  { id: "hr", label: "HR and team", Icon: Users, head: "Business", about: "Interns, attendance, payslips, letters and certificates.", groups: [{ label: "", ids: ["interns", "attendance", "payslips", "letters", "certificates"] }] },
+  { id: "pages", label: "Pages", Icon: LayoutTemplate, head: "Website", about: "What each page of the website says and shows.", groups: [
+    { label: "Pages", ids: ["home", "hero", "pages", "banners", "about", "internship", "careers", "cities"] },
+    { label: "Content used on the pages", ids: ["services", "products", "projects", "industries", "process", "testimonials", "trusted", "goals", "planner", "showreel", "chatbot", "profile"] },
+  ] },
+  { id: "blog", label: "Blog", Icon: Newspaper, head: "Website", about: "", groups: [{ label: "", ids: ["blog"] }] },
+  { id: "media", label: "Media", Icon: Images, head: "Website", about: "", groups: [{ label: "", ids: ["media"] }] },
+  { id: "settings", label: "Site settings", Icon: Settings, head: "Website", about: "Everything that applies to the whole website. Pick what you want to change.", groups: [
+    { label: "Basics", ids: ["brand", "contact"] },
+    { label: "Look", ids: ["theme", "fonts", "buttons"] },
+    { label: "Layout", ids: ["navbar", "footer", "floating"] },
+    { label: "Effects", ids: ["intro", "transitions", "cursor"] },
+    { label: "Google and tracking", ids: ["seo", "integrations", "apikeys"] },
+  ] },
+  { id: "team", label: "Team and security", Icon: ShieldCheck, head: "Admin", about: "Who can sign in, what runs by itself, and your own account.", groups: [{ label: "", ids: ["team", "automation", "activity", "account"] }] },
+  { id: "backup", label: "Backup and history", Icon: History, head: "Admin", about: "Download a copy, restore one, or go back to an older version.", groups: [{ label: "", ids: ["backup", "history"] }] },
+];
+// Dashboard: the changes people make most, each saying where it lives.
+const SHORTCUTS: { id: string; label: string; where: string; Icon: LucideIcon }[] = [
+  { id: "home", label: "Edit the home page", where: "Pages", Icon: LayoutTemplate },
+  { id: "blog", label: "Write a blog post", where: "Blog", Icon: Newspaper },
+  { id: "projects", label: "Add a project", where: "Pages › Projects", Icon: Briefcase },
+  { id: "products", label: "Add a product", where: "Pages › Products", Icon: Package },
+  { id: "banners", label: "Change a banner", where: "Pages › Page banners", Icon: ImageIcon },
+  { id: "navbar", label: "Change the menu", where: "Site settings › Navbar", Icon: PanelTop },
+  { id: "theme", label: "Change colours", where: "Site settings › Colours", Icon: Palette },
+  { id: "fonts", label: "Change fonts", where: "Site settings › Fonts and text", Icon: CaseSensitive },
+];
+const areaOf = (id: string) => AREAS.find((a) => a.groups.some((g) => g.ids.includes(id))) ?? AREAS[0];
+
+// One line under each card saying what is inside.
+const ABOUT: Record<string, string> = {
+  leads: "Every enquiry from the website, WhatsApp and ads", bookings: "Calls people booked with you", replies: "Thank-you email, WhatsApp alert, ready messages",
+  clients: "Client list and their portal logins", feedback: "Feedback clients sent you", reviews: "Rating and reviews pulled from Google",
+  billing: "Quotations, invoices and payments", accounts: "Money out, money in, profit",
+  interns: "Applications and current interns", attendance: "Attendance and leave requests", payslips: "Monthly payslips", letters: "Offer, experience and other letters", certificates: "Certificate design and signatures",
+  home: "Which sections show and their headings", hero: "Headline, buttons and the box on the right", pages: "Title and intro at the top of each page", banners: "Banner picture of each page",
+  about: "About text, founders and numbers", internship: "Open roles and applications", careers: "Jobs and hiring", cities: "Local pages for each city",
+  services: "The services you offer", products: "Your own software", projects: "Work shown on the site", industries: "Who you work with", process: "The steps from call to launch",
+  testimonials: "Client quotes", trusted: "Client logos and Google rating line", goals: "The “I want to…” picker", planner: "Project planner questions and prices", showreel: "The home page video", chatbot: "Assistant name and its answers", profile: "Company profile PDF",
+  brand: "Logo, company name, tagline", contact: "Phone, email, address, social links, contact page", theme: "Brand colour and themes", fonts: "Fonts, heading animation, highlights", buttons: "Button style and hover effect",
+  navbar: "Top menu style and hover", footer: "Big name and products column", floating: "WhatsApp button and phone bar", intro: "Opening animation", transitions: "Effect between pages", cursor: "Custom cursor and trail",
+  seo: "Titles, descriptions, search text", integrations: "Google Analytics, pixel, cookie banner", apikeys: "Keys for connected services",
+  team: "People and what each can do", automation: "Things that run by themselves", activity: "Who changed what", account: "Your name and password",
+  backup: "Download or import the website content", history: "Older saved versions",
+};
 
 type SectionId = (typeof sections)[number]["id"];
 
@@ -167,18 +218,9 @@ function AdminShell() {
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState(false);
   const [find, setFind] = useState("");
-  // Sidebar groups the person opened; the group of the open section is always open. Remembered on this computer.
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
-  useEffect(() => {
-    try { const saved = JSON.parse(localStorage.getItem("spinex-admin-groups") || "[]"); if (Array.isArray(saved)) setOpenGroups((now) => Array.from(new Set([...now, ...saved.filter((x) => typeof x === "string")]))); } catch {}
-  }, []);
-  const saveGroups = (next: string[]) => { try { localStorage.setItem("spinex-admin-groups", JSON.stringify(next)); } catch {} return next; };
-  const toggleGroup = (label: string) => setOpenGroups((list) => saveGroups(list.includes(label) ? list.filter((x) => x !== label) : [...list, label]));
-  // Opening a section (from the address, the dashboard or search) opens its group.
-  useEffect(() => {
-    const g = sections.find((x) => x.id === section)?.group;
-    if (g) setOpenGroups((list) => (list.includes(g) ? list : saveGroups([...list, g])));
-  }, [section]);
+  // Which sidebar entry's page of cards is open (null = a screen is open).
+  const [hub, setHub] = useState<string | null>(null);
+  useEffect(() => { setHub(null); }, [section]);
   const [conflict, setConflict] = useState("");
   // True when the latest saved content couldn't be fetched, so the save base is unknown.
   const [loadFailed, setLoadFailed] = useState(false);
@@ -259,6 +301,8 @@ function AdminShell() {
     // and a refresh or a shared link (e.g. /admin#leads) opens the same place.
     window.history.pushState(null, "", `#${id}`);
   };
+  // Opens a screen and closes the page of cards.
+  const open = (id: SectionId) => { setHub(null); go(id); };
   // "Add to Home screen" from the admin installs the admin app (opens at /admin), not the website.
   useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
@@ -407,10 +451,13 @@ function AdminShell() {
   const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "accounts", "bookings", "reviews", "feedback", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
+  const hubArea = hub ? AREAS.find((a) => a.id === hub) ?? null : null;
+  const curArea = areaOf(section);
+  const curAreaItems = allowed.filter((x) => curArea.groups.some((g) => (g.ids as string[]).includes(x.id))).length;
 
   return (
     <LiveProvider value={badges}>
-    {me && content.cursor?.admin && section !== "intro" && <CustomCursor cfg={content.cursor} />}
+    {me && content.cursor?.admin && section !== "cursor" && <CustomCursor cfg={content.cursor} />}
     {adminIntro && <IntroAnimation cfg={introSettings(content.intro)} logo={content.brand.logo} onDone={() => setAdminIntro(false)} />}
     <MediaDeleteContext.Provider value={!!me && can(me, "media", "edit")}>
     <div className="min-h-screen bg-mist lg:flex">
@@ -427,51 +474,43 @@ function AdminShell() {
         </div>
         <div className="relative mb-3">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-          <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search leads, clients, invoices…" aria-label="Search the admin" data-admin-find
+          <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search settings, leads, clients…" aria-label="Search the admin" data-admin-find
             className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/30" />
         </div>
         <nav className="-mx-1 flex-1 space-y-0.5 overflow-y-auto px-1 [scrollbar-width:thin]" aria-label="Admin sections">
           {find.trim() ? (
             <>
-              {allowed.filter((x) => `${x.label} ${x.group}`.toLowerCase().includes(find.trim().toLowerCase())).map((x) => (
-                <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} sub={x.group} onClick={() => { go(x.id); setNav(false); setFind(""); }} />
+              {allowed.filter((x) => `${x.label} ${areaOf(x.id).label} ${ABOUT[x.id] ?? ""}`.toLowerCase().includes(find.trim().toLowerCase())).map((x) => (
+                <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} sub={areaOf(x.id).label} onClick={() => { open(x.id); setNav(false); setFind(""); }} />
               ))}
               <SearchHits q={find} onLead={(id) => { const w = window as Window & { __spxOpenLead?: string }; w.__spxOpenLead = id; go("leads"); setNav(false); setFind(""); setTimeout(() => window.dispatchEvent(new Event("spx-open-lead")), 50); }} />
             </>
           ) : (
             <>
-              {allowed.filter((x) => !x.group).map((x) => (
-                <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} onClick={() => { go(x.id); setNav(false); }} />
-              ))}
-              {GROUPS.map((g) => {
-                const items = allowed.filter((x) => x.group === g.label);
+              {AREAS.map((a, i) => {
+                const items = allowed.filter((x) => a.groups.some((g) => (g.ids as string[]).includes(x.id)));
                 if (!items.length) return null;
-                const isOpen = openGroups.includes(g.label);
+                const active = hub ? hub === a.id : areaOf(section).id === a.id;
                 const total = items.reduce((n, x) => n + badgeOf(x.id), 0);
+                const newHead = a.head && a.head !== AREAS[i - 1]?.head;
                 return (
-                  <div key={g.label} className="pt-1" data-admin-group={g.label}>
-                    <button type="button" onClick={() => toggleGroup(g.label)} aria-expanded={isOpen}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold uppercase tracking-wider text-white/55 hover:bg-white/5 hover:text-white">
-                      <g.Icon size={16} className="text-white/45" />
-                      <span className="flex-1">{g.label}</span>
-                      {!isOpen && total > 0 && <span className="rounded-full bg-lav-500 px-2 py-0.5 text-xs font-bold normal-case tabular-nums text-white">{total}</span>}
-                      <ChevronDown size={15} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {isOpen && (
-                      <div className="ml-[18px] space-y-0.5 border-l border-white/10 pl-2">
-                        {items.map((x) => (
-                          <NavItem key={x.id} item={x} active={section === x.id} badge={badgeOf(x.id)} title={badgeTitle[x.id]} onClick={() => { go(x.id); setNav(false); }} />
-                        ))}
-                      </div>
-                    )}
+                  <div key={a.id}>
+                    {newHead && <p className="px-3 pb-1 pt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/35">{a.head}</p>}
+                    <NavItem item={a} active={active} badge={active ? 0 : total} title="new"
+                      onClick={() => { if (items.length === 1) open(items[0].id); else setHub(a.id); setNav(false); }} />
                   </div>
                 );
               })}
             </>
           )}
         </nav>
+        <a href="/" target="_blank" rel="noopener" className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 hover:bg-white/5" data-admin-site>
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.18)]" />
+          <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-semibold">{SITE_URL.replace(/^https?:\/\//, "")}</span><span className="block text-xs text-emerald-300">Live · open website</span></span>
+          <ExternalLink size={14} className="text-white/50" />
+        </a>
         {me && (
-          <div className="mt-4 rounded-xl bg-white/5 px-3 py-2.5">
+          <div className="mt-2 rounded-xl bg-white/5 px-3 py-2.5">
             <p className="truncate text-sm font-semibold">{me.name}</p>
             <p className="truncate text-xs text-white/55">{roleLabel[me.role]} · {me.email}</p>
           </div>
@@ -489,7 +528,20 @@ function AdminShell() {
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-white/90 px-5 py-4 backdrop-blur sm:px-8">
           <button onClick={() => setNav(true)} className="lg:hidden" aria-label="Open menu"><Menu size={22} /></button>
-          <div className="min-w-0 flex-1">{current.group && <p className="truncate text-xs font-semibold uppercase tracking-wider text-muted">{current.group}</p>}<h1 className="truncate font-display text-xl font-semibold">{current.label}</h1></div>
+          <div className="min-w-0 flex-1">
+            {hubArea ? (
+              <h1 className="truncate font-display text-xl font-semibold">{hubArea.label}</h1>
+            ) : (
+              <>
+                {curArea.id !== "dashboard" && curAreaItems > 1 && (
+                  <button type="button" onClick={() => setHub(curArea.id)} className="flex items-center gap-1 truncate text-xs font-semibold text-muted hover:text-lav-700" data-admin-crumb>
+                    {curArea.label} <ChevronRight size={12} />
+                  </button>
+                )}
+                <h1 className="truncate font-display text-xl font-semibold">{current.label}</h1>
+              </>
+            )}
+          </div>
           <Link href="/" target="_blank" className="hidden items-center gap-2 text-sm text-muted hover:text-ink sm:flex"><ExternalLink size={15} /> View site</Link>
           {contentSection && dirty && <button onClick={() => setDraft(content)} className="btn-ghost px-4 py-2 text-sm">Discard</button>}
           {contentSection && dirty && <button onClick={preview} disabled={previewing} title="See the website with these changes before they go live (only you see it)" className="btn-ghost px-4 py-2 text-sm">{previewing ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />} Preview</button>}
@@ -503,7 +555,7 @@ function AdminShell() {
         </header>
 
         {/* Lists you work through (leads, clients, invoices…) get a wider page than the forms. */}
-        <main className={`mx-auto p-4 sm:p-8 ${(["overview", "leads", "clients", "billing", "bookings", "interns", "accounts", "attendance", "payslips", "letters", "activity"] as string[]).includes(section) ? "max-w-[1240px]" : "max-w-4xl"}`}>
+        <main className={`mx-auto p-4 sm:p-8 ${(["overview", "leads", "clients", "billing", "bookings", "interns", "accounts", "attendance", "payslips", "letters", "activity"] as string[]).includes(section) || hubArea ? "max-w-[1240px]" : "max-w-4xl"}`}>
           {loadFailed && !conflict && (
             <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
               <p className="min-w-[200px] flex-1">Couldn&apos;t load the latest saved content. Reload before saving.</p>
@@ -522,8 +574,37 @@ function AdminShell() {
               <b>View only.</b> You can look at this section, but changes can&apos;t be saved. Ask the owner if you need to change something here.
             </p>
           )}
-          <motion.div key={section} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            {section === "overview" && <Dashboard go={(id) => go(id as SectionId)} name={me?.name ?? "there"} areas={GROUPS.map((g) => ({ label: g.label, Icon: g.Icon, items: allowed.filter((x) => x.group === g.label) })).filter((a) => a.items.length > 0)} />}
+          {hubArea && (
+            <motion.div key={hubArea.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} data-admin-hub={hubArea.id}>
+              <h2 className="font-display text-3xl font-semibold tracking-tight">{hubArea.label}</h2>
+              {hubArea.about && <p className="mt-1 text-muted">{hubArea.about}</p>}
+              {hubArea.groups.map((g) => {
+                const items = allowed.filter((x) => (g.ids as string[]).includes(x.id)).sort((x, y) => g.ids.indexOf(x.id) - g.ids.indexOf(y.id));
+                if (!items.length) return null;
+                return (
+                  <div key={g.label || "all"}>
+                    {g.label ? <p className="mb-2.5 mt-7 text-[11.5px] font-bold uppercase tracking-[0.1em] text-muted">{g.label}</p> : <div className="mt-6" />}
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {items.map((x) => (
+                        <button key={x.id} type="button" onClick={() => open(x.id)} data-admin-card={x.id}
+                          className="group flex items-center gap-3.5 rounded-2xl border border-line bg-white p-4 text-left transition hover:border-lav-300 hover:shadow-[0_16px_30px_-22px_rgba(87,69,181,0.5)]">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-lav-100 text-lav-600"><x.Icon size={20} /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-semibold">{x.label}</span>
+                            <span className="block truncate text-[13px] text-muted">{ABOUT[x.id] ?? ""}</span>
+                          </span>
+                          {badgeOf(x.id) > 0 && <span className="rounded-full bg-lav-600 px-2 py-0.5 text-xs font-bold tabular-nums text-white">{badgeOf(x.id)}</span>}
+                          <ChevronRight size={16} className="shrink-0 text-muted/50 transition group-hover:translate-x-0.5 group-hover:text-lav-600" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+          <motion.div key={section} className={hubArea ? "hidden" : undefined} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            {section === "overview" && <Dashboard go={(id) => go(id as SectionId)} name={me?.name ?? "there"} shortcuts={SHORTCUTS.filter((x) => allowed.some((y) => y.id === x.id))} />}
 
             {section === "team" && <UsersManager />}
 
@@ -725,11 +806,11 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "integrations" && (
+            {(section === "integrations" || section === "floating" || section === "footer") && (
               <div className="space-y-6">
                 {!canIntegrations && <p className="rounded-2xl border border-line bg-white px-4 py-3 text-sm text-muted">Only the owner or an admin can change these.</p>}
                 <fieldset disabled={!canIntegrations} className="space-y-6 disabled:opacity-70">
-                <Card title="Floating WhatsApp button" note="A green button on every page that opens WhatsApp chat with you.">
+                {section === "floating" && <Card title="Floating WhatsApp button" note="A green button on every page that opens WhatsApp chat with you.">
                   <label className="flex items-center gap-3">
                     <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={draft.integrations.whatsappButton} onChange={(e) => set("integrations", { ...draft.integrations, whatsappButton: e.target.checked })} />
                     <span className="font-medium">Show the WhatsApp button</span>
@@ -738,8 +819,8 @@ function AdminShell() {
                     <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[{ key: "whatsappText", label: "Message filled in for the visitor", type: "textarea" }]} />
                   </div>
                   <p className="mt-3 text-sm text-muted">The number comes from Contact details.</p>
-                </Card>
-                <Card title="Bottom bar on phones" note="A slim bar fixed to the bottom of the screen on phones with Call, WhatsApp and Get a quote buttons. It doesn't show on computers. While it is on, the floating WhatsApp button is hidden on phones (the bar already has WhatsApp).">
+                </Card>}
+                {section === "floating" && <Card title="Bottom bar on phones" note="A slim bar fixed to the bottom of the screen on phones with Call, WhatsApp and Get a quote buttons. It doesn't show on computers. While it is on, the floating WhatsApp button is hidden on phones (the bar already has WhatsApp).">
                   {(() => {
                     const mb = { ...defaultMobileBar, ...(draft.integrations.mobileBar ?? {}) };
                     const setMb = (v: Partial<MobileBar>) => set("integrations", { ...draft.integrations, mobileBar: { ...mb, ...v } });
@@ -764,8 +845,8 @@ function AdminShell() {
                       </div>
                     );
                   })()}
-                </Card>
-                <Card title="Footer" note="The big word at the bottom of the footer and the products column.">
+                </Card>}
+                {section === "footer" && <Card title="Footer" note="The big word at the bottom of the footer and the products column.">
                   {(() => {
                     const ft = { ...defaultFooter, ...(draft.integrations.footer ?? {}) };
                     const setFt = (v: Partial<FooterSettings>) => set("integrations", { ...draft.integrations, footer: { ...ft, ...v } });
@@ -786,8 +867,8 @@ function AdminShell() {
                       </div>
                     );
                   })()}
-                </Card>
-                <Card title="Cookie banner" note="Asks visitors to accept or reject cookies. While it is on, Google Analytics, Clarity, Meta Pixel and Tag Manager run only for visitors who press Accept. Visitors can change their choice from 'Cookie settings' in the footer.">
+                </Card>}
+                {section === "integrations" && <Card title="Cookie banner" note="Asks visitors to accept or reject cookies. While it is on, Google Analytics, Clarity, Meta Pixel and Tag Manager run only for visitors who press Accept. Visitors can change their choice from 'Cookie settings' in the footer.">
                   <label className="flex items-center gap-3">
                     <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={!!draft.integrations.cookieBanner} onChange={(e) => set("integrations", { ...draft.integrations, cookieBanner: e.target.checked })} />
                     <span className="font-medium">Show the cookie banner</span>
@@ -795,15 +876,15 @@ function AdminShell() {
                   <div className="mt-5">
                     <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[{ key: "cookieText", label: "Banner text", type: "textarea", hint: "A link to the Privacy Policy is added after it" }]} />
                   </div>
-                </Card>
-                <Card title="Analytics" note="See how many people visit, which pages they open and where they leave. Leave empty to turn off.">
+                </Card>}
+                {section === "integrations" && <Card title="Analytics" note="See how many people visit, which pages they open and where they leave. Leave empty to turn off.">
                   <ObjectEditor value={draft.integrations} onChange={(v) => set("integrations", v)} fields={[
                     { key: "gaId", label: "Google Analytics 4 ID", hint: "looks like G-XXXXXXXXXX" },
                     { key: "clarityId", label: "Microsoft Clarity project ID", hint: "10 letters, from clarity.microsoft.com" },
                     { key: "metaPixelId", label: "Meta (Facebook) Pixel ID", hint: "numbers only, from Meta Events Manager" },
                     { key: "gtmId", label: "Google Tag Manager ID", hint: "looks like GTM-XXXXXXX" },
                   ]} />
-                </Card>
+                </Card>}
                 </fieldset>
                 {me && can(me, "users") && <p className="text-sm text-muted">API keys (email, AI chatbot, spam protection, webhooks) and custom code are in <button onClick={() => go("apikeys")} className="font-semibold text-lav-700 underline">API keys</button> (owner only).</p>}
               </div>
@@ -1150,7 +1231,7 @@ function AdminShell() {
               </Card>
             )}
 
-            {section === "intro" && <IntroEditor value={draft.intro} onChange={(v) => set("intro", v)} cursor={draft.cursor} onCursor={(v) => set("cursor", v)} site={draft} logo={draft.brand.logo} readOnly={readOnly} />}
+            {(section === "intro" || section === "transitions" || section === "cursor" || section === "navbar" || section === "buttons") && <IntroEditor key={section} part={section} value={draft.intro} onChange={(v) => set("intro", v)} cursor={draft.cursor} onCursor={(v) => set("cursor", v)} site={draft} logo={draft.brand.logo} readOnly={readOnly} />}
 
             {section === "showreel" && (
               <Card title="Showreel">
@@ -1382,9 +1463,9 @@ function NavItem({ item, active, badge, title, sub, onClick }: {
 }) {
   const { Icon } = item;
   return (
-    <button onClick={onClick} data-admin-nav={item.id} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14.5px]">
-      {active && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-white/10" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
-      <Icon size={17} className={`relative shrink-0 ${active ? "text-lav-300" : "text-white/50"}`} />
+    <button onClick={onClick} data-admin-nav={item.id} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14.5px] font-medium">
+      {active && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-lav-600" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
+      <Icon size={17} className={`relative shrink-0 ${active ? "text-white" : "text-white/50"}`} />
       <span className={`relative flex-1 ${active ? "text-white" : "text-white/70"}`}>
         {item.label}
         {sub && <span className="block text-[11px] text-white/40">{sub}</span>}

@@ -25,7 +25,7 @@ const links = [
 
 // Icons for the "icons" navbar style.
 export const NAV_ICONS: Record<string, LucideIcon> = { "/": Home, "/services": Sparkles, "/products": Monitor, "/work": Briefcase, "/blog": Newspaper, "/about": User, "/internship": GraduationCap, "/contact": MessageSquare };
-// For each navbar style (Admin → Intro & cursor → Navbar): the sliding pill behind the current page,
+// For each navbar style (Admin → Site settings → Navbar): the sliding pill behind the current page,
 // the one behind the link under the mouse, and the text colour of the current page. Everything else is in app/nav-fx.css.
 export const NAV: Record<NavStyle, { active?: string; hover?: string; activeText: string; spring?: { stiffness: number; damping: number } }> = {
   default: { active: "inset-0 rounded-full bg-ink", hover: "inset-0 rounded-full bg-lav-100", activeText: "text-white" },
