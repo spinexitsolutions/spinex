@@ -330,6 +330,11 @@ function AdminShell() {
     // and a refresh or a shared link (e.g. /admin#leads) opens the same place.
     window.history.pushState(null, "", `#${id}`);
   };
+  // Computers: the whole admin is drawn a little smaller (see html.spx-admin in globals.css), so more fits on screen.
+  useEffect(() => {
+    document.documentElement.classList.add("spx-admin");
+    return () => document.documentElement.classList.remove("spx-admin");
+  }, []);
   // Opens a screen and closes the page of cards.
   const open = (id: SectionId) => { setHub(null); go(id); };
   // "Add to Home screen" from the admin installs the admin app (opens at /admin), not the website.

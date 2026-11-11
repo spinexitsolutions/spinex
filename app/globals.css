@@ -156,3 +156,12 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
 [data-home-blocks] > section.bg-white + section.bg-white,
 [data-home-blocks] > section.bg-mist + section.bg-mist,
 [data-home-blocks] > section.bg-ink + section.bg-ink { padding-top: 0; }
+
+/* Admin panel on computers: everything 10% smaller so more fits on screen. Heights that fill the
+   window are divided by the same number, because zoom shrinks them too. */
+@media (min-width: 1024px) {
+  html.spx-admin { zoom: 0.9; }
+  html.spx-admin .min-h-screen { min-height: calc(100vh / 0.9); }
+  html.spx-admin .lg\:h-screen { height: calc(100vh / 0.9); }
+  html.spx-admin [data-live-preview] { height: calc(100vh / 0.9 - 73px); }
+}
