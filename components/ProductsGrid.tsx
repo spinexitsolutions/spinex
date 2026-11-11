@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Check } from "lucide-react";
-import WhatsAppIcon from "@/components/WhatsAppIcon";
+import { ArrowUpRight, Check, MonitorPlay, PlayCircle } from "lucide-react";
 import { productSlug, type Product } from "@/lib/content";
 import { sized } from "@/lib/img";
 
@@ -68,7 +67,8 @@ function Visual({ p, big }: { p: Product; big?: boolean }) {
 function Info({ p, whatsapp, big }: { p: Product; whatsapp: string; big?: boolean }) {
   const href = `/products/${productSlug(p)}`;
   const [main, ...more] = (p.price || "Price on request").split(/,\s+(?=[A-Za-z])/);
-  const demo = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hi Spinex, I'd like a free demo of ${p.name}.`)}`;
+  // The product's own live demo link, or else its YouTube video (both set in Admin → Products).
+  const demo = p.demoUrl?.trim() ? { href: p.demoUrl.trim(), label: "Live demo", Icon: MonitorPlay } : p.videoUrl?.trim() ? { href: p.videoUrl.trim(), label: "Watch video", Icon: PlayCircle } : null;
   return (
     <div className={`flex flex-1 flex-col ${big ? "p-7 sm:p-10" : "p-7 sm:p-8"}`}>
       {(p.category || p.audience) && <p className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-lav-700">{p.category || p.audience}</p>}
@@ -92,9 +92,9 @@ function Info({ p, whatsapp, big }: { p: Product; whatsapp: string; big?: boolea
           {more.length > 0 && <p className="text-[13px] text-muted">{more.join(" · ")}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
-          {whatsapp && (
-            <a href={demo} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:brightness-105">
-              <WhatsAppIcon size={16} /> Free demo
+          {demo && (
+            <a href={demo.href} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 text-sm font-semibold transition hover:border-ink">
+              <demo.Icon size={16} /> {demo.label}
             </a>
           )}
           <Link href={href} className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-ink px-4 text-sm font-semibold text-white transition hover:bg-lav-700">
