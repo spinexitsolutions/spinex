@@ -4,10 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { SCENES } from "./home/LiveBuild";
+import type { HeroScene } from "@/lib/content";
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { serviceSlug } from "@/lib/content";
 import { ease } from "./Reveal";
+
+// Service id → its scene in the hero box (the ids differ only for app development).
+const SERVICE_SCENE: Record<string, HeroScene> = { ondemand: "app" };
 
 const links = [
   { href: "/", label: "Home" },
@@ -113,16 +118,13 @@ export default function Navbar() {
             }`}
             aria-label="Main"
           >
-            <Link href="/" className="group flex shrink-0 items-center gap-2 rounded-full pl-0.5 pr-3" aria-label={`${content.brand.name} home`}>
+            <Link href="/" className="flex shrink-0 items-center gap-1.5 rounded-full pl-2 pr-3" aria-label={`${content.brand.name} home`}>
               {content.brand.logo?.trim() ? (
-                <span className="relative grid h-10 w-10 place-items-center">
-                  <span className="absolute inset-0 scale-0 rounded-full bg-lav-100 transition-transform duration-500 group-hover:scale-100" />
-                  <img src="/api/brand-icon?size=160" alt="" className="relative h-8 w-8 object-contain transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-[360deg]" />
-                </span>
+                <img src="/api/brand-icon?size=96" alt="" className="h-6 w-6 object-contain" data-nav-logo />
               ) : (
                 <span className="w-2" aria-hidden />
               )}
-              <span className="font-display text-[22px] font-semibold tracking-tight">Spinex</span>
+              <span className="font-display text-[19px] font-semibold tracking-tight">Spinex</span>
             </Link>
 
             <ul className="hidden items-center lg:flex" onMouseLeave={() => setHovered(null)}>
@@ -215,23 +217,18 @@ export default function Navbar() {
                       </motion.li>
                     ))}
                   </ul>
-                  <div className="relative overflow-hidden rounded-[20px] bg-ink">
-                    <AnimatePresence initial={false}>
-                      <motion.img
-                        key={previewService.id}
-                        src={previewService.image}
-                        alt=""
-                        initial={{ opacity: 0, scale: 1.1 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5, ease }}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    </AnimatePresence>
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                      <p className="text-sm text-white/70">{previewService.tags.join(", ")}</p>
-                      <Link href="/services" onClick={() => setMega(false)} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink transition hover:bg-lav-100">
+                  <div className="flex flex-col overflow-hidden rounded-[20px] border border-line bg-white" data-mega-scene={previewService.id}>
+                    {/* The same moving scene as the box in the hero, for the service under the mouse. */}
+                    <div className="relative h-[300px] p-4">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div key={previewService.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} className="h-full">
+                          {(() => { const View = (SCENES[SERVICE_SCENE[previewService.id] ?? (previewService.id as HeroScene)] ?? SCENES.web).View; return <View />; })()}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-line bg-mist px-4 py-3">
+                      <p className="line-clamp-2 text-[13px] text-muted">{previewService.tags.join(", ")}</p>
+                      <Link href="/services" onClick={() => setMega(false)} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white transition hover:bg-lav-700">
                         All services <ArrowUpRight size={15} />
                       </Link>
                     </div>
