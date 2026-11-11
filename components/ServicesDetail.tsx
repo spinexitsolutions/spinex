@@ -106,7 +106,7 @@ function Card({ s, wide, span, delay }: { s: Service; wide: boolean; span: strin
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, ease, delay }}
-      className={`group flex scroll-mt-44 flex-col rounded-[28px] border border-line bg-white p-3 transition hover:border-lav-300 hover:shadow-[0_24px_60px_-30px_rgba(87,69,181,0.45)] ${span}`}
+      className={`group flex scroll-mt-28 flex-col rounded-[28px] border border-line bg-white p-3 transition hover:border-lav-300 hover:shadow-[0_24px_60px_-30px_rgba(87,69,181,0.45)] ${span}`}
     >
       <Link href={href} aria-label={s.title} className={`svc-stage relative block overflow-hidden rounded-[22px] bg-ink bg-[radial-gradient(80%_90%_at_50%_15%,rgba(110,89,217,0.42),transparent)] text-white ${wide ? "h-[230px] sm:h-[290px]" : "h-[230px]"}`}>
         <span aria-hidden className="pointer-events-none absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:18px_18px]" />
