@@ -7,13 +7,29 @@ import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "../ContentProvider";
 import { LEAD_SOURCES, MANUAL_SOURCES, type Lead, type ManualSource } from "@/lib/leads";
 import { defaultWaTemplates, type WaTemplate } from "@/lib/content";
+import { checkPhone } from "@/lib/phone";
 
 type Member = { id: string; name: string; role: string };
 
-export const waNumber = (phone: string) => {
-  const d = phone.replace(/\D/g, "");
-  return d.length === 10 ? `91${d}` : d;
-};
+export const waNumber = (phone: string) => checkPhone(phone).tel.replace(/\D/g, "");
+
+// The "write a Google review" link from Admin → Google reviews, loaded once per page.
+let reviewUrlCache: Promise<string> | null = null;
+export function useReviewUrl() {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    reviewUrlCache ??= fetch("/api/admin/reviews").then((r) => (r.ok ? r.json() : null)).then((d) => (d?.writeUrl as string) || "").catch(() => "");
+    let live = true;
+    reviewUrlCache.then((u) => live && setUrl(u));
+    return () => { live = false; };
+  }, []);
+  return url;
+}
+const reviewText = (name: string, company: string, url: string) =>
+  `Hi ${name.split(" ")[0] || name}, thank you for working with ${company}! If you are happy with our work, could you leave us a short Google review? It takes a minute and helps us a lot: ${url}`;
+
+// Which ready message fits the lead right now.
+const suggested = (status: string) => (status === "new" ? "hello" : status === "quote" ? "quote" : status === "contacted" ? "follow" : "");
 
 const fill = (text: string, lead: Pick<Lead, "name" | "services" | "phone">, company: string) =>
   text
@@ -36,6 +52,7 @@ export function WaPicker({ lead, onSent, compact = false }: { lead: Lead; onSent
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
   const link = (text: string) => `https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(text)}`;
+  const review = useReviewUrl();
   return (
     <div ref={box} className="relative" data-wa-picker>
       {compact ? (
@@ -56,6 +73,14 @@ export function WaPicker({ lead, onSent, compact = false }: { lead: Lead; onSent
                   </a>
                 </li>
               ))}
+              {review && (
+                <li>
+                  <a href={link(reviewText(lead.name, company, review))} target="_blank" rel="noreferrer" onClick={() => { setOpen(false); onSent?.(); }} className="block border-t border-line px-4 py-2.5 hover:bg-amber-50" data-wa-review>
+                    <span className="block text-sm font-semibold">Ask for a Google review</span>
+                    <span className="line-clamp-2 text-xs text-muted">{reviewText(lead.name, company, review)}</span>
+                  </a>
+                </li>
+              )}
               <li>
                 <a href={`https://wa.me/${waNumber(lead.phone)}`} target="_blank" rel="noreferrer" onClick={() => { setOpen(false); onSent?.(); }} className="block border-t border-line px-4 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">Open chat without a message</a>
               </li>
@@ -63,6 +88,31 @@ export function WaPicker({ lead, onSent, compact = false }: { lead: Lead; onSent
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Lead detail: every ready message as a one-click button, the one that fits the lead's status first.
+export function WaQuick({ lead, onSent }: { lead: Lead; onSent?: () => void }) {
+  const { content } = useContent();
+  const company = content.brand.name || "Spinex IT Solutions";
+  const review = useReviewUrl();
+  const all: WaTemplate[] = content.leadReplies?.waTemplates?.length ? content.leadReplies.waTemplates : defaultWaTemplates;
+  const best = suggested(lead.status);
+  const list = [...all].sort((a, b) => Number(b.id === best) - Number(a.id === best));
+  const items = [...list.map((t) => ({ id: t.id, label: t.label, text: fill(t.text, lead, company) })), ...(review && lead.status === "won" ? [{ id: "review", label: "Ask for a Google review", text: reviewText(lead.name, company, review) }] : [])];
+  if (review && lead.status === "won") items.sort((a, b) => Number(b.id === "review") - Number(a.id === "review"));
+  return (
+    <div className="mt-4" data-wa-quick>
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted"><WhatsAppIcon size={13} /> Send on WhatsApp</p>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((t, i) => (
+          <a key={t.id} href={`https://wa.me/${waNumber(lead.phone)}?text=${encodeURIComponent(t.text)}`} target="_blank" rel="noreferrer" title={t.text} onClick={() => onSent?.()}
+            className={`rounded-full border px-3 py-1.5 text-[13px] font-semibold transition ${i === 0 && (t.id === best || t.id === "review") ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700" : "border-line bg-white hover:border-emerald-600 hover:text-emerald-700"}`}>
+            {t.label}
+          </a>
+        ))}
+      </div>
     </div>
   );
 }

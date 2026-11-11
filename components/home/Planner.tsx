@@ -9,6 +9,7 @@ import { submitLead } from "@/lib/leads";
 import HumanCheck from "../HumanCheck";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
+import { checkPhone, isEmail, PHONE_HELP } from "@/lib/phone";
 
 const steps = ["What do you need?", "How big is it?", "Any extras?"];
 
@@ -27,6 +28,7 @@ export default function Planner() {
   const [extra, setExtra] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -81,8 +83,8 @@ export default function Planner() {
 
   // Saves the plan to the admin Leads inbox.
   const sendPlan = async () => {
-    if (!name.trim() || phone.replace(/\D/g, "").length < 10) {
-      setSendError("Add your name and a 10-digit phone number so we can send you a quote.");
+    if (!name.trim() || !checkPhone(phone).ok || !isEmail(email)) {
+      setSendError(!name.trim() ? "Add your name." : !checkPhone(phone).ok ? PHONE_HELP : "Add your email address so we can send you the quote.");
       return;
     }
     setSendError("");
@@ -90,6 +92,7 @@ export default function Planner() {
     const res = await submitLead({
       name,
       phone,
+      email,
       services: chosen.map((s) => s.title).join(", "),
       plan: message(),
       source: "planner",
@@ -166,6 +169,10 @@ export default function Planner() {
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium">Phone *</span>
                         <input className="input" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
+                      </label>
+                      <label className="block sm:col-span-2">
+                        <span className="mb-2 block text-sm font-medium">Email *</span>
+                        <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
                       </label>
                     </div>
                   </>

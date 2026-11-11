@@ -8,6 +8,7 @@ import { useContent } from "./ContentProvider";
 import { SplitHeading, ease } from "./Reveal";
 import HumanCheck from "./HumanCheck";
 import { track } from "@/lib/track";
+import { checkPhone, PHONE_HELP } from "@/lib/phone";
 
 type Form = { name: string; email: string; phone: string; city: string; role: string; experience: string; link: string; why: string };
 const empty: Form = { name: "", email: "", phone: "", city: "", role: "", experience: "", link: "", why: "" };
@@ -43,7 +44,7 @@ export default function CareersContent() {
     const errs: typeof errors = {};
     if (!form.name.trim()) errs.name = "Enter your full name.";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = "Enter a valid email.";
-    if (form.phone.replace(/\D/g, "").length < 10) errs.phone = "Enter a 10-digit phone number.";
+    if (!checkPhone(form.phone).ok) errs.phone = PHONE_HELP;
     if (!form.role) errs.role = "Choose a role.";
     if (resume && resume.type !== "application/pdf") errs.resume = "Upload your resume as a PDF.";
     if (resume && resume.size > 3 * 1024 * 1024) errs.resume = "Resume must be under 3 MB.";

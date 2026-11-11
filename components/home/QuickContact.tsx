@@ -9,6 +9,7 @@ import { submitLead } from "@/lib/leads";
 import HumanCheck from "../HumanCheck";
 import { useContent } from "../ContentProvider";
 import { SplitHeading, ease } from "../Reveal";
+import { checkPhone, isEmail, PHONE_HELP } from "@/lib/phone";
 
 // Home page contact: one-tap ways to reach us, plus a short form that opens WhatsApp or email.
 export default function QuickContact({ source = "home", note = "" }: { source?: "home" | "city"; note?: string } = {}) {
@@ -16,6 +17,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
   const c = content.contact;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [need, setNeed] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -38,19 +40,20 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
     [
       `Hi Spinex, I'm ${name}.`,
       phone && `Phone: ${phone}`,
+      email && `Email: ${email}`,
       need.length ? `I need: ${need.join(", ")}` : "",
       message,
     ].filter(Boolean).join("\n");
 
   // Saves the enquiry to the admin Leads inbox; WhatsApp stays as a backup.
   const send = async (honeypot: string) => {
-    if (!name.trim() || phone.replace(/\D/g, "").length < 10) {
-      setError("Add your name and a 10-digit phone number so we can call you back.");
+    if (!name.trim() || !checkPhone(phone).ok || !isEmail(email)) {
+      setError(!name.trim() ? "Add your name." : !checkPhone(phone).ok ? PHONE_HELP : "Add your email address.");
       return;
     }
     setError("");
     setSending(true);
-    const res = await submitLead({ name, phone, services: need.join(", "), message: [note, message].filter(Boolean).join("\n"), source, website: honeypot, startedAt: String(startedAt.current), cfToken });
+    const res = await submitLead({ name, phone, email, services: need.join(", "), message: [note, message].filter(Boolean).join("\n"), source, website: honeypot, startedAt: String(startedAt.current), cfToken });
     setSending(false);
     if (res.ok) {
       setDone(name.split(" ")[0]);
@@ -58,6 +61,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
       setHcKey((k) => k + 1);
       setName("");
       setPhone("");
+      setEmail("");
       setNeed([]);
       setMessage("");
     } else {
@@ -131,6 +135,10 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
                 <input className="input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
               </label>
             </div>
+            <label className="mt-4 block">
+              <span className="mb-1.5 block text-sm font-medium">Email *</span>
+              <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+            </label>
 
             <fieldset className="mt-5">
               <legend className="mb-2 text-sm font-medium">What do you need?</legend>

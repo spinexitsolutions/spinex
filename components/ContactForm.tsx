@@ -9,6 +9,7 @@ import { useContent } from "./ContentProvider";
 import { submitLead } from "@/lib/leads";
 import { ease } from "./Reveal";
 import HumanCheck from "./HumanCheck";
+import { checkPhone, PHONE_HELP } from "@/lib/phone";
 
 type Form = { name: string; phone: string; email: string; services: string; budget: string; message: string };
 const empty: Form = { name: "", phone: "", email: "", services: "", budget: "", message: "" };
@@ -36,7 +37,7 @@ export default function ContactForm({ defaultService = "", source = "contact", c
     e.preventDefault();
     const errs: typeof errors = {};
     if (!form.name.trim()) errs.name = "Enter your name.";
-    if (form.phone.replace(/\D/g, "").length < 10) errs.phone = "Enter a 10-digit phone number.";
+    if (!checkPhone(form.phone).ok) errs.phone = PHONE_HELP;
     if (!form.email.trim()) errs.email = "Enter your email address.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) errs.email = "Check the email address.";
     setErrors(errs);

@@ -81,7 +81,7 @@ export default async function ServicePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
 
       <section className="relative flex min-h-[70svh] items-end overflow-hidden bg-ink text-white">
-        {s.image && <img src={sized(s.image, 1920)} srcSet={srcSetFor(s.image)} sizes="100vw" alt="" className="absolute inset-0 h-full w-full object-cover" />}
+        {s.image && <img src={sized(s.image, 1920)} srcSet={srcSetFor(s.image)} sizes="100vw" alt={`${s.title} by Spinex IT Solutions`} className="absolute inset-0 h-full w-full object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-ink/50" />
         <div className="container-x relative w-full pb-16 pt-36">

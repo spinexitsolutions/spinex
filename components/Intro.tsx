@@ -66,7 +66,7 @@ const COVER_ID = "intro-cover";
 export function IntroCover({ cfg: raw }: { cfg?: Partial<IntroSettings> }) {
   const cfg = introSettings(raw);
   const rules = JSON.stringify({ enabled: cfg.enabled, pages: cfg.pages, when: cfg.when });
-  const script = `(function(){try{var r=${rules};if(!r.enabled)return;if(r.pages==="home"&&location.pathname!=="/")return;if(r.when==="session"&&sessionStorage.getItem("${SEEN_KEY}"))return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;var c=document.getElementById("${COVER_ID}");if(c)c.style.display="block"}catch(e){}})()`;
+  const script = `(function(){try{var r=${rules};if(!r.enabled||window.self!==window.top)return;if(r.pages==="home"&&location.pathname!=="/")return;if(r.when==="session"&&sessionStorage.getItem("${SEEN_KEY}"))return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;var c=document.getElementById("${COVER_ID}");if(c)c.style.display="block"}catch(e){}})()`;
   return (
     <>
       <div id={COVER_ID} suppressHydrationWarning aria-hidden style={{ display: "none", background: cfg.background || "rgb(var(--c-ink))" }} className="fixed inset-0 z-[99]" />
@@ -95,7 +95,8 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
     // Decided once per page load. If React mounts this twice (it can while recovering from an error),
     // the second mount keeps the first decision instead of thinking the intro was already seen.
     if (decision === null) {
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // Inside the admin live preview (a frame): no intro, the page shows straight away.
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches || window.self !== window.top;
       let seen = true;
       try {
         seen = !!sessionStorage.getItem(SEEN_KEY);

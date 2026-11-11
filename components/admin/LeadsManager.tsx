@@ -9,7 +9,8 @@ import Modal from "./Modal";
 import AdLeadsSetup from "./AdLeadsSetup";
 import LeadFollowupsSetup from "./LeadFollowupsSetup";
 import { useLive } from "./live";
-import { AddLeadForm, WaPicker } from "./LeadTools";
+import { AddLeadForm, WaPicker, WaQuick } from "./LeadTools";
+import { checkPhone } from "@/lib/phone";
 
 const badge: Record<LeadStatus, string> = {
   new: "bg-lav-600 text-white",
@@ -472,6 +473,7 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = 
       setMaking(false);
     }
   };
+  const phoneCheck = checkPhone(lead.phone);
   const quick = (days: number) => {
     const d = new Date(Date.now() + 5.5 * 3600 * 1000 + days * 86400000).toISOString().slice(0, 10);
     setFollowUp(d);
@@ -480,11 +482,17 @@ function LeadDetail({ lead, team, myId, readOnly, onSave, onDelete, startLost = 
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        <a href={`tel:${lead.phone}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-dark px-4 py-2.5 text-sm"><Phone size={15} /> Call {lead.phone}</a>
+        <a href={`tel:${phoneCheck.tel || lead.phone}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className={`px-4 py-2.5 text-sm ${phoneCheck.ok ? "btn-dark" : "btn-ghost border-amber-300 text-amber-900"}`}><Phone size={15} /> Call {lead.phone}</a>
         <WaPicker lead={lead} onSent={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} />
         {lead.email && <a href={`mailto:${lead.email}`} onClick={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} className="btn-ghost px-4 py-2.5 text-sm"><Mail size={15} /> Email</a>}
         {!readOnly && <button onClick={makeQuote} disabled={making} className="btn-ghost px-4 py-2.5 text-sm">{making ? <Loader2 size={15} className="animate-spin" /> : <FilePlus2 size={15} />} Make quotation</button>}
       </div>
+      {!phoneCheck.ok && (
+        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" role="alert" data-phone-warn>
+          <b>Check this number before calling.</b> {phoneCheck.warn} Fix it in the lead if you know the right one.
+        </p>
+      )}
+      <WaQuick lead={lead} onSent={() => { onTouch?.(); if (status === "new") setStatus("contacted"); }} />
       {docs.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {docs.map((d) => (

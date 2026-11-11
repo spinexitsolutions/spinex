@@ -6,6 +6,7 @@ import { cleanTrack } from "@/lib/attribution";
 import { announceLead } from "@/lib/lead-announce";
 import { whenLabel } from "@/lib/booking";
 import { alertTeam, bookingsCol, emailBooking, getBookingSettings, meetingFor, newBookingToken, slotIsFree, slotStart, toBooking } from "@/lib/booking-db";
+import { checkPhone, PHONE_HELP } from "@/lib/phone";
 
 const s = (v: unknown, max = 200) => String(v ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max);
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
   const email = s(b.email, 160).toLowerCase();
   const errors: Record<string, string> = {};
   if (!name) errors.name = "Enter your name.";
-  if (phone.replace(/\D/g, "").length < 10) errors.phone = "Enter a 10-digit phone number.";
+  if (!checkPhone(phone).ok) errors.phone = PHONE_HELP;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errors.email = "Enter your email. The meeting link is sent there.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) errors.time = "Choose a time.";
   if (Object.keys(errors).length) return NextResponse.json({ error: "Please fix the highlighted fields.", errors }, { status: 400 });

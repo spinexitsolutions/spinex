@@ -4,13 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft, Bold, Eye, FilePlus2, Heading2, Heading3, ImagePlus, Italic, Link2, List, ListOrdered, Loader2, Minus,
-  Newspaper, Pencil, Quote, RefreshCw, Search, Trash2, ExternalLink,
+  Newspaper, Pencil, CalendarClock, Quote, RefreshCw, Search, Trash2, ExternalLink,
 } from "lucide-react";
 import { blankPost, readingMinutes, renderMarkdown, slugify, type Post } from "@/lib/posts";
 import { formatDate } from "@/lib/interns";
 
 // A published post with a future date stays hidden on the website until that day (same date check as lib/post-db.ts).
-const isScheduled = (p: Post) => p.status === "published" && !!p.publishedAt && p.publishedAt > new Date().toISOString().slice(0, 10);
+// Dates are India time, so a post set for a day goes live at midnight in India.
+const todayIst = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+const isScheduled = (p: Post) => p.status === "published" && !!p.publishedAt && p.publishedAt > todayIst();
 import ImageField from "./ImageField";
 import { TagInput } from "./fields";
 import MediaLibrary from "./MediaLibrary";
@@ -182,7 +184,9 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
     insert(`${atLineStart ? "" : "\n\n"}${prefix}`, "", placeholder);
   };
 
-  const save = async (status?: Post["status"]) => {
+  const [scheduling, setScheduling] = useState(false);
+  const [when, setWhen] = useState(() => new Date(Date.now() + 5.5 * 3600 * 1000 + 86400000).toISOString().slice(0, 10));
+  const save = async (status?: Post["status"], date?: string) => {
     if (!post.title.trim()) {
       setError("Add a title first.");
       return;
@@ -190,7 +194,7 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
     setSaving(true);
     setError("");
     try {
-      const body = { ...post, status: status ?? post.status };
+      const body = { ...post, status: status ?? post.status, ...(date ? { publishedAt: date } : {}) };
       const saved = post.id
         ? await api<Post>(`/api/admin/posts/${post.id}`, { method: "PATCH", body: JSON.stringify(body) })
         : await api<Post>("/api/admin/posts", { method: "POST", body: JSON.stringify(body) });
@@ -280,7 +284,7 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
     <div className="space-y-5">
       <div className="sticky top-[73px] z-10 -mx-5 flex flex-wrap items-center gap-2 border-b border-line bg-mist/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8">
         <button onClick={() => { if (!dirty || confirm("Leave without saving your changes?")) onBack(); }} className="btn-ghost bg-white px-4 py-2 text-sm"><ArrowLeft size={15} /> All posts</button>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${post.status === "published" ? "bg-emerald-50 text-emerald-800" : "bg-white text-muted"}`}>{post.status === "published" ? "Published" : "Draft"}</span>
+        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isScheduled(post) ? "bg-amber-50 text-amber-800" : post.status === "published" ? "bg-emerald-50 text-emerald-800" : "bg-white text-muted"}`}>{isScheduled(post) ? `Scheduled for ${formatDate(post.publishedAt)}` : post.status === "published" ? "Published" : "Draft"}</span>
         {dirty && <span className="text-xs text-muted">Unsaved changes</span>}
         <AnimatePresence>{msg && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-sm font-medium text-emerald-700" role="status">{msg}</motion.span>}</AnimatePresence>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -290,7 +294,20 @@ function PostEditor({ initial, onBack, onDirtyChange, readOnly = false }: { init
           {readOnly ? null : post.status === "published" ? (
             <button onClick={() => save("draft")} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm">Unpublish</button>
           ) : (
-            <button onClick={() => save("published")} disabled={saving} className="btn-dark px-4 py-2 text-sm">Publish</button>
+            <>
+              <div className="relative">
+                <button onClick={() => setScheduling((v) => !v)} disabled={saving} className="btn-ghost bg-white px-4 py-2 text-sm" data-schedule><CalendarClock size={15} /> Schedule</button>
+                {scheduling && (
+                  <div className="absolute right-0 z-20 mt-2 w-64 rounded-2xl border border-line bg-white p-4 shadow-[0_20px_50px_-20px_rgba(18,15,27,0.4)]">
+                    <p className="text-sm font-semibold">Publish on</p>
+                    <input type="date" className="input mt-2" min={todayIst()} value={when} onChange={(e) => setWhen(e.target.value)} />
+                    <p className="mt-2 text-xs text-muted">It goes live on its own at the start of that day (India time).</p>
+                    <button onClick={() => { setScheduling(false); save("published", when); }} disabled={!when} className="btn-dark mt-3 w-full justify-center px-4 py-2 text-sm">Schedule post</button>
+                  </div>
+                )}
+              </div>
+              <button onClick={() => save("published", post.publishedAt && post.publishedAt > todayIst() ? undefined : todayIst())} disabled={saving} className="btn-dark px-4 py-2 text-sm">Publish now</button>
+            </>
           )}
         </div>
       </div>

@@ -37,7 +37,8 @@ export async function uniqueSlug(base: string, exceptId?: string) {
   }
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+// India date, so a scheduled post goes live at midnight in India.
+const today = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
 
 // Throws on a database error so the failure is never cached (see getPublishedPosts).
 async function loadPublished(): Promise<Post[]> {

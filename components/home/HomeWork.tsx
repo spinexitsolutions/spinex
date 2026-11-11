@@ -93,14 +93,14 @@ function WindowBar({ label }: { label: string }) {
 }
 
 // A browser or app window. The tall screenshot scrolls down on hover (big card: by itself).
-function Win({ src, label, auto = false, className = "" }: { src: string; label: string; auto?: boolean; className?: string }) {
+function Win({ src, label, auto = false, className = "", alt = "" }: { src: string; label: string; auto?: boolean; className?: string; alt?: string }) {
   return (
     <div className={`flex flex-col overflow-hidden rounded-t-xl border border-black/10 bg-white shadow-[0_24px_50px_-24px_rgba(0,0,0,0.45)] ${className}`}>
       <WindowBar label={label} />
       <div className="relative flex-1 overflow-hidden">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={sized(src, 1280)} alt="" loading="lazy" decoding="async" className={`block w-full ${auto ? "animate-[shot_22s_ease-in-out_infinite_alternate]" : "transition-transform duration-[6s] ease-linear group-hover:[transform:translateY(calc(-100%_+_100cqh))]"}`} />
+          <img src={sized(src, 1280)} alt={alt} loading="lazy" decoding="async" className={`block w-full ${auto ? "animate-[shot_22s_ease-in-out_infinite_alternate]" : "transition-transform duration-[6s] ease-linear group-hover:[transform:translateY(calc(-100%_+_100cqh))]"}`} />
         ) : <div className="h-full bg-mist" />}
       </div>
     </div>
@@ -109,7 +109,7 @@ function Win({ src, label, auto = false, className = "" }: { src: string; label:
 
 // Website projects: a Mac-style window showing only the site's first screen (hero), not a long page.
 // Uses "Hero screenshot" from Admin → Projects; older projects fall back to the top of the full screenshot.
-function MacWin({ src, label, dark }: { src: string; label: string; dark: boolean }) {
+function MacWin({ src, label, dark, alt }: { src: string; label: string; dark: boolean; alt: string }) {
   return (
     <div className={`rounded-[12px] px-1.5 pb-1.5 sm:rounded-[16px] sm:px-2 sm:pb-2 ${dark ? "bg-gradient-to-b from-[#2a2638] to-[#1a1724] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] ring-1 ring-inset ring-white/10" : "bg-gradient-to-b from-[#fdfcff] to-[#ece9f4] shadow-[0_30px_60px_-30px_rgba(18,15,27,0.45)] ring-1 ring-inset ring-[#e1dcec]"}`}>
       <div className="relative flex h-6 items-center gap-1.5 px-1 sm:h-8 sm:px-1.5">
@@ -118,7 +118,7 @@ function MacWin({ src, label, dark }: { src: string; label: string; dark: boolea
       </div>
       <div className="aspect-[16/9] overflow-hidden rounded-[7px] bg-white sm:rounded-[10px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {src ? <img src={sized(src, 1280)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-top transition duration-700 group-hover:scale-[1.02]" /> : <div className="h-full bg-mist" />}
+        {src ? <img src={sized(src, 1280)} alt={alt} loading="lazy" decoding="async" className="h-full w-full object-cover object-top transition duration-700 group-hover:scale-[1.02]" /> : <div className="h-full bg-mist" />}
       </div>
     </div>
   );
@@ -143,14 +143,14 @@ function Visual({ p, big }: { p: Project; big: boolean }) {
   if (d === "website") {
     return (
       <div className={big ? "pb-5 sm:pb-8 lg:flex lg:h-full lg:items-center lg:pb-9" : "pb-3 sm:pb-5"}>
-        <MacWin src={p.hero || shot} label={host(url)} dark={big} />
+        <MacWin src={p.hero || shot} label={host(url)} dark={big} alt={`${p.title} website, home page`} />
       </div>
     );
   }
   if (d === "software" || d === "ecommerce") {
     return (
       <div className={`relative ${h}`}>
-        <Win src={shot} label={host(url) || p.client || p.title} auto={big} className="h-full [container-type:size]" />
+        <Win src={shot} label={host(url) || p.client || p.title} auto={big} className="h-full [container-type:size]" alt={`${p.title} screenshot`} />
         {d === "ecommerce" && (p.platforms?.length ?? 0) > 0 && (
           <div className="absolute bottom-2 left-2 hidden flex-wrap gap-1 sm:flex">
             {p.platforms!.slice(0, 3).map((x) => <span key={x} className="rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-semibold text-white">{x}</span>)}

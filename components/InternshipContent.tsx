@@ -9,6 +9,7 @@ import { useContent } from "./ContentProvider";
 import HumanCheck from "./HumanCheck";
 import { track } from "@/lib/track";
 import { Reveal, SplitHeading, ease } from "./Reveal";
+import { checkPhone, PHONE_HELP } from "@/lib/phone";
 
 const roleIcons: Record<string, LucideIcon> = { "r-web": Code2, "r-design": Palette, "r-video": Clapperboard, "r-social": Heart, "r-marketing": Megaphone };
 
@@ -58,7 +59,7 @@ export default function InternshipContent() {
     const e: Partial<Record<keyof Form, string>> = {};
     if (!form.name.trim()) e.name = "Enter your full name.";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Enter a valid email, like name@gmail.com.";
-    if (form.phone.replace(/\D/g, "").length < 10) e.phone = "Enter a 10-digit phone number.";
+    if (!checkPhone(form.phone).ok) e.phone = PHONE_HELP;
     if (!form.role) e.role = "Choose the role you want to apply for.";
     setErrors(e);
     return Object.keys(e).length === 0;

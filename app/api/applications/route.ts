@@ -5,6 +5,7 @@ import { clean, internsCol } from "@/lib/intern-db";
 import { notifyAdmin } from "@/lib/notify";
 import { checkHuman } from "@/lib/antispam";
 import { safeUrl } from "@/lib/content-sanitize";
+import { checkPhone, PHONE_HELP } from "@/lib/phone";
 
 const MAX_PDF = 3 * 1024 * 1024;
 const APPLICANT_FIELDS = ["name", "email", "phone", "city", "college", "role", "mode", "duration", "experience", "link", "why"] as const;
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   const errors: Record<string, string> = {};
   if (!data.name) errors.name = "Enter your full name.";
   if (!/^\S+@\S+\.\S+$/.test(data.email ?? "")) errors.email = "Enter a valid email, like name@gmail.com.";
-  if ((data.phone ?? "").replace(/\D/g, "").length < 10) errors.phone = "Enter a 10-digit phone number.";
+  if (!checkPhone(data.phone ?? "").ok) errors.phone = PHONE_HELP;
   if (!data.role) errors.role = "Choose the role you want to apply for.";
 
   const raw = form.get("resume");

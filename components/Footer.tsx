@@ -35,7 +35,7 @@ export default function Footer() {
       <div className={`container-x relative grid gap-12 pb-12 pt-16 sm:pt-20 md:grid-cols-2 ${products.length ? "lg:grid-cols-[1.4fr_1fr_1fr_1fr]" : "lg:grid-cols-[1.4fr_1fr_1fr]"} lg:gap-10`}>
         <div className="max-w-xs">
           <Link href="/" className="flex items-center gap-3">
-            {content.brand.logo && <img loading="lazy" decoding="async" src={content.brand.logo} alt="" className="h-10 w-10 object-contain" />}
+            {content.brand.logo && <img loading="lazy" decoding="async" src={content.brand.logo} alt={`${content.brand.name || "Spinex"} logo`} className="h-10 w-10 object-contain" />}
             <span className="font-display text-xl font-semibold">{content.brand.name}</span>
           </Link>
           <p className="mt-4 text-[15px] leading-relaxed text-white/60">{content.brand.tagline}</p>

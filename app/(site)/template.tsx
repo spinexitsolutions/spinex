@@ -19,7 +19,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const [kind, setKind] = useState<string>("fade");
   // Before the new page is painted: page changes get the chosen transition, the first page doesn't.
   useIsoLayoutEffect(() => {
-    if (navigated) setKind(cfg.pageTransition);
+    if (navigated && window.self === window.top) setKind(cfg.pageTransition); // none inside the admin live preview
     navigated = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
