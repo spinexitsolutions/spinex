@@ -57,7 +57,6 @@ export default function LatestPostsView({ items, heading, intro }: { items: Post
             <article className="group flex flex-col overflow-hidden rounded-[28px] border border-line bg-white">
               <Link href={`/blog/${first.slug}`} className="relative block aspect-[16/9] overflow-hidden bg-mist" tabIndex={-1} aria-hidden>
                 <Cover p={first} className="h-full w-full" />
-                {first.category && <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink backdrop-blur">{first.category}</span>}
               </Link>
               <div className="flex flex-1 flex-col p-6 sm:p-7">
                 <p className="flex items-center gap-2 text-sm text-muted">
@@ -78,7 +77,7 @@ export default function LatestPostsView({ items, heading, intro }: { items: Post
                 {rest.map((p) => (
                   <li key={p.id} className="flex-1">
                     <Link href={`/blog/${p.slug}`} className="group flex h-full items-center gap-4 rounded-[22px] border border-line bg-white p-3 transition-shadow hover:shadow-[0_20px_40px_-28px_rgba(18,15,27,0.35)] sm:gap-5">
-                      <span className="block h-[84px] w-[110px] shrink-0 overflow-hidden rounded-2xl bg-mist sm:h-[104px] sm:w-[150px]">
+                      <span className="block aspect-[16/9] w-[120px] shrink-0 overflow-hidden rounded-2xl bg-mist sm:w-[168px]">
                         <Cover p={p} className="h-full w-full" />
                       </span>
                       <span className="min-w-0 py-1 pr-2">
