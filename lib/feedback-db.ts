@@ -1,7 +1,7 @@
 // Server only. Feedback requests and answers ("feedback"), and adding approved ones to Testimonials.
 import { randomBytes } from "crypto";
 import { ObjectId, type Document, type WithId } from "mongodb";
-import { revalidateTag } from "next/cache";
+import { refreshSite } from "@/lib/refresh";
 import { getDb } from "./db";
 import { emailPerson, notifyAdmin } from "./notify";
 import { sendWhatsAppAlert } from "./whatsapp-alert";
@@ -113,12 +113,12 @@ export async function publishTestimonial(f: Feedback, quote: string, by: string)
   const t = { id, name: r.displayName || f.name, role: [r.role, r.company].filter(Boolean).join(", "), quote: quote.trim().slice(0, 600), rating: String(r.rating) };
   const list = content.testimonials.filter((x) => x.id !== id);
   await saveContent({ ...content, testimonials: [t, ...list] }, `Testimonial from client feedback (${t.name}) by ${by}`, updatedAt);
-  revalidateTag("content");
+  refreshSite("content");
   return id;
 }
 export async function unpublishTestimonial(id: string, by: string) {
   const { content, updatedAt } = await readContentDoc();
   if (!content.testimonials.some((x) => x.id === id)) return;
   await saveContent({ ...content, testimonials: content.testimonials.filter((x) => x.id !== id) }, `Removed testimonial from client feedback by ${by}`, updatedAt);
-  revalidateTag("content");
+  refreshSite("content");
 }

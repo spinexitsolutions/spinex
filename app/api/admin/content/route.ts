@@ -2,7 +2,7 @@ import { announce, sitePaths } from "@/lib/seo";
 import { NextResponse } from "next/server";
 import { contentChanges, logActivity } from "@/lib/activity";
 import { allowed } from "@/lib/roles";
-import { revalidateTag } from "next/cache";
+import { refreshSite } from "@/lib/refresh";
 import { getSession, guard } from "@/lib/admin-guard";
 import { ContentConflictError, readContentDoc, saveContent } from "@/lib/content-server";
 import { defaultContent, mergeContent } from "@/lib/content";
@@ -53,7 +53,7 @@ export async function PUT(req: Request) {
     if (e instanceof ContentConflictError) return NextResponse.json({ error: e.message, conflict: true }, { status: 409 });
     throw e;
   }
-  revalidateTag("content");
+  refreshSite("content");
   void announce(sitePaths(data), data, true); // tell Bing and others the pages changed (in the background)
   const parts = contentChanges(before, data as unknown as Record<string, unknown>);
   if (parts.length) await logActivity(session, "Website content", `Changed ${parts.join(", ")}`, "", req);

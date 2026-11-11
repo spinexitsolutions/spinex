@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { refreshSite } from "@/lib/refresh";
 import { getSession, guard } from "@/lib/admin-guard";
 import { logActivity } from "@/lib/activity";
 import { readBackup, restoreBackup } from "@/lib/automation";
@@ -35,8 +35,8 @@ export async function POST(req: Request) {
       only = [];
     }
     const r = await restoreBackup(buf, Array.isArray(only) ? only.map(String) : []);
-    revalidateTag("content");
-    revalidateTag("posts");
+    refreshSite("content");
+    refreshSite("posts");
     await logActivity(await getSession(), "Automation", `Restored from backup: ${Object.keys(r.restored).join(", ")}`, `${file.name} (${r.backupDate.slice(0, 10)})`, req);
     return NextResponse.json({ ok: true, ...r });
   } catch (e) {

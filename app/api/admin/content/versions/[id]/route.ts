@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 import { allowed } from "@/lib/roles";
-import { revalidateTag } from "next/cache";
+import { refreshSite } from "@/lib/refresh";
 import { getSession, guard } from "@/lib/admin-guard";
 import { ContentConflictError, getVersion, readContentDoc, saveContent } from "@/lib/content-server";
 import { defaultContent, mergeContent } from "@/lib/content";
@@ -23,7 +23,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     const session = await getSession();
     if (!allowed(session, "integrations", "edit")) data.integrations = (await readContentDoc()).content.integrations;
     const updatedAt = await saveContent(data, "Before restoring an older version");
-    revalidateTag("content");
+    refreshSite("content");
     await logActivity(session, "Website content", "Restored an older version from History", String(version.savedAt ?? ""), _req);
     return NextResponse.json(data, { headers: { "x-content-updated": updatedAt } });
   } catch (e) {

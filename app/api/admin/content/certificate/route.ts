@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { refreshSite } from "@/lib/refresh";
 import { guard } from "@/lib/admin-guard";
 import { ContentConflictError, readContentDoc, saveContent } from "@/lib/content-server";
 import { cleanCertificate } from "@/lib/content-sanitize";
@@ -31,7 +31,7 @@ export async function PUT(req: Request) {
     }
     try {
       const updatedAt = await saveContent({ ...doc.content, certificate }, "Before changing certificate settings", doc.updatedAt || undefined);
-      revalidateTag("content");
+      refreshSite("content");
       const baseWasCurrent = rawBase !== "" && rawBase !== "unknown" && clientBase === (doc.updatedAt || "");
       return NextResponse.json({ certificate }, { headers: { "x-content-updated": updatedAt, "x-base-current": baseWasCurrent ? "1" : "0" } });
     } catch (e) {

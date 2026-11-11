@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { refreshSite } from "@/lib/refresh";
 import { getSession, guard, jsonBody } from "@/lib/admin-guard";
 import { saveSecrets, secretsView } from "@/lib/secrets";
 
@@ -26,7 +26,6 @@ export async function PUT(req: Request) {
   // Pages read the Turnstile site key and custom head code when they are built, so rebuild them now.
   const names = [...Object.keys(body.keys ?? {}), ...Object.keys(body.custom ?? {}), ...(typeof body.headCode === "string" ? ["Custom code"] : [])];
   await logActivity(await getSession(), "API keys", `Saved ${names.length ? names.join(", ") : "API keys"}`, "", req);
-  revalidatePath("/", "layout");
-  revalidateTag("content");
+  refreshSite("content");
   return NextResponse.json(await secretsView());
 }
