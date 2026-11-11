@@ -31,7 +31,7 @@ export const SCENES: Record<HeroScene, Scene> = {
 
 const STAY = 5600; // ms each scene shows before the next one
 
-export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
+export default function LiveBuild({ scenes, start = true }: { scenes?: HeroScene[]; start?: boolean }) {
   const key = (scenes ?? []).join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const list = useMemo(() => (scenes?.length ? scenes : HERO_SCENES_DEFAULT).filter((s) => SCENES[s]).slice(0, 4), [key]);
@@ -52,23 +52,32 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
   const [click, setClick] = useState<{ x: number; y: number; k: number } | null>(null);
   const shown = phase === "off" || phase === "show" || phase === "live";
 
+  // Hide the box straight away on computers, so it can be dragged out once the hero is ready.
   useEffect(() => {
     const ok = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!ok || !win.current) return;
-    setFancy(true);
     const W = win.current.offsetWidth, H = win.current.offsetHeight;
     setSize({ w: W, h: H });
-    const ts: ReturnType<typeof setTimeout>[] = [];
-    const at = (ms: number, f: () => void) => ts.push(setTimeout(f, ms));
     setCur({ x: W + 240, y: H + 160, dur: 0 });
+    setFancy(true);
     setPhase("enter");
-    at(80, () => setCur({ x: 0, y: 0, dur: 900 }));
-    at(1050, () => { setPhase("drag"); setCur({ x: W, y: H, dur: 1400 }); });
-    at(2500, () => { setClick({ x: W, y: H, k: 1 }); setPhase("show"); });
-    at(3000, () => setCur({ x: W * 0.22, y: H * 0.42, dur: 900 }));
-    at(3900, () => { setClick({ x: W * 0.22, y: H * 0.42, k: 2 }); setPhase("live"); });
-    return () => ts.forEach(clearTimeout);
   }, []);
+
+  // Play the intro once the Spinex intro screen is gone and the hero has faded in.
+  const played = useRef(false);
+  useEffect(() => {
+    if (!fancy || !start || played.current) return;
+    played.current = true;
+    const W = size.w, H = size.h;
+    const ts: ReturnType<typeof setTimeout>[] = [];
+    const at = (ms: number, f: () => void) => ts.push(setTimeout(f, ms + 900));
+    at(0, () => setCur({ x: 0, y: 0, dur: 900 }));
+    at(970, () => { setPhase("drag"); setCur({ x: W, y: H, dur: 1400 }); });
+    at(2420, () => { setClick({ x: W, y: H, k: 1 }); setPhase("show"); });
+    at(2920, () => setCur({ x: W * 0.22, y: H * 0.42, dur: 900 }));
+    at(3820, () => { setClick({ x: W * 0.22, y: H * 0.42, k: 2 }); setPhase("live"); });
+    return () => { ts.forEach(clearTimeout); played.current = false; };
+  }, [fancy, start, size.w, size.h]);
 
   useEffect(() => {
     if (paused || !onScreen || list.length < 2 || !shown) return;
@@ -196,7 +205,7 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
       {fancy && (
         <>
           {click && <span key={click.k} aria-hidden className="hs-click-ring pointer-events-none absolute z-30 -ml-4 -mt-4 h-8 w-8 rounded-full border-2 border-lav-600" style={{ left: click.x, top: click.y }} />}
-          <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-30" style={{ transform: `translate(${cur.x}px, ${cur.y}px)`, transition: `transform ${cur.dur}ms cubic-bezier(.65,0,.35,1), opacity .3s`, opacity: paused || phase === "off" ? 0 : 1 }}>
+          <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-30" style={{ transform: `translate(${cur.x}px, ${cur.y}px)`, transition: `transform ${cur.dur}ms cubic-bezier(.65,0,.35,1), opacity .3s`, opacity: paused || phase === "off" || !start ? 0 : 1 }}>
             <svg width="20" height="22" viewBox="0 0 14 16"><path d="M0 0 13 8 6 9.5 3.5 15z" fill="rgb(var(--c-lav-600))" stroke="#fff" strokeWidth="1.2" /></svg>
             <span className="absolute left-4 top-[18px] whitespace-nowrap rounded-full rounded-tl-sm bg-lav-600 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-[0_6px_14px_-6px_rgb(var(--c-lav-600)/0.8)]">Spinex</span>
           </div>

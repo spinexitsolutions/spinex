@@ -170,7 +170,7 @@ function Classic(x: Ctx) {
           <Facts {...x} />
         </div>
         <motion.div initial={{ opacity: 0, y: 40, scale: 0.96 }} animate={x.ready ? { opacity: 1, y: 0, scale: 1 } : undefined} transition={{ duration: 1.1, delay: 0.35, ease }}>
-          <LiveBuild scenes={x.h.scenes} />
+          <LiveBuild scenes={x.h.scenes} start={x.ready} />
         </motion.div>
       </div>
     </section>
