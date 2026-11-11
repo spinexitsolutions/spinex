@@ -107,6 +107,23 @@ function Win({ src, label, auto = false, className = "" }: { src: string; label:
   );
 }
 
+// Website projects: a Mac-style window showing only the site's first screen (hero), not a long page.
+// Uses "Hero screenshot" from Admin → Projects; older projects fall back to the top of the full screenshot.
+function MacWin({ src, label, dark }: { src: string; label: string; dark: boolean }) {
+  return (
+    <div className={`rounded-[12px] px-1.5 pb-1.5 sm:rounded-[16px] sm:px-2 sm:pb-2 ${dark ? "bg-gradient-to-b from-[#2a2638] to-[#1a1724] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] ring-1 ring-inset ring-white/10" : "bg-gradient-to-b from-[#fdfcff] to-[#ece9f4] shadow-[0_30px_60px_-30px_rgba(18,15,27,0.45)] ring-1 ring-inset ring-[#e1dcec]"}`}>
+      <div className="relative flex h-6 items-center gap-1.5 px-1 sm:h-8 sm:px-1.5">
+        <i className="h-2 w-2 rounded-full bg-[#ff5f57] sm:h-2.5 sm:w-2.5" /><i className="h-2 w-2 rounded-full bg-[#febc2e] sm:h-2.5 sm:w-2.5" /><i className="h-2 w-2 rounded-full bg-[#28c840] sm:h-2.5 sm:w-2.5" />
+        {label && <span className={`absolute left-1/2 hidden max-w-[60%] -translate-x-1/2 truncate rounded-md px-3 py-0.5 text-[11px] sm:block ${dark ? "bg-white/[0.06] text-white/55" : "border border-line bg-white text-muted"}`}>{label}</span>}
+      </div>
+      <div className="aspect-[16/9] overflow-hidden rounded-[7px] bg-white sm:rounded-[10px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {src ? <img src={sized(src, 1280)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-top transition duration-700 group-hover:scale-[1.02]" /> : <div className="h-full bg-mist" />}
+      </div>
+    </div>
+  );
+}
+
 function PhoneFrame({ src, className = "" }: { src: string; className?: string }) {
   return (
     <div className={`aspect-[9/19] overflow-hidden rounded-[18%/8.5%] border-[4px] border-[#17141f] bg-white shadow-[0_24px_50px_-20px_rgba(0,0,0,0.55)] ${className}`}>
@@ -125,9 +142,8 @@ function Visual({ p, big }: { p: Project; big: boolean }) {
 
   if (d === "website") {
     return (
-      <div className={`relative ${h}`}>
-        <Win src={shot} label={host(url)} auto={big} className="h-full [container-type:size]" />
-        {p.mobile && <PhoneFrame src={p.mobile} className={`absolute bottom-[-18px] right-2 ${big ? "w-[80px] sm:w-[112px]" : "hidden w-[64px] sm:block"}`} />}
+      <div className={big ? "pb-5 sm:pb-8 lg:flex lg:h-full lg:items-center lg:pb-9" : "pb-3 sm:pb-5"}>
+        <MacWin src={p.hero || shot} label={host(url)} dark={big} />
       </div>
     );
   }

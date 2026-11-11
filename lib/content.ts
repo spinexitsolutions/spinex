@@ -32,6 +32,7 @@ export type Project = {
   image: string;
   url: string;
   display?: ProjectDisplay | "";
+  hero?: string; // website: screenshot of just the first screen (shown in a Mac window on the cards)
   screen?: string; // website: full-page screenshot · e-commerce: seller dashboard · on-demand: admin panel
   mobile?: string; // website: mobile screenshot · on-demand: customer app
   home?: string; // home page "Our work": "featured" = big card, "" = small card, "hide" = not shown
