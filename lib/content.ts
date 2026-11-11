@@ -294,8 +294,21 @@ export function homeOrder(layout: HomeBlock[] | undefined): HomeBlock[] {
 // Bar fixed to the bottom of the screen on phones: Call, WhatsApp and Get a quote.
 export type MobileBar = { show: boolean; call: boolean; whatsapp: boolean; quote: boolean; quoteLabel: string; quoteLink: string };
 export const FAQ_HELP = { helpTitle: "Still have a question?", helpText: "Talk to a real person, or get an instant answer from our assistant.", helpNote: "We usually reply within an hour, Mon–Sat" };
-export type FooterSettings = { wordmark: string; animate: boolean; products: boolean };
-export const defaultFooter: FooterSettings = { wordmark: "SPINEX", animate: true, products: true };
+// Footer (Admin → Site settings → Footer). Every link has a key; keys listed in `hide` are not shown.
+export type FooterLink = { id: string; label: string; href: string; column: "services" | "company" | "legal" };
+export type FooterSettings = {
+  wordmark: string; animate: boolean; products: boolean;
+  productsCount?: number; // how many products the "Our products" column shows
+  titles?: { services: string; company: string; products: string };
+  hide?: string[]; // keys from footerLinks(), e.g. "company:careers", "service:<id>", "info:phone"
+  extra?: FooterLink[]; // own links added in the admin
+  copyright?: string; // text after the year; empty = "<brand>. All rights reserved."
+};
+export const defaultFooter: FooterSettings = {
+  wordmark: "SPINEX", animate: true, products: true, productsCount: 3,
+  titles: { services: "Services", company: "Company", products: "Our products" },
+  hide: [], extra: [], copyright: "",
+};
 export const defaultMobileBar: MobileBar = { show: false, call: true, whatsapp: true, quote: true, quoteLabel: "Get a quote", quoteLink: "/contact" };
 
 // "Trusted by" strip: client logos (or names) and an optional Google rating line.

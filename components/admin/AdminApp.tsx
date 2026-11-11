@@ -11,7 +11,7 @@ import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { INDUSTRY_ICONS } from "@/lib/industry-icons";
 import { SERVICE_ANIMS } from "@/lib/service-anims";
-import { FAQ_HELP, defaultContent, defaultFooter, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type FooterSettings, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
+import { FAQ_HELP, defaultContent, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -39,6 +39,7 @@ import FeedbackManager from "./FeedbackManager";
 import AccountsManager from "./AccountsManager";
 import IntroEditor from "./IntroEditor";
 import LivePreview from "./LivePreview";
+import FooterEditor from "./FooterEditor";
 import HeroEditor from "./HeroEditor";
 import CustomCursor from "../CustomCursor";
 import IntroAnimation from "../intro/IntroAnimation";
@@ -184,7 +185,7 @@ const ABOUT: Record<string, string> = {
   services: "The services you offer", products: "Your own software", projects: "Work shown on the site", industries: "Who you work with", process: "The steps from call to launch",
   testimonials: "Client quotes", trusted: "Client logos and Google rating line", goals: "The “I want to…” picker", planner: "Project planner questions and prices", showreel: "The home page video", chatbot: "Assistant name and its answers", profile: "Company profile PDF",
   brand: "Logo, company name, tagline", contact: "Phone, email, address, social links", theme: "Brand colour and themes", fonts: "Fonts, heading animation, highlights", buttons: "Button style and hover effect",
-  navbar: "Top menu style and hover", footer: "Big name and products column", floating: "WhatsApp button and phone bar", intro: "Opening animation", transitions: "Effect between pages", cursor: "Custom cursor and trail",
+  navbar: "Top menu style and hover", footer: "Links, columns and text", floating: "WhatsApp button and phone bar", intro: "Opening animation", transitions: "Effect between pages", cursor: "Custom cursor and trail",
   seo: "Titles, descriptions, search text", integrations: "Google Analytics, pixel, cookie banner", apikeys: "Keys for connected services",
   team: "People and what each can do", automation: "Things that run by themselves", activity: "Who changed what", account: "Your name and password",
   backup: "Download or import the website content", history: "Older saved versions",
@@ -905,27 +906,8 @@ function AdminShell() {
                     );
                   })()}
                 </Card>}
-                {section === "footer" && <Card title="Footer" note="The big word at the bottom of the footer and the products column.">
-                  {(() => {
-                    const ft = { ...defaultFooter, ...(draft.integrations.footer ?? {}) };
-                    const setFt = (v: Partial<FooterSettings>) => set("integrations", { ...draft.integrations, footer: { ...ft, ...v } });
-                    return (
-                      <div className="space-y-4" data-footer-settings>
-                        <ObjectEditor value={ft} onChange={(v) => setFt(v as Partial<FooterSettings>)} fields={[
-                          { key: "wordmark", label: "Big word at the bottom", hint: "Shown with wide letter spacing, e.g. SPINEX. Leave empty to hide it" },
-                        ]} />
-                        <label className="flex items-center gap-3">
-                          <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={ft.animate} onChange={(e) => setFt({ animate: e.target.checked })} />
-                          <span className="font-medium">Animate the big word (letters open up from a soft blur when the footer comes into view)</span>
-                        </label>
-                        <label className="flex items-center gap-3">
-                          <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={ft.products} onChange={(e) => setFt({ products: e.target.checked })} />
-                          <span className="font-medium">Show the &quot;Our products&quot; column with pictures</span>
-                        </label>
-                        <p className="text-sm text-muted">Email, phone, address and social links come from Contact details. The short line under the logo is the brand tagline.</p>
-                      </div>
-                    );
-                  })()}
+                {section === "footer" && <Card title="Footer" note="Choose what the footer shows: every link, column and line can be turned on or off.">
+                  <FooterEditor draft={draft} onChange={(footer) => set("integrations", { ...draft.integrations, footer })} />
                 </Card>}
                 {section === "integrations" && <Card title="Cookie banner" note="Asks visitors to accept or reject cookies. While it is on, Google Analytics, Clarity, Meta Pixel and Tag Manager run only for visitors who press Accept. Visitors can change their choice from 'Cookie settings' in the footer.">
                   <label className="flex items-center gap-3">

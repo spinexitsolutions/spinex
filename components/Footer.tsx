@@ -5,7 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ChevronUp } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { openCookieSettings } from "@/lib/consent";
-import { cityPath, defaultFooter, productSlug, serviceSlug } from "@/lib/content";
+import { productSlug } from "@/lib/content";
+import { footerLinks, footerSettings, type FooterItem } from "@/lib/footer";
 import { sized } from "@/lib/img";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -20,29 +21,39 @@ const social = {
 export default function Footer() {
   const { content } = useContent();
   const c = content.contact;
-  const ft = { ...defaultFooter, ...(content.integrations?.footer ?? {}) };
-  const products = ft.products ? content.products.slice(0, 3) : [];
+  // Everything here is set in Admin → Site settings → Footer.
+  const ft = footerSettings(content);
+  const hidden = new Set(ft.hide);
+  const on = (key: string) => !hidden.has(key);
+  const products = ft.products ? content.products.filter((p) => p.name).slice(0, Math.max(1, ft.productsCount)) : [];
+  const all = footerLinks(content, products.length > 0);
+  const services = on("col:services") ? all.services.filter((x) => on(x.key)) : [];
+  const company = on("col:company") ? all.company.filter((x) => on(x.key)) : [];
+  const legal = all.legal.filter((x) => on(x.key));
+  const cols = 1 + (services.length ? 1 : 0) + (company.length ? 1 : 0) + (products.length ? 1 : 0);
   const links = ([
     ["Instagram", c.instagram],
     ["LinkedIn", c.linkedin],
     ["YouTube", c.youtube],
-  ] as const).filter(([, href]) => href);
+  ] as const).filter(([, href]) => href && on("info:social"));
 
   return (
     <footer className="relative overflow-hidden bg-ink text-white" data-footer>
       <div aria-hidden className="pointer-events-none absolute -right-52 -top-64 h-[760px] w-[760px] rounded-full bg-[radial-gradient(circle,rgba(110,89,217,0.42),transparent_65%)]" />
 
-      <div className={`container-x relative grid gap-12 pb-12 pt-16 sm:pt-20 md:grid-cols-2 ${products.length ? "lg:grid-cols-[1.4fr_1fr_1fr_1fr]" : "lg:grid-cols-[1.4fr_1fr_1fr]"} lg:gap-10`}>
+      <div className={`container-x relative grid gap-12 pb-12 pt-16 sm:pt-20 md:grid-cols-2 ${["lg:grid-cols-1", "lg:grid-cols-[1.4fr_1fr]", "lg:grid-cols-[1.4fr_1fr_1fr]", "lg:grid-cols-[1.4fr_1fr_1fr_1fr]"][cols - 1]} lg:gap-10`}>
         <div className="max-w-xs">
           <Link href="/" className="flex items-center gap-3">
             {content.brand.logo && <img loading="lazy" decoding="async" src={content.brand.logo} alt={`${content.brand.name || "Spinex"} logo`} className="h-10 w-10 object-contain" />}
             <span className="font-display text-xl font-semibold">{content.brand.name}</span>
           </Link>
-          <p className="mt-4 text-[15px] leading-relaxed text-white/60">{content.brand.tagline}</p>
-          <div className="mt-5 space-y-1.5 text-[15px] text-white/80">
-            <a href={`mailto:${c.email}`} className="flex min-h-10 items-center break-all hover:text-white sm:min-h-0">{c.email}</a>
-            <a href={`tel:+91${c.phone}`} className="flex min-h-10 items-center hover:text-white sm:min-h-0">+91 {c.phone}</a>
-          </div>
+          {on("info:tagline") && content.brand.tagline && <p className="mt-4 text-[15px] leading-relaxed text-white/60">{content.brand.tagline}</p>}
+          {(on("info:email") || on("info:phone")) && (
+            <div className="mt-5 space-y-1.5 text-[15px] text-white/80">
+              {on("info:email") && c.email && <a href={`mailto:${c.email}`} className="flex min-h-10 items-center break-all hover:text-white sm:min-h-0">{c.email}</a>}
+              {on("info:phone") && c.phone && <a href={`tel:+91${c.phone}`} className="flex min-h-10 items-center hover:text-white sm:min-h-0">+91 {c.phone}</a>}
+            </div>
+          )}
           {links.length > 0 && (
             <div className="mt-6 flex gap-2.5">
               {links.map(([label, href]) => {
@@ -57,28 +68,13 @@ export default function Footer() {
           )}
         </div>
 
-        <FooterCol title="Services" items={content.services.map((s) => ({ label: s.title, href: `/services/${serviceSlug(s)}` }))} />
-        <FooterCol
-          title="Company"
-          items={[
-            { label: "About", href: "/about" },
-            ...(content.products.length && !products.length ? [{ label: "Our products", href: "/products" }] : []),
-            { label: "Our work", href: "/work" },
-            { label: "Blog", href: "/blog" },
-            { label: "Careers", href: "/careers" },
-            { label: "Internship", href: "/internship" },
-            ...(content.profile?.public ? [{ label: "Company profile (PDF)", href: "/company-profile" }] : []),
-            { label: "Verify certificate", href: "/verify" },
-            ...(content.cities ?? []).filter((x) => x.show).map((x) => ({ label: `Website development in ${x.city}`, href: cityPath(x) })),
-            { label: "Contact", href: "/contact" },
-            { label: "Client login", href: "/portal/login" },
-          ]}
-        />
+        {services.length > 0 && <FooterCol title={ft.titles.services} items={services} />}
+        {company.length > 0 && <FooterCol title={ft.titles.company} items={company} />}
 
         {products.length > 0 && (
           <div data-footer-products>
             <h3 className="mb-5 text-xs font-medium uppercase tracking-[0.14em] text-white/50">
-              <Link href="/products" className="hover:text-white">Our products</Link>
+              <Link href="/products" className="hover:text-white">{ft.titles.products}</Link>
             </h3>
             <ul className="space-y-3">
               {products.map((p) => (
@@ -102,22 +98,20 @@ export default function Footer() {
       {ft.wordmark.trim() && <Wordmark text={ft.wordmark.trim()} animate={ft.animate} />}
 
       <div data-footer-bottom className="container-x relative flex flex-col gap-3 pb-7 pt-3 text-sm text-white/55 sm:flex-row sm:items-center sm:justify-between">
-        <p suppressHydrationWarning>© {new Date().getFullYear()} {content.brand.name}. All rights reserved.</p>
+        <p suppressHydrationWarning>© {new Date().getFullYear()} {ft.copyright.trim() || `${content.brand.name}. All rights reserved.`}</p>
         <div className="flex flex-wrap items-center gap-x-5">
           <nav aria-label="Legal" className="flex flex-wrap gap-x-5">
-            <Link href="/privacy" className="flex min-h-10 items-center hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="flex min-h-10 items-center hover:text-white">Terms of Service</Link>
-            <Link href="/refund" className="flex min-h-10 items-center hover:text-white">Refund Policy</Link>
-            {content.integrations?.cookieBanner && <button type="button" onClick={openCookieSettings} className="flex min-h-10 items-center text-left hover:text-white">Cookie settings</button>}
+            {legal.map((l) => <FooterA key={l.key} item={l} className="flex min-h-10 items-center hover:text-white" />)}
+            {content.integrations?.cookieBanner && on("legal:cookie") && <button type="button" onClick={openCookieSettings} className="flex min-h-10 items-center text-left hover:text-white">Cookie settings</button>}
           </nav>
-          <button
+          {on("info:top") && <button
             type="button"
             aria-label="Back to top"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="hidden h-10 w-10 place-items-center rounded-full border border-white/20 text-white transition hover:border-white hover:bg-white hover:text-ink sm:grid"
           >
             <ChevronUp size={18} />
-          </button>
+          </button>}
         </div>
       </div>
     </footer>
@@ -159,15 +153,22 @@ function Wordmark({ text, animate }: { text: string; animate: boolean }) {
   );
 }
 
-function FooterCol({ title, items }: { title: string; items: { label: string; href: string }[] }) {
+// Own links that start with http open in a new tab.
+function FooterA({ item, className }: { item: FooterItem; className: string }) {
+  return item.newTab
+    ? <a href={item.href} target="_blank" rel="noreferrer" className={className}>{item.label}</a>
+    : <Link href={item.href} className={className}>{item.label}</Link>;
+}
+
+function FooterCol({ title, items }: { title: string; items: FooterItem[] }) {
   return (
     <div>
       <h3 className="mb-5 text-xs font-medium uppercase tracking-[0.14em] text-white/50">{title}</h3>
       {/* On phones every link gets a 40 px tall touch area so the right one is easy to tap. */}
       <ul className="sm:space-y-2.5">
         {items.map((i) => (
-          <li key={i.label}>
-            <Link href={i.href} className="flex min-h-10 items-center text-[15px] text-white/80 transition hover:text-lav-300 sm:inline sm:min-h-0">{i.label}</Link>
+          <li key={i.key}>
+            <FooterA item={i} className="flex min-h-10 items-center text-[15px] text-white/80 transition hover:text-lav-300 sm:inline sm:min-h-0" />
           </li>
         ))}
       </ul>

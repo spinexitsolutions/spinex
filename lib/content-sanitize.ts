@@ -82,7 +82,19 @@ export function sanitizeUrls(c: SiteContent): SiteContent {
         id: String(x?.id ?? ""), name: String(x?.name ?? ""), logo: safeUrl(x?.logo), url: safeUrl(x?.url),
       })),
     },
-    ...(c.integrations?.mobileBar ? { integrations: { ...c.integrations, mobileBar: { ...c.integrations.mobileBar, quoteLink: safeUrl(c.integrations.mobileBar.quoteLink) || "/contact" } } } : {}),
+    integrations: {
+      ...c.integrations,
+      ...(c.integrations?.mobileBar ? { mobileBar: { ...c.integrations.mobileBar, quoteLink: safeUrl(c.integrations.mobileBar.quoteLink) || "/contact" } } : {}),
+      // Own footer links: safe links only, and a known column.
+      ...(c.integrations?.footer ? { footer: {
+        ...c.integrations.footer,
+        hide: (Array.isArray(c.integrations.footer.hide) ? c.integrations.footer.hide : []).filter((x) => typeof x === "string").slice(0, 300),
+        extra: (Array.isArray(c.integrations.footer.extra) ? c.integrations.footer.extra : []).slice(0, 40).map((x) => ({
+          id: String(x?.id ?? ""), label: String(x?.label ?? ""), href: safeUrl(x?.href),
+          column: (["services", "company", "legal"] as const).includes(x?.column) ? x.column : "company",
+        })),
+      } } : {}),
+    },
     contact: { ...c.contact, instagram: safeUrl(c.contact.instagram), linkedin: safeUrl(c.contact.linkedin), youtube: safeUrl(c.contact.youtube) },
   };
 }
