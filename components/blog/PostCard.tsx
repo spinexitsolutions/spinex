@@ -8,13 +8,12 @@ export default function PostCard({ post, large = false, fallback = "" }: { post:
   const cover = post.cover || fallback;
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white transition-shadow hover:shadow-[0_30px_60px_-30px_rgba(18,15,27,0.35)]">
-      <Link href={`/blog/${post.slug}`} className={`relative block overflow-hidden bg-mist ${large ? "aspect-[16/9]" : "aspect-[16/10]"}`} tabIndex={-1} aria-hidden>
+      <Link href={`/blog/${post.slug}`} className={`relative block overflow-hidden bg-mist aspect-[16/9]`} tabIndex={-1} aria-hidden>
         {cover ? (
-          <img src={cover} alt={post.coverAlt || ""} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <img src={cover} alt={post.coverAlt || ""} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
         ) : (
           <div className="grid h-full w-full place-items-center bg-gradient-to-br from-lav-100 to-lav-300 font-display text-5xl font-semibold text-lav-700">{post.title.slice(0, 1)}</div>
         )}
-        {post.category && <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink backdrop-blur">{post.category}</span>}
       </Link>
       <div className="flex flex-1 flex-col p-6">
         <p className="flex items-center gap-2 text-sm text-muted">

@@ -49,7 +49,7 @@ export default function PostView({ post, all, content }: { post: Post; all: Post
       {(post.cover || content.banners?.blogCover) && (
         <div className="bg-ink">
           <div className="container-x max-w-5xl translate-y-0 pb-0">
-            <img src={post.cover || content.banners.blogCover} alt={post.coverAlt || post.title} className="aspect-[16/8] w-full rounded-t-[28px] object-cover" />
+            <img src={post.cover || content.banners.blogCover} alt={post.coverAlt || post.title} className="aspect-[16/9] w-full rounded-t-[28px] object-cover" />
           </div>
         </div>
       )}
