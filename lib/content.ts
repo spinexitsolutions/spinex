@@ -1026,8 +1026,8 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
   }
   out.seo = seo;
   // The services banner stock photo was replaced by our own banner image; saved copies of the old photo move to the new one.
-  const bn = out.banners as SiteContent["banners"];
-  if (bn?.services === "/images/stock/photo-1531297484001-80022131f5a1.jpg") out.banners = { ...bn, services: base.banners.services };
+  const savedBanners = out.banners as SiteContent["banners"];
+  if (savedBanners?.services === "/images/stock/photo-1531297484001-80022131f5a1.jpg") out.banners = { ...savedBanners, services: base.banners.services };
   // The "Who we work with" cards are now a grid, so the old "keep scrolling" line no longer fits.
   const secs = out.sections as SiteContent["sections"];
   if (secs?.industries?.intro === "Different businesses need different things. Keep scrolling to see what we build for each.") out.sections = { ...secs, industries: { ...secs.industries, intro: base.sections.industries.intro } };
