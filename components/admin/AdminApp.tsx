@@ -494,10 +494,10 @@ function AdminShell() {
     {adminIntro && <IntroAnimation cfg={introSettings(content.intro)} logo={content.brand.logo} onDone={() => setAdminIntro(false)} />}
     <MediaDeleteContext.Provider value={!!me && can(me, "media", "edit")}>
     <div className="min-h-screen bg-mist lg:flex">
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col bg-ink p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between px-2 pb-8 pt-2">
+      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col bg-ink p-3.5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between px-1.5 pb-3 pt-1">
           <div className="flex items-center gap-2.5">
-            {draft.brand.logo && <img src={draft.brand.logo} alt="" className="h-11 w-11 object-contain" />}
+            {draft.brand.logo && <img src={draft.brand.logo} alt="" className="h-8 w-8 object-contain" />}
             <div>
               <p className="font-display font-semibold leading-tight">Spinex</p>
               <p className="text-xs text-white/55">Admin panel</p>
@@ -505,7 +505,7 @@ function AdminShell() {
           </div>
           <button onClick={() => setNav(false)} className="lg:hidden" aria-label="Close menu"><X size={20} /></button>
         </div>
-        <div className="relative mb-3">
+        <div className="relative mb-2">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
           <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search settings, leads, clients…" aria-label="Search the admin" data-admin-find
             className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/30" />
@@ -528,7 +528,7 @@ function AdminShell() {
                 const newHead = a.head && a.head !== AREAS[i - 1]?.head;
                 return (
                   <div key={a.id}>
-                    {newHead && <p className="px-3 pb-1 pt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/35">{a.head}</p>}
+                    {newHead && <p className="px-3 pb-0.5 pt-3 text-[10.5px] font-bold uppercase tracking-[0.1em] text-white/35">{a.head}</p>}
                     <NavItem item={a} active={active} badge={active ? 0 : total} title="new"
                       onClick={() => { if (items.length === 1) open(items[0].id); else setHub(a.id); setNav(false); }} />
                   </div>
@@ -537,24 +537,24 @@ function AdminShell() {
             </>
           )}
         </nav>
-        <a href="/" target="_blank" rel="noopener" className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 hover:bg-white/5" data-admin-site>
-          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.18)]" />
-          <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-semibold">{SITE_URL.replace(/^https?:\/\//, "")}</span><span className="block text-xs text-emerald-300">Live · open website</span></span>
-          <ExternalLink size={14} className="text-white/50" />
-        </a>
-        {me && (
-          <div className="mt-2 rounded-xl bg-white/5 px-3 py-2.5">
-            <p className="truncate text-sm font-semibold">{me.name}</p>
-            <p className="truncate text-xs text-white/55">{roleLabel[me.role]} · {me.email}</p>
+        {/* Bottom of the sidebar, kept short so the ten entries above fit without scrolling. */}
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <div className="flex items-center gap-2.5 px-1">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lav-600 text-sm font-bold uppercase">{(me?.name || "A").slice(0, 1)}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13.5px] font-semibold leading-tight">{me?.name ?? "Admin"}</p>
+              <p className="truncate text-[11.5px] text-white/50">{me ? `${roleLabel[me.role]} · ${me.email}` : ""}</p>
+            </div>
           </div>
-        )}
-        {me && can(me, "leads", "view") && <LeadAlertToggle />}
-        <a href="/api/admin/guide" target="_blank" rel="noopener" data-admin-guide className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/60 hover:bg-white/10 hover:text-white">
-          <LifeBuoy size={17} /> Help guide (PDF)
-        </a>
-        <button onClick={logout} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/60 hover:bg-white/10 hover:text-white">
-          <LogOut size={17} /> Log out
-        </button>
+          <div className="mt-2.5 grid grid-flow-col auto-cols-fr gap-1.5">
+            <a href="/" target="_blank" rel="noopener" title="Open the live website" aria-label="Open the live website" data-admin-site className="relative grid h-10 place-items-center rounded-xl bg-white/5 text-white/70 hover:bg-white/10 hover:text-white">
+              <ExternalLink size={16} /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            </a>
+            {me && can(me, "leads", "view") && <LeadAlertToggle />}
+            <a href="/api/admin/guide" target="_blank" rel="noopener" data-admin-guide title="Help guide (PDF)" aria-label="Help guide (PDF)" className="grid h-10 place-items-center rounded-xl bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"><LifeBuoy size={16} /></a>
+            <button onClick={logout} title="Log out" aria-label="Log out" className="grid h-10 place-items-center rounded-xl bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"><LogOut size={16} /></button>
+          </div>
+        </div>
       </aside>
       {nav && <div className="fixed inset-0 z-30 bg-ink/50 lg:hidden" onClick={() => setNav(false)} />}
 
@@ -1469,8 +1469,10 @@ function LeadAlertToggle() {
     }
   };
   return (
-    <button type="button" onClick={flip} data-lead-alert={on ? "on" : "off"} title="Plays a sound and shows a notification when a new lead arrives while the admin is open" className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-white/60 hover:bg-white/10 hover:text-white">
-      {on ? <Bell size={17} /> : <BellOff size={17} />} New-lead sound: {on ? "On" : "Off"}
+    <button type="button" onClick={flip} data-lead-alert={on ? "on" : "off"} aria-pressed={on} aria-label={`New-lead sound: ${on ? "on" : "off"}`}
+      title={`New-lead sound: ${on ? "On" : "Off"}. Plays a sound and shows a notification when a new lead arrives while the admin is open`}
+      className={`grid h-10 place-items-center rounded-xl hover:bg-white/10 ${on ? "bg-white/5 text-lav-300" : "bg-white/5 text-white/40"}`}>
+      {on ? <Bell size={16} /> : <BellOff size={16} />}
     </button>
   );
 }
@@ -1515,7 +1517,7 @@ function NavItem({ item, active, badge, title, sub, onClick }: {
 }) {
   const { Icon } = item;
   return (
-    <button onClick={onClick} data-admin-nav={item.id} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14.5px] font-medium">
+    <button onClick={onClick} data-admin-nav={item.id} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] font-medium">
       {active && <motion.span layoutId="admin-nav" className="absolute inset-0 rounded-xl bg-lav-600" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
       <Icon size={17} className={`relative shrink-0 ${active ? "text-white" : "text-white/50"}`} />
       <span className={`relative flex-1 ${active ? "text-white" : "text-white/70"}`}>
