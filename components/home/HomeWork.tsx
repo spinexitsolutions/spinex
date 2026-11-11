@@ -215,8 +215,8 @@ function Visual({ p, big }: { p: Project; big: boolean }) {
 
 /* ---------- cards ---------- */
 
-function Big({ p, wide }: { p: Project; wide: boolean }) {
-  const href = `/work/${projectSlug(p)}`;
+export function Big({ p, wide, flip = false }: { p: Project; wide: boolean; flip?: boolean }) {
+  const href = p.hidePage ? (liveUrl(p) || "/work") : `/work/${projectSlug(p)}`;
   const url = liveUrl(p);
   const kind = PROJECT_KIND[projectDisplay(p)];
   return (
@@ -225,11 +225,11 @@ function Big({ p, wide }: { p: Project; wide: boolean }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, ease }}
-      className={`group relative col-span-2 grid overflow-hidden rounded-[24px] bg-ink text-white sm:rounded-[30px] lg:grid-cols-[1fr_1.35fr] ${wide ? "lg:col-span-3" : ""}`}
+      className={`group relative col-span-2 grid overflow-hidden rounded-[24px] bg-ink text-white sm:rounded-[30px] ${flip ? "lg:grid-cols-[1.35fr_1fr]" : "lg:grid-cols-[1fr_1.35fr]"} ${wide ? "lg:col-span-3" : ""}`}
       data-work-big
     >
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-36 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(110,89,217,0.45),transparent_65%)]" />
-      <div className="relative order-2 flex flex-col p-5 sm:p-8 lg:order-1 lg:p-9">
+      <div aria-hidden className={`pointer-events-none absolute -top-36 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(110,89,217,0.45),transparent_65%)] ${flip ? "-left-24" : "-right-24"}`} />
+      <div className={`relative order-2 flex flex-col p-5 sm:p-8 lg:p-9 ${flip ? "lg:order-2" : "lg:order-1"}`}>
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/85">{kind}</span>
           {p.industry && <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-white/60">{p.industry}</span>}
@@ -238,19 +238,19 @@ function Big({ p, wide }: { p: Project; wide: boolean }) {
         <h3 className="mt-4 font-display text-2xl font-semibold leading-tight tracking-tight sm:mt-5 sm:text-[32px]"><Link href={href} className="hover:text-lav-200">{p.title}</Link></h3>
         {p.summary && <p className="mt-3 line-clamp-3 text-[15px] leading-relaxed text-white/60">{p.summary}</p>}
         <div className="mt-6 flex flex-wrap gap-2.5 lg:mt-auto lg:pt-6">
-          <Link href={href} className="btn-light px-5 py-2.5 text-sm">Case study <ArrowUpRight size={15} /></Link>
+          {!p.hidePage && <Link href={href} className="btn-light px-5 py-2.5 text-sm">Case study <ArrowUpRight size={15} /></Link>}
           {url && <a href={url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition hover:bg-white/10">Visit site <ArrowUpRight size={15} /></a>}
         </div>
       </div>
-      <Link href={href} tabIndex={-1} aria-hidden className="relative order-1 block px-4 pt-5 sm:px-8 sm:pt-8 lg:order-2 lg:pl-0 lg:pr-8 lg:pt-9">
+      <Link href={href} tabIndex={-1} aria-hidden className={`relative order-1 block px-4 pt-5 sm:px-8 sm:pt-8 lg:pt-9 ${flip ? "lg:order-1 lg:pl-8 lg:pr-0" : "lg:order-2 lg:pl-0 lg:pr-8"}`}>
         <Visual p={p} big />
       </Link>
     </motion.article>
   );
 }
 
-function Small({ p, i }: { p: Project; i: number }) {
-  const href = `/work/${projectSlug(p)}`;
+export function Small({ p, i }: { p: Project; i: number }) {
+  const href = p.hidePage ? (liveUrl(p) || "/work") : `/work/${projectSlug(p)}`;
   const kind = PROJECT_KIND[projectDisplay(p)];
   return (
     <motion.article
@@ -274,5 +274,84 @@ function Small({ p, i }: { p: Project; i: number }) {
         </div>
       </Link>
     </motion.article>
+  );
+}
+
+/* ---------- Work page: every project in the same style ---------- */
+
+// Client projects as big cards (alternating sides), demos as small cards, then a "your turn" card.
+export function WorkProjects() {
+  const { content } = useContent();
+  const all = useMemo(() => content.projects.filter((p) => p.title), [content.projects]);
+  const kinds = useMemo(() => Array.from(new Set(all.map((p) => projectDisplay(p)))), [all]);
+  const [kind, setKind] = useState<ProjectDisplay | "">("");
+
+  if (!all.length)
+    return (
+      <section className="bg-mist py-24 sm:py-32">
+        <div className="container-x max-w-2xl text-center">
+          <SplitHeading text="Our latest work is on its way." className="h-display text-3xl sm:text-4xl" />
+          <p className="mt-4 text-lg text-muted">We are adding recent projects here. Want to see examples for your industry? Ask us and we will share them directly.</p>
+          <Link href="/contact" className="btn-dark mt-8 inline-flex">Ask for examples <ArrowUpRight size={17} /></Link>
+        </div>
+      </section>
+    );
+
+  const list = kind ? all.filter((p) => projectDisplay(p) === kind) : all;
+  const bigs = list.filter((p) => p.type !== "demo");
+  const smalls = list.filter((p) => p.type === "demo");
+
+  return (
+    <section className="overflow-hidden bg-white py-16 sm:py-24" data-work-page>
+      <div className="container-x">
+        {kinds.length > 1 && (
+          <div className="-mx-1 mb-7 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" role="group" aria-label="Filter projects">
+            {(["", ...kinds] as (ProjectDisplay | "")[]).map((k) => (
+              <button
+                key={k || "all"}
+                type="button"
+                aria-pressed={kind === k}
+                onClick={() => setKind(k)}
+                className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors ${kind === k ? "border-ink bg-ink text-white" : "border-line text-muted hover:border-ink hover:text-ink"}`}
+              >
+                {k ? PROJECT_KIND[k] : "All"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {bigs.length > 0 && (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-[18px]">
+            {bigs.map((p, i) => <Big key={p.id} p={p} wide flip={i % 2 === 1} />)}
+          </div>
+        )}
+
+        {smalls.length > 0 && <p className="mb-4 mt-12 text-[13px] font-semibold uppercase tracking-[0.12em] text-lav-700">{bigs.length ? "More work" : "Demos we built"}</p>}
+        <div className={`grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3 lg:gap-[18px] ${smalls.length ? "" : "mt-4 sm:mt-[18px]"}`}>
+          {smalls.map((p, i) => <Small key={p.id} p={p} i={i} />)}
+          <YourTurn wide={smalls.length % 3 === 0} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function YourTurn({ wide }: { wide: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.6, ease }}
+      className={`relative col-span-2 flex flex-col overflow-hidden rounded-[18px] bg-ink p-6 text-white sm:rounded-[26px] sm:p-8 lg:col-span-1 ${wide ? "lg:col-span-3 lg:flex-row lg:items-center lg:justify-between lg:gap-10" : ""}`}
+    >
+      <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-[300px] w-[300px] rounded-full bg-lav-600/50 blur-[90px]" />
+      <div className="relative">
+        <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-lav-300">Your turn</p>
+        <h3 className="h-display mt-3 text-3xl">Your business could be next.</h3>
+        <p className="mt-3 max-w-md leading-relaxed text-white/60">Tell us what you need. The first call and the quote are free.</p>
+      </div>
+      <Link href="/contact" className={`btn-light relative w-fit ${wide ? "mt-6 lg:mt-0 lg:shrink-0" : "mt-6 lg:mt-auto"}`}>Start a project <ArrowUpRight size={17} /></Link>
+    </motion.div>
   );
 }
