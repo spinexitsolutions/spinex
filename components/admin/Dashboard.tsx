@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BellRing, CalendarClock, LifeBuoy, ReceiptIndianRupee, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BellRing, Hourglass, Minus, Trophy, MessageCircleReply, CalendarClock, LifeBuoy, ReceiptIndianRupee, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { leadStatusLabel, LEAD_SOURCES, type LeadStatus } from "@/lib/leads";
 import { statusLabel, type Status } from "@/lib/interns";
@@ -13,6 +13,7 @@ type Stats = {
     total: number; newThisWeek: number; byStatus: Record<string, number>; bySource: Record<string, number>;
     perMonth: { all: number; won: number }[]; wonValue: number; followUpsDue: number; topServices: [string, number][];
     latest: { id: string; name: string; status: LeadStatus; source: string; createdAt: string }[];
+    week?: { leads: number; leadsBefore: number; won: number; wonBefore: number; wonValue: number; answered: number; waiting: number; waitHours: number; bySource: [string, number][] };
   };
   people?: { interns: number; jobApplicants: number; byStatus: Record<string, number>; certificates: number; perMonth: number[] };
   content?: { published: number; drafts: number; images: number };
@@ -73,6 +74,8 @@ export default function Dashboard({ go, name, shortcuts = [] }: { go: (s: string
           </div>
         </section>
       )}
+
+      {leads?.week && <WeekReport w={leads.week} go={go} />}
 
       {shortcuts.length > 0 && (
         <section data-admin-shortcuts>
@@ -149,6 +152,60 @@ export default function Dashboard({ go, name, shortcuts = [] }: { go: (s: string
       )}
 
     </div>
+  );
+}
+
+// "This week": leads, wins and replies in the last 7 days, next to the 7 days before.
+function WeekReport({ w, go }: { w: NonNullable<NonNullable<Stats["leads"]>["week"]>; go: (s: string) => void }) {
+  const answeredPct = w.leads ? Math.round((w.answered / w.leads) * 100) : 0;
+  const from = new Date(Date.now() - 6 * 86400000).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  const to = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  const tiles: { Icon: LucideIcon; label: string; value: string | number; change?: [number, number]; sub?: string; warn?: boolean }[] = [
+    { Icon: Inbox, label: "New leads", value: w.leads, change: [w.leads, w.leadsBefore] },
+    { Icon: Trophy, label: "Won", value: w.won, change: [w.won, w.wonBefore], sub: w.wonValue ? `₹${w.wonValue.toLocaleString("en-IN")}` : undefined },
+    { Icon: MessageCircleReply, label: "Answered", value: `${answeredPct}%`, sub: w.leads ? `${w.answered} of ${w.leads} leads contacted` : "No leads this week" },
+    { Icon: Hourglass, label: "Waiting for a reply", value: w.waiting, sub: w.waiting ? `New for over ${w.waitHours} hour${w.waitHours === 1 ? "" : "s"}` : "Nobody waiting", warn: w.waiting > 0 },
+  ];
+  return (
+    <section className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-week-report>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h3 className="font-display text-lg font-semibold">This week</h3>
+          <p className="text-sm text-muted">{from} – {to}, compared with the 7 days before</p>
+        </div>
+        <button type="button" onClick={() => go("leads")} className="inline-flex items-center gap-1 text-sm font-semibold text-lav-700 hover:text-ink">Open leads <ArrowUpRight size={15} /></button>
+      </div>
+      <div className="mt-5 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid grid-cols-2 gap-3">
+          {tiles.map((t) => (
+            <button key={t.label} type="button" onClick={() => go("leads")} className={`rounded-2xl p-4 text-left transition ${t.warn ? "bg-amber-50 ring-1 ring-amber-200 hover:ring-amber-300" : "bg-mist hover:bg-lav-100/60"}`}>
+              <span className={`flex items-center gap-2 text-sm ${t.warn ? "text-amber-800" : "text-muted"}`}><t.Icon size={15} /> {t.label}</span>
+              <span className="mt-1.5 flex items-baseline gap-2">
+                <span className="font-display text-3xl font-semibold tabular-nums">{t.value}</span>
+                {t.change && <Change now={t.change[0]} before={t.change[1]} />}
+              </span>
+              {t.sub && <span className={`mt-0.5 block truncate text-xs ${t.warn ? "text-amber-700" : "text-muted"}`}>{t.sub}</span>}
+            </button>
+          ))}
+        </div>
+        <div>
+          <p className="mb-3 text-sm font-semibold">Where this week&apos;s leads came from</p>
+          {w.bySource.length ? <HBars data={w.bySource.map(([k, v]) => [LEAD_SOURCES[k as keyof typeof LEAD_SOURCES] ?? k, v])} /> : <Empty />}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Up or down against last week.
+function Change({ now, before }: { now: number; before: number }) {
+  const d = now - before;
+  if (!d) return <span className="inline-flex items-center gap-0.5 text-xs text-muted"><Minus size={12} /> same as last week</span>;
+  const up = d > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${up ? "text-emerald-600" : "text-red-600"}`}>
+      {up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}{Math.abs(d)} vs last week
+    </span>
   );
 }
 

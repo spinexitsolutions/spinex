@@ -22,6 +22,8 @@ export type AutomationSettings = {
   amcRemindersOn: boolean; // AMC renewal reminders (client portal → AMC)
   amcRemindDays: string; // days before the end, e.g. "30, 7, 1, 0"
   amcEmailClient: boolean; // also email the client (otherwise only you)
+  unrepliedOn: boolean; // alert when a new lead hasn't been answered
+  unrepliedHours: number; // after how many hours
 };
 
 export const defaultAutomation: AutomationSettings = {
@@ -34,6 +36,8 @@ export const defaultAutomation: AutomationSettings = {
   amcRemindersOn: true,
   amcRemindDays: "30, 7, 1, 0",
   amcEmailClient: true,
+  unrepliedOn: true,
+  unrepliedHours: 2,
 };
 
 export const getAutomation = () => readSetting("automation", defaultAutomation);
@@ -43,6 +47,7 @@ export const saveAutomation = (input: Record<string, unknown>) => {
   if ("reminderHour" in input) input.reminderHour = Math.min(23, Math.max(0, Math.round(Number(input.reminderHour) || 0)));
   if ("backupWeekday" in input) input.backupWeekday = Math.min(6, Math.max(0, Math.round(Number(input.backupWeekday) || 0)));
   if ("amcRemindDays" in input) input.amcRemindDays = String(input.amcRemindDays ?? "").replace(/[^\d,\s]/g, "").trim().slice(0, 60) || "30, 7, 1, 0";
+  if ("unrepliedHours" in input) input.unrepliedHours = [1, 2, 3, 4, 6, 12, 24].includes(Number(input.unrepliedHours)) ? Number(input.unrepliedHours) : 2;
   if ("backupEmail" in input) input.backupEmail = String(input.backupEmail ?? "").trim().slice(0, 200);
   return writeSetting("automation", defaultAutomation, input);
 };
@@ -103,6 +108,63 @@ export async function runReminders(origin: string) {
   }
   await writeState("automation", { lastReminders: today, lastRemindersResult: `${due.length} due, ${sent} email${sent === 1 ? "" : "s"} sent` });
   return { sent, due: due.length };
+}
+
+// ---------- Leads nobody has answered ----------
+
+// A lead that is still "New" (nobody marked it Contacted or logged a call/message) after the set number of hours
+// gets one alert: a WhatsApp message to you and an email to the person it is given to (or to you).
+// Only leads from the last 7 days, and only between 9 AM and 9 PM India time; ones that wait overnight go out at 9 AM.
+export async function runUnreplied(origin: string) {
+  const settings = await getAutomation();
+  if (!settings.unrepliedOn) return { skipped: "off" };
+  const { hour } = nowIST();
+  if (hour < 9 || hour >= 21) return { skipped: "quiet hours" };
+  const hours = settings.unrepliedHours || 2;
+  const cutoff = new Date(Date.now() - hours * 3600e3).toISOString();
+  const weekAgo = new Date(Date.now() - 7 * 86400e3).toISOString();
+  const col = await leadsCol();
+  const docs = await col
+    .find({ status: "new", createdAt: { $lte: cutoff, $gte: weekAgo }, unrepliedAlertAt: { $exists: false }, $or: [{ history: { $exists: false } }, { history: { $size: 0 } }] })
+    .sort({ createdAt: 1 })
+    .limit(100)
+    .toArray();
+  const leads = docs.map(toLead);
+  if (!leads.length) return { alerted: 0 };
+  // Marked first, so a slow email never makes the next run send the same alert again.
+  await col.updateMany({ _id: { $in: docs.map((d) => d._id) } }, { $set: { unrepliedAlertAt: new Date().toISOString() } });
+
+  const ago = (iso: string) => {
+    const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600e3);
+    return h >= 24 ? `${Math.floor(h / 24)} day${h >= 48 ? "s" : ""}` : `${h} hour${h === 1 ? "" : "s"}`;
+  };
+  const line = (l: (typeof leads)[number]) => `• ${l.name}, ${l.phone}${l.services ? `, ${l.services}` : ""} (waiting ${ago(l.createdAt)})${l.assignedName ? ` – ${l.assignedName}` : ""}`;
+
+  const team = await leadTeam();
+  const owner = team.find((m) => m.id === "env");
+  const groups = new Map<string, typeof leads>();
+  for (const l of leads) {
+    const who = team.some((m) => m.id === l.assignedTo) ? l.assignedTo : "env";
+    groups.set(who, [...(groups.get(who) ?? []), l]);
+  }
+  let emails = 0;
+  for (const [who, list] of groups) {
+    const m = team.find((x) => x.id === who) ?? owner;
+    if (!m?.email) continue;
+    const ok = await emailPerson(
+      m.email,
+      `${list.length} new lead${list.length > 1 ? "s" : ""} not answered yet`,
+      `${list.length > 1 ? "These leads are" : "This lead is"} still waiting for a reply`,
+      [list.slice(0, 40).map(line).join("\n"), "Call or WhatsApp them now. A quick reply wins far more deals. When done, mark the lead Contacted or log the call so this reminder stops."],
+      { label: "Open leads", url: `${origin}/admin#leads` },
+    );
+    if (ok) emails++;
+  }
+  const wa = await sendWhatsAppAlert(
+    `⏳ ${leads.length} new lead${leads.length > 1 ? "s" : ""} not answered for ${hours}+ hour${hours === 1 ? "" : "s"}\n\n${leads.slice(0, 10).map(line).join("\n")}${leads.length > 10 ? `\n…and ${leads.length - 10} more` : ""}\n\nOpen: ${origin}/admin#leads`,
+  ).catch(() => null);
+  await writeState("automation", { lastUnreplied: new Date().toISOString(), lastUnrepliedResult: `${leads.length} lead${leads.length === 1 ? "" : "s"}, ${emails} email${emails === 1 ? "" : "s"}${wa?.ok ? ", WhatsApp sent" : ""}` });
+  return { alerted: leads.length, emails, whatsapp: !!wa?.ok };
 }
 
 // ---------- Database backup ----------

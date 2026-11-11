@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import { can } from "@/lib/roles";
 import { billingCol, getProfile, toBill } from "@/lib/billing-db";
 import { computeTotals } from "@/lib/billing";
+import { getAutomation } from "@/lib/automation";
 
 type Month = { key: string; label: string };
 
@@ -38,9 +39,10 @@ export async function GET() {
   const out: Record<string, unknown> = { months: months.map((m) => m.label) };
 
   if (can(s, "leads", "view")) {
+    const unrepliedHours = (await getAutomation()).unrepliedHours || 2;
     const leads = await db
       .collection("leads")
-      .find({}, { projection: { name: 1, status: 1, source: 1, createdAt: 1, value: 1, followUp: 1, services: 1 } })
+      .find({}, { projection: { name: 1, status: 1, source: 1, createdAt: 1, updatedAt: 1, value: 1, followUp: 1, services: 1 } })
       .sort({ createdAt: -1 })
       .limit(5000)
       .toArray();
@@ -64,6 +66,26 @@ export async function GET() {
       )
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5),
+      // "This week" report: the last 7 days next to the 7 days before.
+      week: (() => {
+        const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+        const waitCut = new Date(Date.now() - unrepliedHours * 3600e3).toISOString();
+        const thisWeek = leads.filter((l) => String(l.createdAt) >= weekAgo);
+        const lastWeek = leads.filter((l) => String(l.createdAt) >= twoWeeksAgo && String(l.createdAt) < weekAgo);
+        const wonNow = leads.filter((l) => l.status === "won" && String(l.updatedAt || l.createdAt) >= weekAgo);
+        const wonBefore = leads.filter((l) => l.status === "won" && String(l.updatedAt || l.createdAt) >= twoWeeksAgo && String(l.updatedAt || l.createdAt) < weekAgo);
+        return {
+          leads: thisWeek.length,
+          leadsBefore: lastWeek.length,
+          won: wonNow.length,
+          wonBefore: wonBefore.length,
+          wonValue: wonNow.reduce((n, l) => n + (Number(l.value) || 0), 0),
+          answered: thisWeek.filter((l) => l.status !== "new").length,
+          waiting: leads.filter((l) => l.status === "new" && String(l.createdAt) <= waitCut).length,
+          waitHours: unrepliedHours,
+          bySource: Object.entries(countBy(thisWeek, (l) => String(l.source))).sort((a, b) => b[1] - a[1]),
+        };
+      })(),
       latest: leads.slice(0, 5).map((l) => ({ id: String(l._id), name: l.name, status: l.status, source: l.source, createdAt: l.createdAt })),
     };
   }

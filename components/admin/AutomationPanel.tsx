@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, BellRing, CalendarClock, CheckCircle2, Copy, DatabaseBackup, Download, History, Loader2, Play, RefreshCw, Save, TriangleAlert, Upload, Workflow } from "lucide-react";
+import { Activity, BellRing, Hourglass, CalendarClock, CheckCircle2, Copy, DatabaseBackup, Download, History, Loader2, Play, RefreshCw, Save, TriangleAlert, Upload, Workflow } from "lucide-react";
 
-type Settings = { remindersOn: boolean; reminderHour: number; whatsappSummary: boolean; backupFrequency: string; backupWeekday: number; backupEmail: string; amcRemindersOn: boolean; amcRemindDays: string; amcEmailClient: boolean };
+type Settings = { remindersOn: boolean; reminderHour: number; whatsappSummary: boolean; backupFrequency: string; backupWeekday: number; backupEmail: string; amcRemindersOn: boolean; amcRemindDays: string; amcEmailClient: boolean; unrepliedOn: boolean; unrepliedHours: number };
 type Data = {
   settings: Settings;
-  state: { lastCron?: string; lastReminders?: string; lastRemindersResult?: string; lastAmc?: string; lastAmcResult?: string; lastBackup?: string; lastBackupOk?: boolean; lastBackupResult?: string; lastRestore?: string; lastRestoreResult?: string };
+  state: { lastCron?: string; lastReminders?: string; lastRemindersResult?: string; lastAmc?: string; lastAmcResult?: string; lastBackup?: string; lastBackupOk?: boolean; lastBackupResult?: string; lastRestore?: string; lastRestoreResult?: string; lastUnreplied?: string; lastUnrepliedResult?: string };
   cronUrl: string;
   healthUrl: string;
   vercelCron: boolean;
@@ -137,7 +137,21 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
         </div>
       </Card>
 
-      <Card icon={<CalendarClock size={18} />} title="3. AMC renewal reminders" note="For clients with a maintenance plan (Client portal → client → AMC). Before the plan ends, the client gets a polite renewal email with a “Renew my plan” button, and you get a list of renewals due. Sent at the same time as follow-up reminders.">
+      <Card icon={<Hourglass size={18} />} title="3. New leads nobody answered" note="If a new lead is still “New” after the time you pick (nobody marked it Contacted or logged a call or message), you get a WhatsApp alert and the person the lead is given to gets an email. One alert per lead, only between 9 AM and 9 PM.">
+        <Toggle checked={s.unrepliedOn ?? true} onChange={(v) => setS({ ...s, unrepliedOn: v })} label="Alert me about leads waiting for a reply" />
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-[13px] font-semibold">Alert after</span>
+            <select className="input" value={s.unrepliedHours ?? 2} onChange={(e) => setS({ ...s, unrepliedHours: Number(e.target.value) })}>
+              {[1, 2, 3, 4, 6, 12, 24].map((h) => <option key={h} value={h}>{h} hour{h === 1 ? "" : "s"}</option>)}
+            </select>
+            <span className="mt-1 block text-xs text-muted">Checked every time the scheduler runs (every hour).</span>
+          </label>
+        </div>
+        <Status label="Last alert" value={data.state.lastUnreplied ? `${new Date(data.state.lastUnreplied).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}: ${data.state.lastUnrepliedResult ?? ""}` : "none yet"} />
+      </Card>
+
+      <Card icon={<CalendarClock size={18} />} title="4. AMC renewal reminders" note="For clients with a maintenance plan (Client portal → client → AMC). Before the plan ends, the client gets a polite renewal email with a “Renew my plan” button, and you get a list of renewals due. Sent at the same time as follow-up reminders.">
         <Toggle checked={s.amcRemindersOn} onChange={(v) => setS({ ...s, amcRemindersOn: v })} label="Send AMC renewal reminders" />
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block">
@@ -154,7 +168,7 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
         </div>
       </Card>
 
-      <Card icon={<DatabaseBackup size={18} />} title="4. Automatic database backup" note="A full copy of leads, interns, blog posts, quotations, invoices, website content and settings, emailed to you as a .json.gz file. Images and API keys are not included. Passwords are never included.">
+      <Card icon={<DatabaseBackup size={18} />} title="5. Automatic database backup" note="A full copy of leads, interns, blog posts, quotations, invoices, website content and settings, emailed to you as a .json.gz file. Images and API keys are not included. Passwords are never included.">
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-semibold">How often</span>
@@ -192,7 +206,7 @@ export default function AutomationPanel({ goApiKeys }: { goApiKeys: () => void }
         {note.save && <Msg {...note.save} />}
       </div>
 
-      <Card icon={<Activity size={18} />} title="4. Alert when the website is down (uptime monitoring)" note="A website can't tell you it is down, so an outside service checks it every few minutes and alerts you by email or on its phone app.">
+      <Card icon={<Activity size={18} />} title="6. Alert when the website is down (uptime monitoring)" note="A website can't tell you it is down, so an outside service checks it every few minutes and alerts you by email or on its phone app.">
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-semibold">Health check link</span>
           <div className="flex gap-2">

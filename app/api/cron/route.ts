@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "crypto";
 import { hasDb } from "@/lib/db";
-import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders } from "@/lib/automation";
+import { backupDue, cronKey, getAutomation, nowIST, runBackup, runReminders, runUnreplied } from "@/lib/automation";
 import { runAmcReminders } from "@/lib/amc";
 import { runBookingReminders } from "@/lib/booking-db";
 import { runReviewRequests } from "@/lib/reviews-db";
@@ -62,6 +62,7 @@ export async function GET(req: Request) {
   done.reviews = await runReviewRequests().catch((e) => ({ error: String(e) }));
   done.feedback = await runFeedbackRequests().catch((e) => ({ error: String(e) }));
   done.followups = await runLeadFollowups().catch((e) => ({ error: String(e) }));
+  done.unreplied = await runUnreplied(origin).catch((e) => ({ error: String(e) }));
   if (backupDue(settings, String(state.lastBackup || "")) && (await claimState("automation", "gateBackup", `${now.date}T${now.hour}`))) {
     done.backup = await runBackup().catch((e) => ({ error: String(e) }));
   }
