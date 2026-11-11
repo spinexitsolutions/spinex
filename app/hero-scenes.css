@@ -56,6 +56,8 @@
 .hp-float { animation: hp-float 16s ease-in-out infinite alternate; }
 .hp-bob { animation: hp-bob 10s ease-in-out infinite alternate; }
 .hp-spin { animation: hp-spin 40s linear infinite; }
+/* Blurred shapes that only move: kept on their own GPU layer so the blur is drawn once, not every frame. */
+.hp-breathe, .hp-sway, .hp-orbit, .hp-float, .hp-bob, .hp-spin { will-change: transform; }
 @keyframes hp-drift { to { background-position: 300px 150px; } }
 @keyframes hp-drift-slow { to { transform: translate(-2%, 2%) scale(1.04); } }
 @keyframes hp-twinkle { 50% { opacity: 0.45; } }
