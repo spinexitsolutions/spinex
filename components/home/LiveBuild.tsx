@@ -53,14 +53,25 @@ export default function LiveBuild({ scenes, start = true }: { scenes?: HeroScene
   const shown = phase === "off" || phase === "show" || phase === "live";
 
   // Hide the box straight away on computers, so it can be dragged out once the hero is ready.
+  // A page opened in a background tab has no size yet, so wait until it is actually on screen.
   useEffect(() => {
-    const ok = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!ok || !win.current) return;
-    const W = win.current.offsetWidth, H = win.current.offsetHeight;
-    setSize({ w: W, h: H });
-    setCur({ x: W + 240, y: H + 160, dur: 0 });
-    setFancy(true);
-    setPhase("enter");
+    let done = false;
+    const seenBefore = !document.hidden && window.innerWidth > 0;
+    const setup = () => {
+      if (done || document.hidden || !win.current) return;
+      const ok = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!ok) { if (seenBefore) done = true; return; }
+      done = true;
+      const W = win.current.offsetWidth, H = win.current.offsetHeight;
+      setSize({ w: W, h: H });
+      setCur({ x: W + 240, y: H + 160, dur: 0 });
+      setFancy(true);
+      setPhase("enter");
+    };
+    setup();
+    document.addEventListener("visibilitychange", setup);
+    window.addEventListener("resize", setup);
+    return () => { done = true; document.removeEventListener("visibilitychange", setup); window.removeEventListener("resize", setup); };
   }, []);
 
   // Play the intro once the Spinex intro screen is gone and the hero has faded in.
