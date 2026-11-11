@@ -111,11 +111,12 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
         </div>
       </motion.div>
 
+      {/* Website speed card: only with the website scene, so it never covers the others. */}
       <motion.div
         style={{ translateZ: 60 }}
         initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 1.2, duration: 0.7 }}
+        animate={current === "web" ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+        transition={{ delay: current === "web" ? 1.2 : 0, duration: current === "web" ? 0.7 : 0.25 }}
         className="absolute -left-6 bottom-20 hidden items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 shadow-xl sm:flex"
       >
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-lav-100 text-lav-700"><Gauge size={18} /></span>
@@ -241,7 +242,7 @@ function StoreScene() {
           <span className="hs-pop absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-lav-600 text-[9px] font-bold text-white" style={d(1.5)}>1</span>
         </div>
       </In>
-      <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
+      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-[minmax(0,1fr)] gap-3">
         {[["photo-1523275335684-37898b6baf30", "₹2,499"], ["photo-1505740420928-5e560c06d30e", "₹1,899"]].map(([p, price], i) => (
           <In key={p} at={0.2 + i * 0.15} className="relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-line">
             <img src={img(p, 400)} alt="" className="min-h-0 w-full flex-1 object-cover" />
@@ -322,7 +323,7 @@ function SocialScene() {
         <div className="flex-1"><p className="text-sm font-bold"><Count to={12480} at={0.3} dur={2.4} /></p><p className="text-[10px] text-muted">followers</p></div>
         <span className="rounded-full bg-lav-100 px-2.5 py-1 text-[11px] font-semibold text-lav-700">+2,140 this month</span>
       </In>
-      <div className="relative grid min-h-0 flex-1 grid-cols-3 gap-1">
+      <div className="relative grid min-h-0 flex-1 grid-cols-3 grid-rows-[repeat(2,minmax(0,1fr))] gap-1">
         {tiles.map((t, i) => (
           <div key={t} className="hs-tile overflow-hidden rounded-md bg-mist" style={d(0.2 + i * 0.15)}>
             <img src={img(t, 320)} alt="" className="h-full w-full object-cover" />
