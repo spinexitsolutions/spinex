@@ -34,11 +34,12 @@ export default function ProductsGrid({ products, whatsapp }: { products: Product
 }
 
 function Visual({ p, big }: { p: Product; big?: boolean }) {
+  // The big card can be taller than its picture, so the picture is shown whole (no cropped edges).
   const tone = TONES[p.cardTone ?? ""] ?? TONES[""];
   return (
     <div className="relative h-full overflow-hidden text-white" style={{ background: `radial-gradient(110% 110% at 0% 0%, ${tone}, #0e0b17 70%)` }}>
       {p.cardImage ? (
-        <img src={sized(p.cardImage, 1600)} alt={`${p.name} preview`} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]" />
+        <img src={sized(p.cardImage, 1600)} alt={`${p.name} preview`} loading="lazy" decoding="async" className={`absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.02] ${big ? "object-contain" : "object-cover"}`} />
       ) : (
         <>
           <span aria-hidden className="pointer-events-none absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:18px_18px]" />
@@ -66,11 +67,11 @@ function Visual({ p, big }: { p: Product; big?: boolean }) {
 
 function Info({ p, whatsapp, big }: { p: Product; whatsapp: string; big?: boolean }) {
   const href = `/products/${productSlug(p)}`;
-  const [main, ...more] = (p.price || "Price on request").split(/,\s*/);
+  const [main, ...more] = (p.price || "Price on request").split(/,\s+(?=[A-Za-z])/);
   const demo = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hi Spinex, I'd like a free demo of ${p.name}.`)}`;
   return (
     <div className={`flex flex-1 flex-col ${big ? "p-7 sm:p-10" : "p-7 sm:p-8"}`}>
-      {(p.audience || p.category) && <p className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-lav-700">{p.audience || p.category}</p>}
+      {(p.category || p.audience) && <p className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-lav-700">{p.category || p.audience}</p>}
       <h2 className={`mt-2 font-display font-semibold tracking-[-0.035em] ${big ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"}`}>
         <Link href={href} className="hover:text-lav-700">{p.name}</Link>
       </h2>
