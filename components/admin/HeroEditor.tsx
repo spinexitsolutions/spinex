@@ -1,10 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Monitor } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Monitor } from "lucide-react";
 import Hero, { heroSettings } from "../home/Hero";
 import ImageField from "./ImageField";
-import { HERO_BGS, HERO_DESIGNS, heroDefaults, type HeroBg, type HeroDesign, type HeroSettings } from "@/lib/content";
+import { HERO_BGS, HERO_DESIGNS, HERO_SCENES, heroDefaults, type HeroBg, type HeroDesign, type HeroScene, type HeroSettings } from "@/lib/content";
+
+const SCENE_INFO: Record<HeroScene, { name: string; about: string }> = {
+  web: { name: "Web development", about: "A website builds itself, a click, speed score 98." },
+  ai: { name: "AI automation", about: "WhatsApp chat answered by AI, lead saved to CRM." },
+  ecommerce: { name: "E-commerce", about: "Product goes to cart, orders from Amazon, Flipkart, Meesho." },
+  saas: { name: "SaaS software", about: "Dashboard numbers count up, chart draws, new subscriber." },
+  marketing: { name: "Digital marketing", about: "Google and Meta ads, reach to leads, 4.2x return." },
+  social: { name: "Social media", about: "Posts fill the grid, a heart pops, followers grow." },
+  app: { name: "App development", about: "Delivery moves on a map in a phone, then Delivered." },
+  video: { name: "Video editing", about: "A reel plays with cuts and captions while the timeline runs." },
+  design: { name: "Graphic design", about: "A logo is drawn with a pen, colours and fonts appear." },
+  promotion: { name: "Brand promotion", about: "Influencers join, reach climbs to 1.2M." },
+};
 
 const BGS: Record<HeroBg, { name: string; about: string }> = {
   dots: { name: "Dots", about: "Dot grid that moves away from the mouse. The current one." },
@@ -100,6 +113,39 @@ export default function HeroEditor({ value, onChange, readOnly }: { value: HeroS
               <textarea className="input min-h-[80px]" value={v.subtitle} onChange={(e) => set({ subtitle: e.target.value })} />
             </Field>
           </div>
+        </div>
+
+        <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-hero-scenes-editor>
+          <p className="font-semibold">Box on the right</p>
+          <p className="mt-0.5 text-sm text-muted">The moving box next to the text (Classic design). Tick up to 4 services and use the arrows to set the order: number 1 shows first and is the first tab.</p>
+          <ul className="mt-3 grid gap-2">
+            {[...(v.scenes ?? []), ...HERO_SCENES.filter((id) => !(v.scenes ?? []).includes(id))].map((id) => {
+              const list = v.scenes ?? [];
+              const at = list.indexOf(id), on = at >= 0, full = list.length >= 4;
+              const move = (by: number) => { const n = [...list]; n.splice(at, 1); n.splice(at + by, 0, id); set({ scenes: n }); };
+              return (
+                <li key={id} data-hero-scene-option={id} className={`flex items-center gap-3 rounded-2xl border p-3 ${on ? "border-ink bg-mist" : "border-line"}`}>
+                  <button type="button" aria-pressed={on} disabled={!on && full}
+                    onClick={() => set({ scenes: on ? (list.length > 1 ? list.filter((x) => x !== id) : list) : [...list, id] })}
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border text-xs font-bold ${on ? "border-ink bg-ink text-white" : "border-line text-transparent"} disabled:opacity-40`}
+                    title={on ? (list.length > 1 ? "Remove" : "Keep at least one") : full ? "Remove one first, up to 4 show" : "Show this"}>
+                    {on ? at + 1 : <Check size={14} />}
+                  </button>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold">{SCENE_INFO[id].name}</span>
+                    <span className="block text-xs text-muted">{SCENE_INFO[id].about}</span>
+                  </span>
+                  {on && (
+                    <span className="flex gap-1">
+                      <button type="button" aria-label="Move up" disabled={at === 0} onClick={() => move(-1)} className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-white disabled:opacity-30"><ArrowUp size={14} /></button>
+                      <button type="button" aria-label="Move down" disabled={at === list.length - 1} onClick={() => move(1)} className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-white disabled:opacity-30"><ArrowDown size={14} /></button>
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-xs text-muted">{(v.scenes ?? []).length} of 4 picked.{(v.scenes ?? []).length >= 4 ? " Untick one to pick another." : ""}</p>
         </div>
 
         <div className="rounded-3xl border border-line bg-white p-5 sm:p-6">

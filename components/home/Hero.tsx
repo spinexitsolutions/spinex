@@ -8,7 +8,7 @@ import HeroBackground from "./HeroBackground";
 import LiveBuild from "./LiveBuild";
 import { ease } from "../Reveal";
 import { useIntroDone } from "../Intro";
-import { HERO_BGS, HERO_DESIGNS, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
+import { HERO_BGS, HERO_DESIGNS, HERO_SCENES, HERO_SCENES_DEFAULT, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
 import { sized } from "@/lib/img";
 
 // Saved hero with every field checked, so an old or broken save still draws a hero.
@@ -30,7 +30,14 @@ export function heroSettings(raw: Partial<HeroSettings> | undefined, fallback: H
     showStats: v.showStats !== false,
     showLocation: v.showLocation !== false,
     showTicker: v.showTicker !== false,
+    scenes: heroScenes(v.scenes),
   };
+}
+
+// Up to four known scenes, no repeats; the default four when none are picked.
+export function heroScenes(raw: unknown): HeroSettings["scenes"] {
+  const list = (Array.isArray(raw) ? raw : []).filter((x, i, a) => (HERO_SCENES as readonly unknown[]).includes(x) && a.indexOf(x) === i).slice(0, 4);
+  return list.length ? (list as NonNullable<HeroSettings["scenes"]>) : HERO_SCENES_DEFAULT;
 }
 
 type Ctx = { h: HeroSettings; c: SiteContent; ready: boolean; preview?: boolean; accent: string };
@@ -160,7 +167,7 @@ function Classic(x: Ctx) {
           <Facts {...x} />
         </div>
         <motion.div initial={{ opacity: 0, y: 40, scale: 0.96 }} animate={x.ready ? { opacity: 1, y: 0, scale: 1 } : undefined} transition={{ duration: 1.1, delay: 0.35, ease }}>
-          <LiveBuild />
+          <LiveBuild scenes={x.h.scenes} />
         </motion.div>
       </div>
     </section>

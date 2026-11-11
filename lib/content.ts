@@ -176,6 +176,10 @@ export type HeroDesign = (typeof HERO_DESIGNS)[number];
 // Moving background behind the Classic and Centered hero designs (components/home/HeroBackground.tsx).
 export const HERO_BGS = ["dots", "aurora", "wave", "trail", "icons", "torch", "orb", "india", "none"] as const;
 export type HeroBg = (typeof HERO_BGS)[number];
+// Scenes the box on the right of the hero can show, one per service (components/home/LiveBuild.tsx).
+export const HERO_SCENES = ["web", "ai", "ecommerce", "saas", "marketing", "social", "app", "video", "design", "promotion"] as const;
+export type HeroScene = (typeof HERO_SCENES)[number];
+export const HERO_SCENES_DEFAULT: HeroScene[] = ["web", "ai", "ecommerce", "saas"];
 export type HeroSettings = {
   kicker: string; title: string; subtitle: string; primaryCta: string; secondaryCta: string;
   design: HeroDesign;
@@ -187,11 +191,12 @@ export type HeroSettings = {
   overlay: number; // full-screen design: how dark the layer over the photo is, 0–90
   accent: string; // highlight colour, "" = brand
   showStats: boolean; showLocation: boolean; showTicker: boolean;
+  scenes?: HeroScene[]; // up to 4, in this order, for the box on the right (Classic design)
 };
 export const heroDefaults: Omit<HeroSettings, "kicker" | "title" | "subtitle" | "primaryCta" | "secondaryCta"> = {
   design: "classic", bg: "dots", highlight: "", primaryLink: "/contact", secondaryLink: "/work",
   image: "/images/stock/photo-1522071820081-009f0129c71c.jpg", video: "", overlay: 55, accent: "",
-  showStats: true, showLocation: true, showTicker: true,
+  showStats: true, showLocation: true, showTicker: true, scenes: HERO_SCENES_DEFAULT,
 };
 
 // "The people behind Spinex" on the About page, set in Admin → About and stats → Founders.

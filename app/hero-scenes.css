@@ -1,0 +1,45 @@
+/* One-shot animations for the hero's "live build" box (components/home/LiveBuild.tsx).
+   Each scene is mounted fresh every time its tab shows, so these play once and hold their end state. */
+.hs-in { animation: hs-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hs-pop { animation: hs-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.hs-tile { animation: hs-tile 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hs-gone { animation: hs-gone 0.3s ease both; }
+.hs-draw { stroke-dasharray: var(--len, 300); animation: hs-draw 1.6s cubic-bezier(0.6, 0, 0.2, 1) both; }
+.hs-grow { transform-origin: bottom; transform-box: fill-box; animation: hs-grow 1.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hs-width { animation: hs-width 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hs-fly { animation: hs-fly 0.7s cubic-bezier(0.6, 0, 0.4, 1) both; }
+.hs-cursor { animation: hs-cursor 1s cubic-bezier(0.6, 0, 0.2, 1) both; }
+.hs-click { animation: hs-click 0.25s ease 2 alternate both; }
+.hs-heart { animation: hs-heart 1.3s ease both; }
+.hs-ripple { animation: hs-ripple 2.4s ease-out infinite; }
+.hs-car { animation: hs-car 2.6s cubic-bezier(0.45, 0, 0.3, 1) both; }
+.hs-sheet { animation: hs-sheet 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hs-real { animation: hs-real 0.7s ease both; }
+.hs-fill { animation: hs-fill 0.6s ease both; }
+.hs-type i { animation: hs-type 0.9s infinite; }
+.hs-type i:nth-child(2) { animation-delay: 0.15s; }
+.hs-type i:nth-child(3) { animation-delay: 0.3s; }
+.hs-blink { animation: hs-blink 1s infinite; }
+
+@keyframes hs-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes hs-pop { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: none; } }
+@keyframes hs-tile { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes hs-gone { to { opacity: 0; visibility: hidden; } }
+@keyframes hs-draw { from { stroke-dashoffset: var(--len, 300); } to { stroke-dashoffset: 0; } }
+@keyframes hs-grow { from { transform: scaleY(0.05); } to { transform: none; } }
+@keyframes hs-width { from { width: var(--from, 12%); } to { width: var(--to, 100%); } }
+@keyframes hs-fly { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translate(var(--fx, 0), var(--fy, 0)) scale(0.2); } }
+@keyframes hs-cursor { from { transform: translate(var(--x0), var(--y0)); } to { transform: translate(var(--x1), var(--y1)); } }
+@keyframes hs-click { to { transform: translate(var(--x1), var(--y1)) scale(0.8); } }
+@keyframes hs-heart { 0% { opacity: 0; transform: scale(0); } 25% { opacity: 1; transform: scale(1.3); } 45% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.3) translateY(-24px); } }
+@keyframes hs-ripple { from { transform: scale(0.3); opacity: 0.9; } to { transform: scale(2.6); opacity: 0; } }
+@keyframes hs-car { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes hs-sheet { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes hs-real { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+@keyframes hs-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
+@keyframes hs-type { 50% { transform: translateY(-3px); opacity: 0.4; } }
+@keyframes hs-blink { 50% { opacity: 0.2; } }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="hs-"], .hs-type i { animation-duration: 0.01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+}
