@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getStaffSession } from "@/lib/staff-auth";
 import { getContent } from "@/lib/content-server";
 import PortalLogin from "@/components/portal/PortalLogin";
+import LoginShell from "@/components/portal/LoginShell";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Staff login", robots: { index: false, follow: false } };
@@ -12,12 +12,8 @@ export default async function StaffLoginPage({ searchParams }: { searchParams: {
   if (await getStaffSession()) redirect("/staff");
   const content = await getContent();
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-ink px-4 py-16">
-      <div aria-hidden className="pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-lav-600/30 blur-[130px]" />
-      <div className="relative flex w-full flex-col items-center">
-        <PortalLogin initialEmail={String(searchParams.email ?? "").slice(0, 160)} brand={content.brand.name} api="/api/staff/login" next="/staff" title="Staff portal" intro="Apply for leave, check in, and download your payslips." placeholder="you@yourwork.email" />
-        <Link href="/" className="mt-6 text-sm text-white/60 hover:text-white">Back to website</Link>
-      </div>
-    </main>
+    <LoginShell kind="staff" content={content}>
+      <PortalLogin initialEmail={String(searchParams.email ?? "").slice(0, 160)} api="/api/staff/login" next="/staff" placeholder="you@yourwork.email" intro="Log in with your work email. We’ll send you a 6-digit code, no password needed." />
+    </LoginShell>
   );
 }
