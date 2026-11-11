@@ -13,6 +13,7 @@ import { ease } from "../Reveal";
 import { useIntroDone } from "../Intro";
 import { HERO_BGS, HERO_DESIGNS, HERO_PATTERNS, HERO_SCENES, HERO_SCENES_DEFAULT, heroDefaults, type HeroSettings, type SiteContent } from "@/lib/content";
 import { sized } from "@/lib/img";
+import CountUp from "../CountUp";
 
 // Saved hero with every field checked, so an old or broken save still draws a hero.
 export function heroSettings(raw: Partial<HeroSettings> | undefined, fallback: HeroSettings): HeroSettings {
@@ -127,7 +128,7 @@ function Facts({ h, c, ready, light, center, accent }: Ctx & { light?: boolean; 
       className={`mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm lg:[@media(max-height:760px)]:mt-5 ${light ? "text-white/70" : "text-muted"} ${center ? "justify-center" : ""}`}>
       {h.showStats && c.stats.slice(0, 2).map((s) => (
         <div key={s.id}>
-          <p className={`font-display text-2xl font-semibold ${light ? "text-white" : "text-ink"}`}>{s.value}</p>
+          <p className={`font-display text-2xl font-semibold ${light ? "text-white" : "text-ink"}`}><CountUp value={s.value} /></p>
           <p>{s.label}</p>
         </div>
       ))}
@@ -213,7 +214,7 @@ function Split(x: Ctx) {
           </div>
           {stat && (
             <motion.div {...fade(x.ready, 1)} className="absolute -left-3 bottom-8 rounded-2xl bg-white px-5 py-4 shadow-xl sm:-left-8">
-              <p className="font-display text-3xl font-semibold" style={{ color: x.accent }}>{stat.value}</p>
+              <p className="font-display text-3xl font-semibold" style={{ color: x.accent }}><CountUp value={stat.value} /></p>
               <p className="text-sm text-muted">{stat.label}</p>
             </motion.div>
           )}
@@ -280,7 +281,7 @@ function Bento(x: Ctx) {
         {(x.h.showStats || x.h.showLocation) && (
           <motion.div {...fade(x.ready, 1)} className="mt-3 grid gap-3 sm:grid-cols-3">
             {x.h.showStats && x.c.stats.slice(0, 2).map((s) => (
-              <div key={s.id} className="rounded-3xl border border-line px-5 py-4"><p className="font-display text-2xl font-semibold">{s.value}</p><p className="text-sm text-muted">{s.label}</p></div>
+              <div key={s.id} className="rounded-3xl border border-line px-5 py-4"><p className="font-display text-2xl font-semibold"><CountUp value={s.value} /></p><p className="text-sm text-muted">{s.label}</p></div>
             ))}
             {x.h.showLocation && <div className="flex items-center gap-2 rounded-3xl px-5 py-4 text-white" style={{ background: x.accent }}><MapPin size={18} /> <span className="font-semibold">{x.c.contact.location || stat?.label}</span></div>}
           </motion.div>

@@ -8,6 +8,7 @@ import { ChevronRight } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { SplitHeading, ease } from "./Reveal";
 import { sized, srcSetFor } from "@/lib/img";
+import CountUp from "./CountUp";
 
 type Page = "about" | "services" | "products" | "work" | "contact" | "internship" | "blog" | "careers";
 
@@ -90,7 +91,7 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
               transition={{ duration: 0.8, delay: 0.55, ease }}
               className="flex items-center gap-4 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 backdrop-blur-md"
             >
-              <span className="h-display text-4xl">{shown.value}</span>
+              <span className="h-display text-4xl"><CountUp value={shown.value} /></span>
               <span className="max-w-[9rem] text-sm leading-snug text-white/70">{shown.label}</span>
             </motion.div>
           )}

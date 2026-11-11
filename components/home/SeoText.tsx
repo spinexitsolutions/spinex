@@ -4,6 +4,7 @@ import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { serviceSlug, type SiteContent } from "@/lib/content";
 import { Reveal } from "../Reveal";
 import { SplitHeading } from "@/components/Reveal";
+import CountUp from "../CountUp";
 
 const icons: Record<string, LucideIcon> = {
   web: Globe, ecommerce: ShoppingBag, marketing: TrendingUp, social: Heart, video: Clapperboard,
@@ -87,7 +88,7 @@ export default function SeoText({ content }: { content: SiteContent }) {
                     {stats.map((st) => (
                       <div key={st.id}>
                         <dt className="sr-only">{st.label}</dt>
-                        <dd className="font-display text-2xl font-semibold sm:text-3xl">{st.value}</dd>
+                        <dd className="font-display text-2xl font-semibold sm:text-3xl"><CountUp value={st.value} /></dd>
                         <dd className="mt-1 text-xs text-muted sm:text-sm">{st.label}</dd>
                       </div>
                     ))}

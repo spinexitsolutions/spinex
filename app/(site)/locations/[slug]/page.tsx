@@ -7,6 +7,7 @@ import { cityPath, citySlug, projectSlug, type CityPage, type SiteContent } from
 import { SITE_URL } from "@/lib/site";
 import QuickContact from "@/components/home/QuickContact";
 import { SplitHeading } from "@/components/Reveal";
+import CountUp from "@/components/CountUp";
 
 // Local SEO page for one city, shown at /website-development-<city> (next.config rewrites it here).
 // Everything comes from Admin → City pages.
@@ -66,7 +67,7 @@ export default async function CityPageView({ params }: Props) {
           <div className="container-x grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {c.stats.filter((s) => s.value.trim()).map((s) => (
               <div key={s.id} className="rounded-[24px] border border-line p-6">
-                <p className="font-display text-3xl font-semibold tracking-tight">{s.value}</p>
+                <p className="font-display text-3xl font-semibold tracking-tight"><CountUp value={s.value} /></p>
                 <p className="mt-1 text-sm text-muted">{s.label}</p>
               </div>
             ))}
