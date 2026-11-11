@@ -14,9 +14,9 @@ const Logo = () => (
 // Green WhatsApp button fixed to the bottom-left of every page (the chat assistant sits bottom-right).
 export default function FloatingWhatsApp() {
   const { content } = useContent();
-  // Steps aside for the cookie banner, rises above the footer's last line, and folds to a round button once
-  // the visitor scrolls, so it never sits on top of text.
-  const { lift, cookieOpen: banner, menuOpen, scrolled, bar } = useFloatLift();
+  // Steps aside for the cookie banner and rises above the footer's last line. Always the small round
+  // button, the same size on the hero as everywhere else.
+  const { lift, cookieOpen: banner, menuOpen, bar } = useFloatLift();
   const cookieOpen = banner || menuOpen;
   const on = content.integrations?.whatsappButton ?? true;
   // The phone bottom bar already has a WhatsApp button.
@@ -36,11 +36,10 @@ export default function FloatingWhatsApp() {
       style={{ pointerEvents: cookieOpen ? "none" : undefined }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className={`group fixed bottom-5 left-5 z-50 flex h-14 items-center gap-2 rounded-full bg-[#25D366] pl-3.5 pr-3.5 text-white shadow-[0_14px_40px_-10px_rgba(37,211,102,0.8)] ${scrolled ? "" : "sm:pr-5"}`}
+      className={`group fixed bottom-5 left-5 z-50 flex h-14 items-center gap-2 rounded-full bg-[#25D366] w-14 justify-center text-white shadow-[0_14px_40px_-10px_rgba(37,211,102,0.8)]`}
     >
       <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#25D366] opacity-30 [animation-duration:2.5s] motion-reduce:hidden" aria-hidden />
       <Logo />
-      <span className={`hidden text-sm font-semibold ${scrolled ? "" : "sm:inline"}`}>Chat with us</span>
     </motion.a>
   );
 }
