@@ -163,9 +163,9 @@ function history(n: number) {
 const MAKE: Partial<Record<TrailKind, (w: Ctx) => Fx>> = {
   // 1. Pixel sparks: small purple squares that fall and fade.
   pixels: (w) => particles(w, {
-    every: 6,
+    every: 11,
     make: (x, y) => part(x + rnd(-4, 4), y + rnd(-4, 4), { vx: rnd(-0.6, 0.6), vy: rnd(0.3, 1.5), s: rnd(2, 6), c: pick(BRIGHT) }),
-    step: (p) => { p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.l -= 0.022; },
+    step: (p) => { p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.l -= 0.028; },
     draw: (g, p) => { g.globalAlpha = p.l; g.fillStyle = p.c; g.fillRect(p.x, p.y, p.s, p.s); },
   }),
 
@@ -389,11 +389,11 @@ const MAKE: Partial<Record<TrailKind, (w: Ctx) => Fx>> = {
       busy: () => cells.size > 0,
       frame: (m) => {
         const ci = Math.floor(m.x / S), cj = Math.floor(m.y / S);
-        if ((m.vx || m.vy) && (ci !== lx || cj !== ly || Math.random() < 0.3)) {
+        if ((m.vx || m.vy) && (ci !== lx || cj !== ly || Math.random() < 0.1)) {
           lx = ci; ly = cj;
           for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
             const d = Math.hypot(a, b);
-            if (d > 2.3 || Math.random() > 1 - d / 3 || ci + a < 0 || cj + b < 0) continue;
+            if (d > 2.3 || Math.random() > 0.7 - d / 3 || ci + a < 0 || cj + b < 0) continue;
             const key = (cj + b) * 10000 + ci + a;
             const old = cells.get(key);
             cells.set(key, { h: 1, c: old && old.h > 0.5 ? old.c : pick(["#6e59d9", "#8b7bff", "#c4b5fd", "#d946ef", "#ede9fe", "#120f1b"]) });
