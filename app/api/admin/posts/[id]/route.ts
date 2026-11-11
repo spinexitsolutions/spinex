@@ -32,7 +32,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const doc = await (await postsCol()).findOneAndUpdate({ _id }, { $set: { ...data, updatedAt: new Date().toISOString() } }, { returnDocument: "after" });
   if (!doc) return NextResponse.json({ error: "Post not found." }, { status: 404 });
   refreshSite("posts");
-  if (String(doc.status) === "published") void getContent().then((c) => announce([`/blog/${String(doc.slug)}`, "/blog"], c)).catch(() => undefined);
+  // Scheduled posts (a future date) are not announced to search engines yet.
+  if (String(doc.status) === "published" && String(doc.publishedAt || "") <= new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10)) void getContent().then((c) => announce([`/blog/${String(doc.slug)}`, "/blog"], c)).catch(() => undefined);
   await logActivity(await getSession(), "Blog", data.status === "published" ? "Published / updated a post" : "Edited a post", String(doc.title ?? ""), req);
   return NextResponse.json(toPost(doc));
 }

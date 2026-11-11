@@ -31,7 +31,8 @@ export async function POST(req: Request) {
   };
   const { insertedId } = await (await postsCol()).insertOne(doc);
   refreshSite("posts");
-  if (String(doc.status) === "published") void getContent().then((c) => announce([`/blog/${String(doc.slug)}`, "/blog"], c)).catch(() => undefined);
+  // Scheduled posts (a future date) are not announced to search engines yet.
+  if (String(doc.status) === "published" && String(doc.publishedAt || "") <= new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10)) void getContent().then((c) => announce([`/blog/${String(doc.slug)}`, "/blog"], c)).catch(() => undefined);
   await logActivity(await getSession(), "Blog", "Created a post", title, req);
   return NextResponse.json(toPost({ _id: insertedId, ...doc }), { status: 201 });
 }
