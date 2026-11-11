@@ -6,6 +6,7 @@ import { ChevronUp } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { openCookieSettings } from "@/lib/consent";
 import { cityPath, defaultFooter, productSlug, serviceSlug } from "@/lib/content";
+import { sized } from "@/lib/img";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -84,7 +85,7 @@ export default function Footer() {
                 <li key={p.id}>
                   <Link href={`/products/${productSlug(p)}`} className="group flex items-center gap-3">
                     <span className="h-10 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5">
-                      {p.image && <img loading="lazy" decoding="async" src={p.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />}
+                      {(p.cardImage || p.image) && <img loading="lazy" decoding="async" src={sized(p.cardImage || p.image, 160)} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block text-[15px] leading-snug text-white/85 group-hover:text-lav-300">{p.name}</span>

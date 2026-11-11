@@ -14,8 +14,9 @@ const TONES: Record<string, string> = {
 
 // Products page: one big card at the top, the rest in pairs. A product left on its own
 // becomes a wide card too, so the grid never has an empty gap however many products there are.
-export default function ProductsGrid({ products, whatsapp }: { products: Product[]; whatsapp: string }) {
-  const fi = Math.max(0, products.findIndex((p) => p.page === "featured"));
+// The home page uses the same cards; there "featured" comes from the product's "On the home page" setting.
+export default function ProductsGrid({ products, whatsapp, home = false }: { products: Product[]; whatsapp: string; home?: boolean }) {
+  const fi = Math.max(0, products.findIndex((p) => (home ? p.home : p.page) === "featured"));
   const first = products[fi];
   const rest = products.filter((_, i) => i !== fi);
   const pairs = rest.length - (rest.length % 2);

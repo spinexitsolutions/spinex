@@ -74,9 +74,11 @@ export default async function HomePage() {
     <>
       <JsonLd content={content} faq={faqShown} />
       <Hero />
-      {order.filter((b) => b.visible).map((b) => (
-        <Fragment key={b.id}>{blocks[b.id]}</Fragment>
-      ))}
+      <div data-home-blocks>
+        {order.filter((b) => b.visible).map((b) => (
+          <Fragment key={b.id}>{blocks[b.id]}</Fragment>
+        ))}
+      </div>
     </>
   );
 }

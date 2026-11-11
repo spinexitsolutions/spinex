@@ -151,3 +151,9 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
   .tx-a { animation: none !important; }
   .tx-mark { animation: none; background-size: 100% var(--mh); }
 }
+
+/* Home page: two sections in a row on the same background would stack both paddings and leave a
+   big empty band, so the second one starts right after the first one's bottom padding. */
+[data-home-blocks] > section.bg-white + section.bg-white,
+[data-home-blocks] > section.bg-mist + section.bg-mist,
+[data-home-blocks] > section.bg-ink + section.bg-ink { padding-top: 0; }
