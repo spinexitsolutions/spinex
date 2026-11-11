@@ -19,7 +19,7 @@ export async function resized(key: string, input: () => Promise<Buffer>, width: 
     cache.set(k, hit); // most recently used last
     return hit;
   }
-  const out = await sharp(await input(), { failOn: "none" }).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
+  const out = await sharp(await input(), { failOn: "none" }).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: width >= 1600 ? 88 : 78 }).toBuffer();
   cache.set(k, out);
   cacheBytes += out.length;
   for (const [old, buf] of cache) {

@@ -764,12 +764,12 @@ const baseContent: SiteContent = {
     waTemplates: defaultWaTemplates,
   },
   banners: {
-    about: img("photo-1556761175-5973dc0f32e7", 1600),
+    about: "/images/banners/about.jpg",
     services: "/images/banners/services.jpg",
     products: "/images/banners/products.jpg",
-    work: img("photo-1519389950473-47ba0277781c", 1600),
-    contact: img("photo-1497366216548-37526070297c", 1600),
-    internship: img("photo-1522071820081-009f0129c71c", 1600),
+    work: "/images/banners/work.jpg",
+    contact: "/images/banners/contact.jpg",
+    internship: "/images/banners/internship.jpg",
     blog: "/images/banners/blog.jpg",
     careers: img("photo-1519389950473-47ba0277781c", 1600),
     blogCover: "", // shown on blog posts that have no cover image
@@ -1025,9 +1025,19 @@ export function mergeContent(base: SiteContent, saved: Partial<SiteContent>): Si
     if (Array.isArray(seo.areas) && seo.areas.join("|") === OLD_SEO_DEFAULTS.areas.join("|")) seo.areas = base.seo.areas;
   }
   out.seo = seo;
-  // The services banner stock photo was replaced by our own banner image; saved copies of the old photo move to the new one.
-  const savedBanners = out.banners as SiteContent["banners"];
-  if (savedBanners?.services === "/images/stock/photo-1531297484001-80022131f5a1.jpg") out.banners = { ...savedBanners, services: base.banners.services };
+  // Stock photos on page banners were replaced by our own banner images; saved copies of the old photos move to the new ones.
+  const OLD_BANNERS: Partial<Record<keyof SiteContent["banners"], string>> = {
+    services: "/images/stock/photo-1531297484001-80022131f5a1.jpg",
+    about: "/images/stock/photo-1556761175-5973dc0f32e7.jpg",
+    work: "/images/stock/photo-1519389950473-47ba0277781c.jpg",
+    contact: "/images/stock/photo-1497366216548-37526070297c.jpg",
+    internship: "/images/stock/photo-1522071820081-009f0129c71c.jpg",
+  };
+  const savedBanners = { ...(out.banners as SiteContent["banners"]) };
+  for (const [k, oldSrc] of Object.entries(OLD_BANNERS) as [keyof SiteContent["banners"], string][]) {
+    if (savedBanners[k] === oldSrc) savedBanners[k] = base.banners[k];
+  }
+  out.banners = savedBanners;
   // The "Who we work with" cards are now a grid, so the old "keep scrolling" line no longer fits.
   const secs = out.sections as SiteContent["sections"];
   if (secs?.industries?.intro === "Different businesses need different things. Keep scrolling to see what we build for each.") out.sections = { ...secs, industries: { ...secs.industries, intro: base.sections.industries.intro } };

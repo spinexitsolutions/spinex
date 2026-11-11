@@ -7,7 +7,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { SplitHeading, ease } from "./Reveal";
-import { sized } from "@/lib/img";
+import { sized, srcSetFor } from "@/lib/img";
 
 type Page = "about" | "services" | "products" | "work" | "contact" | "internship" | "blog" | "careers";
 
@@ -46,6 +46,7 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
     blog: { value: "", label: "" },
     careers: { value: content.careers?.open ? String(content.careers.jobs.length) : "", label: "Open roles" },
   }[page];
+  const banner = (!own && content.banners?.[page]) || fallbackBanner;
   const shown = badgeProp ?? (own ? { value: "", label: "" } : badge);
 
   return (
@@ -53,8 +54,11 @@ export default function PageHeader({ page: pageProp, title: titleProp, intro: in
       {/* Background banner */}
       <motion.div style={{ y: bgY }} className="absolute inset-0">
         <motion.img
-          src={sized((!own && content.banners?.[page]) || fallbackBanner, 1600)}
+          src={sized(banner, 1920)}
+          srcSet={srcSetFor(banner)}
+          sizes="100vw"
           alt=""
+          decoding="async"
           initial={{ scale: 1.25 }}
           animate={{ scale: 1.08 }}
           transition={{ duration: 2.2, ease }}
