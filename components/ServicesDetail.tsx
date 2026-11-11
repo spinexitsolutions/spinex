@@ -7,6 +7,7 @@ import { useContent } from "./ContentProvider";
 import { serviceSlug } from "@/lib/content";
 import { ease } from "./Reveal";
 import { sized } from "@/lib/img";
+import { SplitHeading } from "@/components/Reveal";
 
 export default function ServicesDetail() {
   const { content } = useContent();
@@ -25,7 +26,7 @@ export default function ServicesDetail() {
               <motion.img src={sized(s.image, 960)} alt={s.title} className="aspect-[5/4] w-full object-cover" initial={{ scale: 1.25 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 1.4, ease }} />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.8, delay: 0.2, ease }}>
-              <h2 className="h-display text-4xl sm:text-5xl">{s.title}</h2>
+              <SplitHeading text={s.title} className="h-display text-4xl sm:text-5xl" />
               <p className="mt-6 text-lg leading-relaxed text-muted">{s.description}</p>
               <ul className="mt-8 space-y-3">
                 {s.tags.map((t) => (

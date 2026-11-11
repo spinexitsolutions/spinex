@@ -8,6 +8,7 @@ import { renderMarkdown } from "@/lib/posts";
 import { SITE_URL } from "@/lib/site";
 import ContactForm from "@/components/ContactForm";
 import ProjectStage from "@/components/home/ProjectFrames";
+import { SplitHeading } from "@/components/Reveal";
 
 type Props = { params: { slug: string } };
 
@@ -106,7 +107,7 @@ export default async function ProjectPage({ params }: Props) {
               <div className="flex flex-wrap items-center gap-2">
                 {p.category && <span className="rounded-full bg-lav-100 px-3 py-1 text-xs font-semibold text-lav-700">{p.category}</span>}
               </div>
-              <h1 className="h-display mt-5 text-4xl sm:text-6xl">{p.title}</h1>
+              <SplitHeading as="h1" text={p.title} className="h-display mt-5 text-4xl sm:text-6xl" />
               {p.summary && <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted">{p.summary}</p>}
               <div className="mt-8 flex flex-wrap gap-3">
                 <a href="#quote" className="btn-dark">Get similar results <ArrowUpRight size={17} /></a>
@@ -145,7 +146,7 @@ export default async function ProjectPage({ params }: Props) {
             {sections.map((s, n) => (
               <article key={s.id} id={s.id} className="scroll-mt-28">
                 <p className="font-display text-sm font-semibold text-lav-700">0{n + 1}</p>
-                <h2 className="h-display mt-2 text-3xl sm:text-4xl">{s.title}</h2>
+                <SplitHeading text={s.title} className="h-display mt-2 text-3xl sm:text-4xl" />
                 <div className="prose-spinex mt-5 max-w-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdown(s.text ?? "").html }} />
               </article>
             ))}
@@ -182,7 +183,7 @@ export default async function ProjectPage({ params }: Props) {
       {gallery.length > 0 && (
         <section className="bg-mist py-16 sm:py-20">
           <div className="container-x">
-            <h2 className="h-display text-3xl sm:text-4xl">Gallery</h2>
+            <SplitHeading text="Gallery" className="h-display text-3xl sm:text-4xl" />
             <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {gallery.map((src, n) => (
                 <li key={`${n}:${src}`}>
@@ -227,7 +228,7 @@ export default async function ProjectPage({ params }: Props) {
       <section id="quote" className="scroll-mt-24 bg-mist py-16 sm:py-24">
         <div className="container-x grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <h2 className="h-display text-3xl sm:text-5xl">Want results like this?</h2>
+            <SplitHeading text="Want results like this?" className="h-display text-3xl sm:text-5xl" />
             <p className="mt-4 text-muted">Tell us about your business and we&apos;ll reply within a day with ideas and a clear quote.</p>
             <Link href="/work" className="btn-ghost mt-8 inline-flex bg-white"><ArrowLeft size={16} /> All projects</Link>
           </div>

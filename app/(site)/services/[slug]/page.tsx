@@ -7,6 +7,7 @@ import { projectSlug, serviceSlug, type Service } from "@/lib/content";
 import { renderMarkdown } from "@/lib/posts";
 import { SITE_URL } from "@/lib/site";
 import ContactForm from "@/components/ContactForm";
+import { SplitHeading } from "@/components/Reveal";
 
 // Lower-case a service name for use mid-sentence, keeping words like AI and SaaS as they are.
 const lower = (t: string) => t.split(" ").map((w) => (/^(AI|SaaS|SEO|[A-Z]{2,})$/.test(w) ? w : w.toLowerCase())).join(" ");
@@ -92,7 +93,7 @@ export default async function ServicePage({ params }: Props) {
               <li aria-current="page" className="text-white">{s.title}</li>
             </ol>
           </nav>
-          <h1 className="h-display mt-6 max-w-4xl text-5xl sm:text-7xl">{s.title} in Jaipur</h1>
+          <SplitHeading as="h1" text={`${s.title} in Jaipur`} className="h-display mt-6 max-w-4xl text-5xl sm:text-7xl" />
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75">{s.description}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#quote" className="btn-light">Get a free quote <ArrowUpRight size={17} /></a>
@@ -130,7 +131,7 @@ export default async function ServicePage({ params }: Props) {
 
       <section className="bg-mist py-16 sm:py-20">
         <div className="container-x">
-          <h2 className="h-display text-3xl sm:text-5xl">How we work</h2>
+          <SplitHeading text="How we work" className="h-display text-3xl sm:text-5xl" />
           <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {content.process.map((p, i) => (
               <li key={p.id} className="rounded-[24px] border border-line bg-white p-6">
@@ -147,7 +148,7 @@ export default async function ServicePage({ params }: Props) {
       {projects.length > 0 && (
         <section className="bg-white py-16 sm:py-20">
           <div className="container-x">
-            <h2 className="h-display text-3xl sm:text-5xl">Recent {lower(s.title)} work</h2>
+            <SplitHeading text={`Recent ${lower(s.title)} work`} className="h-display text-3xl sm:text-5xl" />
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {projects.map((p) => (
                 <article key={p.id} className="group relative overflow-hidden rounded-[24px] border border-line transition hover:border-ink">
@@ -170,7 +171,7 @@ export default async function ServicePage({ params }: Props) {
       {faqs.length > 0 && (
         <section className="bg-white py-16 sm:py-20">
           <div className="container-x grid gap-10 lg:grid-cols-[1fr_1.5fr]">
-            <h2 className="h-display text-3xl sm:text-5xl">{s.title}: common questions</h2>
+            <SplitHeading text={`${s.title}: common questions`} className="h-display text-3xl sm:text-5xl" />
             <div className="border-t border-line">
               {faqs.map((f) => (
                 <details key={f.q} className="group border-b border-line">
@@ -189,7 +190,7 @@ export default async function ServicePage({ params }: Props) {
       <section id="quote" className="scroll-mt-24 bg-mist py-16 sm:py-24">
         <div className="container-x grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <h2 className="h-display text-3xl sm:text-5xl">Get a quote for {lower(s.title)}</h2>
+            <SplitHeading text={`Get a quote for ${lower(s.title)}`} className="h-display text-3xl sm:text-5xl" />
             <p className="mt-4 text-muted">Tell us a little about your project. We reply within a day.</p>
             <div className="mt-8">
               <p className="text-sm font-semibold">Other services</p>

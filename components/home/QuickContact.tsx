@@ -8,7 +8,7 @@ import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { submitLead } from "@/lib/leads";
 import HumanCheck from "../HumanCheck";
 import { useContent } from "../ContentProvider";
-import { ease } from "../Reveal";
+import { SplitHeading, ease } from "../Reveal";
 
 // Home page contact: one-tap ways to reach us, plus a short form that opens WhatsApp or email.
 export default function QuickContact({ source = "home", note = "" }: { source?: "home" | "city"; note?: string } = {}) {
@@ -74,7 +74,7 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
         <div className="relative mx-auto grid w-full max-w-[1180px] gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-stretch lg:gap-16">
           <div className="flex flex-col">
             {eyebrow && <p className="text-[13px] font-medium uppercase tracking-[0.16em] text-lav-300">{eyebrow}</p>}
-            <ContactHeading key={sec.heading} text={sec.heading} />
+            <SplitHeading key={sec.heading} text={sec.heading} className="h-display mt-4 text-4xl sm:text-6xl" />
             {sec.intro && <p className="mt-5 max-w-md text-lg text-white/65">{sec.intro}</p>}
 
             <a href={`mailto:${c.email}`} className="group mt-8 inline-flex max-w-full items-center gap-3 self-start border-b-2 border-white/25 pb-1.5 font-display text-xl font-medium transition-colors hover:border-lav-300 sm:text-2xl [overflow-wrap:anywhere]">
@@ -187,33 +187,3 @@ export default function QuickContact({ source = "home", note = "" }: { source?: 
   );
 }
 
-// Big heading; words between * get the soft gradient (e.g. "Let's build what your business *needs next.*").
-function ContactHeading({ text }: { text: string }) {
-  const parts = text.split("*");
-  let n = 0;
-  return (
-    <motion.h2
-      className="h-display mt-4 text-4xl sm:text-6xl"
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: "-60px" }}
-      aria-label={text.replace(/\*/g, "")}
-    >
-      {parts.map((part, pi) =>
-        part.split(" ").filter(Boolean).map((w) => {
-          const i = n++;
-          return (
-            <span key={`${pi}-${i}`} className="inline-block overflow-hidden pb-[0.08em] align-top" aria-hidden>
-              <motion.span
-                className={`inline-block ${pi % 2 ? "bg-gradient-to-r from-[#b9acf5] to-[#f0abfc] bg-clip-text text-transparent" : ""}`}
-                variants={{ hidden: { y: "110%" }, show: { y: 0, transition: { delay: i * 0.05, duration: 0.8, ease } } }}
-              >
-                {w}&nbsp;
-              </motion.span>
-            </span>
-          );
-        })
-      )}
-    </motion.h2>
-  );
-}

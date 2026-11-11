@@ -3,6 +3,7 @@ import { ArrowUpRight, MapPin, Globe, ShoppingBag, TrendingUp, Heart, Clapperboa
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { serviceSlug, type SiteContent } from "@/lib/content";
 import { Reveal } from "../Reveal";
+import { SplitHeading } from "@/components/Reveal";
 
 const icons: Record<string, LucideIcon> = {
   web: Globe, ecommerce: ShoppingBag, marketing: TrendingUp, social: Heart, video: Clapperboard,
@@ -33,7 +34,7 @@ export default function SeoText({ content }: { content: SiteContent }) {
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-1.5 text-sm text-muted">
               <MapPin size={15} className="text-lav-600" /> Based in Jaipur · Working across India
             </p>
-            <h2 id="seo-heading" className="h-display text-4xl sm:text-5xl lg:text-6xl">{seo.heading}</h2>
+            <SplitHeading id="seo-heading" text={seo.heading} className="h-display text-4xl sm:text-5xl lg:text-6xl" />
           </Reveal>
           {lead && (
             <Reveal delay={0.1}>

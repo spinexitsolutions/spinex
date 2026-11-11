@@ -6,6 +6,7 @@ import { getContent } from "@/lib/content-server";
 import { cityPath, citySlug, projectSlug, type CityPage, type SiteContent } from "@/lib/content";
 import { SITE_URL } from "@/lib/site";
 import QuickContact from "@/components/home/QuickContact";
+import { SplitHeading } from "@/components/Reveal";
 
 // Local SEO page for one city, shown at /website-development-<city> (next.config rewrites it here).
 // Everything comes from Admin → City pages.
@@ -50,7 +51,7 @@ export default async function CityPageView({ params }: Props) {
             <Link href="/" className="hover:text-white">Home</Link> <span aria-hidden>›</span> <Link href="/services" className="hover:text-white">Services</Link> <span aria-hidden>›</span> <span className="text-white/80">{c.city}</span>
           </nav>
           <p className="mt-8 font-semibold uppercase tracking-[0.14em] text-lav-300">{[c.city, c.state].filter(Boolean).join(", ")}</p>
-          <h1 className="h-display mt-3 max-w-4xl text-4xl sm:text-6xl lg:text-7xl">{c.heading}</h1>
+          <SplitHeading as="h1" text={c.heading} className="h-display mt-3 max-w-4xl text-4xl sm:text-6xl lg:text-7xl" />
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/65">{c.intro}</p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="#enquiry" className="btn-light px-6 py-3.5">Get a free quote <ArrowUpRight size={16} /></Link>
@@ -77,7 +78,7 @@ export default async function CityPageView({ params }: Props) {
         <section className="bg-white py-20 sm:py-24">
           <div className="container-x">
             <p className="font-semibold uppercase tracking-[0.14em] text-lav-700">What we do in {c.city}</p>
-            <h2 className="h-display mt-3 text-3xl sm:text-5xl">Services for {c.city} businesses</h2>
+            <SplitHeading text={`Services for ${c.city} businesses`} className="h-display mt-3 text-3xl sm:text-5xl" />
             <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {c.services.filter((s) => s.title.trim()).map((s) => (
                 <div key={s.id} className="rounded-[24px] border border-line bg-white p-7 transition hover:border-lav-300 hover:shadow-[0_20px_50px_-30px_rgba(18,15,27,.35)]">
@@ -96,7 +97,7 @@ export default async function CityPageView({ params }: Props) {
         <section className="bg-mist py-20 sm:py-24">
           <div className="container-x">
             <p className="font-semibold uppercase tracking-[0.14em] text-lav-700">Our work</p>
-            <h2 className="h-display mt-3 text-3xl sm:text-5xl">Recent projects</h2>
+            <SplitHeading text="Recent projects" className="h-display mt-3 text-3xl sm:text-5xl" />
             {projects.length > 0 && (
               <div className="mt-10 grid gap-5 md:grid-cols-3">
                 {projects.map((p) => (
@@ -129,7 +130,7 @@ export default async function CityPageView({ params }: Props) {
           {c.why.length > 0 && (
             <div className="rounded-[28px] bg-ink p-8 text-white sm:p-10">
               <p className="font-semibold uppercase tracking-[0.14em] text-lav-300">Why a local team</p>
-              <h2 className="h-display mt-3 text-3xl sm:text-4xl">We know {c.city}.</h2>
+              <SplitHeading text={`We know ${c.city}.`} className="h-display mt-3 text-3xl sm:text-4xl" />
               <ul className="mt-7 space-y-3">
                 {c.why.map((w) => <li key={w} className="flex gap-3 text-white/80"><CheckCircle2 size={19} className="mt-0.5 shrink-0 text-lav-300" /> {w}</li>)}
               </ul>
@@ -153,7 +154,7 @@ export default async function CityPageView({ params }: Props) {
         <section className="bg-mist py-20 sm:py-24">
           <div className="container-x max-w-4xl">
             <p className="font-semibold uppercase tracking-[0.14em] text-lav-700">FAQ</p>
-            <h2 className="h-display mt-3 text-3xl sm:text-5xl">Questions from {c.city} businesses</h2>
+            <SplitHeading text={`Questions from ${c.city} businesses`} className="h-display mt-3 text-3xl sm:text-5xl" />
             <div className="mt-10 space-y-3">
               {c.faqs.filter((f) => f.q.trim()).map((f, i) => (
                 <details key={f.id} open={i === 0} className="group rounded-[20px] border border-line bg-white px-6 py-5">

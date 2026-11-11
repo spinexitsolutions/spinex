@@ -125,3 +125,29 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
 @keyframes tx-blink { 50% { opacity: 0; } }
 .tx-caret { animation: tx-blink 0.9s steps(1) infinite; }
 @media (prefers-reduced-motion: reduce) { .tx-caret { animation: none; } }
+.tx-a { display: inline-block; animation-fill-mode: both; animation-play-state: paused; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); backface-visibility: hidden; }
+.tx-run .tx-a { animation-play-state: running; }
+.tx-rise { animation-name: tx-rise; }
+.tx-fade { animation-name: tx-fade; }
+.tx-blur { animation-name: tx-blur; animation-timing-function: cubic-bezier(0.25, 0.8, 0.3, 1); }
+.tx-run .tx-blur { will-change: filter, opacity, transform; }
+.tx-slide { animation-name: tx-slide; }
+.tx-zoom { animation-name: tx-zoom; transform-origin: 50% 80%; }
+.tx-flip { animation-name: tx-flip; transform-origin: 50% 100%; }
+.tx-letters { animation-name: tx-letters; }
+.tx-wave { animation-name: tx-wave; animation-timing-function: ease-out; }
+@keyframes tx-rise { from { transform: translate3d(0, 110%, 0) rotate(4deg); } to { transform: none; } }
+@keyframes tx-fade { from { opacity: 0; transform: translate3d(0, 0.35em, 0); } to { opacity: 1; transform: none; } }
+@keyframes tx-blur { from { opacity: 0; filter: blur(0.16em); transform: translate3d(0, 0.1em, 0); } to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes tx-slide { from { opacity: 0; transform: translate3d(-0.6em, 0, 0); } to { opacity: 1; transform: none; } }
+@keyframes tx-zoom { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+@keyframes tx-flip { from { opacity: 0; transform: rotateX(95deg); } to { opacity: 1; transform: none; } }
+@keyframes tx-letters { from { transform: translate3d(0, 105%, 0); } to { transform: none; } }
+@keyframes tx-wave { 0% { opacity: 0; transform: translate3d(0, -0.8em, 0); } 55% { opacity: 1; transform: translate3d(0, 0.08em, 0); } 75% { transform: translate3d(0, -0.03em, 0); } 100% { opacity: 1; transform: none; } }
+.tx-mark { background-repeat: no-repeat; -webkit-box-decoration-break: clone; box-decoration-break: clone; background-size: 0% var(--mh); animation: tx-draw var(--md-dur, 0.8s) cubic-bezier(0.65, 0, 0.35, 1) var(--md-del, 0s) both paused; }
+.tx-run .tx-mark { animation-play-state: running; }
+@keyframes tx-draw { from { background-size: 0% var(--mh); } to { background-size: 100% var(--mh); } }
+@media (prefers-reduced-motion: reduce) {
+  .tx-a { animation: none !important; }
+  .tx-mark { animation: none; background-size: 100% var(--mh); }
+}

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, FileText } from "lucide-react";
 import { useContent } from "./ContentProvider";
 import { legalDocs, type Block } from "@/lib/legal";
-import { ease } from "./Reveal";
+import { SplitHeading, ease } from "./Reveal";
 
 const others = [
   { slug: "privacy", label: "Privacy Policy" },
@@ -50,9 +50,7 @@ export default function LegalPage({ slug }: { slug: keyof typeof legalDocs }) {
               <li aria-current="page" className="text-white">{doc.title}</li>
             </ol>
           </nav>
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }} className="h-display mt-6 text-5xl sm:text-6xl">
-            {doc.title}
-          </motion.h1>
+          <SplitHeading as="h1" text={doc.title} className="h-display mt-6 text-5xl sm:text-6xl" />
           <motion.p initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1, ease }} className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
             {doc.summary}
           </motion.p>

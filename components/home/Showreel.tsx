@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useContent } from "../ContentProvider";
-import { ease } from "../Reveal";
+import { SplitHeading, ease } from "../Reveal";
 
 // Brand video: heading on top and the video in a glowing frame below. It scrolls like any other
 // section. The video plays muted while on screen; "Watch with sound" restarts it with sound.
@@ -12,17 +12,6 @@ export default function Showreel() {
   const { content } = useContent();
   if (!content.showreel.video?.trim()) return null;
   return <ShowreelInner />;
-}
-
-function Heading({ text }: { text: string }) {
-  const parts = text.split("*");
-  return (
-    <>
-      {parts.map((p, i) =>
-        i % 2 ? <span key={i} className="bg-gradient-to-r from-[#b9acf5] to-[#f0abfc] bg-clip-text text-transparent">{p}</span> : <span key={i}>{p}</span>
-      )}
-    </>
-  );
 }
 
 function ShowreelInner() {
@@ -97,7 +86,7 @@ function ShowreelInner() {
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] h-[700px] w-[1100px] max-w-[160vw] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(110,89,217,0.45),transparent)]" />
       <div className="container-x relative">
         {eyebrow && <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-lav-300 sm:text-[13px]">{eyebrow}</p>}
-        <h2 className="h-display mx-auto mt-3 max-w-4xl text-4xl sm:mt-4 sm:text-6xl"><Heading text={title} /></h2>
+        <SplitHeading text={title} className="h-display mx-auto mt-3 max-w-4xl text-4xl sm:mt-4 sm:text-6xl" />
         {sr.intro && <p className="mx-auto mt-3 max-w-xl text-[15px] text-white/60 sm:mt-4 sm:text-lg">{sr.intro}</p>}
 
         <motion.div

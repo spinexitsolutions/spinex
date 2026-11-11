@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/interns";
 import { SITE_URL } from "@/lib/site";
 import PostCard from "./PostCard";
 import ShareButtons from "./ShareButtons";
+import { SplitHeading } from "@/components/Reveal";
 
 // The article page itself. Used by /blog/[slug] and by the admin preview of a post that isn't live yet.
 export default function PostView({ post, all, content }: { post: Post; all: Post[]; content: SiteContent }) {
@@ -36,7 +37,7 @@ export default function PostView({ post, all, content }: { post: Post; all: Post
         <div className="container-x max-w-4xl">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white"><ArrowLeft size={15} /> All articles</Link>
           {post.category && <p className="mt-8 text-lav-300">{post.category}</p>}
-          <h1 className="h-display mt-3 text-4xl sm:text-6xl">{post.title}</h1>
+          <SplitHeading as="h1" text={post.title} className="h-display mt-3 text-4xl sm:text-6xl" />
           {post.excerpt && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/65">{post.excerpt}</p>}
           <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/55">
             <span>{post.author}</span><span aria-hidden>·</span><span>{formatDate(post.publishedAt)}</span><span aria-hidden>·</span>
@@ -87,7 +88,7 @@ export default function PostView({ post, all, content }: { post: Post; all: Post
       {more.length > 0 && (
         <section className="bg-mist py-16 sm:py-20">
           <div className="container-x">
-            <h2 className="h-display mb-8 text-3xl sm:text-4xl">Keep reading</h2>
+            <SplitHeading text="Keep reading" className="h-display mb-8 text-3xl sm:text-4xl" />
             <div className="grid gap-6 md:grid-cols-3">{more.map((p) => <PostCard key={p.id} post={p} fallback={content.banners?.blogCover} />)}</div>
           </div>
         </section>

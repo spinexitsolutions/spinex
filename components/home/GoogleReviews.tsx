@@ -1,6 +1,7 @@
 import { ExternalLink, PenLine, Star } from "lucide-react";
 import { hasDb } from "@/lib/db";
 import { siteReviews } from "@/lib/reviews-db";
+import { SplitHeading } from "@/components/Reveal";
 
 // Home page: Google rating, review count and a few recent reviews (live from Google, or typed in Admin → Google reviews).
 // Hidden when turned off or when there is nothing to show.
@@ -39,7 +40,7 @@ export default async function GoogleReviews() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted"><GoogleG /> Google reviews</p>
-            <h2 id="google-reviews-title" className="h-display mt-3 text-4xl sm:text-5xl">{d.title}</h2>
+            <SplitHeading id="google-reviews-title" text={d.title} className="h-display mt-3 text-4xl sm:text-5xl" />
             {d.rating > 0 && (
               <p className="mt-4 flex flex-wrap items-center gap-3">
                 <span className="font-display text-5xl font-semibold tabular-nums">{d.rating.toFixed(1)}</span>

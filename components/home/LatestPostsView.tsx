@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Clock } from "lucide-react";
+import { SplitHeading } from "@/components/Reveal";
 
 export type PostItem = { id: string; slug: string; title: string; excerpt: string; cover: string; coverAlt: string; category: string; date: string; mins: number };
 
@@ -30,7 +31,7 @@ export default function LatestPostsView({ items, heading, intro }: { items: Post
       <div className="container-x">
         <div className="mb-9 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <h2 className="h-display text-4xl sm:text-6xl">{heading}</h2>
+            <SplitHeading text={heading} className="h-display text-4xl sm:text-6xl" />
             {intro && <p className="mt-4 max-w-xl text-muted sm:text-lg">{intro}</p>}
             {cats.length > 1 && (
               <div className="-mx-1 mt-6 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" role="group" aria-label="Filter articles by topic">

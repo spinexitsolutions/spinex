@@ -3,6 +3,7 @@ import { ArrowUpRight, Check, Package } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { productBuyLink, productSlug, type Product, type SiteContent } from "@/lib/content";
 import { sized } from "@/lib/img";
+import { SplitHeading } from "@/components/Reveal";
 
 // Home page "Our products": one product as a big dark card, up to four more as small cards under it.
 // Which is big, small or hidden is set per product in Admin → Products ("On the home page").
@@ -21,7 +22,7 @@ export default function HomeProducts({ content }: { content: SiteContent }) {
         <div className="mb-8 flex flex-col justify-between gap-6 sm:mb-10 md:flex-row md:items-end">
           <div>
             <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.16em] text-lav-600 sm:text-[13px]">Our products</p>
-            <h2 className="h-display text-4xl sm:text-6xl">{sec?.heading || "Software we built."}</h2>
+            <SplitHeading text={sec?.heading || "Software we built."} className="h-display text-4xl sm:text-6xl" />
             {sec?.intro && <p className="mt-4 max-w-xl text-muted sm:text-lg">{sec.intro}</p>}
           </div>
           <Link href="/products" className="btn-ghost w-fit shrink-0">All products <ArrowUpRight size={16} /></Link>

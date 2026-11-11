@@ -60,7 +60,7 @@ export default function ProjectsShowcase({ full = false }: { full?: boolean }) {
     return full ? (
       <section className="bg-mist py-24 sm:py-32">
         <div className="container-x max-w-2xl text-center">
-          <h2 className="h-display text-3xl sm:text-4xl">Our latest work is on its way.</h2>
+          <SplitHeading text="Our latest work is on its way." className="h-display text-3xl sm:text-4xl" />
           <p className="mt-4 text-lg text-muted">We are adding recent projects here. Want to see examples for your industry? Ask us and we will share them directly.</p>
           <Link href="/contact" className="btn-dark mt-8 inline-flex">Ask for examples <ArrowUpRight size={17} /></Link>
         </div>

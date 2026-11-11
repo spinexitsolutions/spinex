@@ -1,14 +1,12 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { motion, type TargetAndTransition } from "framer-motion";
 import type { Highlight, TextAnim } from "@/lib/typography";
 
 // Heading text with the animation and highlight picked in Admin → Fonts & text.
 // Used by the home hero headline (components/home/Hero.tsx) and SplitHeading (components/Reveal.tsx).
 
 export type Word = { w: string; on?: boolean };
-const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 type Props = {
   words: Word[];
@@ -66,17 +64,19 @@ function wordStyle(h: Highlight | undefined, c: string, light?: boolean): React.
 }
 
 // ---- per-word / per-letter motion ----
+// Plain CSS animations (app/globals.css, tx-*): they run on the GPU, so they stay smooth even while
+// the hero background is busy. They wait (paused) until the wrapper gets the tx-run class.
 
-type Step = { from: TargetAndTransition; to: TargetAndTransition; mask?: boolean; letters?: boolean; dur: number; gap: number };
+type Step = { mask?: boolean; letters?: boolean; dur: number; gap: number };
 const STEPS: Partial<Record<TextAnim, Step>> = {
-  rise: { from: { y: "110%", rotate: 4 }, to: { y: "0%", rotate: 0 }, mask: true, dur: 1, gap: 0.055 },
-  fade: { from: { opacity: 0, y: 18 }, to: { opacity: 1, y: 0 }, dur: 0.8, gap: 0.06 },
-  blur: { from: { opacity: 0, filter: "blur(14px)", y: 6 }, to: { opacity: 1, filter: "blur(0px)", y: 0 }, dur: 0.9, gap: 0.07 },
-  slide: { from: { opacity: 0, x: -48 }, to: { opacity: 1, x: 0 }, dur: 0.8, gap: 0.06 },
-  zoom: { from: { opacity: 0, scale: 0.4 }, to: { opacity: 1, scale: 1 }, dur: 0.7, gap: 0.06 },
-  flip: { from: { opacity: 0, rotateX: 95 }, to: { opacity: 1, rotateX: 0 }, dur: 0.9, gap: 0.07 },
-  letters: { from: { y: "105%" }, to: { y: "0%" }, mask: true, letters: true, dur: 0.6, gap: 0.022 },
-  wave: { from: { opacity: 0, y: "-0.8em" }, to: { opacity: 1, y: 0 }, letters: true, dur: 0.7, gap: 0.03 },
+  rise: { mask: true, dur: 1, gap: 0.055 },
+  fade: { dur: 0.9, gap: 0.06 },
+  blur: { dur: 1.1, gap: 0.08 },
+  slide: { dur: 0.8, gap: 0.06 },
+  zoom: { dur: 0.7, gap: 0.06 },
+  flip: { dur: 0.9, gap: 0.07 },
+  letters: { mask: true, letters: true, dur: 0.6, gap: 0.022 },
+  wave: { letters: true, dur: 0.8, gap: 0.03 },
 };
 
 // How long the text takes to appear, so marks can start drawing just after.
@@ -89,25 +89,27 @@ export function textDuration(words: Word[], anim: TextAnim, speed = 1) {
   return ((s.letters ? letters : words.length) * s.gap + s.dur * 0.6) * speed;
 }
 
-export default function AnimText({ words, anim, play, speed = 1, delay = 0, highlight = "color", color = "#6E59D9", light }: Props) {
+export default function AnimText({ words, anim, play, speed = 1, delay = 0, highlight = "color", color = "#6E59D9", light, onClass = "" }: Props & { onClass?: string }) {
   const mark = markBg(highlight, color);
   const ws = wordStyle(highlight, color, light);
   const markDelay = delay + textDuration(words, anim, speed);
   const typed = useTyped(words, anim, play, speed, delay);
+  const t = (n: number) => `${Math.round(n * 1000)}ms`;
 
   let letter = 0;
   const word = (w: string, i: number, on: boolean) => {
     const style = on ? ws : undefined;
+    const cls = on ? onClass : "";
     const last = i === words.length - 1;
-    const text = last ? w : `${w} `;
-    if (anim === "none") return <span key={i} className="inline-block" style={style}>{text}</span>;
+    const text = last ? w : `${w}\u00a0`;
+    if (anim === "none") return <span key={i} className={`inline-block ${cls}`} style={style}>{text}</span>;
     if (anim === "typewriter" || anim === "scramble") {
       const start = letter;
       letter += w.length;
       return (
-        <span key={i} className="inline-block whitespace-nowrap" style={style}>
+        <span key={i} className={`inline-block whitespace-nowrap ${cls}`} style={style}>
           {[...w].map((ch, k) => <Fragment key={k}>{typed.render(ch, start + k)}{typed.caretAt === start + k && <Caret />}</Fragment>)}
-          {!last && " "}
+          {!last && "\u00a0"}
         </span>
       );
     }
@@ -117,44 +119,36 @@ export default function AnimText({ words, anim, play, speed = 1, delay = 0, high
       const start = letter;
       letter += chars.length;
       return (
-        <span key={i} className="inline-block whitespace-nowrap" style={style}>
+        <span key={i} className="inline-block whitespace-nowrap">
           {chars.map((ch, k) => (
             <span key={k} className={`inline-block align-top ${s.mask ? "overflow-hidden pb-[0.1em]" : ""}`}>
-              <motion.span className="inline-block" initial={s.from as never} animate={play ? s.to : undefined}
-                transition={anim === "wave" ? { type: "spring", stiffness: 380, damping: 14, delay: delay + (start + k) * s.gap * speed } : { duration: s.dur * speed, delay: delay + (start + k) * s.gap * speed, ease }}>
-                {ch}
-              </motion.span>
+              <span className={`tx-a tx-${anim} ${cls}`} style={{ ...style, animationDuration: t(s.dur * speed), animationDelay: t(delay + (start + k) * s.gap * speed) }}>{ch}</span>
             </span>
           ))}
-          {!last && " "}
+          {!last && "\u00a0"}
         </span>
       );
     }
     return (
       <span key={i} className={`inline-block align-top ${s.mask ? "overflow-hidden pb-[0.1em]" : ""}`} style={anim === "flip" ? { perspective: 600 } : undefined}>
-        <motion.span className="inline-block" style={{ ...style, transformOrigin: anim === "flip" ? "50% 100%" : anim === "zoom" ? "50% 80%" : undefined }}
-          initial={s.from as never} animate={play ? s.to : undefined} transition={{ duration: s.dur * speed, delay: delay + i * s.gap * speed, ease }}>
-          {text}
-        </motion.span>
+        <span className={`tx-a tx-${anim} ${cls}`} style={{ ...style, animationDuration: t(s.dur * speed), animationDelay: t(delay + i * s.gap * speed) }}>{text}</span>
       </span>
     );
   };
 
   return (
-    <>
+    <span className={play ? "tx-run" : undefined}>
       {groups(words).map((g, gi) => {
         const inner = g.items.map(({ w, i }) => word(w, i, g.on));
         if (!g.on || !mark) return <Fragment key={gi}>{inner}</Fragment>;
         return (
-          <motion.span key={gi} className="relative" aria-hidden={false}
-            style={{ backgroundImage: mark.img, backgroundRepeat: "no-repeat", backgroundPosition: mark.pos, WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone", padding: highlight === "circle" ? "0.1em 0.12em" : undefined }}
-            initial={{ backgroundSize: `0% ${mark.h}` }} animate={play ? { backgroundSize: `100% ${mark.h}` } : undefined}
-            transition={{ duration: 0.8 * speed, delay: markDelay, ease: [0.65, 0, 0.35, 1] }}>
+          <span key={gi} className="tx-mark relative"
+            style={{ backgroundImage: mark.img, backgroundPosition: mark.pos, ["--mh" as string]: mark.h, ["--md-dur" as string]: t(0.8 * speed), ["--md-del" as string]: t(markDelay), padding: highlight === "circle" ? "0.1em 0.12em" : undefined } as React.CSSProperties}>
             {inner}
-          </motion.span>
+          </span>
         );
       })}
-    </>
+    </span>
   );
 }
 
