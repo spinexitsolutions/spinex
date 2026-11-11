@@ -111,23 +111,28 @@ export default function Navbar() {
             initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, ease, delay: 0.1 }}
-            className={`relative flex items-center justify-between gap-4 rounded-full border px-2.5 py-2 transition-[background,box-shadow,border-color] duration-500 ${
-              scrolled || mega
-                ? "border-line bg-white/90 shadow-[0_12px_40px_-14px_rgba(18,15,27,0.28)] backdrop-blur-xl"
-                : "border-white/70 bg-white/85 backdrop-blur-md"
-            }`}
+            // "Floating islands": the logo sits on its own with no background, the links and the button float as separate pills.
+            className="relative flex items-center justify-between gap-3"
             aria-label="Main"
           >
-            <Link href="/" className="flex shrink-0 items-center gap-1.5 rounded-full pl-2 pr-3" aria-label={`${content.brand.name} home`}>
+            <Link href="/" className="flex shrink-0 items-center gap-1.5 rounded-full py-2 pl-1 pr-3" aria-label={`${content.brand.name} home`} data-nav-brand>
               {content.brand.logo?.trim() ? (
                 <img src="/api/brand-icon?size=96" alt="" className="h-6 w-6 object-contain" data-nav-logo />
               ) : (
                 <span className="w-2" aria-hidden />
               )}
-              <span className="font-display text-[19px] font-semibold tracking-tight">Spinex</span>
+              <span className="font-display text-[20px] font-semibold tracking-tight">Spinex</span>
             </Link>
 
-            <ul className="hidden items-center lg:flex" onMouseLeave={() => setHovered(null)}>
+            <ul
+              className={`hidden items-center rounded-full border p-1.5 transition-[background,box-shadow,border-color] duration-500 lg:flex ${
+                scrolled || mega
+                  ? "border-line bg-white/90 shadow-[0_12px_40px_-14px_rgba(18,15,27,0.3)] backdrop-blur-xl"
+                  : "border-line bg-white shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)]"
+              }`}
+              onMouseLeave={() => setHovered(null)}
+              data-nav-links
+            >
               {navLinks.map((l) => {
                 const isActive = active(l.href);
                 return (
@@ -162,17 +167,18 @@ export default function Navbar() {
             </ul>
 
             <div className="flex items-center gap-2">
-              <Link href="/contact" className="group relative hidden h-11 shrink-0 items-center whitespace-nowrap gap-2 overflow-hidden rounded-full bg-ink pl-5 pr-1.5 text-sm font-semibold text-white sm:inline-flex">
+              <Link href="/contact" className="group relative inline-flex h-12 shrink-0 items-center whitespace-nowrap gap-2 overflow-hidden rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-[0_12px_30px_-12px_rgba(18,15,27,0.55)] sm:h-[54px] sm:pl-6 sm:pr-2">
                 <span aria-hidden className="absolute inset-0 origin-left scale-x-0 rounded-full bg-lav-600 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
-                <span className="relative">Start a project</span>
-                <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-white text-ink">
+                <span className="relative hidden sm:inline">Start a project</span>
+                <span className="relative sm:hidden">Start</span>
+                <span className="relative hidden h-[38px] w-[38px] place-items-center overflow-hidden rounded-full bg-white text-ink sm:grid">
                   <ArrowUpRight size={15} className="transition-transform duration-500 group-hover:-translate-y-6 group-hover:translate-x-6" />
                   <ArrowUpRight size={15} className="absolute -translate-x-6 translate-y-6 transition-transform duration-500 group-hover:translate-x-0 group-hover:translate-y-0" />
                 </span>
               </Link>
               <button
                 onClick={() => setOpen((v) => !v)}
-                className="grid h-11 w-11 place-items-center rounded-full bg-ink text-white lg:hidden"
+                className="grid h-12 w-12 place-items-center rounded-full border border-line bg-white text-ink shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)] lg:hidden"
                 aria-label={open ? "Close menu" : "Open menu"}
                 aria-expanded={open}
               >
