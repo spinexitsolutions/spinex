@@ -16,6 +16,29 @@ export default function ProjectStage({ project, open, play }: { project: Project
   // Custom software shows in the laptop like a website; a mobile app like the on-demand phones.
   const display = raw === "software" ? "website" : raw === "app" ? "ondemand" : raw;
 
+  // Website projects with a hero screenshot (or a full-page one): a Mac window showing only the first screen.
+  const heroShot = raw === "website" && !project.video ? project.hero || project.screen : "";
+  if (heroShot) {
+    const host = (project.url || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={open ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+        transition={{ duration: 0.8, ease }}
+        className="mx-auto w-full max-w-[760px] rounded-[16px] bg-gradient-to-b from-[#fdfcff] to-[#ece9f4] px-2 pb-2 shadow-[0_40px_80px_-30px_rgb(var(--c-lav-700)/0.45)] ring-1 ring-inset ring-[#e1dcec] sm:rounded-[20px] sm:px-2.5 sm:pb-2.5"
+      >
+        <div className="relative flex h-8 items-center gap-1.5 px-1.5 sm:h-10">
+          <i className="h-2.5 w-2.5 rounded-full bg-[#ff5f57] sm:h-3 sm:w-3" /><i className="h-2.5 w-2.5 rounded-full bg-[#febc2e] sm:h-3 sm:w-3" /><i className="h-2.5 w-2.5 rounded-full bg-[#28c840] sm:h-3 sm:w-3" />
+          {host && <span className="absolute left-1/2 max-w-[60%] -translate-x-1/2 truncate rounded-md border border-line bg-white px-3 py-0.5 text-[11px] text-muted sm:text-xs">{host}</span>}
+        </div>
+        <div className="aspect-[16/9] overflow-hidden rounded-[9px] bg-white sm:rounded-[12px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={sized(heroShot, 1600)} alt={project.title} className="h-full w-full object-cover object-top" />
+        </div>
+      </motion.div>
+    );
+  }
+
   if (display === "website") {
     return (
       <div className="relative mx-auto w-full max-w-[760px] pb-[4%] [perspective:1800px]">
