@@ -102,13 +102,14 @@ export default function Navbar() {
 
   return (
     <>
-      {/* The logo and the button stay put while scrolling; only the links pill slides away on the way down and comes back on the way up. */}
-      <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-4">
-        <div className="relative w-full max-w-[1240px]" onMouseLeave={hideMega}>
+      {/* The logo and the button sit at the top of the page and scroll away with it.
+          Only the links pill (and the phone menu button) is fixed: it slides away while scrolling down and comes back when scrolling up. */}
+      <header className="absolute inset-x-0 top-0 z-50 flex justify-center px-3 pt-4">
+        <div className="relative w-full max-w-[1240px]">
           <motion.nav
-            initial={{ y: -30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, ease, delay: 0.1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, ease, delay: 0.1 }} // opacity only: a transform here would pin the fixed links pill to the nav
             // "Floating islands": the logo sits on its own with no background, the links and the button float as separate pills.
             className="relative flex items-center justify-between gap-3"
             aria-label="Main"
@@ -123,16 +124,17 @@ export default function Navbar() {
             </Link>
 
             <motion.ul
-              animate={{ y: hidden ? -90 : 0, opacity: hidden ? 0 : 1 }}
+              initial={false}
+              animate={{ x: "-50%", y: hidden ? -100 : 0, opacity: hidden ? 0 : 1 }}
               transition={{ duration: 0.45, ease }}
-              style={{ pointerEvents: hidden ? "none" : undefined }}
+              style={{ pointerEvents: hidden ? "none" : undefined, left: "50%" }}
               aria-hidden={hidden || undefined}
-              className={`hidden items-center rounded-full border p-1.5 transition-[background,box-shadow,border-color] duration-500 lg:flex ${
+              onMouseLeave={() => { setHovered(null); hideMega(); }}
+              className={`fixed top-4 z-50 hidden items-center rounded-full border p-1.5 transition-[background,box-shadow,border-color] duration-500 lg:flex ${
                 scrolled || mega
                   ? "border-line bg-white/90 shadow-[0_12px_40px_-14px_rgba(18,15,27,0.3)] backdrop-blur-xl"
                   : "border-line bg-white shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)]"
               }`}
-              onMouseLeave={() => setHovered(null)}
               data-nav-links
             >
               {navLinks.map((l) => {
@@ -178,9 +180,14 @@ export default function Navbar() {
                   <ArrowUpRight size={15} className="absolute -translate-x-6 translate-y-6 transition-transform duration-500 group-hover:translate-x-0 group-hover:translate-y-0" />
                 </span>
               </Link>
-              <button
+              <span className="h-12 w-12 lg:hidden" aria-hidden />
+              <motion.button
+                initial={false}
+                animate={{ y: hidden ? -90 : 0, opacity: hidden ? 0 : 1 }}
+                transition={{ duration: 0.45, ease }}
+                style={{ pointerEvents: hidden ? "none" : undefined }}
                 onClick={() => setOpen((v) => !v)}
-                className="grid h-12 w-12 place-items-center rounded-full border border-line bg-white text-ink shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)] lg:hidden"
+                className="fixed right-3 top-4 z-50 grid h-12 w-12 place-items-center rounded-full border border-line bg-white text-ink shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)] lg:hidden"
                 aria-label={open ? "Close menu" : "Open menu"}
                 aria-expanded={open}
               >
@@ -189,21 +196,23 @@ export default function Navbar() {
                     {open ? <X size={20} /> : <Menu size={20} />}
                   </motion.span>
                 </AnimatePresence>
-              </button>
+              </motion.button>
             </div>
           </motion.nav>
 
-          {/* Services mega menu (desktop) */}
+          {/* Services mega menu (desktop): fixed under the links pill */}
+          <div className="pointer-events-none fixed left-1/2 top-[84px] z-50 hidden w-[min(1240px,calc(100vw-24px))] -translate-x-1/2 lg:block">
           <AnimatePresence>
-            {mega && previewService && (
+            {mega && !hidden && previewService && (
               <motion.div
                 id="services-menu"
                 onMouseEnter={showMega}
+                onMouseLeave={hideMega}
                 initial={{ opacity: 0, y: -10, clipPath: "inset(0 0 100% 0 round 28px)" }}
                 animate={{ opacity: 1, y: 0, clipPath: "inset(0 0 0% 0 round 28px)" }}
                 exit={{ opacity: 0, y: -8, transition: { duration: 0.2 } }}
                 transition={{ duration: 0.45, ease }}
-                className="absolute inset-x-0 top-full mt-3 hidden overflow-hidden rounded-[28px] border border-line bg-white shadow-[0_30px_80px_-24px_rgba(18,15,27,0.35)] lg:block"
+                className="pointer-events-auto relative overflow-hidden rounded-[28px] border border-line bg-white shadow-[0_30px_80px_-24px_rgba(18,15,27,0.35)]"
               >
                 <div className="grid grid-cols-[1.3fr_1fr] gap-2 p-3">
                   <ul className="grid grid-cols-2 gap-1">
@@ -251,6 +260,7 @@ export default function Navbar() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
       </header>
 
