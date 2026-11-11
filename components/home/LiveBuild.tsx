@@ -41,11 +41,53 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
   const onScreen = useInView(box);
   const current = list.includes(active) ? active : list[0];
 
+  // Intro on computers: a "Spinex" cursor drags out the box, the box appears, and from then on the
+  // cursor walks to the next tab and clicks it. Phones and "reduce motion" get the box straight away.
+  const win = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [fancy, setFancy] = useState(false);
+  const [phase, setPhase] = useState<"off" | "enter" | "drag" | "show" | "live">("off");
+  const [cur, setCur] = useState({ x: 0, y: 0, dur: 0 });
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const [click, setClick] = useState<{ x: number; y: number; k: number } | null>(null);
+  const shown = phase === "off" || phase === "show" || phase === "live";
+
   useEffect(() => {
-    if (paused || !onScreen || list.length < 2) return;
-    const t = setTimeout(() => setActive(list[(list.indexOf(current) + 1) % list.length]), STAY);
-    return () => clearTimeout(t);
-  }, [current, paused, onScreen, list]);
+    const ok = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!ok || !win.current) return;
+    setFancy(true);
+    const W = win.current.offsetWidth, H = win.current.offsetHeight;
+    setSize({ w: W, h: H });
+    const ts: ReturnType<typeof setTimeout>[] = [];
+    const at = (ms: number, f: () => void) => ts.push(setTimeout(f, ms));
+    setCur({ x: W + 240, y: H + 160, dur: 0 });
+    setPhase("enter");
+    at(80, () => setCur({ x: 0, y: 0, dur: 900 }));
+    at(1050, () => { setPhase("drag"); setCur({ x: W, y: H, dur: 1400 }); });
+    at(2500, () => { setClick({ x: W, y: H, k: 1 }); setPhase("show"); });
+    at(3000, () => setCur({ x: W * 0.22, y: H * 0.42, dur: 900 }));
+    at(3900, () => { setClick({ x: W * 0.22, y: H * 0.42, k: 2 }); setPhase("live"); });
+    return () => ts.forEach(clearTimeout);
+  }, []);
+
+  useEffect(() => {
+    if (paused || !onScreen || list.length < 2 || !shown) return;
+    const next = list[(list.indexOf(current) + 1) % list.length];
+    if (!fancy || phase !== "live") {
+      const t = setTimeout(() => setActive(next), STAY);
+      return () => clearTimeout(t);
+    }
+    // Walk the cursor to the next tab, then click it.
+    const spot = () => {
+      const tab = tabRefs.current[list.indexOf(next)], b = box.current;
+      if (!tab || !b) return { x: 0, y: 0 };
+      const r = tab.getBoundingClientRect(), o = b.getBoundingClientRect();
+      return { x: r.left - o.left + r.width / 2, y: r.top - o.top + r.height / 2 };
+    };
+    const t1 = setTimeout(() => setCur({ ...spot(), dur: 900 }), STAY - 1100);
+    const t2 = setTimeout(() => { const p = spot(); setClick({ ...p, k: Date.now() }); setActive(next); }, STAY);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [current, paused, onScreen, list, shown, fancy, phase]);
 
   const mx = useMotionValue(0.5), my = useMotionValue(0.5);
   const rx = useSpring(useTransform(my, [0, 1], [7, -7]), { stiffness: 120, damping: 18 });
@@ -66,7 +108,22 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
         my.set((e.clientY - r.top) / r.height);
       }}
     >
-      <motion.div style={{ rotateX: rx, rotateY: ry }} className="relative rounded-[22px] border border-line bg-white shadow-[0_40px_90px_-30px_rgb(var(--c-lav-700)/0.45)] [transform-style:preserve-3d]">
+      {/* The dashed box the cursor drags out before the window appears. */}
+      {fancy && (phase === "enter" || phase === "drag" || phase === "show") && (
+        <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-20 rounded-md border-[1.5px] border-dashed border-lav-600 bg-lav-600/[0.06]"
+          style={{ width: phase === "enter" ? 0 : size.w, height: phase === "enter" ? 0 : size.h, opacity: phase === "show" ? 0 : 1, transition: "width 1.4s cubic-bezier(.65,0,.35,1), height 1.4s cubic-bezier(.65,0,.35,1), opacity .35s" }}>
+          {["-left-[5px] -top-[5px]", "-right-[5px] -top-[5px]", "-left-[5px] -bottom-[5px]", "-right-[5px] -bottom-[5px]"].map((c) => <i key={c} className={`absolute h-2.5 w-2.5 rounded-sm border-[1.5px] border-lav-600 bg-white ${c}`} />)}
+          {phase === "drag" && <DragSize w={size.w} h={size.h} />}
+        </div>
+      )}
+      <motion.div
+        ref={win}
+        initial={false}
+        animate={{ opacity: shown ? 1 : 0, scale: shown ? 1 : 0.96 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        style={{ rotateX: rx, rotateY: ry, transformOrigin: "top left" }}
+        className="relative rounded-[22px] border border-line bg-white shadow-[0_40px_90px_-30px_rgb(var(--c-lav-700)/0.45)] [transform-style:preserve-3d]"
+      >
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <div className="flex gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#FF6159]" />
@@ -85,9 +142,9 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
 
         <div className="relative h-[300px] overflow-hidden p-4 sm:h-[340px] lg:h-[clamp(220px,calc(100svh_-_380px),360px)]">
           <AnimatePresence mode="wait">
-            <motion.div key={current} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} className="h-full" data-scene={current}>
+            {shown && <motion.div key={current} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} className="h-full" data-scene={current}>
               <View />
-            </motion.div>
+            </motion.div>}
           </AnimatePresence>
         </div>
 
@@ -97,6 +154,7 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
             return (
               <button
                 key={id}
+                ref={(el) => { tabRefs.current[list.indexOf(id)] = el; }}
                 role="tab"
                 aria-selected={current === id}
                 onClick={() => setActive(id)}
@@ -115,7 +173,7 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
       <motion.div
         style={{ translateZ: 60 }}
         initial={{ opacity: 0, x: 20 }}
-        animate={current === "web" ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+        animate={current === "web" && shown ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
         transition={{ delay: current === "web" ? 1.2 : 0, duration: current === "web" ? 0.7 : 0.25 }}
         className="absolute -left-6 bottom-20 hidden items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 shadow-xl sm:flex"
       >
@@ -127,14 +185,32 @@ export default function LiveBuild({ scenes }: { scenes?: HeroScene[] }) {
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.45, duration: 0.7 }}
+        animate={shown ? { opacity: 1, y: 0 } : { opacity: 0, y: -16 }}
+        transition={{ delay: shown ? 1.45 : 0, duration: 0.7 }}
         className="absolute -right-4 -top-5 hidden items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-white shadow-xl sm:flex"
       >
         <Zap size={14} className="text-lav-300" /> Loads in 0.8s
       </motion.div>
+
+      {/* The "Spinex" cursor and its click ripple (computers only). */}
+      {fancy && (
+        <>
+          {click && <span key={click.k} aria-hidden className="hs-click-ring pointer-events-none absolute z-30 -ml-4 -mt-4 h-8 w-8 rounded-full border-2 border-lav-600" style={{ left: click.x, top: click.y }} />}
+          <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-30" style={{ transform: `translate(${cur.x}px, ${cur.y}px)`, transition: `transform ${cur.dur}ms cubic-bezier(.65,0,.35,1), opacity .3s`, opacity: paused || phase === "off" ? 0 : 1 }}>
+            <svg width="20" height="22" viewBox="0 0 14 16"><path d="M0 0 13 8 6 9.5 3.5 15z" fill="rgb(var(--c-lav-600))" stroke="#fff" strokeWidth="1.2" /></svg>
+            <span className="absolute left-4 top-[18px] whitespace-nowrap rounded-full rounded-tl-sm bg-lav-600 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-[0_6px_14px_-6px_rgb(var(--c-lav-600)/0.8)]">Spinex</span>
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+// The "520 × 440" label that counts up while the box is dragged out.
+function DragSize({ w, h }: { w: number; h: number }) {
+  const t = useClock(1.5);
+  const k = ease(t / 1.4);
+  return <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-lav-600 px-2 py-0.5 text-[11px] font-semibold text-white">{Math.round(w * k)} × {Math.round(h * k)}</span>;
 }
 
 // ---------- helpers ----------
