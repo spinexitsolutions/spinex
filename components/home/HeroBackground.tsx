@@ -116,9 +116,6 @@ const dot = (g: CanvasRenderingContext2D, x: number, y: number, r: number, fill:
   g.fillStyle = fill;
   g.fill();
 };
-const grid = (g: CanvasRenderingContext2D, s: S, a = 0.09) => {
-  for (let x = 13; x < s.w; x += 26) for (let y = 13; y < s.h; y += 26) dot(g, x, y, 1.05, `rgb(${s.ink} / ${a})`);
-};
 
 // C. Soft purple, pink and blue light that follows the mouse.
 const aurora: Draw = (g, s) => {
@@ -136,7 +133,6 @@ const aurora: Draw = (g, s) => {
     g.fillStyle = gr;
     g.fillRect(x - rr, y - rr, rr * 2, rr * 2);
   }
-  grid(g, s, 0.08);
 };
 
 // D. A field of dots in perspective that waves, with ripples where the mouse is.
@@ -206,7 +202,6 @@ const HOME_SIDE = [[0.5, 0.17], [0.64, 0.1], [0.79, 0.16], [0.93, 0.09], [0.97, 
 // Around the edges, for phones and the centred design.
 const HOME_EDGE = [[0.08, 0.12], [0.3, 0.06], [0.7, 0.07], [0.92, 0.14], [0.95, 0.45], [0.92, 0.82], [0.68, 0.94], [0.32, 0.95], [0.07, 0.82], [0.05, 0.47]];
 const icons: Draw = (g, s) => {
-  grid(g, s, 0.07);
   const paths = (s.mem.paths as Path2D[]) ?? (s.mem.paths = ICONS.map(([d]) => new Path2D(d)));
   const home = s.wide && !s.center ? HOME_SIDE : HOME_EDGE;
   const n = s.wide ? ICONS.length : 7;

@@ -30,7 +30,7 @@ const SCENE_INFO: Record<HeroScene, { name: string; about: string }> = {
 };
 
 const BGS: Record<HeroBg, { name: string; about: string }> = {
-  dots: { name: "Dots", about: "Dot grid that moves away from the mouse. The current one." },
+  dots: { name: "Moving dots", about: "Dot grid that moves away from the mouse. Pick None to remove these dots." },
   aurora: { name: "Aurora", about: "Soft purple, pink and blue light that follows the mouse." },
   wave: { name: "Wave", about: "A field of dots that waves, with ripples under the mouse." },
   trail: { name: "Glow trail", about: "Grid squares light up where the mouse passes." },
@@ -102,7 +102,7 @@ export default function HeroEditor({ value, onChange, readOnly }: { value: HeroS
 
         <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-hero-pattern-picker>
           <p className="font-semibold">Background pattern</p>
-          <p className="mt-0.5 text-sm text-muted">A still or slowly moving background under the moving effect above. Pick one and look at the preview at the top. Shows with the Classic and Centred designs.</p>
+          <p className="mt-0.5 text-sm text-muted">A still or slowly moving background under the moving effect above. Pick one and look at the preview at the top. Shows with the Classic and Centred designs. If dots still show with None here, they come from the moving effect: set Background effect to None (or another effect) as well.</p>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
             {HERO_PATTERNS.map((id) => (
               <button type="button" key={id} data-hero-pattern-option={id} onClick={() => set({ pattern: id })}
