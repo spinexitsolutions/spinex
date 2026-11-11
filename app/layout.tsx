@@ -45,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [content, turnstileKey] = await Promise.all([getContent(), getSecret("TURNSTILE_SITE_KEY")]);
   return (
-    <html lang="en-IN" className={fontVars}>
+    <html lang="en-IN" className={fontVars} suppressHydrationWarning>
       <head>
         {/* Colour theme from Admin → Colour theme */}
         <style id="theme-vars" dangerouslySetInnerHTML={{ __html: themeCss(content.theme) }} />
