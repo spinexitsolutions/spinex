@@ -87,7 +87,7 @@ const sections = [
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Blog and media" , perm: "blog" },
   { id: "media", label: "Media", Icon: Images, group: "Blog and media" , perm: "media" },
   { id: "brand", label: "Logo and company name", Icon: BadgeCheck, group: "Site settings" , perm: "content" },
-  { id: "contact", label: "Contact details", Icon: Phone, group: "Site settings" , perm: "content" },
+  { id: "contact", label: "Contact page and details", Icon: Phone, group: "Site settings" , perm: "content" },
   { id: "theme", label: "Colour theme", Icon: Palette, group: "Site settings" , perm: "content" },
   { id: "fonts", label: "Fonts & text", Icon: CaseSensitive, group: "Site settings" , perm: "content" },
   { id: "intro", label: "Intro & cursor", Icon: Sparkles, group: "Site settings" , perm: "content" },
@@ -1163,6 +1163,7 @@ function AdminShell() {
             )}
 
             {section === "contact" && (
+              <div className="space-y-6">
               <Card title="Contact details">
                 <ObjectEditor value={draft.contact} onChange={(v) => set("contact", v)} fields={[
                   { key: "email", label: "Email" }, { key: "phone", label: "Phone", hint: "Without +91" },
@@ -1170,6 +1171,30 @@ function AdminShell() {
                   { key: "instagram", label: "Instagram URL" }, { key: "linkedin", label: "LinkedIn URL" }, { key: "youtube", label: "YouTube URL" },
                 ]} />
               </Card>
+              <Card title="Contact page" note="The dark box with the form, the office hours card and the questions at the end of the contact page. Wrap words in *stars* to highlight them in the heading.">
+                <ObjectEditor value={draft.contactPage} onChange={(v) => set("contactPage", v)} fields={[
+                  { key: "eyebrow", label: "Small label" }, { key: "heading", label: "Heading" }, { key: "intro", label: "Intro", type: "textarea" },
+                  { key: "hours", label: "Office hours" }, { key: "hoursNote", label: "Office hours note" }, { key: "emailNote", label: "Email card note" },
+                  { key: "faqTitle", label: "Questions heading" },
+                ]} />
+                <label className="mt-5 flex items-center gap-3 text-sm font-medium">
+                  <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={draft.contactPage.showMap} onChange={(e) => set("contactPage", { ...draft.contactPage, showMap: e.target.checked })} />
+                  Show the Google map
+                </label>
+              </Card>
+              <Card title="What happens next (steps)">
+                <ListEditor items={draft.contactPage.steps} titleKey="title" addLabel="Add step"
+                  onChange={(v) => set("contactPage", { ...draft.contactPage, steps: v })}
+                  newItem={() => ({ id: uid(), title: "", note: "" })}
+                  fields={[{ key: "title", label: "Step" }, { key: "note", label: "Right side note", hint: "Short, like Free or 1 to 2 days" }]} />
+              </Card>
+              <Card title="Contact page questions">
+                <ListEditor items={draft.contactPage.faqs} titleKey="q" addLabel="Add question"
+                  onChange={(v) => set("contactPage", { ...draft.contactPage, faqs: v })}
+                  newItem={() => ({ id: uid(), q: "", a: "" })}
+                  fields={[{ key: "q", label: "Question" }, { key: "a", label: "Answer", type: "textarea" }]} />
+              </Card>
+              </div>
             )}
 
             {section === "chatbot" && (

@@ -14,7 +14,7 @@ type Form = { name: string; phone: string; email: string; services: string; budg
 const empty: Form = { name: "", phone: "", email: "", services: "", budget: "", message: "" };
 
 // Contact page form: saves the enquiry to the admin Leads inbox.
-export default function ContactForm({ defaultService = "", source = "contact" }: { defaultService?: string; source?: "contact" | "product" }) {
+export default function ContactForm({ defaultService = "", source = "contact", className = "", tall = false }: { defaultService?: string; source?: "contact" | "product"; className?: string; tall?: boolean }) {
   const { content } = useContent();
   const [form, setForm] = useState<Form>({ ...empty, services: defaultService });
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
@@ -60,7 +60,7 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
   };
 
   return (
-    <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_30px_70px_-40px_rgba(18,15,27,0.35)] sm:p-10">
+    <div className={`rounded-[28px] border border-line bg-white p-6 text-ink shadow-[0_30px_70px_-40px_rgba(18,15,27,0.35)] sm:p-10 ${className}`}>
       <AnimatePresence mode="wait">
         {done ? (
           <motion.div key="done" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease }} role="status" className="py-8 text-center">
@@ -95,7 +95,7 @@ export default function ContactForm({ defaultService = "", source = "contact" }:
                 </select>
               </Field>
               <Field label="Tell us about the project" className="sm:col-span-2">
-                <textarea className="input min-h-[140px] resize-y" value={form.message} onChange={set("message")} />
+                <textarea className={`input resize-y ${tall ? "min-h-[140px] lg:min-h-[300px]" : "min-h-[140px]"}`} value={form.message} onChange={set("message")} />
               </Field>
               <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
             </div>

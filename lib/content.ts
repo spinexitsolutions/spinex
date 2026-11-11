@@ -419,6 +419,13 @@ export type SiteContent = {
   careers: { open: boolean; intro: string; perks: string[]; jobs: Job[] };
   integrations: { whatsappButton: boolean; whatsappText: string; mobileBar?: MobileBar; footer?: FooterSettings; gaId: string; clarityId: string; metaPixelId: string; gtmId: string; cookieBanner: boolean; cookieText: string };
   internship: { open: boolean; intro: string; modes: string[]; durations: string[]; perks: string[]; roles: InternRole[] };
+  // Contact page: the dark form box, the info cards and the FAQ.
+  contactPage: {
+    eyebrow: string; heading: string; intro: string;
+    steps: { id: string; title: string; note: string }[];
+    hours: string; hoursNote: string; emailNote: string; showMap: boolean;
+    faqTitle: string; faqs: { id: string; q: string; a: string }[];
+  };
   contact: {
     email: string;
     phone: string;
@@ -830,6 +837,27 @@ const baseContent: SiteContent = {
     poster: "/showreel-poster.jpg",
     videoMobile: "/showreel-mobile.mp4",
     posterMobile: "/showreel-mobile-poster.jpg",
+  },
+  contactPage: {
+    eyebrow: "Start a project",
+    heading: "Let's build what your business *needs next.*",
+    intro: "Tell us what you need. The first call and the quote are free.",
+    steps: [
+      { id: "cs1", title: "We call you within a day", note: "Free" },
+      { id: "cs2", title: "Plan and written quote", note: "1 to 2 days" },
+      { id: "cs3", title: "Work starts", note: "Designs first" },
+    ],
+    hours: "Monday to Saturday, 10am to 7pm.",
+    hoursNote: "WhatsApp answered after hours too.",
+    emailNote: "We reply within a day.",
+    showMap: true,
+    faqTitle: "Before you reach out.",
+    faqs: [
+      { id: "cf1", q: "How much does a website cost?", a: "Most business websites start from ₹15,000. You get an exact written quote after the first call." },
+      { id: "cf2", q: "How long does it take?", a: "A business website takes 1 to 3 weeks. Online stores and apps take a little longer." },
+      { id: "cf3", q: "Do you work outside Jaipur?", a: "Yes. We work with clients across India over calls, WhatsApp and Google Meet." },
+      { id: "cf4", q: "Do I pay everything upfront?", a: "No. You pay part to start and the rest when the work is ready to go live." },
+    ],
   },
   contact: {
     email: "spinexitsolutions@gmail.com",
