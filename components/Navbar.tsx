@@ -76,6 +76,35 @@ export default function Navbar() {
   const [preview, setPreview] = useState(content.services[0]?.id);
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
+  // The logo scrolls with the page, so its text colour follows what is behind it:
+  // white on dark banners and dark sections, ink on light pages.
+  const brandRef = useRef<HTMLAnchorElement>(null);
+  const [onDark, setOnDark] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const el = brandRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (y < 0 || y > window.innerHeight) return;
+      for (const node of document.elementsFromPoint(x, y)) {
+        if (el.contains(node) || node.closest("header")) continue;
+        if (node instanceof HTMLImageElement || node instanceof HTMLVideoElement) { setOnDark(true); return; }
+        const m = getComputedStyle(node).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/);
+        if (!m || (m[4] !== undefined && Number(m[4]) < 0.5)) continue; // transparent or a soft overlay: look further down
+        const lum = 0.2126 * +m[1] + 0.7152 * +m[2] + 0.0722 * +m[3];
+        setOnDark(lum < 140);
+        return;
+      }
+      setOnDark(false);
+    };
+    const t = setTimeout(check, 60);
+    const t2 = setTimeout(check, 600);
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => { clearTimeout(t); clearTimeout(t2); window.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
+  }, [pathname]);
 
   useMotionValueEvent(scrollY, "change", (y) => {
     const prev = scrollY.getPrevious() ?? 0;
@@ -136,7 +165,7 @@ export default function Navbar() {
             className="relative flex items-center justify-between gap-3"
             aria-label="Main"
           >
-            <Link href="/" className="flex shrink-0 items-center gap-1.5 rounded-full py-2 pl-1 pr-3" aria-label={`${content.brand.name} home`} data-nav-brand>
+            <Link ref={brandRef} href="/" className={`flex shrink-0 items-center gap-1.5 rounded-full py-2 pl-1 pr-3 transition-colors duration-300 ${onDark ? "text-white" : "text-ink"}`} aria-label={`${content.brand.name} home`} data-nav-brand>
               {content.brand.logo?.trim() ? (
                 <img src={content.brand.logo.trim() === "/brand/logo.png" ? "/brand/icon.svg" : "/api/brand-icon?size=96"} alt="" className="h-6 w-6 object-contain" data-nav-logo />
               ) : (
