@@ -81,12 +81,13 @@ export default function LiveBuild({ scenes, start = true }: { scenes?: HeroScene
     played.current = true;
     const W = size.w, H = size.h;
     const ts: ReturnType<typeof setTimeout>[] = [];
-    const at = (ms: number, f: () => void) => ts.push(setTimeout(f, ms + 900));
-    at(0, () => setCur({ x: 0, y: 0, dur: 900 }));
-    at(970, () => { setPhase("drag"); setCur({ x: W, y: H, dur: 1400 }); });
-    at(2420, () => { setClick({ x: W, y: H, k: 1 }); setPhase("show"); });
-    at(2920, () => setCur({ x: W * 0.22, y: H * 0.42, dur: 900 }));
-    at(3820, () => { setClick({ x: W * 0.22, y: H * 0.42, k: 2 }); setPhase("live"); });
+    // Quick on purpose: the box is on screen about a second after the hero appears, so it never looks empty.
+    const at = (ms: number, f: () => void) => ts.push(setTimeout(f, ms + 120));
+    at(0, () => setCur({ x: 0, y: 0, dur: 420 }));
+    at(440, () => { setPhase("drag"); setCur({ x: W, y: H, dur: 620 }); });
+    at(1080, () => { setClick({ x: W, y: H, k: 1 }); setPhase("show"); });
+    at(1350, () => setCur({ x: W * 0.22, y: H * 0.42, dur: 600 }));
+    at(1950, () => { setClick({ x: W * 0.22, y: H * 0.42, k: 2 }); setPhase("live"); });
     return () => { ts.forEach(clearTimeout); played.current = false; };
   }, [fancy, start, size.w, size.h]);
 
@@ -131,7 +132,7 @@ export default function LiveBuild({ scenes, start = true }: { scenes?: HeroScene
       {/* The dashed box the cursor drags out before the window appears. */}
       {fancy && (phase === "enter" || phase === "drag" || phase === "show") && (
         <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-20 rounded-md border-[1.5px] border-dashed border-lav-600 bg-lav-600/[0.06]"
-          style={{ width: phase === "enter" ? 0 : size.w, height: phase === "enter" ? 0 : size.h, opacity: phase === "show" ? 0 : 1, transition: "width 1.4s cubic-bezier(.65,0,.35,1), height 1.4s cubic-bezier(.65,0,.35,1), opacity .35s" }}>
+          style={{ width: phase === "enter" ? 0 : size.w, height: phase === "enter" ? 0 : size.h, opacity: phase === "show" ? 0 : 1, transition: "width .62s cubic-bezier(.65,0,.35,1), height .62s cubic-bezier(.65,0,.35,1), opacity .25s" }}>
           {["-left-[5px] -top-[5px]", "-right-[5px] -top-[5px]", "-left-[5px] -bottom-[5px]", "-right-[5px] -bottom-[5px]"].map((c) => <i key={c} className={`absolute h-2.5 w-2.5 rounded-sm border-[1.5px] border-lav-600 bg-white ${c}`} />)}
           {phase === "drag" && <DragSize w={size.w} h={size.h} />}
         </div>
@@ -228,8 +229,8 @@ export default function LiveBuild({ scenes, start = true }: { scenes?: HeroScene
 
 // The "520 × 440" label that counts up while the box is dragged out.
 function DragSize({ w, h }: { w: number; h: number }) {
-  const t = useClock(1.5);
-  const k = ease(t / 1.4);
+  const t = useClock(0.7);
+  const k = ease(t / 0.62);
   return <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-lav-600 px-2 py-0.5 text-[11px] font-semibold text-white">{Math.round(w * k)} × {Math.round(h * k)}</span>;
 }
 
@@ -275,21 +276,21 @@ function WebScene() {
         <div className="flex gap-3"><Bar w="30px" /><Bar w="30px" /><Bar w="30px" /></div>
       </In>
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-mist">
-        <div className="hs-gone absolute inset-0 space-y-2.5 rounded-2xl border-2 border-dashed border-lav-300 p-5" style={d(1.2)}>
+        <div className="hs-gone absolute inset-0 space-y-2.5 rounded-2xl border-2 border-dashed border-lav-300 p-5" style={d(0.45)}>
           <div className="h-3.5 w-3/5 rounded bg-line" /><div className="h-3.5 w-2/5 rounded bg-line" /><div className="mt-4 h-7 w-24 rounded-full bg-line" />
         </div>
-        <div className="hs-real absolute inset-0" style={d(1.2)}>
+        <div className="hs-real absolute inset-0" style={d(0.45)}>
           <img src={img("photo-1497366216548-37526070297c", 960)} alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink/90 to-ink/20 p-5 text-white">
             <p className="font-display text-xl font-semibold leading-tight sm:text-2xl">We grow<br />your business.</p>
             <span className="mt-4 inline-block rounded-full bg-lav-400 px-4 py-2 text-xs font-semibold text-ink">Get started →</span>
           </div>
         </div>
-        <svg viewBox="0 0 14 16" className="hs-cursor absolute left-0 top-0 h-4 w-4" style={{ ["--x0" as string]: "260px", ["--y0" as string]: "200px", ["--x1" as string]: "70px", ["--y1" as string]: "92px", ...d(2.3) }}>
+        <svg viewBox="0 0 14 16" className="hs-cursor absolute left-0 top-0 h-4 w-4" style={{ ["--x0" as string]: "260px", ["--y0" as string]: "200px", ["--x1" as string]: "70px", ["--y1" as string]: "92px", ...d(1.2) }}>
           <path d="M0 0 13 8 6 9.5 3.5 15z" fill="#120f1b" stroke="#fff" strokeWidth="1.2" />
         </svg>
-        <div className="hs-pop absolute right-3 top-3 flex items-center gap-2 rounded-xl bg-white px-2.5 py-1.5 text-xs font-semibold shadow-lg" style={d(3.4)}>
-          <svg width="26" height="26" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="none" stroke="#eee" strokeWidth="4" /><circle cx="17" cy="17" r="15" fill="none" stroke="#16a34a" strokeWidth="4" strokeLinecap="round" transform="rotate(-90 17 17)" className="hs-draw" style={{ ["--len" as string]: 94, ...d(3.5) }} /><text x="17" y="21" textAnchor="middle" fontSize="10" fontWeight="700" fill="#16a34a">98</text></svg>
+        <div className="hs-pop absolute right-3 top-3 flex items-center gap-2 rounded-xl bg-white px-2.5 py-1.5 text-xs font-semibold shadow-lg" style={d(2.0)}>
+          <svg width="26" height="26" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="none" stroke="#eee" strokeWidth="4" /><circle cx="17" cy="17" r="15" fill="none" stroke="#16a34a" strokeWidth="4" strokeLinecap="round" transform="rotate(-90 17 17)" className="hs-draw" style={{ ["--len" as string]: 94, ...d(2.1) }} /><text x="17" y="21" textAnchor="middle" fontSize="10" fontWeight="700" fill="#16a34a">98</text></svg>
           Speed
         </div>
       </div>
