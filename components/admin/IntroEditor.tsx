@@ -8,7 +8,8 @@ import { INTRO_STYLES, defaultIntro, type IntroSettings, type PageTransition } f
 import { introSettings } from "../Intro";
 import CustomCursor, { CursorMarks, SiteTrail, cursorSettings } from "../CustomCursor";
 import ButtonFx from "../ButtonFx";
-import { BUTTON_HOVERS, BUTTON_STYLES, CURSOR_STYLES, CURSOR_TRAILS, type ButtonHover, type ButtonStyle, type CursorSettings, type CursorStyle, type CursorTrail, type SiteContent } from "@/lib/content";
+import { NAV, NAV_ICONS } from "../Navbar";
+import { BUTTON_HOVERS, BUTTON_STYLES, NAV_STYLES, type NavStyle, CURSOR_STYLES, CURSOR_TRAILS, type ButtonHover, type ButtonStyle, type CursorSettings, type CursorStyle, type CursorTrail, type SiteContent } from "@/lib/content";
 
 const TRAILS: Record<CursorTrail, { name: string; about: string; dark?: boolean }> = {
   none: { name: "No trail", about: "Just the cursor, nothing behind it." },
@@ -38,6 +39,22 @@ const CURSORS: Record<CursorStyle, { name: string; about: string }> = {
   blend: { name: "Invert", about: "A white circle that flips the colours under it." },
   glow: { name: "Glow", about: "A small dot with a soft light following it." },
 };
+
+const NAV_NAMES: Record<NavStyle, { name: string; about: string }> = {
+  default: { name: "Current", about: "Black pill on the current page." },
+  underline: { name: "Gradient underline", about: "A purple-pink line under the page." },
+  capsule: { name: "Glow capsule", about: "Soft lavender capsule that slides." },
+  dot: { name: "Dot", about: "Small glowing dot under the page." },
+  segmented: { name: "Segmented", about: "White chip on a grey track, like iPhone." },
+  brackets: { name: "Gradient + brackets", about: "Gradient text with corner brackets." },
+  gradient: { name: "Gradient pill", about: "Purple-pink pill that slides." },
+  elastic: { name: "Elastic slide", about: "Black pill that bounces to the new page." },
+  neon: { name: "Neon ring", about: "A colour ring keeps turning round the page." },
+  marker: { name: "Highlighter", about: "Marker-pen highlight behind the page." },
+  icons: { name: "Icons", about: "An icon for each link, coloured on the page." },
+  glowbar: { name: "Glow bar", about: "A glowing light bar under the page." },
+};
+const NAV_DEMO = [["/", "Home"], ["/services", "Services"], ["/work", "Work"], ["/about", "About"], ["/contact", "Contact"]];
 
 const BTN_STYLES: Record<ButtonStyle, { name: string; about: string }> = {
   default: { name: "Current", about: "The buttons the website has now." },
@@ -254,6 +271,42 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
             {trying && site && <SiteTrail content={site} kind={cur.trail} area={tryBox} />}
           </div>
         )}
+        {/* Navbar */}
+        {onCursor && (
+          <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-nav-style-editor>
+            <p className="font-semibold">Navbar</p>
+            <p className="text-sm text-muted">How the navbar links show the page you are on, and what happens when the mouse goes over a link. Try it in the sample below.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {NAV_STYLES.map((id) => (
+                <button type="button" key={id} data-nav-style-option={id} onClick={() => setCur({ navStyle: id })}
+                  className={`rounded-2xl border p-3 text-left transition ${(cur.navStyle ?? "default") === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                  <span className="block text-sm font-semibold">{NAV_NAMES[id].name}</span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-muted">{NAV_NAMES[id].about}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-center rounded-2xl bg-mist p-5">
+              <ul data-nav-style={cur.navStyle ?? "default"} className="relative flex items-center rounded-full border border-line bg-white p-1.5 shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)]">
+                {NAV_DEMO.map(([href, label], i) => {
+                  const ns = NAV[(cur.navStyle ?? "default") as NavStyle] ?? NAV.default, on = i === 0, I = NAV_ICONS[href];
+                  return (
+                    <li key={href} className="group/nav relative">
+                      {on && ns.active && <span className={`absolute ${ns.active}`} />}
+                      {!on && ns.hover && <span className={`absolute opacity-0 transition group-hover/nav:opacity-100 ${ns.hover}`} />}
+                      <a href="#nav" onClick={(e) => e.preventDefault()} data-nav-link aria-current={on ? "page" : undefined}
+                        className={`relative z-10 flex min-h-11 items-center gap-1.5 whitespace-nowrap px-4 text-[14px] ${on ? `font-semibold ${ns.activeText}` : "font-medium text-muted hover:text-ink"}`}>
+                        {cur.navStyle === "icons" && I && <b className="nav-ic grid h-6 w-6 place-items-center rounded-full"><I size={13} strokeWidth={2.2} /></b>}
+                        <span className="nav-label relative">{label}</span>
+                        {cur.navStyle === "brackets" && <><i aria-hidden className="nav-br nav-br-a" /><i aria-hidden className="nav-br nav-br-b" /></>}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Buttons */}
         {onCursor && (
           <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-button-editor>

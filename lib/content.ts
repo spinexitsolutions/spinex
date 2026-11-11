@@ -236,11 +236,14 @@ export const BUTTON_STYLES = ["default", "split", "glass", "sticker", "ring", "k
 export type ButtonStyle = (typeof BUTTON_STYLES)[number];
 export const BUTTON_HOVERS = ["default", "liquid", "roll", "glow", "spotlight", "burst", "lift", "follow", "aurora", "holo", "draw", "spark", "doors", "wave", "magnet", "flip"] as const;
 export type ButtonHover = (typeof BUTTON_HOVERS)[number];
+// Look of the navbar links: how the current page and hover are shown (components/Navbar.tsx, app/nav-fx.css).
+export const NAV_STYLES = ["default", "underline", "capsule", "dot", "segmented", "brackets", "gradient", "elastic", "neon", "marker", "icons", "glowbar"] as const;
+export type NavStyle = (typeof NAV_STYLES)[number];
 export type CursorSettings = {
   enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean; trail?: CursorTrail;
-  btnStyle?: ButtonStyle; btnHover?: ButtonHover;
+  btnStyle?: ButtonStyle; btnHover?: ButtonHover; navStyle?: NavStyle;
 };
-export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none", btnStyle: "default", btnHover: "default" };
+export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none", btnStyle: "default", btnHover: "default", navStyle: "default" };
 
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
 export type Heading = { heading: string; intro: string; eyebrow?: string; helpTitle?: string; helpText?: string; helpNote?: string };

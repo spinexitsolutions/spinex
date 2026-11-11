@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { Stage } from "./home/ServicesList";
-import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
+import { ArrowUpRight, Briefcase, ChevronDown, GraduationCap, Home, Menu, MessageSquare, Monitor, Newspaper, Sparkles, User, X, type LucideIcon } from "lucide-react";
 import { useContent } from "./ContentProvider";
-import { serviceSlug } from "@/lib/content";
+import { serviceSlug, type NavStyle } from "@/lib/content";
+import { cursorSettings } from "./CustomCursor";
 import { ease } from "./Reveal";
 
 
@@ -21,6 +22,25 @@ const links = [
   { href: "/internship", label: "Internship" },
   { href: "/contact", label: "Contact" },
 ];
+
+// Icons for the "icons" navbar style.
+export const NAV_ICONS: Record<string, LucideIcon> = { "/": Home, "/services": Sparkles, "/products": Monitor, "/work": Briefcase, "/blog": Newspaper, "/about": User, "/internship": GraduationCap, "/contact": MessageSquare };
+// For each navbar style (Admin → Intro & cursor → Navbar): the sliding pill behind the current page,
+// the one behind the link under the mouse, and the text colour of the current page. Everything else is in app/nav-fx.css.
+export const NAV: Record<NavStyle, { active?: string; hover?: string; activeText: string; spring?: { stiffness: number; damping: number } }> = {
+  default: { active: "inset-0 rounded-full bg-ink", hover: "inset-0 rounded-full bg-lav-100", activeText: "text-white" },
+  underline: { activeText: "text-ink" },
+  capsule: { active: "inset-0 rounded-full bg-gradient-to-b from-[#f3f0ff] to-[#e9e3ff] shadow-[inset_0_0_0_1px_rgb(var(--c-lav-600)/0.25),0_6px_16px_-8px_rgb(var(--c-lav-600)/0.6)]", hover: "inset-0 rounded-full bg-mist", activeText: "text-lav-700", spring: { stiffness: 300, damping: 20 } },
+  dot: { activeText: "text-ink" },
+  segmented: { active: "inset-0 rounded-full bg-white shadow-[0_1px_2px_rgba(18,15,27,0.08),0_6px_14px_-6px_rgba(18,15,27,0.25)]", activeText: "text-ink" },
+  brackets: { activeText: "" },
+  gradient: { active: "inset-0 rounded-full bg-gradient-to-r from-lav-600 to-fuchsia-600 shadow-[0_8px_20px_-8px_rgba(192,38,211,0.7)]", hover: "inset-0 rounded-full bg-lav-100", activeText: "text-white" },
+  elastic: { active: "inset-0 rounded-full bg-ink", hover: "inset-x-4 bottom-1 h-[3px] rounded-full bg-lav-400", activeText: "text-white", spring: { stiffness: 260, damping: 13 } },
+  neon: { activeText: "text-ink" },
+  marker: { activeText: "text-ink" },
+  icons: { activeText: "text-ink" },
+  glowbar: { active: "inset-x-3 bottom-0.5 h-[3px] rounded-full bg-gradient-to-r from-lav-500 to-fuchsia-500 shadow-[0_0_12px_2px_rgba(192,38,211,0.55),0_-14px_22px_-6px_rgb(var(--c-lav-400)/0.55)]", hover: "inset-0 rounded-full bg-mist", activeText: "text-ink" },
+};
 
 // Letters roll up one after another on hover; the visible copy is for screen readers.
 function RollText({ text, alt = "text-lav-700" }: { text: string; alt?: string }) {
@@ -44,6 +64,8 @@ function RollText({ text, alt = "text-lav-700" }: { text: string; alt?: string }
 export default function Navbar() {
   const { content } = useContent();
   // "Products" shows only once at least one product is added in the admin panel.
+  const navStyle = cursorSettings(content.cursor).navStyle ?? "default";
+  const ns = NAV[navStyle] ?? NAV.default;
   const navLinks = links.filter((l) => l.href !== "/products" || content.products.length > 0);
   const pathname = usePathname();
   const { scrollY } = useScroll();
@@ -136,20 +158,25 @@ export default function Navbar() {
                   : "border-line bg-white shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)]"
               }`}
               data-nav-links
+              data-nav-style={navStyle}
+              onMouseMove={navStyle === "segmented" ? (e) => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty("--nx", `${e.clientX - r.left}px`); } : undefined}
             >
               {navLinks.map((l) => {
                 const isActive = active(l.href);
                 return (
                   <li key={l.href} className="relative" onMouseEnter={() => { setHovered(l.href); if (l.mega) showMega(); else hideMega(); }}>
-                    {isActive && (
-                      <motion.span layoutId="nav-active" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 380, damping: 32 }} />
+                    {isActive && ns.active && (
+                      <motion.span layoutId="nav-active" className={`absolute ${ns.active}`} transition={{ type: "spring", ...(ns.spring ?? { stiffness: 380, damping: 32 }) }} />
                     )}
-                    {hovered === l.href && !isActive && (
-                      <motion.span layoutId="nav-hover" className="absolute inset-0 rounded-full bg-lav-100" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+                    {hovered === l.href && !isActive && ns.hover && (
+                      <motion.span layoutId="nav-hover" className={`absolute ${ns.hover}`} transition={{ type: "spring", stiffness: 420, damping: 34 }} />
                     )}
                     <div className="relative flex items-center">
-                      <Link href={l.href} onFocus={() => setHovered(l.href)} aria-current={isActive ? "page" : undefined} className={`group relative z-10 flex min-h-11 items-center whitespace-nowrap px-3.5 text-[14.5px] xl:px-4 ${isActive ? "font-semibold text-white" : "font-medium text-muted hover:text-ink"}`}>
-                        <RollText text={l.label} alt={isActive ? "text-lav-200" : "text-lav-700"} />
+                      <Link href={l.href} onFocus={() => setHovered(l.href)} aria-current={isActive ? "page" : undefined} data-nav-link
+                        className={`group relative z-10 flex min-h-11 items-center gap-1.5 whitespace-nowrap px-3.5 text-[14.5px] xl:px-4 ${isActive ? `font-semibold ${ns.activeText}` : "font-medium text-muted hover:text-ink"}`}>
+                        {navStyle === "icons" && (() => { const I = NAV_ICONS[l.href] ?? Sparkles; return <b className="nav-ic grid h-6 w-6 place-items-center rounded-full"><I size={13} strokeWidth={2.2} /></b>; })()}
+                        {navStyle === "default" ? <RollText text={l.label} alt={isActive ? "text-lav-200" : "text-lav-700"} /> : <span className="nav-label relative">{l.label}</span>}
+                        {navStyle === "brackets" && <><i aria-hidden className="nav-br nav-br-a" /><i aria-hidden className="nav-br nav-br-b" /></>}
                       </Link>
                       {l.mega && (
                         <button
@@ -157,7 +184,7 @@ export default function Navbar() {
                           aria-expanded={mega}
                           aria-controls="services-menu"
                           aria-label="Show services menu"
-                          className={`relative z-10 -ml-3 mr-1 grid h-11 w-7 place-items-center ${isActive ? "text-white/80" : "text-muted"}`}
+                          className={`relative z-10 -ml-3 mr-1 grid h-11 w-7 place-items-center ${isActive && ns.activeText === "text-white" ? "text-white/80" : "text-muted"}`}
                         >
                           <motion.span animate={{ rotate: mega ? 180 : 0 }} transition={{ duration: 0.3 }}>
                             <ChevronDown size={15} />

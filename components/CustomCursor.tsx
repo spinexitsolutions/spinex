@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BUTTON_HOVERS, BUTTON_STYLES, CURSOR_STYLES, CURSOR_TRAILS, defaultCursor, type CursorSettings, type SiteContent } from "@/lib/content";
+import { BUTTON_HOVERS, BUTTON_STYLES, NAV_STYLES, CURSOR_STYLES, CURSOR_TRAILS, defaultCursor, type CursorSettings, type SiteContent } from "@/lib/content";
 import CursorTrail from "./CursorTrail";
 import { useIntroDone } from "./Intro";
 import { useContent } from "./ContentProvider";
@@ -17,6 +17,7 @@ export function cursorSettings(raw: Partial<CursorSettings> | undefined): Cursor
     trail: v.trail && (CURSOR_TRAILS as readonly string[]).includes(v.trail) ? v.trail : "none",
     btnStyle: v.btnStyle && (BUTTON_STYLES as readonly string[]).includes(v.btnStyle) ? v.btnStyle : "default",
     btnHover: v.btnHover && (BUTTON_HOVERS as readonly string[]).includes(v.btnHover) ? v.btnHover : "default",
+    navStyle: v.navStyle && (NAV_STYLES as readonly string[]).includes(v.navStyle) ? v.navStyle : "default",
   };
 }
 

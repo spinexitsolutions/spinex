@@ -1,0 +1,49 @@
+/* Navbar link styles picked in Admin → Intro & cursor → Navbar (components/Navbar.tsx).
+   The sliding pills are drawn by the component; these rules add the line, dot, ring, marker and icon looks. */
+@property --nav-a { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes nav-rot { to { --nav-a: 360deg; } }
+
+/* Gradient underline */
+[data-nav-style="underline"] [data-nav-link]::after { content: ""; position: absolute; left: 50%; right: 50%; bottom: 7px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgb(var(--c-lav-600)), #d946ef); transition: left 0.35s, right 0.35s; }
+[data-nav-style="underline"] [data-nav-link]:hover::after, [data-nav-style="underline"] [data-nav-link][aria-current="page"]::after { left: 16px; right: 16px; }
+
+/* Dot */
+[data-nav-style="dot"] [data-nav-link]::before { content: ""; position: absolute; left: 50%; bottom: 4px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: rgb(var(--c-lav-600)); transform: scale(0); transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+[data-nav-style="dot"] [data-nav-link][aria-current="page"]::before { transform: scale(1); box-shadow: 0 0 8px rgb(var(--c-lav-400)); }
+[data-nav-style="dot"] [data-nav-link]:hover::before { transform: scale(0.7); }
+[data-nav-style="dot"] .nav-label { display: inline-block; transition: transform 0.3s; }
+[data-nav-style="dot"] [data-nav-link]:hover .nav-label { transform: translateY(-3px); }
+
+/* Segmented: grey track, white chip (from the component), soft glow under the mouse */
+[data-nav-style="segmented"] { background-color: rgb(var(--c-mist)) !important; }
+[data-nav-style="segmented"]::before { content: ""; position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; background: radial-gradient(70px 40px at var(--nx, -200px) 50%, rgb(var(--c-lav-600) / 0.16), transparent); }
+
+/* Gradient text + corner brackets */
+[data-nav-style="brackets"] [data-nav-link][aria-current="page"] .nav-label { background: linear-gradient(90deg, rgb(var(--c-lav-600)), #d946ef); -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-nav-style="brackets"] .nav-br { position: absolute; width: 8px; height: 8px; border: 0 solid rgb(var(--c-lav-600)); opacity: 0; transition: all 0.3s; }
+[data-nav-style="brackets"] .nav-br-a { left: 9px; top: 9px; border-width: 2px 0 0 2px; }
+[data-nav-style="brackets"] .nav-br-b { right: 9px; bottom: 9px; border-width: 0 2px 2px 0; }
+[data-nav-style="brackets"] [data-nav-link]:hover .nav-br { opacity: 0.6; }
+[data-nav-style="brackets"] [data-nav-link][aria-current="page"] .nav-br { opacity: 1; }
+[data-nav-style="brackets"] [data-nav-link][aria-current="page"] .nav-br-a { left: 4px; top: 4px; }
+[data-nav-style="brackets"] [data-nav-link][aria-current="page"] .nav-br-b { right: 4px; bottom: 4px; }
+
+/* Neon ring */
+[data-nav-style="neon"] [data-nav-link][aria-current="page"]::before { content: ""; position: absolute; inset: 0; border-radius: 9999px; padding: 1.5px; background: conic-gradient(from var(--nav-a), #8b7bff, #d946ef, #38bdf8, #8b7bff); -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: nav-rot 3s linear infinite; box-shadow: 0 0 14px rgb(167 139 250 / 0.5); }
+[data-nav-style="neon"] [data-nav-link]:not([aria-current="page"]):hover::before { content: ""; position: absolute; inset: 0; border-radius: 9999px; border: 1.5px solid rgb(var(--c-line)); }
+
+/* Highlighter */
+[data-nav-style="marker"] .nav-label { z-index: 0; }
+[data-nav-style="marker"] .nav-label::before { content: ""; position: absolute; left: -4px; right: -4px; bottom: 1px; height: 45%; z-index: -1; border-radius: 3px 8px 4px 9px; background: rgb(var(--c-lav-200)); transform: scaleX(0) skewX(-12deg); transform-origin: left; transition: transform 0.35s cubic-bezier(0.6, 0, 0.2, 1); }
+[data-nav-style="marker"] [data-nav-link]:hover .nav-label::before { transform: scaleX(1) skewX(-12deg); }
+[data-nav-style="marker"] [data-nav-link][aria-current="page"] .nav-label::before { transform: scaleX(1) skewX(-12deg); background: rgb(var(--c-lav-300)); }
+
+/* Icons */
+[data-nav-style="icons"] [data-nav-link] { padding-left: 10px; padding-right: 12px; }
+[data-nav-style="icons"] .nav-ic { background: rgb(var(--c-mist)); color: #8a84a0; transition: all 0.3s; }
+[data-nav-style="icons"] [data-nav-link]:hover .nav-ic { transform: scale(1.15) rotate(-8deg); color: rgb(var(--c-lav-600)); }
+[data-nav-style="icons"] [data-nav-link][aria-current="page"] .nav-ic { background: linear-gradient(135deg, #8b7bff, #d946ef); color: #fff; box-shadow: 0 4px 10px -3px rgb(192 38 211 / 0.6); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-nav-style] [data-nav-link]::before, [data-nav-style] [data-nav-link]::after { animation: none !important; transition: none !important; }
+}

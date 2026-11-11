@@ -8,6 +8,7 @@ import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 import "./button-fx.css";
 import "./hero-scenes.css";
+import "./nav-fx.css";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const body = Manrope({ subsets: ["latin"], variable: "--font-body", display: "swap" });
