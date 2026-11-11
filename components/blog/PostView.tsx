@@ -16,19 +16,37 @@ export default function PostView({ post, all, content }: { post: Post; all: Post
   const url = `${SITE_URL}/blog/${post.slug}`;
   const abs = (src: string) => (/^https?:\/\//.test(src) ? src : `${SITE_URL}${src.startsWith("/") ? "" : "/"}${src}`);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.seoDescription || post.excerpt,
-    image: post.cover ? (post.cover.startsWith("http") ? post.cover : `${SITE_URL}${post.cover}`) : `${SITE_URL}/og-image.jpg`,
-    datePublished: post.publishedAt,
-    dateModified: post.updatedAt || post.publishedAt,
-    author: { "@type": "Person", name: post.author || content.brand.name },
-    publisher: { "@type": "Organization", name: content.brand.name, ...(content.brand.logo ? { logo: { "@type": "ImageObject", url: abs(content.brand.logo) } } : {}) },
-    mainEntityOfPage: url,
-    keywords: post.tags.join(", "),
-  };
+  const brandAuthor = !post.author || post.author === content.brand.name || /spinex/i.test(post.author);
+  const words = post.body.split(/\s+/).filter(Boolean).length;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "@id": `${url}#article`,
+      headline: post.title,
+      description: post.seoDescription || post.excerpt,
+      image: abs(post.cover || content.banners?.blogCover || "/og-image.jpg"),
+      datePublished: post.publishedAt,
+      dateModified: post.updatedAt || post.publishedAt,
+      author: brandAuthor ? { "@type": "Organization", name: content.brand.name, url: SITE_URL } : { "@type": "Person", name: post.author },
+      publisher: { "@type": "Organization", "@id": `${SITE_URL}/#business`, name: content.brand.name, ...(content.brand.logo ? { logo: { "@type": "ImageObject", url: abs(content.brand.logo) } } : {}) },
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+      url,
+      inLanguage: "en-IN",
+      wordCount: words,
+      ...(post.category ? { articleSection: post.category } : {}),
+      ...(post.tags.length ? { keywords: post.tags.join(", ") } : {}),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+        { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+        { "@type": "ListItem", position: 3, name: post.title, item: url },
+      ],
+    },
+  ];
 
   return (
     <>

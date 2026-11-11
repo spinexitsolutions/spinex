@@ -57,6 +57,14 @@ export default async function ProductPage({ params }: Props) {
   const others = content.products.filter((x) => x.id !== p.id);
   const wa = `https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(`Hi Spinex, I want a demo of ${p.name}.`)}`;
 
+  // The price from Admin → Products, as Google's "offer" (only when it has a real amount like "₹999", or says "Free").
+  const amount = (p.price || "").match(/₹\s*([\d,]+(?:\.\d+)?)/);
+  const offer = amount
+    ? { "@type": "Offer", price: amount[1].replace(/,/g, ""), priceCurrency: "INR", availability: "https://schema.org/InStock", url, seller: { "@id": `${SITE_URL}/#business` } }
+    : /^\s*free\b/i.test(p.price || "")
+      ? { "@type": "Offer", price: "0", priceCurrency: "INR", availability: "https://schema.org/InStock", url, seller: { "@id": `${SITE_URL}/#business` } }
+      : null;
+
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -64,8 +72,12 @@ export default async function ProductPage({ params }: Props) {
       name: p.name,
       description: p.seoDescription || p.description || p.tagline,
       applicationCategory: "BusinessApplication",
-      operatingSystem: "Web",
+      operatingSystem: /chrome|extension/i.test(`${p.name} ${p.category ?? ""}`) ? "Chrome" : "Web",
       url,
+      ...(p.tagline ? { slogan: p.tagline } : {}),
+      ...(p.features.length ? { featureList: p.features.join(", ") } : {}),
+      ...(shots.length ? { screenshot: shots.slice(0, 6).map((x) => (x.startsWith("http") ? x : `${SITE_URL}${x}`)) } : {}),
+      ...(offer ? { offers: offer } : {}),
       ...(p.image ? { image: p.image.startsWith("http") ? p.image : `${SITE_URL}${p.image}` } : {}),
       publisher: { "@id": `${SITE_URL}/#business` },
     },

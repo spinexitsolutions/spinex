@@ -5,6 +5,8 @@ import PageHeader from "@/components/PageHeader";
 import CTA from "@/components/home/CTA";
 import { getContent } from "@/lib/content-server";
 import ProductsGrid from "@/components/ProductsGrid";
+import { PageJsonLd } from "@/components/JsonLd";
+import { productSlug } from "@/lib/content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { pages, brand } = await getContent();
@@ -23,6 +25,7 @@ export default async function ProductsPage() {
 
   return (
     <>
+      <PageJsonLd type="CollectionPage" name="Products" path="/products" description={content.pages.products?.intro} items={products.filter((p) => p.name).map((p) => ({ name: p.name, path: `/products/${productSlug(p)}`, description: p.tagline || p.description }))} />
       <PageHeader page="products" title="Software we built and run." intro="Ready-made tools and SaaS products from the Spinex team. Ask for a free demo of any of them." />
 
       <section className="bg-white py-20 sm:py-28">
