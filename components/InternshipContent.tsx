@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, Check, Code2, Megaphone, Palette, Clapperboard, Heart, Briefcase, Sparkles, Upload, Loader2, PartyPopper, type LucideIcon } from "lucide-react";
+import { ArrowDown, Award, CalendarDays, Check, Code2, MapPin, Megaphone, Palette, Clapperboard, Heart, Briefcase, Sparkles, Upload, Loader2, PartyPopper, type LucideIcon } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useContent } from "./ContentProvider";
 import HumanCheck from "./HumanCheck";
@@ -18,6 +18,14 @@ const steps = [
   { title: "Small task", text: "A small practice task related to your role." },
   { title: "Start", text: "You join the team and start on real projects." },
 ];
+
+// "1 month", "2 months", "6 months" → "1 to 6 months"
+function durationRange(list: string[]) {
+  const n = list.map((d) => parseInt(d, 10)).filter((x) => Number.isFinite(x));
+  if (!n.length) return list[0] ?? "";
+  const lo = Math.min(...n), hi = Math.max(...n);
+  return lo === hi ? list[0] : `${lo} to ${hi} months`;
+}
 
 type Form = { name: string; email: string; phone: string; city: string; college: string; role: string; duration: string; mode: string; link: string; why: string };
 const empty: Form = { name: "", email: "", phone: "", city: "", college: "", role: "", duration: "", mode: "", link: "", why: "" };
@@ -109,8 +117,38 @@ export default function InternshipContent() {
     }
   };
 
+  const remote = intern.modes.some((m) => /remote|online/i.test(m));
+  const office = intern.modes.some((m) => /office|jaipur/i.test(m));
+  const facts = [
+    { Icon: CalendarDays, title: durationRange(intern.durations), text: "Pick your duration" },
+    { Icon: MapPin, title: office && remote ? "Jaipur or remote" : remote ? "Remote" : "In Jaipur", text: intern.modes.join(", ") || "Jaipur office" },
+    { Icon: Award, title: "Certificate", text: "Verifiable online" },
+    { Icon: Sparkles, title: "Real client work", text: "Not just practice tasks" },
+  ].filter((f) => f.title);
+  const faqs = [
+    { q: "Who can apply?", a: "Students and freshers who want to learn by doing. You don't need experience, just the basics of your role." },
+    remote && { q: "Can I intern remotely?", a: `Yes. Choose ${intern.modes.map((m) => m.toLowerCase()).join(", ").replace(/, ([^,]*)$/, " or $1")} when you apply.` },
+    intern.durations.length > 0 && { q: "How long is the internship?", a: `${intern.durations.join(", ").replace(/, ([^,]*)$/, " or $1")}. Pick what fits your college schedule.` },
+    { q: "Will I get a certificate?", a: "Yes. Every certificate has a code anyone can check on our website." },
+  ].filter(Boolean) as { q: string; a: string }[];
+
   return (
     <>
+      {/* Quick facts, overlapping the bottom of the banner */}
+      <div className="container-x relative z-10 mt-6 sm:-mt-10">
+        <ul className="grid grid-cols-2 overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_30px_60px_-40px_rgba(18,15,27,0.45)] lg:grid-cols-4">
+          {facts.map(({ Icon, title, text }, i) => (
+            <li key={title} className={`flex items-center gap-3 p-4 sm:gap-3.5 sm:p-6 ${i % 2 ? "" : "border-r border-line"} ${i < 2 ? "border-b border-line lg:border-b-0" : ""} ${i === 1 ? "lg:border-r" : ""}`}>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] bg-lav-100 text-lav-600 sm:h-12 sm:w-12"><Icon size={20} /></span>
+              <span className="min-w-0">
+                <span className="block text-[14px] font-semibold sm:text-[16.5px]">{title}</span>
+                <span className="block truncate text-[12px] text-muted sm:text-[13px]">{text}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {/* Roles */}
       <section className="bg-white py-24 sm:py-28">
         <div className="container-x">
@@ -192,6 +230,22 @@ export default function InternshipContent() {
         </div>
       </section>
 
+      {/* Questions */}
+      <section className="bg-white py-24 sm:py-28">
+        <div className="container-x">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-lav-700">Questions</p>
+          <SplitHeading text="Before you apply." className="h-display mt-3 text-4xl sm:text-6xl" />
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 sm:gap-4">
+            {faqs.map((f, i) => (
+              <motion.div key={f.q} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06, ease }} className="rounded-[22px] border border-line bg-white p-6">
+                <h3 className="text-[17px] font-semibold">{f.q}</h3>
+                <p className="mt-2 leading-relaxed text-muted">{f.a}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Application form */}
       {intern.open && (
         <section className="bg-mist py-24 sm:py-28">
@@ -200,6 +254,28 @@ export default function InternshipContent() {
               <SplitHeading text="Apply now." className="h-display text-4xl sm:text-6xl" />
               <Reveal delay={0.1}>
                 <p className="mt-5 max-w-sm text-lg text-muted">Fill the form and attach your resume. We read every application and reply within a few days.</p>
+              </Reveal>
+              <Reveal delay={0.2}>
+                <div className="relative mt-8 overflow-hidden rounded-[26px] bg-ink p-7 text-white lg:max-w-sm">
+                  <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-[240px] w-[280px] rounded-full bg-lav-600/45 blur-[80px]" />
+                  <h3 className="relative font-display text-2xl font-semibold tracking-tight">What happens next</h3>
+                  <ol className="relative mt-5 space-y-4">
+                    {["We read every application.", "We reply within a few days.", "A short call and a small task."].map((t, i) => (
+                      <li key={t} className="flex items-center gap-3.5">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-[13px] font-bold">{i + 1}</span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  {content.contact.whatsapp && (
+                    <div className="relative mt-7 border-t border-white/10 pt-5">
+                      <p className="text-sm text-white/60">Questions?</p>
+                      <a href={`https://wa.me/${content.contact.whatsapp}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-white transition hover:brightness-110">
+                        <WhatsAppIcon size={16} /> Ask on WhatsApp
+                      </a>
+                    </div>
+                  )}
+                </div>
               </Reveal>
             </div>
 
