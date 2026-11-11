@@ -8,6 +8,9 @@ import { renderMarkdown } from "@/lib/posts";
 import { SITE_URL } from "@/lib/site";
 import ContactForm from "@/components/ContactForm";
 
+// Lower-case a service name for use mid-sentence, keeping words like AI and SaaS as they are.
+const lower = (t: string) => t.split(" ").map((w) => (/^(AI|SaaS|SEO|[A-Z]{2,})$/.test(w) ? w : w.toLowerCase())).join(" ");
+
 type Props = { params: { slug: string } };
 
 const findService = (services: Service[], slug: string) => services.find((s) => serviceSlug(s) === slug || s.id === slug);
@@ -93,7 +96,7 @@ export default async function ServicePage({ params }: Props) {
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75">{s.description}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#quote" className="btn-light">Get a free quote <ArrowUpRight size={17} /></a>
-            <a href={`https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(`Hi Spinex, I want to know about ${s.title.toLowerCase()}.`)}`} target="_blank" rel="noreferrer" className="btn-ghost-dark">Chat on WhatsApp</a>
+            <a href={`https://wa.me/${content.contact.whatsapp}?text=${encodeURIComponent(`Hi Spinex, I want to know about ${lower(s.title)}.`)}`} target="_blank" rel="noreferrer" className="btn-ghost-dark">Chat on WhatsApp</a>
           </div>
         </div>
       </section>
@@ -116,7 +119,7 @@ export default async function ServicePage({ params }: Props) {
               </div>
             )}
             <div className="rounded-[24px] bg-ink p-6 text-white">
-              <p className="font-display text-xl font-semibold">Talk to us about {s.title.toLowerCase()}</p>
+              <p className="font-display text-xl font-semibold">Talk to us about {lower(s.title)}</p>
               <p className="mt-2 text-sm text-white/65">Free call, clear written quote, usually within a day.</p>
               <a href="#quote" className="btn-light mt-5 w-full py-3 text-sm">Get a quote <ArrowUpRight size={15} /></a>
               <a href={`tel:+91${content.contact.phone}`} className="mt-3 block text-center text-sm text-white/70 hover:text-white">or call +91 {content.contact.phone}</a>
@@ -144,7 +147,7 @@ export default async function ServicePage({ params }: Props) {
       {projects.length > 0 && (
         <section className="bg-white py-16 sm:py-20">
           <div className="container-x">
-            <h2 className="h-display text-3xl sm:text-5xl">Recent {s.title.toLowerCase()} work</h2>
+            <h2 className="h-display text-3xl sm:text-5xl">Recent {lower(s.title)} work</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {projects.map((p) => (
                 <article key={p.id} className="group relative overflow-hidden rounded-[24px] border border-line transition hover:border-ink">
@@ -186,7 +189,7 @@ export default async function ServicePage({ params }: Props) {
       <section id="quote" className="scroll-mt-24 bg-mist py-16 sm:py-24">
         <div className="container-x grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <h2 className="h-display text-3xl sm:text-5xl">Get a quote for {s.title.toLowerCase()}</h2>
+            <h2 className="h-display text-3xl sm:text-5xl">Get a quote for {lower(s.title)}</h2>
             <p className="mt-4 text-muted">Tell us a little about your project. We reply within a day.</p>
             <div className="mt-8">
               <p className="text-sm font-semibold">Other services</p>

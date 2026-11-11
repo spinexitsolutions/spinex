@@ -534,7 +534,7 @@ const baseContent: SiteContent = {
     indexNow: true,
     metaTitle: "Spinex IT Solutions | IT Company in Jaipur, Serving All India",
     metaDescription:
-      "Jaipur-based IT company serving businesses across India: websites, online stores, on-demand apps, SEO, ads, social media, video, design and brand promotion. Get a free quote.",
+      "Jaipur-based IT company serving businesses across India: AI automation, SaaS software, websites, online stores, apps, SEO, ads, social media, video and design. Get a free quote.",
     keywords: [
       "IT company in Jaipur",
       "website development company in Jaipur",

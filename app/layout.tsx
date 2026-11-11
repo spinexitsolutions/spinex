@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(SITE_URL),
     title: { default: "Spinex IT Solutions | IT Company in Jaipur, Serving All India", template: "%s | Spinex IT Solutions" },
     description:
-      "Spinex IT Solutions builds websites, online stores and on-demand apps, and runs SEO, ads, social media, video and brand promotion for businesses across India.",
+      "Spinex IT Solutions builds websites, online stores, apps, SaaS software and AI automation, and runs SEO, ads, social media, video and brand promotion for businesses across India.",
     keywords: ["IT Company Jaipur", "Website Development Jaipur", "Website Development India", "App Development", "Digital Marketing Agency India", "Spinex IT Solutions"],
     openGraph: { title: "Spinex IT Solutions", description: "Websites, apps and digital marketing from Jaipur, for businesses across India.", type: "website", siteName: brand.name || "Spinex IT Solutions", locale: "en_IN", images: ["/og-image.jpg"] },
     twitter: { card: "summary_large_image" },
