@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BUTTON_HOVERS, BUTTON_STYLES, CURSOR_STYLES, CURSOR_TRAILS, defaultCursor, type CursorSettings, type SiteContent } from "@/lib/content";
 import CursorTrail from "./CursorTrail";
+import { useIntroDone } from "./Intro";
 import { useContent } from "./ContentProvider";
 import { sized } from "@/lib/img";
 
@@ -151,5 +152,6 @@ export function trailData(content: SiteContent) {
 export function SiteTrail({ content, area, kind }: { content: SiteContent; area?: React.RefObject<HTMLElement | null>; kind?: CursorSettings["trail"] }) {
   const cfg = cursorSettings(content.cursor);
   const d = trailData(content);
-  return <CursorTrail kind={kind ?? cfg.trail} images={d.images} words={d.words} brand={d.brand} area={area} />;
+  const introDone = useIntroDone(); // no trail while the Spinex intro animation is playing
+  return <CursorTrail kind={introDone ? kind ?? cfg.trail : "none"} images={d.images} words={d.words} brand={d.brand} area={area} />;
 }
