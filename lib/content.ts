@@ -592,7 +592,7 @@ const baseContent: SiteContent = {
       description:
         "AI chatbots for WhatsApp and your website, and automations that connect your forms, CRM, sheets and messages, so routine work happens on its own.",
       tags: ["AI chatbots", "WhatsApp automation", "Workflow automation"],
-      image: img("photo-1551288049-bebda4e38f71"),
+      image: "/images/services/ai-automation.jpg",
       slug: "ai-automation",
       seoTitle: "AI Automation and Chatbot Company in Jaipur | Spinex IT Solutions",
       seoDescription: "AI automation in Jaipur: WhatsApp and website chatbots, lead follow-ups and workflows that connect your CRM, forms and sheets. Get a free consultation.",
@@ -608,7 +608,7 @@ const baseContent: SiteContent = {
       description:
         "Custom software and SaaS products: CRMs, dashboards, client portals and subscription platforms with logins, payments and an admin panel.",
       tags: ["SaaS products", "CRM and dashboards", "Client portals"],
-      image: img("photo-1460925895917-afdab827c52f"),
+      image: "/images/services/saas-software-development.jpg",
       slug: "saas-software-development",
       seoTitle: "SaaS and Custom Software Development in Jaipur | Spinex IT Solutions",
       seoDescription: "SaaS and custom software development in Jaipur: CRMs, dashboards, client portals and subscription products with secure logins, payments and admin panel.",
@@ -623,7 +623,7 @@ const baseContent: SiteContent = {
       description:
         "Custom-coded websites and WordPress builds that are fast, secure and SEO-ready. We set up hosting, analytics and forms so your site starts working the day it goes live.",
       tags: ["Custom code", "WordPress", "React / Next.js"],
-      image: img("photo-1498050108023-c5249f4df085"),
+      image: "/images/services/website-development.jpg",
       slug: "website-development",
       seoTitle: "Website Development Company in Jaipur | Spinex IT Solutions",
       seoDescription: "Custom websites and WordPress sites in Jaipur that load fast, rank on Google and bring enquiries. Free quote from Spinex IT Solutions.",
@@ -638,7 +638,7 @@ const baseContent: SiteContent = {
       description:
         "Complete e-commerce account management: listings, catalogue, pricing, orders, returns, ads and growth on Amazon, Flipkart, Meesho and your own Shopify store, handled by one team.",
       tags: ["Amazon & Flipkart", "Meesho", "Listings & ads"],
-      image: img("photo-1556742049-0cfed4f6a45d"),
+      image: "/images/services/ecommerce-management.jpg",
       slug: "ecommerce-management",
       seoTitle: "E-commerce Management Services | Amazon, Flipkart, Meesho",
       seoDescription: "E-commerce account management for Amazon, Flipkart, Meesho and Shopify sellers: listings, catalogue, orders, returns, ads and reports. Spinex IT Solutions, Jaipur, serving all India.",
@@ -653,7 +653,7 @@ const baseContent: SiteContent = {
       description:
         "Meta and Google ad campaigns planned around enquiries and sales. We set up tracking, test creatives and report what each rupee brought back.",
       tags: ["Meta ads", "Google ads", "Lead generation"],
-      image: img("photo-1460925895917-afdab827c52f"),
+      image: "/images/services/digital-marketing.jpg",
       slug: "digital-marketing",
       seoTitle: "Digital Marketing Agency in Jaipur | Meta & Google Ads | Spinex",
       seoDescription: "Meta and Google ads, SEO and lead generation for businesses in Jaipur. Campaigns measured by enquiries and sales, not just likes.",
@@ -668,7 +668,7 @@ const baseContent: SiteContent = {
       description:
         "Content calendars, posting, community replies and growth for Instagram, LinkedIn and Facebook. Your brand stays active and consistent without taking your time.",
       tags: ["Strategy", "Content", "Community"],
-      image: img("photo-1512941937669-90a1b58e7e9c"),
+      image: "/images/services/social-media-marketing.jpg",
       slug: "social-media-marketing",
       seoTitle: "Social Media Marketing in Jaipur | Instagram Management | Spinex",
       seoDescription: "Instagram, Facebook and LinkedIn management in Jaipur: content calendars, posts, reels and replies, handled end to end by Spinex IT Solutions.",
@@ -683,7 +683,7 @@ const baseContent: SiteContent = {
       description:
         "Cinematic edits for Reels, Shorts, YouTube and ads, with motion graphics, colour grading and sound design that keep viewers watching to the end.",
       tags: ["Reels / Shorts", "Motion graphics", "Colour grading"],
-      image: img("photo-1574717024653-61fd2cf4d44d"),
+      image: "/images/services/video-editing.jpg",
       slug: "video-editing",
       seoTitle: "Video Editing Services in Jaipur | Reels, YouTube & Ads | Spinex",
       seoDescription: "Professional video editing in Jaipur for Instagram reels, YouTube and ads, with motion graphics, colour grading and sound design.",
@@ -698,7 +698,7 @@ const baseContent: SiteContent = {
       description:
         "Logos, social creatives, brochures and brand graphics that make you recognisable. Every design is made for where it will actually be seen.",
       tags: ["Logo design", "Social creatives", "Brand graphics"],
-      image: img("photo-1561070791-2526d30994b5"),
+      image: "/images/services/graphic-design.jpg",
       slug: "graphic-design",
       seoTitle: "Graphic Design and Logo Design in Jaipur | Spinex IT Solutions",
       seoDescription: "Logo design, brand identity, social media creatives and brochures in Jaipur that make your business look professional everywhere.",
@@ -713,7 +713,7 @@ const baseContent: SiteContent = {
       description:
         "Custom on-demand platforms like food delivery, home services, taxi or appointment booking. Customer app, partner app and admin panel, built to work together.",
       tags: ["Booking apps", "Delivery apps", "Admin panel"],
-      image: img("photo-1512941937669-90a1b58e7e9c"),
+      image: "/images/services/on-demand-app-development.jpg",
       slug: "on-demand-app-development",
       seoTitle: "On-Demand App Development Company in Jaipur | Spinex IT Solutions",
       seoDescription: "On-demand app development in Jaipur: food delivery, home service, taxi and booking apps with customer app, partner app and admin panel. Get a free quote.",
@@ -728,7 +728,7 @@ const baseContent: SiteContent = {
       description:
         "Influencer campaigns, launch promotions, WhatsApp and YouTube marketing that put your brand in front of the right people and keep it there.",
       tags: ["Influencer marketing", "Launch campaigns", "WhatsApp marketing"],
-      image: img("photo-1556761175-5973dc0f32e7"),
+      image: "/images/services/brand-promotion.jpg",
       slug: "brand-promotion",
       seoTitle: "Brand Promotion Agency in Jaipur | Spinex IT Solutions",
       seoDescription: "Brand promotion in Jaipur: influencer marketing, product launch campaigns, YouTube and WhatsApp promotion that build awareness and bring customers.",
