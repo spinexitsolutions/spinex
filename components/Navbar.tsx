@@ -116,7 +116,7 @@ export default function Navbar() {
           >
             <Link href="/" className="flex shrink-0 items-center gap-1.5 rounded-full py-2 pl-1 pr-3" aria-label={`${content.brand.name} home`} data-nav-brand>
               {content.brand.logo?.trim() ? (
-                <img src="/api/brand-icon?size=96" alt="" className="h-6 w-6 object-contain" data-nav-logo />
+                <img src={content.brand.logo.trim() === "/brand/logo.png" ? "/brand/icon.svg" : "/api/brand-icon?size=96"} alt="" className="h-6 w-6 object-contain" data-nav-logo />
               ) : (
                 <span className="w-2" aria-hidden />
               )}
