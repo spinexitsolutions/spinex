@@ -38,6 +38,7 @@ import ReviewsManager from "./ReviewsManager";
 import FeedbackManager from "./FeedbackManager";
 import AccountsManager from "./AccountsManager";
 import IntroEditor from "./IntroEditor";
+import LivePreview from "./LivePreview";
 import HeroEditor from "./HeroEditor";
 import CustomCursor from "../CustomCursor";
 import IntroAnimation from "../intro/IntroAnimation";
@@ -66,12 +67,19 @@ const sections = [
   { id: "certificates", label: "Certificates", Icon: Award, group: "HR and team" , perm: "people" },
   { id: "home", label: "Home page", Icon: LayoutTemplate, group: "Website pages" , perm: "content" },
   { id: "hero", label: "Homepage hero", Icon: Type, group: "Website pages" , perm: "content" },
-  { id: "pages", label: "Page headers", Icon: PanelTop, group: "Website pages" , perm: "content" },
-  { id: "banners", label: "Page banners", Icon: ImageIcon, group: "Website pages" , perm: "content" },
+  { id: "pg-services", label: "Services page", Icon: Layers, group: "Website pages" , perm: "content" },
+  { id: "pg-products", label: "Products page", Icon: Package, group: "Website pages" , perm: "content" },
+  { id: "pg-work", label: "Work page", Icon: Briefcase, group: "Website pages" , perm: "content" },
+  { id: "pg-blog", label: "Blog page", Icon: Newspaper, group: "Website pages" , perm: "content" },
+  { id: "pg-about", label: "About page", Icon: Info, group: "Website pages" , perm: "content" },
+  { id: "pg-internship", label: "Internship page", Icon: GraduationCap, group: "Website pages" , perm: "content" },
+  { id: "pg-careers", label: "Careers page", Icon: Briefcase, group: "Website pages" , perm: "content" },
+  { id: "pg-contact", label: "Contact page", Icon: Phone, group: "Website pages" , perm: "content" },
+  { id: "contactpage", label: "Contact page content", Icon: Phone, group: "Website pages" , perm: "content" },
   { id: "about", label: "About and stats", Icon: Info, group: "Website pages" , perm: "content" },
   { id: "careers", label: "Careers (jobs)", Icon: Briefcase, group: "Website pages" , perm: "content" },
   { id: "internship", label: "Internship", Icon: GraduationCap, group: "Website pages" , perm: "content" },
-  { id: "cities", label: "City pages (local SEO)", Icon: MapPin, group: "Website pages" , perm: "content" },
+  { id: "cities", label: "City pages", Icon: MapPin, group: "Website pages" , perm: "content" },
   { id: "services", label: "Services", Icon: Layers, group: "Website content" , perm: "content" },
   { id: "products", label: "Products", Icon: Package, group: "Website content" , perm: "content" },
   { id: "projects", label: "Projects", Icon: Briefcase, group: "Website content" , perm: "content" },
@@ -87,7 +95,7 @@ const sections = [
   { id: "blog", label: "Blog posts", Icon: Newspaper, group: "Blog and media" , perm: "blog" },
   { id: "media", label: "Media", Icon: Images, group: "Blog and media" , perm: "media" },
   { id: "brand", label: "Logo and name", Icon: BadgeCheck, group: "Site settings" , perm: "content" },
-  { id: "contact", label: "Contact details and page", Icon: Phone, group: "Site settings" , perm: "content" },
+  { id: "contact", label: "Contact details", Icon: Phone, group: "Site settings" , perm: "content" },
   { id: "theme", label: "Colours", Icon: Palette, group: "Site settings" , perm: "content" },
   { id: "fonts", label: "Fonts and text", Icon: CaseSensitive, group: "Site settings" , perm: "content" },
   { id: "intro", label: "Intro screen", Icon: Sparkles, group: "Site settings" , perm: "content" },
@@ -110,7 +118,7 @@ const sections = [
 
 // The sidebar: ten plain entries, always visible, no drop-downs. An entry with several screens opens a
 // page of cards (one card per screen, with a line saying what is inside), grouped under small headings.
-type Area = { id: string; label: string; Icon: LucideIcon; head: string; about: string; groups: { label: string; ids: string[] }[] };
+type Area = { id: string; label: string; Icon: LucideIcon; head: string; about: string; groups: { label: string; ids: string[]; hidden?: boolean }[] };
 const AREAS: Area[] = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, head: "", about: "", groups: [{ label: "", ids: ["overview"] }] },
   { id: "crm", label: "Leads and clients", Icon: Inbox, head: "Business", about: "Enquiries, calls and the clients you work with.", groups: [
@@ -119,9 +127,9 @@ const AREAS: Area[] = [
   ] },
   { id: "sales", label: "Sales and accounts", Icon: ReceiptIndianRupee, head: "Business", about: "Quotes, invoices, expenses and profit.", groups: [{ label: "", ids: ["billing", "accounts"] }] },
   { id: "hr", label: "HR and team", Icon: Users, head: "Business", about: "Interns, attendance, payslips, letters and certificates.", groups: [{ label: "", ids: ["interns", "attendance", "payslips", "letters", "certificates"] }] },
-  { id: "pages", label: "Pages", Icon: LayoutTemplate, head: "Website", about: "What each page of the website says and shows.", groups: [
-    { label: "Pages", ids: ["home", "hero", "pages", "banners", "about", "internship", "careers", "cities"] },
-    { label: "Content used on the pages", ids: ["services", "products", "projects", "industries", "process", "testimonials", "trusted", "goals", "planner", "showreel", "chatbot", "profile"] },
+  { id: "pages", label: "Pages", Icon: LayoutTemplate, head: "Website", about: "One card per page. Everything on a page is inside it.", groups: [
+    { label: "", ids: ["home", "pg-services", "pg-products", "pg-work", "pg-blog", "pg-about", "pg-internship", "pg-careers", "pg-contact", "cities", "profile"] },
+    { label: "", hidden: true, ids: ["hero", "trusted", "process", "showreel", "industries", "goals", "testimonials", "planner", "chatbot", "services", "products", "projects", "about", "internship", "careers", "contactpage"] },
   ] },
   { id: "blog", label: "Blog", Icon: Newspaper, head: "Website", about: "", groups: [{ label: "", ids: ["blog"] }] },
   { id: "media", label: "Media", Icon: Images, head: "Website", about: "", groups: [{ label: "", ids: ["media"] }] },
@@ -137,15 +145,30 @@ const AREAS: Area[] = [
 ];
 // Dashboard: the changes people make most, each saying where it lives.
 const SHORTCUTS: { id: string; label: string; where: string; Icon: LucideIcon }[] = [
-  { id: "home", label: "Edit the home page", where: "Pages", Icon: LayoutTemplate },
+  { id: "home", label: "Edit the home page", where: "Pages › Home page", Icon: LayoutTemplate },
   { id: "blog", label: "Write a blog post", where: "Blog", Icon: Newspaper },
-  { id: "projects", label: "Add a project", where: "Pages › Projects", Icon: Briefcase },
-  { id: "products", label: "Add a product", where: "Pages › Products", Icon: Package },
-  { id: "banners", label: "Change a banner", where: "Pages › Page banners", Icon: ImageIcon },
+  { id: "projects", label: "Add a project", where: "Pages › Work page", Icon: Briefcase },
+  { id: "products", label: "Add a product", where: "Pages › Products page", Icon: Package },
+  { id: "pg-services", label: "Change a banner", where: "Pages › any page", Icon: ImageIcon },
   { id: "navbar", label: "Change the menu", where: "Site settings › Navbar", Icon: PanelTop },
   { id: "theme", label: "Change colours", where: "Site settings › Colours", Icon: Palette },
   { id: "fonts", label: "Change fonts", where: "Site settings › Fonts and text", Icon: CaseSensitive },
 ];
+// A page and the screens inside it, shown as tabs at the top (first one is the page's own card).
+const PAGE_TABS: string[][] = [
+  ["home", "hero", "trusted", "process", "showreel", "industries", "goals", "testimonials", "planner", "chatbot"],
+  ["pg-services", "services"], ["pg-products", "products"], ["pg-work", "projects"], ["pg-blog"], ["pg-about", "about"],
+  ["pg-internship", "internship"], ["pg-careers", "careers"], ["pg-contact", "contactpage"],
+];
+const TAB_NAMES: Record<string, string> = {
+  home: "Sections and headings", hero: "Hero", trusted: "Client logos", process: "Process", showreel: "Showreel", industries: "Industries", goals: "Goal picker", testimonials: "Testimonials", planner: "Project planner", chatbot: "FAQ and chatbot",
+  services: "Services list", products: "Products list", projects: "Projects", about: "About content", internship: "Roles and applications", careers: "Jobs", contactpage: "Form box, steps and FAQ",
+};
+// The website page a screen changes (for Preview).
+const pathOf = (id: string) => {
+  if (id.startsWith("pg-")) return id === "pg-work" ? "/work" : `/${id.slice(3)}`;
+  return ({ services: "/services", projects: "/work", products: "/products", about: "/about", internship: "/internship", careers: "/careers", contact: "/contact", contactpage: "/contact" } as Record<string, string>)[id] ?? "/";
+};
 const areaOf = (id: string) => AREAS.find((a) => a.groups.some((g) => g.ids.includes(id))) ?? AREAS[0];
 
 // One line under each card saying what is inside.
@@ -154,11 +177,13 @@ const ABOUT: Record<string, string> = {
   clients: "Client list and their portal logins", feedback: "Feedback clients sent you", reviews: "Rating and reviews pulled from Google",
   billing: "Quotations, invoices and payments", accounts: "Money out, money in, profit",
   interns: "Applications and current interns", attendance: "Attendance and leave requests", payslips: "Monthly payslips", letters: "Offer, experience and other letters", certificates: "Certificate design and signatures",
-  home: "Which sections show and their headings", hero: "Headline, buttons and the box on the right", pages: "Title and intro at the top of each page", banners: "Banner picture of each page",
-  about: "About text, founders and numbers", internship: "Open roles and applications", careers: "Jobs and hiring", cities: "Local pages for each city",
+  home: "Sections, hero, process, showreel, FAQ and more", hero: "Headline, buttons and the box on the right",
+  "pg-services": "Banner, heading and the services list", "pg-products": "Banner, heading and the products list", "pg-work": "Banner, heading and projects", "pg-blog": "Banner and heading of the blog page",
+  "pg-about": "Banner, heading, about text and numbers", "pg-internship": "Banner, heading, roles and applications", "pg-careers": "Banner, heading and jobs", "pg-contact": "Banner, heading, form box, steps and FAQ",
+  contactpage: "The dark form box, steps and questions", about: "About text, founders and numbers", internship: "Open roles and applications", careers: "Jobs and hiring", cities: "Local SEO pages for each city",
   services: "The services you offer", products: "Your own software", projects: "Work shown on the site", industries: "Who you work with", process: "The steps from call to launch",
   testimonials: "Client quotes", trusted: "Client logos and Google rating line", goals: "The “I want to…” picker", planner: "Project planner questions and prices", showreel: "The home page video", chatbot: "Assistant name and its answers", profile: "Company profile PDF",
-  brand: "Logo, company name, tagline", contact: "Phone, email, address, social links, contact page", theme: "Brand colour and themes", fonts: "Fonts, heading animation, highlights", buttons: "Button style and hover effect",
+  brand: "Logo, company name, tagline", contact: "Phone, email, address, social links", theme: "Brand colour and themes", fonts: "Fonts, heading animation, highlights", buttons: "Button style and hover effect",
   navbar: "Top menu style and hover", footer: "Big name and products column", floating: "WhatsApp button and phone bar", intro: "Opening animation", transitions: "Effect between pages", cursor: "Custom cursor and trail",
   seo: "Titles, descriptions, search text", integrations: "Google Analytics, pixel, cookie banner", apikeys: "Keys for connected services",
   team: "People and what each can do", automation: "Things that run by themselves", activity: "Who changed what", account: "Your name and password",
@@ -220,6 +245,10 @@ function AdminShell() {
   const [find, setFind] = useState("");
   // Which sidebar entry's page of cards is open (null = a screen is open).
   const [hub, setHub] = useState<string | null>(null);
+  // Website shown beside the editor (wide screens). Remembered on this computer.
+  const [live, setLive] = useState(false);
+  useEffect(() => { try { setLive(localStorage.getItem("spinex-admin-live") !== "off"); } catch { setLive(true); } }, []);
+  const toggleLive = (on: boolean) => { setLive(on); try { localStorage.setItem("spinex-admin-live", on ? "on" : "off"); } catch {} };
   useEffect(() => { setHub(null); }, [section]);
   const [conflict, setConflict] = useState("");
   // True when the latest saved content couldn't be fetched, so the save base is unknown.
@@ -399,8 +428,7 @@ function AdminShell() {
       const res = await fetch("/api/admin/preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(draft) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Couldn't open the preview.");
-      const page: Record<string, string> = { services: "/services", projects: "/work", products: "/products", about: "/about", internship: "/internship", careers: "/careers", contact: "/contact", banners: "/about" };
-      const url = page[section] ?? "/";
+      const url = pathOf(section);
       if (tab) tab.location.href = url;
       else window.open(url, "_blank");
     } catch (e) {
@@ -451,6 +479,11 @@ function AdminShell() {
   const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "accounts", "bookings", "reviews", "feedback", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
+  const tabIds = PAGE_TABS.find((t) => t.includes(section)) ?? [];
+  const tabs = tabIds.map((id) => allowed.find((x) => x.id === id)).filter((x): x is (typeof allowed)[number] => !!x);
+  const pageTitle = tabs.length > 1 ? (tabs[0].id === "home" ? "Home page" : tabs[0].label) : current.label;
+  const CHANGE_NAMES: Record<string, string> = { theme: "Colours", typography: "Fonts and text", brand: "Logo and name", hero: "Hero", sections: "Section headings", homeLayout: "Home sections", pages: "Page headings", banners: "Banners", intro: "Intro, navbar and buttons", cursor: "Cursor", integrations: "Footer, floating buttons, analytics", contact: "Contact details", contactPage: "Contact page", seo: "SEO", stats: "Numbers", trusted: "Client logos", leadReplies: "Lead emails", processExtras: "Process", chatbot: "FAQ and chatbot" };
+  const changed = dirty ? Array.from(new Set((Object.keys(draft) as (keyof SiteContent)[]).filter((k) => JSON.stringify(draft[k]) !== JSON.stringify(content[k])).map((k) => CHANGE_NAMES[k] ?? k.charAt(0).toUpperCase() + k.slice(1)))) : [];
   const hubArea = hub ? AREAS.find((a) => a.id === hub) ?? null : null;
   const curArea = areaOf(section);
   const curAreaItems = allowed.filter((x) => curArea.groups.some((g) => (g.ids as string[]).includes(x.id))).length;
@@ -538,13 +571,12 @@ function AdminShell() {
                     {curArea.label} <ChevronRight size={12} />
                   </button>
                 )}
-                <h1 className="truncate font-display text-xl font-semibold">{current.label}</h1>
+                <h1 className="truncate font-display text-xl font-semibold">{pageTitle}</h1>
               </>
             )}
           </div>
           <Link href="/" target="_blank" className="hidden items-center gap-2 text-sm text-muted hover:text-ink sm:flex"><ExternalLink size={15} /> View site</Link>
-          {contentSection && dirty && <button onClick={() => setDraft(content)} className="btn-ghost px-4 py-2 text-sm">Discard</button>}
-          {contentSection && dirty && <button onClick={preview} disabled={previewing} title="See the website with these changes before they go live (only you see it)" className="btn-ghost px-4 py-2 text-sm">{previewing ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />} Preview</button>}
+          {contentSection && !hubArea && !live && <button type="button" onClick={() => toggleLive(true)} className="btn-ghost hidden px-4 py-2 text-sm xl:inline-flex" data-live-on><Eye size={15} /> Live preview</button>}
           {contentSection && <button onClick={save} disabled={!dirty || saving} className="btn-dark px-5 py-2.5 text-sm disabled:cursor-default disabled:bg-line disabled:text-muted">
             {saving ? <><Loader2 size={15} className="animate-spin" /> Saving</> : dirty ? "Save and publish" : "All saved"}
           </button>}
@@ -555,7 +587,9 @@ function AdminShell() {
         </header>
 
         {/* Lists you work through (leads, clients, invoices…) get a wider page than the forms. */}
-        <main className={`mx-auto p-4 sm:p-8 ${(["overview", "leads", "clients", "billing", "bookings", "interns", "accounts", "attendance", "payslips", "letters", "activity"] as string[]).includes(section) || hubArea ? "max-w-[1240px]" : "max-w-4xl"}`}>
+        <div className="xl:flex">
+        <div className="min-w-0 flex-1">
+        <main className={`mx-auto p-4 pb-28 sm:p-8 sm:pb-28 ${(["overview", "leads", "clients", "billing", "bookings", "interns", "accounts", "attendance", "payslips", "letters", "activity"] as string[]).includes(section) || hubArea ? "max-w-[1240px]" : "max-w-4xl"}`}>
           {loadFailed && !conflict && (
             <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
               <p className="min-w-[200px] flex-1">Couldn&apos;t load the latest saved content. Reload before saving.</p>
@@ -574,11 +608,21 @@ function AdminShell() {
               <b>View only.</b> You can look at this section, but changes can&apos;t be saved. Ask the owner if you need to change something here.
             </p>
           )}
+          {!hubArea && tabs.length > 1 && (
+            <div className="-mx-1 mb-6 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" role="tablist" aria-label="Parts of this page" data-page-tabs>
+              {tabs.map((x, i) => (
+                <button key={x.id} type="button" role="tab" aria-selected={x.id === section} onClick={() => open(x.id)}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${x.id === section ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:border-ink hover:text-ink"}`}>
+                  {TAB_NAMES[x.id] ?? (i === 0 ? "Banner and heading" : x.label)}
+                </button>
+              ))}
+            </div>
+          )}
           {hubArea && (
             <motion.div key={hubArea.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} data-admin-hub={hubArea.id}>
               <h2 className="font-display text-3xl font-semibold tracking-tight">{hubArea.label}</h2>
               {hubArea.about && <p className="mt-1 text-muted">{hubArea.about}</p>}
-              {hubArea.groups.map((g) => {
+              {hubArea.groups.filter((g) => !g.hidden).map((g) => {
                 const items = allowed.filter((x) => (g.ids as string[]).includes(x.id)).sort((x, y) => g.ids.indexOf(x.id) - g.ids.indexOf(y.id));
                 if (!items.length) return null;
                 return (
@@ -716,18 +760,28 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "pages" && (
-              <div className="space-y-6">
-                {([["about", "About"], ["services", "Services"], ["products", "Products"], ["work", "Work"], ["contact", "Contact"], ["internship", "Internship"], ["blog", "Blog"], ["careers", "Careers"]] as const).map(([key, label]) => (
-                  <Card key={key} title={`${label} page`}>
+            {section.startsWith("pg-") && (() => {
+              const key = section.slice(3) as "about" | "services" | "products" | "work" | "contact" | "internship" | "blog" | "careers";
+              const path = key === "work" ? "/work" : `/${key}`;
+              return (
+                <div className="space-y-6" data-page-top={key}>
+                  <Card title="Heading and intro" note={`The big text at the top of ${path}.`}>
                     <ObjectEditor value={draft.pages[key]} onChange={(v) => set("pages", { ...draft.pages, [key]: v })} fields={[
                       { key: "title", label: "Heading" },
                       { key: "intro", label: "Intro text", type: "textarea" },
                     ]} />
                   </Card>
-                ))}
-              </div>
-            )}
+                  <Card title="Banner picture" note="The large picture behind the heading. Best size 3200×1680.">
+                    <ObjectEditor value={{ image: draft.banners[key] }} onChange={(v) => set("banners", { ...draft.banners, [key]: v.image })} fields={[{ key: "image", label: "Banner", type: "image" }]} />
+                  </Card>
+                  {key === "blog" && (
+                    <Card title="Photo for posts without a cover" note="Optional. Each post's own cover (Blog → Cover image) is used first.">
+                      <ObjectEditor value={{ image: draft.banners.blogCover }} onChange={(v) => set("banners", { ...draft.banners, blogCover: v.image })} fields={[{ key: "image", label: "Photo", type: "image" }]} />
+                    </Card>
+                  )}
+                </div>
+              );
+            })()}
 
             {section === "process" && (
               <>
@@ -1215,22 +1269,6 @@ function AdminShell() {
               </div>
             )}
 
-            {section === "banners" && (
-              <Card title="Page banners" note="The large image at the top of each inner page.">
-                <ObjectEditor value={draft.banners} onChange={(v) => set("banners", v)} fields={[
-                  { key: "about", label: "About page", type: "image" },
-                  { key: "services", label: "Services page", type: "image" },
-                  { key: "products", label: "Products page", type: "image" },
-                  { key: "work", label: "Work page", type: "image" },
-                  { key: "contact", label: "Contact page", type: "image" },
-                  { key: "internship", label: "Internship page", type: "image" },
-                  { key: "blog", label: "Blog page", type: "image" },
-                  { key: "careers", label: "Careers page", type: "image" },
-                  { key: "blogCover", label: "Blog: photo for posts without their own cover image", type: "image", hint: "Optional. Each post's own cover (Blog posts → Cover image) is used first." },
-                ]} />
-              </Card>
-            )}
-
             {(section === "intro" || section === "transitions" || section === "cursor" || section === "navbar" || section === "buttons") && <IntroEditor key={section} part={section} value={draft.intro} onChange={(v) => set("intro", v)} cursor={draft.cursor} onCursor={(v) => set("cursor", v)} site={draft} logo={draft.brand.logo} readOnly={readOnly} />}
 
             {section === "showreel" && (
@@ -1247,16 +1285,16 @@ function AdminShell() {
               </Card>
             )}
 
-            {section === "contact" && (
+            {(section === "contact" || section === "contactpage") && (
               <div className="space-y-6">
-              <Card title="Contact details">
+              {section === "contact" && <Card title="Contact details">
                 <ObjectEditor value={draft.contact} onChange={(v) => set("contact", v)} fields={[
                   { key: "email", label: "Email" }, { key: "phone", label: "Phone", hint: "Without +91" },
                   { key: "whatsapp", label: "WhatsApp number", hint: "With country code, digits only" }, { key: "location", label: "Location" },
                   { key: "instagram", label: "Instagram URL" }, { key: "linkedin", label: "LinkedIn URL" }, { key: "youtube", label: "YouTube URL" },
                 ]} />
-              </Card>
-              <Card title="Contact page" note="The dark box with the form, the office hours card and the questions at the end of the contact page. Wrap words in *stars* to highlight them in the heading.">
+              </Card>}
+              {section === "contactpage" && <Card title="Contact page" note="The dark box with the form, the office hours card and the questions at the end of the contact page. Wrap words in *stars* to highlight them in the heading.">
                 <ObjectEditor value={draft.contactPage} onChange={(v) => set("contactPage", v)} fields={[
                   { key: "eyebrow", label: "Small label" }, { key: "heading", label: "Heading" }, { key: "intro", label: "Intro", type: "textarea" },
                   { key: "hours", label: "Office hours" }, { key: "hoursNote", label: "Office hours note" }, { key: "emailNote", label: "Email card note" },
@@ -1266,19 +1304,19 @@ function AdminShell() {
                   <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={draft.contactPage.showMap} onChange={(e) => set("contactPage", { ...draft.contactPage, showMap: e.target.checked })} />
                   Show the Google map
                 </label>
-              </Card>
-              <Card title="What happens next (steps)">
+              </Card>}
+              {section === "contactpage" && <Card title="What happens next (steps)">
                 <ListEditor items={draft.contactPage.steps} titleKey="title" addLabel="Add step"
                   onChange={(v) => set("contactPage", { ...draft.contactPage, steps: v })}
                   newItem={() => ({ id: uid(), title: "", note: "" })}
                   fields={[{ key: "title", label: "Step" }, { key: "note", label: "Right side note", hint: "Short, like Free or 1 to 2 days" }]} />
-              </Card>
-              <Card title="Contact page questions">
+              </Card>}
+              {section === "contactpage" && <Card title="Contact page questions">
                 <ListEditor items={draft.contactPage.faqs} titleKey="q" addLabel="Add question"
                   onChange={(v) => set("contactPage", { ...draft.contactPage, faqs: v })}
                   newItem={() => ({ id: uid(), q: "", a: "" })}
                   fields={[{ key: "q", label: "Question" }, { key: "a", label: "Answer", type: "textarea" }]} />
-              </Card>
+              </Card>}
               </div>
             )}
 
@@ -1301,6 +1339,20 @@ function AdminShell() {
             {section === "backup" && <Backup draft={draft} onImport={(c) => { if (!confirm(`Replace the live website content with this backup? Current content stays in History.${dirty ? " Your unsaved changes here will be replaced too." : ""}`)) return; saveContent(c, "Content imported and live", true); }} onReset={() => saveContent(defaultContent, "Default content restored", true)} />}
           </motion.div>
         </main>
+        {contentSection && dirty && (
+          <div className="pointer-events-none sticky bottom-0 z-20 px-4 pb-4 sm:px-8" data-unsaved-bar>
+            <div className="pointer-events-auto mx-auto flex max-w-4xl flex-wrap items-center gap-3 rounded-2xl bg-ink px-5 py-3 text-white shadow-[0_20px_50px_-20px_rgba(18,15,27,0.7)]">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.2)]" />
+              <p className="min-w-[160px] flex-1 text-sm"><b>{changed.length} unsaved {changed.length === 1 ? "change" : "changes"}</b><span className="text-white/60"> in {changed.slice(0, 3).join(", ")}{changed.length > 3 ? ` and ${changed.length - 3} more` : ""}</span></p>
+              <button onClick={() => setDraft(content)} className="inline-flex min-h-10 items-center rounded-full border border-white/25 px-4 text-sm font-semibold hover:bg-white/10">Discard</button>
+              <button onClick={preview} disabled={previewing} title="Open the website in a new tab with these changes (only you see it)" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/25 px-4 text-sm font-semibold hover:bg-white/10">{previewing ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />} Open preview</button>
+              <button onClick={save} disabled={saving} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink hover:bg-lav-100">{saving ? <><Loader2 size={15} className="animate-spin" /> Saving</> : <><Check size={15} /> Save and publish</>}</button>
+            </div>
+          </div>
+        )}
+        </div>
+        {contentSection && !hubArea && live && <LivePreview draft={draft} dirty={dirty} path={pathOf(section)} onClose={() => toggleLive(false)} />}
+        </div>
       </div>
 
       <AnimatePresence>

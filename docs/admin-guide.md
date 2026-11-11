@@ -1,6 +1,6 @@
 title: Admin Panel Guide
 subtitle: How to run the Spinex website, leads, clients, invoices and team from one place.
-version: spinexitsolutions.com/admin · Edition 1 · November 2026
+version: spinexitsolutions.com/admin · Edition 2 · November 2026
 ---
 
 # Getting started {#start}
@@ -17,26 +17,30 @@ Open **spinexitsolutions.com/admin** and enter your **Email** and **Password**, 
 
 ## Finding your way around
 
-- **Sidebar:** **Overview** is at the top. Everything else is in groups: **CRM**, **Sales and accounts**, **HR and team**, **Website pages**, **Website content**, **Blog and media**, **Site settings**, **Admin and security**. Click a group name to open or close it.
-- **Search** at the top of the sidebar finds sections by name *and* your data: type a name, phone number, company or invoice number to see matching **Leads**, **Clients** and **Quotes / invoices**. Click a result to open it.
-- **Purple numbers** next to a section mean something new arrived since you last opened it (new leads, bookings, client messages, leave requests, accepted quotes, feedback, applications). They refresh every 20 seconds.
-- **New-lead sound** (bottom of the sidebar): plays a short ding and shows a browser notification when a new lead arrives while the admin is open, even in a background tab. Turn it on once and allow notifications when the browser asks.
-- **View site** (top right) opens the live website. **Help guide (PDF)** at the bottom of the sidebar opens this guide.
+- **Sidebar:** ten entries, always visible, nothing to open or close: **Dashboard**, then **Leads and clients**, **Sales and accounts**, **HR and team** (your business), **Pages**, **Blog**, **Media**, **Site settings** (your website), and **Team and security**, **Backup and history** (admin).
+- **Cards:** an entry with several screens opens a page of cards. Each card has a name and one line saying what is inside. Click a card to open it. The small link above the title (for example **Site settings ›**) takes you back to the cards.
+- **Dashboard shortcuts:** under **What do you want to change?** are the most common jobs (edit the home page, add a product, change a banner, change the menu), each saying where it lives.
+- **Search** at the top of the sidebar finds any screen or setting by name ("navbar", "footer", "banner") *and* your data: type a name, phone number, company or invoice number to see matching **Leads**, **Clients** and **Quotes / invoices**.
+- **Purple numbers** mean something new arrived since you last opened it (new leads, bookings, client messages, leave requests, accepted quotes, feedback, applications). They refresh every 20 seconds.
+- **New-lead sound** (bottom of the sidebar): plays a short ding and shows a browser notification when a new lead arrives while the admin is open. Turn it on once and allow notifications when the browser asks.
+- **Live · open website** (bottom of the sidebar) and **View site** (top right) open the live website. **Help guide (PDF)** opens this guide.
 - On a phone, use the menu button at the top left to open the sidebar.
 
 ## Saving your changes
 
-Website sections (pages, content and settings) work like a draft until you publish:
+Website screens (pages and site settings) work like a draft until you publish. As soon as you change something, a dark bar appears at the bottom saying how many unsaved changes there are and where:
 
 | Button | What it does |
 |---|---|
-| **Save and publish** | Puts your changes live on the website for everyone. Shows **All saved** when nothing has changed. |
-| **Preview** | Opens the website in a new tab with your unsaved changes. Only you can see it. |
+| **Save and publish** | Puts your changes live on the website for everyone. |
+| **Open preview** | Opens the website in a new tab with your unsaved changes. Only you can see it. |
 | **Discard** | Throws away your unsaved changes. |
+
+**Live preview:** on a wide screen the website shows beside the editor and updates a moment after each change. Switch between computer and phone view at the top of the preview. Close it with the X; **Live preview** in the top bar brings it back. The real website changes only when you save.
 
 - Some sections have their own buttons instead: **Blog posts** (Save / Publish), **Media** (saves on upload), **Certificates** (Save certificate), and most CRM, sales and HR screens (**Save**, **Save settings**).
 - If someone else saved while you were editing, you will see **Not saved** with a **Reload** button. Your changes stay on screen.
-- Made a mistake after saving? **History** keeps the last 40 versions of the website content (see Admin and security).
+- Made a mistake after saving? **History** keeps the last 40 versions of the website content (Backup and history).
 
 ## Pictures and lists
 
@@ -84,9 +88,9 @@ Each person on the team gets a role. The owner can then set each area to **No ac
   - raise support requests
   - renew their maintenance plan
 
-# Overview and CRM {#crm}
+# Dashboard, leads and clients {#crm}
 
-## Overview
+## Dashboard
 
 The first screen after login. It shows shortcut cards for every area you can open, plus key numbers:
 
@@ -378,7 +382,9 @@ Design the internship certificate and see every certificate issued.
 
 > Signature images look best as transparent PNGs.
 
-# Website pages {#pages}
+# Pages {#pages}
+
+*Sidebar → Pages. One card per page: Home, Services, Products, Work, Blog, About, Internship, Careers, Contact, plus City pages and Company profile. Inside a page, the tabs at the top are the parts of that page. The first tab of every inner page is **Banner and heading**.*
 
 ## Home page
 
@@ -418,10 +424,13 @@ The big first block of the home page. A live **Preview** at the top shows your c
 > - The **Keyword line** is part of the main page heading on Google. Put your main search phrase there.
 > - Highlight words must appear exactly in the headline.
 
-## Page headers and Page banners
+## Banner and heading (every inner page)
 
-- **Page headers:** the **Heading** and **Intro text** at the top of About, Services, Products, Work, Contact, Internship, Blog and Careers.
-- **Page banners:** the large image behind each of those headings, plus a fallback cover photo for blog posts that don't have their own.
+Open the page's card (for example **Services page**). The first tab has:
+
+- **Heading and intro:** the big text at the top of the page.
+- **Banner picture:** the large picture behind the heading. Best size 3200×1680.
+- On the **Blog page** only: a fallback photo for posts that don't have their own cover.
 
 ## About and stats
 
@@ -470,7 +479,9 @@ One page per city (for example `/website-development-jaipur`) to show up in loca
 
 > **Write each city page in its own words.** Google ignores pages that only swap the city name. Add only cities where you really work.
 
-# Website content {#content}
+# Content inside the pages {#content}
+
+*These screens are tabs inside their page: Services list inside Services page, Products list inside Products page, Projects inside Work page, and the rest inside Home page.*
 
 ## Services
 
@@ -597,7 +608,7 @@ The library of every uploaded image. The **Library** button on any picture field
 
 # Site settings {#settings}
 
-## Logo and company name
+## Logo and name
 
 **Company name**, **Tagline** (shown in the footer) and **Logo**. The logo is used in the menu, footer, intro, browser tab, admin panel and Company profile PDF.
 
@@ -612,31 +623,54 @@ These details feed:
 - the hero
 - the Company profile PDF
 
-## Colour theme
+## Colours
 
 - Pick a ready-made theme: Lavender (Spinex), Ocean blue, Emerald, Sunset orange, Rose, Teal, Royal gold or Graphite.
 - Or set your own **Main colour** and **Dark colour**. Lighter and darker shades are made automatically.
 - **Back to Spinex lavender** resets the colours.
-- Press **Save and publish** to put the new colours on the website.
 
-## Intro & cursor
+## Fonts and text
 
-**Intro animation:**
+Heading font, text font, weight and spacing, the animation of the home headline and of section headings, the look of highlighted words, and the animation speed. The preview at the top changes at once.
+
+> The **Blur** animation is the heaviest one. If the website feels slow while scrolling, pick **Rise** or **Fade**.
+
+## Buttons
+
+How the buttons on the website look and what they do when the mouse goes over them. Pick any look with any hover and try it in the sample.
+
+## Navbar
+
+How the top menu marks the page you are on, and what happens when the mouse goes over a link. Twelve styles; try them in the sample.
+
+## Footer
+
+Only the owner or an admin can change this. The big word at the bottom of the footer and the products column.
+
+## Floating buttons
+
+Only the owner or an admin can change these.
+
+- **Floating WhatsApp button:** on or off, and the message filled in for the visitor.
+- **Bottom bar on phones:** the slim bar with Call, WhatsApp and Get a quote.
+
+## Intro screen
 
 - Turn it on or off with **Show the intro**.
 - Pick a style: Logo reveal, Loading counter, Big letters, Split doors, Circle burst, Code typing, Stripes or Minimal.
 - Choose when it shows, on which pages, the speed, the text and the colours.
 
-**Between pages:** an animation when moving between pages. Choose None, Fade, Curtain, Colour wipe or Logo flash.
+> If the intro plays on every visit, **Minimal** is the best choice. Visitors who turned on "reduce motion" don't see the intro or the custom cursor.
 
-**Mouse cursor:**
+## Page transitions
+
+An animation when moving between pages. Choose None, Fade, Curtain, Colour wipe or Logo flash.
+
+## Cursor
 
 - Tick **Show the custom cursor on desktop**.
-- Pick a style: Dot and ring, Soft dot, Invert or Glow.
-- Choose the **Cursor colour**.
+- Pick a style and a trail, and choose the **Cursor colour**.
 - The custom cursor never shows on phones or tablets.
-
-> If the intro plays on every visit, **Minimal** is the best choice. Visitors who turned on "reduce motion" don't see the intro or the custom cursor.
 
 ## SEO
 
@@ -648,11 +682,10 @@ These details feed:
 
 > Services, products, projects, city pages and blog posts each have their own Google title and description fields.
 
-## WhatsApp and analytics
+## Analytics and cookies
 
 Only the owner or an admin can change these.
 
-- **Floating WhatsApp button:** on or off, and the message filled in for the visitor.
 - **Cookie banner:** on or off, and its text. While it is on, tracking runs only for visitors who press Accept.
 - **Analytics:**
   - **Google Analytics 4 ID** (starts with G-)
@@ -662,7 +695,9 @@ Only the owner or an admin can change these.
 
   Paste the ID and press **Save and publish**. Leave a field empty to turn that tool off.
 
-# Admin and security {#security}
+# Team, security and backup {#security}
+
+*Sidebar → Team and security (Team and roles, Automation, Activity log, My account) and Backup and history (Backup and restore, History). API keys are in Site settings.*
 
 ## Team and roles (owner only)
 
@@ -747,18 +782,20 @@ Saves or loads the **website content only** (text, images and settings) as `cont
 | Call a new enquiry | **Leads** → open the lead → **Call** |
 | Send a quotation | **Leads** → **Make quotation**, or **Quotes and invoices** → **New quotation** |
 | Mark a payment as received | **Quotes and invoices** → open the invoice → **Payment received** → **Save** |
-| Add a finished website to the portfolio | **Projects** → **Add project** |
-| Publish a blog article | **Blog posts** → **New post** → **Publish** |
-| Change the phone number or email | **Contact details** |
-| Change the logo | **Logo and company name** |
-| Change the top of the home page | **Homepage hero** |
-| Hide a home page section | **Home page** → **Shown/Hidden** |
+| Add a finished website to the portfolio | **Pages → Work page → Projects** → **Add project** |
+| Publish a blog article | **Blog** → **New post** → **Publish** |
+| Change the phone number or email | **Site settings → Contact details** |
+| Change the logo | **Site settings → Logo and name** |
+| Change the top of the home page | **Pages → Home page → Hero** |
+| Hide a home page section | **Pages → Home page** → **Shown/Hidden** |
 | Add a client review | **Client feedback** → **Approve**, or **Testimonials** → **Add testimonial** |
-| Post a job | **Careers (jobs)** → **Add job** |
+| Post a job | **Pages → Careers page → Jobs** → **Add job** |
 | Give a certificate to an intern | **Interns** → set Completed → **Issue certificate** |
 | Run salaries | **Payslips** → **Make payslips** → **Issue and email all** |
 | Give a staff member a login | **Team and roles** → **Add member** |
-| Undo a wrong website change | **History** → **Restore** |
+| Change the top menu, footer or buttons | **Site settings** → **Navbar**, **Footer** or **Buttons** |
+| Change a page banner | **Pages** → open the page → **Banner and heading** |
+| Undo a wrong website change | **Backup and history → History** → **Restore** |
 
 ## If something goes wrong
 
