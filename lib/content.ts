@@ -180,10 +180,19 @@ export type HeroBg = (typeof HERO_BGS)[number];
 export const HERO_SCENES = ["web", "ai", "ecommerce", "saas", "marketing", "social", "app", "video", "design", "promotion"] as const;
 export type HeroScene = (typeof HERO_SCENES)[number];
 export const HERO_SCENES_DEFAULT: HeroScene[] = ["web", "ai", "ecommerce", "saas"];
+// Background pattern drawn under the moving effect (components/home/HeroPattern.tsx).
+export const HERO_PATTERNS = [
+  "none",
+  "dots", "plus", "graph", "topo", "honeycomb", "circuit", "isometric", "diagonal", "radar", "stars", "floor", "grain",
+  "mesh", "beams", "rays", "ribbons", "halftone", "constellation", "tunnel", "holo", "coderain", "flow", "glowgrid", "orbits",
+  "aurora-curtains", "aurora-top", "aurora-grain", "blobs", "orbs", "prism", "bokeh", "aurora-grid", "waves", "swirl", "sunset", "colordots",
+] as const;
+export type HeroPattern = (typeof HERO_PATTERNS)[number];
 export type HeroSettings = {
   kicker: string; title: string; subtitle: string; primaryCta: string; secondaryCta: string;
   design: HeroDesign;
   bg?: HeroBg; // background effect, "dots" when not set
+  pattern?: HeroPattern; // still or slow background under the effect, "none" when not set
   highlight: string; // words of the headline shown in the highlight colour ("" = none)
   primaryLink: string; secondaryLink: string;
   image: string; // split and full-screen designs
@@ -194,7 +203,7 @@ export type HeroSettings = {
   scenes?: HeroScene[]; // up to 4, in this order, for the box on the right (Classic design)
 };
 export const heroDefaults: Omit<HeroSettings, "kicker" | "title" | "subtitle" | "primaryCta" | "secondaryCta"> = {
-  design: "classic", bg: "dots", highlight: "", primaryLink: "/contact", secondaryLink: "/work",
+  design: "classic", bg: "dots", pattern: "none", highlight: "", primaryLink: "/contact", secondaryLink: "/work",
   image: "/images/stock/photo-1522071820081-009f0129c71c.jpg", video: "", overlay: 55, accent: "",
   showStats: true, showLocation: true, showTicker: true, scenes: HERO_SCENES_DEFAULT,
 };

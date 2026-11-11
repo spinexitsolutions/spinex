@@ -40,6 +40,35 @@
 @keyframes hs-type { 50% { transform: translateY(-3px); opacity: 0.4; } }
 @keyframes hs-blink { 50% { opacity: 0.2; } }
 
+/* Slow movement for the hero background patterns (components/home/HeroPattern.tsx). */
+.hp-drift { animation: hp-drift 60s linear infinite; }
+.hp-drift-slow { animation: hp-drift-slow 40s ease-in-out infinite alternate; }
+.hp-twinkle { animation: hp-twinkle 4s ease-in-out infinite; }
+.hp-floor { animation: hp-floor 3s linear infinite; }
+.hp-breathe { animation: hp-breathe 14s ease-in-out infinite alternate; }
+.hp-beam { animation: hp-beam 7s linear infinite; }
+.hp-sway { animation: hp-sway 18s ease-in-out infinite alternate; }
+.hp-shift { animation: hp-shift 16s ease-in-out infinite alternate; }
+.hp-rain { animation: hp-rain 18s linear infinite; }
+.hp-orbit { animation: hp-orbit 40s linear infinite; }
+.hp-float { animation: hp-float 16s ease-in-out infinite alternate; }
+.hp-bob { animation: hp-bob 10s ease-in-out infinite alternate; }
+.hp-spin { animation: hp-spin 40s linear infinite; }
+@keyframes hp-drift { to { background-position: 300px 150px; } }
+@keyframes hp-drift-slow { to { transform: translate(-2%, 2%) scale(1.04); } }
+@keyframes hp-twinkle { 50% { opacity: 0.45; } }
+@keyframes hp-floor { to { background-position: 0 56px, 0 0; } }
+@keyframes hp-breathe { to { transform: scale(1.08) translate(1%, -2%); } }
+@keyframes hp-beam { from { transform: translateY(-140px); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } to { transform: translateY(110vh); opacity: 0; } }
+@keyframes hp-sway { to { transform: translate(2%, -2%) scale(1.03); } }
+@keyframes hp-shift { to { background-position: 100% 100%; } }
+@keyframes hp-rain { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+@keyframes hp-orbit { to { transform: rotate(360deg); } }
+@keyframes hp-float { 50% { transform: translate(4%, 6%) scale(1.06); } to { transform: translate(-3%, 2%) scale(0.96); } }
+@keyframes hp-bob { to { transform: translateY(-22px); } }
+@keyframes hp-spin { to { transform: rotate(360deg); } }
+
 @media (prefers-reduced-motion: reduce) {
+  [class*="hp-"] { animation: none !important; }
   [class*="hs-"], .hs-type i { animation-duration: 0.01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }

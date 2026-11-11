@@ -3,8 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Check, Monitor } from "lucide-react";
 import Hero, { heroSettings } from "../home/Hero";
+import HeroPattern from "../home/HeroPattern";
 import ImageField from "./ImageField";
-import { HERO_BGS, HERO_DESIGNS, HERO_SCENES, heroDefaults, type HeroBg, type HeroDesign, type HeroScene, type HeroSettings } from "@/lib/content";
+import { HERO_BGS, HERO_DESIGNS, HERO_PATTERNS, HERO_SCENES, type HeroPattern as PatternKind, heroDefaults, type HeroBg, type HeroDesign, type HeroScene, type HeroSettings } from "@/lib/content";
+
+const PATTERN_NAMES: Record<PatternKind, string> = {
+  none: "None", dots: "Dots", plus: "Plus marks", graph: "Graph paper", topo: "Topography", honeycomb: "Honeycomb", circuit: "Circuit",
+  isometric: "Isometric", diagonal: "Diagonal lines", radar: "Radar rings", stars: "Sparkle stars", floor: "Retro floor", grain: "Soft grain",
+  mesh: "Mesh gradient", beams: "Light beams", rays: "Spotlight rays", ribbons: "Silk ribbons", halftone: "Halftone fade", constellation: "Constellation",
+  tunnel: "Square tunnel", holo: "Holographic wash", coderain: "Code rain", flow: "Flow lines", glowgrid: "Glowing grid", orbits: "Orbits",
+  "aurora-curtains": "Aurora curtains", "aurora-top": "Aurora top glow", "aurora-grain": "Aurora + grain", blobs: "Liquid blobs", orbs: "Glass orbs",
+  prism: "Prism light", bokeh: "Bokeh", "aurora-grid": "Aurora grid", waves: "Colour waves", swirl: "Swirl", sunset: "Sunset glow", colordots: "Colour dots",
+};
 
 const SCENE_INFO: Record<HeroScene, { name: string; about: string }> = {
   web: { name: "Web development", about: "A website builds itself, a click, speed score 98." },
@@ -85,6 +95,22 @@ export default function HeroEditor({ value, onChange, readOnly }: { value: HeroS
                 className={`rounded-2xl border p-3 text-left transition ${v.bg === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
                 <span className="block text-sm font-semibold">{BGS[id].name}</span>
                 <span className="mt-0.5 block text-[11px] leading-snug text-muted">{BGS[id].about}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-hero-pattern-picker>
+          <p className="font-semibold">Background pattern</p>
+          <p className="mt-0.5 text-sm text-muted">A still or slowly moving background under the moving effect above. Pick one and look at the preview at the top. Shows with the Classic and Centred designs.</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+            {HERO_PATTERNS.map((id) => (
+              <button type="button" key={id} data-hero-pattern-option={id} onClick={() => set({ pattern: id })}
+                className={`overflow-hidden rounded-2xl border text-left transition ${v.pattern === id ? "border-ink ring-2 ring-ink" : "border-line hover:border-ink"}`}>
+                <span className="relative block h-20 overflow-hidden bg-white">
+                  {id === "none" ? <span className="grid h-full place-items-center text-xs text-muted">Plain white</span> : <span className="absolute left-0 top-0 h-[134%] w-[134%] origin-top-left scale-75"><HeroPattern kind={id} /></span>}
+                </span>
+                <span className="block border-t border-line px-2.5 py-1.5 text-xs font-semibold">{PATTERN_NAMES[id]}</span>
               </button>
             ))}
           </div>
