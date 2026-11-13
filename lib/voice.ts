@@ -125,31 +125,59 @@ export function unlockAudio() {
   }
 }
 
-// Human-like voice from the server (Gemini). Returns false when it isn't available, so the browser voice is used.
-async function speakNatural(text: string, lang: VoiceLang, id: number): Promise<boolean> {
-  try {
-    const res = await fetch("/api/chat/speak", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, lang }) });
-    if (res.status !== 200 || id !== speakId) return id !== speakId;
-    const url = URL.createObjectURL(await res.blob());
+// Human-like voice from the server (Gemini). The first sentence is asked for on its own, so it can start playing
+// while the rest is still being made. Returns false when it isn't available, so the browser voice is used.
+function fetchVoice(text: string, lang: VoiceLang): Promise<Blob | null> {
+  return fetch("/api/chat/speak", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, lang }) })
+    .then((r) => (r.status === 200 ? r.blob() : null))
+    .catch(() => null);
+}
+
+function play(blob: Blob): Promise<void> {
+  if (!player) player = new Audio();
+  const p = player;
+  const url = URL.createObjectURL(blob);
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      p.onended = p.onerror = p.onpause = null;
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    p.src = url;
+    p.onended = done;
+    p.onerror = done;
+    p.onpause = done;
+    p.play().catch(done);
+  });
+}
+
+function chunks(text: string): string[] {
+  const parts = (text.replace(/\s+/g, " ").match(/[^.!?।]+[.!?।]*/g) ?? [text]).map((x) => x.trim()).filter(Boolean);
+  if (parts.length <= 1) return parts;
+  // A very short first sentence ("Haan ji.") is joined with the next one so it doesn't sound cut off.
+  let i = 1;
+  let first = parts[0];
+  while (first.length < 25 && i < parts.length) first += " " + parts[i++];
+  const rest = parts.slice(i).join(" ");
+  return rest ? [first, rest] : [first];
+}
+
+async function speakNatural(text: string, lang: VoiceLang, id: number, gender: "female" | "male"): Promise<boolean> {
+  const list = chunks(text);
+  if (!list.length) return true;
+  const pending = list.map((t) => fetchVoice(t, lang));
+  const first = await pending[0];
+  if (id !== speakId) return true;
+  if (!first) return false;
+  await play(first);
+  for (let i = 1; i < list.length; i++) {
     if (id !== speakId) return true;
-    if (!player) player = new Audio();
-    const p = player;
-    await new Promise<void>((resolve) => {
-      const done = () => {
-        p.onended = p.onerror = p.onpause = null;
-        resolve();
-      };
-      p.src = url;
-      p.onended = done;
-      p.onerror = done;
-      p.onpause = done;
-      p.play().catch(done);
-    });
-    URL.revokeObjectURL(url);
-    return true;
-  } catch {
-    return false;
+    const blob = await pending[i];
+    if (id !== speakId) return true;
+    if (blob) await play(blob);
+    else await speakBrowser(list[i], lang, gender, id);
   }
+  return true;
 }
 
 // Speaks the text: the natural voice when it's set up, otherwise the device's voice sentence by sentence
@@ -158,8 +186,13 @@ export async function speak(text: string, lang: VoiceLang, gender: "female" | "m
   if (typeof window === "undefined") return;
   const id = ++speakId;
   if ("speechSynthesis" in window) speechSynthesis.cancel();
-  if (engine === "natural" && (await speakNatural(text, lang, id))) return;
-  if (id !== speakId || !("speechSynthesis" in window)) return;
+  if (engine === "natural" && (await speakNatural(text, lang, id, gender))) return;
+  if (id !== speakId) return;
+  await speakBrowser(text, lang, gender, id);
+}
+
+async function speakBrowser(text: string, lang: VoiceLang, gender: "female" | "male", id: number): Promise<void> {
+  if (!("speechSynthesis" in window)) return;
   const voice = await pickVoice(lang, gender);
   const parts = text.replace(/\s+/g, " ").match(/[^.!?।]+[.!?।]*/g) ?? [text];
   for (const part of parts) {

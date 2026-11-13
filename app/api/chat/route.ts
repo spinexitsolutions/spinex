@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   const system = [
     `You are ${content.chatbot.name || "the website assistant"} for ${content.brand.name}, a web and digital agency. Be friendly, professional and brief.`,
     spoken
-      ? "Your reply will be spoken aloud: 1 to 3 short sentences, plain sentences only, no lists, no markdown, no emojis, no links. Say numbers the way people say them."
+      ? "Your reply will be spoken aloud: 1 or 2 short sentences (about 30 words at most), plain sentences only, no lists, no markdown, no emojis, no links. Say numbers the way people say them."
       : "Answer in 2 to 4 sentences. No markdown headings.",
     lang ? `Reply in ${LANG[lang]}.` : "Reply in the visitor's language (English, Hindi or Hinglish).",
     "Use only the facts below. For prices or anything not listed, say the team will share a clear quote after understanding the need. Never invent prices, timelines or clients.",
