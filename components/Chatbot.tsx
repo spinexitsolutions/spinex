@@ -135,15 +135,21 @@ export default function Chatbot() {
       setHeard("");
       setPhase("listening");
       let said = "";
-      try {
-        said = await listen(vlang, setHeard);
-      } catch (e) {
+      // Phones often stop listening after a short pause or before the visitor starts talking;
+      // keep listening (up to 4 tries) instead of switching off.
+      for (let tries = 0; tries < 4 && !said; tries++) {
+        try {
+          said = await listen(vlang, setHeard);
+        } catch (e) {
+          if (run.current !== id) return;
+          const why = (e as Error).message;
+          if (why === "error" && tries < 3) continue;
+          setMicNote(MIC_HELP[why] ?? MIC_HELP.error);
+          setPhase("idle");
+          return;
+        }
         if (run.current !== id) return;
-        setMicNote(MIC_HELP[(e as Error).message] ?? MIC_HELP.error);
-        setPhase("idle");
-        return;
       }
-      if (run.current !== id) return;
       if (!said) {
         setPhase("idle");
         return;
@@ -405,15 +411,20 @@ function LeadCard({ lead, msgs, startedAt, done, onChange, onSent, onClose, dark
   const [err, setErr] = useState("");
   const [cfToken, setCfToken] = useState("");
   const set = (k: keyof Lead) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...lead, [k]: e.target.value });
+  // "neha at the rate gmail dot com" → neha@gmail.com, and "98290 12345" → 9829012345, when the field is left.
+  const tidy = (k: "email" | "phone") => () => onChange({ ...lead, [k]: k === "email" ? tidyEmail(lead.email) : tidyPhone(lead.phone) });
 
   async function sendLead() {
     setErr("");
     if (!lead.name.trim()) return setErr("Please add your name.");
-    if (!checkPhone(lead.phone).ok) return setErr("Please check the mobile number.");
-    if (!isEmail(lead.email)) return setErr("Please check the email address.");
+    const phone = tidyPhone(lead.phone);
+    const email = tidyEmail(lead.email);
+    if (phone !== lead.phone || email !== lead.email) onChange({ ...lead, phone, email });
+    if (!checkPhone(phone).ok) return setErr("Please check the mobile number (10 digits).");
+    if (!isEmail(email)) return setErr("Please check the email address.");
     setBusy(true);
     const talk = msgs.slice(-12).map((m) => `${m.role === "user" ? "Visitor" : "Assistant"}: ${m.content}`).join("\n");
-    const r = await submitLead({ name: lead.name, phone: lead.phone, email: lead.email, services: lead.needs, message: `From the AI assistant on the website.\n\n${talk}`.slice(0, 1900), source: "assistant", startedAt: String(startedAt), cfToken, website: "" });
+    const r = await submitLead({ name: lead.name, phone, email, services: lead.needs, message: `From the AI assistant on the website.\n\n${talk}`.slice(0, 1900), source: "assistant", startedAt: String(startedAt), cfToken, website: "" });
     setBusy(false);
     if (r.ok) onSent();
     else setErr(r.error || "Couldn't send. Please try again or use WhatsApp.");
@@ -430,8 +441,8 @@ function LeadCard({ lead, msgs, startedAt, done, onChange, onSent, onClose, dark
           <p className="text-xs text-muted">We&apos;ll send these to the Spinex team so they can contact you.</p>
           <div className="mt-2.5 grid gap-2">
             <label className="text-xs text-muted">Name<input className={box} value={lead.name} onChange={set("name")} autoComplete="name" /></label>
-            <label className="text-xs text-muted">Mobile number<input className={box} value={lead.phone} onChange={set("phone")} inputMode="tel" autoComplete="tel" /></label>
-            <label className="text-xs text-muted">Email<input className={box} value={lead.email} onChange={set("email")} inputMode="email" autoComplete="email" /></label>
+            <label className="text-xs text-muted">Mobile number<input className={box} type="tel" value={lead.phone} onChange={set("phone")} onBlur={tidy("phone")} inputMode="tel" autoComplete="tel" maxLength={16} /></label>
+            <label className="text-xs text-muted">Email<input className={box} type="email" value={lead.email} onChange={set("email")} onBlur={tidy("email")} inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} /></label>
             <label className="text-xs text-muted">What you need<input className={box} value={lead.needs} onChange={set("needs")} /></label>
           </div>
           <HumanCheck onToken={setCfToken} />
@@ -445,3 +456,10 @@ function LeadCard({ lead, msgs, startedAt, done, onChange, onSent, onClose, dark
     </div>
   );
 }
+
+function tidyEmail(v: string) {
+  let e = v.trim().toLowerCase();
+  if (!e.includes("@")) e = e.replace(/\s*(at the rate of|at the rate|at sign|attherate|at)\s+/, "@");
+  return e.replace(/\s*(dot|point)\s*/g, ".").replace(/\s+/g, "").replace(/\.+/g, ".");
+}
+const tidyPhone = (v: string) => v.trim().replace(/(?!^\+)[^\d]/g, "");

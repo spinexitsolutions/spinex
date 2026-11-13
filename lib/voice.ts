@@ -115,8 +115,11 @@ async function pickVoice(lang: VoiceLang, gender: "female" | "male") {
   for (const code of want) {
     const same = all.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(code.toLowerCase()));
     if (!same.length) continue;
+    // Online "natural"/"neural" voices (Edge, Chrome, newer phones) sound far more human than the basic ones.
+    const quality = (v: SpeechSynthesisVoice) => (/natural|neural|online|enhanced|premium|wavenet/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 2 : 0) + (!v.localService ? 1 : 0);
     const g = same.filter((v) => (gender === "female" ? FEMALE.test(v.name) && !MALE.test(v.name) : MALE.test(v.name)));
-    return (g[0] ?? same.find((v) => v.localService) ?? same[0]) || null;
+    const pool = (g.length ? g : same).slice().sort((a, b) => quality(b) - quality(a));
+    return pool[0] ?? null;
   }
   return null;
 }
@@ -227,8 +230,9 @@ async function speakBrowser(text: string, lang: VoiceLang, gender: "female" | "m
       const u = new SpeechSynthesisUtterance(t);
       if (voice) u.voice = voice;
       u.lang = voice?.lang ?? (lang === "hi" ? "hi-IN" : "en-IN");
-      u.rate = 1;
-      u.pitch = 1;
+      // A touch faster and brighter than default, so it sounds lively rather than flat.
+      u.rate = 1.05;
+      u.pitch = 1.08;
       u.onend = () => resolve();
       u.onerror = () => resolve();
       speechSynthesis.speak(u);

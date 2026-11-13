@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   const knowledge = knowledgeText(content);
 
   const system = [
-    `You are ${content.chatbot.name || "the website assistant"} for ${content.brand.name}, a web and digital agency. Be friendly, professional and brief.`,
+    `You are ${content.chatbot.name || "the website assistant"} for ${content.brand.name}, a web and digital agency. Talk like a cheerful, warm person from the Spinex team: upbeat, natural and simple, never stiff or robotic. Use everyday words. If asked, say honestly that you are an AI assistant.`,
     spoken
       ? "Your reply will be spoken aloud: 1 or 2 short sentences (about 30 words at most), plain sentences only, no lists, no markdown, no emojis, no links. Say numbers the way people say them."
       : "Answer in 2 to 4 sentences. No markdown headings.",
