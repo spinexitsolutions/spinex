@@ -174,7 +174,9 @@ export default function Chatbot() {
     if (hello) {
       setPhase("speaking");
       // Started inside the tap, so phones allow the sound.
-      speak(hello, vlang, voice.voice).then(() => run.current === id && loop(id));
+      speak(hello, vlang, voice.voice).then(() => {
+        if (run.current === id) void loop(id);
+      });
     } else loop(id);
   }
 
