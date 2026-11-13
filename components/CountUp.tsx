@@ -17,9 +17,11 @@ function parse(value: string) {
 }
 
 // Counts a stat like "120+" or "4.9" up from 0 when it scrolls into view; text without a number shows as is.
+// The in-view margin is top/bottom only: a side margin would never "see" a short number near the
+// screen edge on phones (it stayed at 0).
 export default function CountUp({ value }: { value: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, margin: "-60px 0px" });
   const [shown, setShown] = useState(() => parse(value)?.format(0) ?? value);
 
   useEffect(() => {

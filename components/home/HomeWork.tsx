@@ -239,7 +239,7 @@ export function Big({ p, wide, flip = false }: { p: Project; wide: boolean; flip
     <motion.article
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "-60px 0px" }}
       transition={{ duration: 0.7, ease }}
       className={`group relative col-span-2 grid overflow-hidden rounded-[24px] bg-ink text-white sm:rounded-[30px] ${flip ? "lg:grid-cols-[1.35fr_1fr]" : "lg:grid-cols-[1fr_1.35fr]"} ${wide ? "lg:col-span-3" : ""}`}
       data-work-big
@@ -272,7 +272,7 @@ export function Small({ p, i }: { p: Project; i: number }) {
     <motion.article
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, margin: "-40px 0px" }}
       transition={{ duration: 0.6, ease, delay: (i % 3) * 0.06 }}
       className="group flex flex-col overflow-hidden rounded-[18px] border border-line bg-[#f4f2fb] sm:rounded-[26px]"
     >
@@ -357,7 +357,7 @@ function YourTurn({ wide }: { wide: boolean }) {
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, margin: "-40px 0px" }}
       transition={{ duration: 0.6, ease }}
       className={`relative col-span-2 flex flex-col overflow-hidden rounded-[18px] bg-ink p-6 text-white sm:rounded-[26px] sm:p-8 lg:col-span-1 ${wide ? "lg:col-span-3 lg:flex-row lg:items-center lg:justify-between lg:gap-10" : ""}`}
     >

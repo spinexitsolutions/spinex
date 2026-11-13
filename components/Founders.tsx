@@ -71,7 +71,7 @@ function Person({ p, i }: { p: Founder; i: number }) {
     <motion.article
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "-60px 0px" }}
       transition={{ duration: 0.8, ease, delay: i * 0.1 }}
       className="[perspective:1000px]"
     >

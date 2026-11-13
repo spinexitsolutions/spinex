@@ -75,7 +75,7 @@ export function ContactMain({ booking }: { booking: Booking }) {
             </div>
           </div>
 
-          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease }}>
+          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px 0px" }} transition={{ duration: 0.7, ease }}>
             <ContactForm className="h-full border-0 sm:p-8" tall />
           </motion.div>
         </div>

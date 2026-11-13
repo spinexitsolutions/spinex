@@ -83,7 +83,7 @@ function Cell({ ind, i, hidden }: { ind: Industry; i: number; hidden: boolean })
     <motion.div
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, margin: "-40px 0px" }}
       transition={{ duration: 0.6, ease, delay: (i % 4) * 0.06 }}
       className={`${hidden ? "hidden lg:block" : ""} bg-ink`}
     >

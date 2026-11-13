@@ -36,7 +36,7 @@ function Tile({ children, className = "", dark, accent }: { children: React.Reac
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "-60px 0px" }}
       transition={{ duration: 0.7, ease }}
       className={`relative overflow-hidden rounded-[28px] p-6 sm:p-7 ${dark ? "bg-ink text-white" : accent ? "bg-lav-600 text-white" : "border border-line bg-mist"} ${className}`}
     >
@@ -98,7 +98,7 @@ function DevicePreview() {
 
 function SpeedTest() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, margin: "-60px 0px" });
   const [score, setScore] = useState(0);
   const [run, setRun] = useState(0);
 
@@ -188,7 +188,7 @@ const seoItems = ["Page titles and meta tags", "Fast mobile loading", "Google Bu
 
 function SeoChecklist() {
   const ref = useRef<HTMLUListElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, margin: "-60px 0px" });
   return (
     <div>
       <h3 className="font-display text-xl font-semibold tracking-tight">Ready for Google</h3>

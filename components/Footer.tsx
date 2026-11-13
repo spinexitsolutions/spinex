@@ -132,7 +132,7 @@ function Wordmark({ text, animate }: { text: string; animate: boolean }) {
         style={{ fontSize: `clamp(34px, ${Math.min(9, 62 / letters.length)}vw, 110px)` }}
         initial={still ? false : "hidden"}
         whileInView="show"
-        viewport={{ once: true, margin: "-40px" }}
+        viewport={{ once: true, margin: "-40px 0px" }}
       >
         {letters.map((ch, i) => (
           <motion.span

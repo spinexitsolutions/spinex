@@ -14,7 +14,7 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
       className={className}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, margin: "-80px 0px" }}
       transition={{ duration: 0.8, delay, ease }}
     >
       {children}
@@ -27,7 +27,7 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
 export function SplitHeading({ text, className = "", as = "h2", id, markClass = "bg-gradient-to-r from-[#b9acf5] to-[#f0abfc] bg-clip-text text-transparent" }: { text: string; className?: string; as?: "h1" | "h2"; id?: string; markClass?: string }) {
   const Tag = as;
   const ref = useRef<HTMLHeadingElement>(null);
-  const seen = useInView(ref, { once: true, margin: "-60px" });
+  const seen = useInView(ref, { once: true, margin: "-60px 0px" });
   const t = typeSettings(useContentMaybe()?.content.typography);
   const words = text.split("*").flatMap((part, pi) => part.split(" ").filter(Boolean).map((w) => ({ w, on: pi % 2 === 1 })));
   return (

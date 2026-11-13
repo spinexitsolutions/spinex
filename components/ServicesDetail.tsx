@@ -104,7 +104,7 @@ function Card({ s, wide, span, delay }: { s: Service; wide: boolean; span: strin
       id={s.id}
       initial={{ opacity: 0, y: 26 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "-60px 0px" }}
       transition={{ duration: 0.7, ease, delay }}
       className={`group flex scroll-mt-28 flex-col rounded-[28px] border border-line bg-white p-3 transition hover:border-lav-300 hover:shadow-[0_24px_60px_-30px_rgba(87,69,181,0.45)] ${span}`}
     >

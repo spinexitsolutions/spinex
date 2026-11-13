@@ -67,7 +67,7 @@ export default function Testimonials() {
                 data-card
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
+                viewport={{ once: true, margin: "-40px 0px" }}
                 transition={{ duration: 0.6, delay: Math.min(i, 3) * 0.08, ease }}
                 className="w-[85%] shrink-0 snap-start sm:w-[60%] lg:w-[calc((100%-48px)/3)]"
               >

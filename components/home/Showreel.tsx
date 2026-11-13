@@ -92,7 +92,7 @@ function ShowreelInner() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
+          viewport={{ once: true, margin: "-60px 0px" }}
           transition={{ duration: 0.8, ease }}
           className={`relative mx-auto mt-8 rounded-[30px] bg-gradient-to-br from-[#b9acf5]/60 via-white/[0.06] to-[#f0abfc]/45 p-[7px] shadow-[0_60px_120px_-40px_rgba(110,89,217,0.6)] sm:mt-14 sm:rounded-[34px] sm:p-[10px] ${usePhone ? "w-[min(300px,82vw)]" : "max-w-[1040px]"}`}
         >

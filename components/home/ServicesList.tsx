@@ -45,7 +45,7 @@ function Card({ s, i }: { s: Service; i: number }) {
     <motion.li
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, margin: "-40px 0px" }}
       transition={{ duration: 0.6, ease, delay: (i % 5) * 0.05 }}
       className={`overflow-hidden rounded-[18px] border sm:rounded-[24px] ${hot ? "border-lav-300/45 bg-[linear-gradient(180deg,rgba(110,89,217,0.16),rgba(255,255,255,0.03))]" : "border-white/10 bg-white/[0.035]"}`}
     >

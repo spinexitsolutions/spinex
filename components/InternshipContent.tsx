@@ -177,7 +177,7 @@ export default function InternshipContent() {
                     key={r.id}
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-60px" }}
+                    viewport={{ once: true, margin: "-60px 0px" }}
                     transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease }}
                     className={`group flex flex-col rounded-[24px] border p-6 transition-colors ${chosen ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink"}`}
                   >
