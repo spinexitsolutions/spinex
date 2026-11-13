@@ -452,10 +452,29 @@ export type SiteContent = {
     linkedin: string;
     youtube: string;
   };
-  chatbot: { name: string; greeting: string; faqs: Faq[] };
+  chatbot: { name: string; greeting: string; faqs: Faq[]; voice?: VoiceSettings };
   cities: CityPage[];
   profile: CompanyProfile;
 };
+
+// Voice for the website assistant (Admin → Chatbot → Voice assistant). Speech is heard and spoken by the visitor's browser.
+export type VoiceSettings = {
+  enabled: boolean;
+  lang: "en" | "hi" | "hinglish"; // the language it starts in; the visitor can switch
+  voice: "female" | "male"; // preferred browser voice (best effort: phones offer what they have)
+  greeting: string; // spoken when voice mode opens
+  notes: string; // extra things the AI should know or follow
+  askAfter: number; // ask for name, phone and email after this many questions (0 = only when the visitor wants a quote)
+};
+export const defaultVoice: VoiceSettings = {
+  enabled: true,
+  lang: "hinglish",
+  voice: "female",
+  greeting: "Namaste! Main Spinex AI hoon. Website, online store, SEO ya ads ke baare me kuch bhi poochiye.",
+  notes: "",
+  askAfter: 2,
+};
+export const voiceSettings = (c: SiteContent): VoiceSettings => ({ ...defaultVoice, ...(c.chatbot.voice ?? {}) });
 
 // Stock photos live in public/images/stock (run `npm run offline-images` once to download them).
 const img = (id: string, _w = 1400) => `/images/stock/${id}.jpg`;
@@ -951,6 +970,7 @@ const baseContent: SiteContent = {
     },
   ],
   chatbot: {
+    voice: defaultVoice,
     name: "Spinex Assistant",
     greeting:
       "Hi! I can tell you about our services, timelines and how to get started. What are you looking to build?",

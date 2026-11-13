@@ -1,0 +1,59 @@
+import { getSecret } from "./secrets";
+
+export type ChatMsg = { role: "user" | "assistant"; content: string };
+export type AiResult = { ok: true; reply: string; provider: "gemini" | "anthropic"; model: string } | { ok: false; error: "not_configured" | "upstream" | "rejected"; status?: number; provider?: string };
+
+export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+export const DEFAULT_CLAUDE_MODEL = "claude-haiku-4-5-20251001";
+
+// Which AI answers the website chat: Google Gemini when its (free) key is set, otherwise Claude when that key is set.
+export async function chatProvider() {
+  const gemini = await getSecret("GEMINI_API_KEY");
+  if (gemini) return { provider: "gemini" as const, key: gemini, model: (await getSecret("GEMINI_MODEL")) || DEFAULT_GEMINI_MODEL };
+  const claude = await getSecret("ANTHROPIC_API_KEY");
+  if (claude) return { provider: "anthropic" as const, key: claude, model: (await getSecret("CHAT_MODEL")) || DEFAULT_CLAUDE_MODEL };
+  return null;
+}
+
+// One answer from the configured AI. `history` must start with a visitor message.
+export async function askAi(system: string, history: ChatMsg[], maxTokens = 500): Promise<AiResult> {
+  const p = await chatProvider();
+  if (!p) return { ok: false, error: "not_configured" };
+  try {
+    if (p.provider === "gemini") {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(p.model)}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": p.key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: history.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+          generationConfig: {
+            maxOutputTokens: maxTokens,
+            temperature: 0.6,
+            // 2.5 models "think" before answering by default; a chat reply doesn't need it and it would eat the token budget.
+            ...(/^gemini-2\.5/.test(p.model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.status === 400 || res.status === 401 || res.status === 403) return { ok: false, error: "rejected", status: res.status, provider: "gemini" };
+      if (!res.ok) return { ok: false, error: "upstream", status: res.status, provider: "gemini" };
+      const data = await res.json().catch(() => ({}));
+      const reply = (data.candidates?.[0]?.content?.parts ?? []).map((x: { text?: string }) => x.text ?? "").join("").trim();
+      return reply ? { ok: true, reply, provider: "gemini", model: p.model } : { ok: false, error: "upstream", provider: "gemini" };
+    }
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": p.key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: p.model, max_tokens: maxTokens, system, messages: history }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (res.status === 401 || res.status === 403) return { ok: false, error: "rejected", status: res.status, provider: "anthropic" };
+    if (!res.ok) return { ok: false, error: "upstream", status: res.status, provider: "anthropic" };
+    const data = await res.json().catch(() => ({}));
+    const reply = (data.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n").trim();
+    return reply ? { ok: true, reply, provider: "anthropic", model: p.model } : { ok: false, error: "upstream", provider: "anthropic" };
+  } catch {
+    return { ok: false, error: "upstream", provider: p.provider };
+  }
+}

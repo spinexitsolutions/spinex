@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { guard, jsonBody } from "@/lib/admin-guard";
-import { getSecret } from "@/lib/secrets";
+import { askAi, chatProvider } from "@/lib/ai-chat";
 import { lastEmailError, notifyAdmin, smtpSettings } from "@/lib/notify";
 import { sendLeadWebhook } from "@/lib/webhook";
 import { leadAlertText, sendWhatsAppAlert } from "@/lib/whatsapp-alert";
@@ -19,22 +19,13 @@ export async function POST(req: Request) {
   }
 
   if (kind === "chat") {
-    const key = await getSecret("ANTHROPIC_API_KEY");
-    if (!key) return NextResponse.json({ ok: false, message: "Add the Anthropic API key first, then save." });
-    const model = (await getSecret("CHAT_MODEL")) || "claude-haiku-4-5-20251001";
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model, max_tokens: 30, messages: [{ role: "user", content: "Reply with: Chatbot is working." }] }),
-        signal: AbortSignal.timeout(15000),
-      });
-      if (res.status === 401) return NextResponse.json({ ok: false, message: "The API key was rejected. Check it and save again." });
-      if (!res.ok) return NextResponse.json({ ok: false, message: `Anthropic replied with ${res.status}. Check the model name and your credits.` });
-      return NextResponse.json({ ok: true, message: `Working (model ${model}).` });
-    } catch {
-      return NextResponse.json({ ok: false, message: "Couldn't reach Anthropic. Try again in a minute." });
-    }
+    const p = await chatProvider();
+    if (!p) return NextResponse.json({ ok: false, message: "Add the Gemini (free) or Anthropic API key first, then save." });
+    const r = await askAi("Reply with exactly: Chatbot is working.", [{ role: "user", content: "Test" }], 30);
+    const name = p.provider === "gemini" ? "Google Gemini" : "Anthropic";
+    if (r.ok) return NextResponse.json({ ok: true, message: `Working: ${name}, model ${r.model}.` });
+    if (r.error === "rejected") return NextResponse.json({ ok: false, message: `${name} rejected the request (${r.status}). Check the API key and the model name, then save again.` });
+    return NextResponse.json({ ok: false, message: `${name} didn't answer${r.status ? ` (${r.status})` : ""}. ${r.status === 429 ? "The free daily limit may be used up; try again later." : "Check the model name, or try again in a minute."}` });
   }
 
   if (kind === "webhook") {

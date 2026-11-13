@@ -11,7 +11,7 @@ import type { LucideIcon } from "lucide-react";
 import { useContent } from "../ContentProvider";
 import { INDUSTRY_ICONS } from "@/lib/industry-icons";
 import { SERVICE_ANIMS } from "@/lib/service-anims";
-import { FAQ_HELP, defaultContent, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type ProcessExtras, type SiteContent } from "@/lib/content";
+import { FAQ_HELP, defaultContent, defaultMobileBar, defaultProcessExtras, mergeContent, LATER_SERVICES, PROJECT_DISPLAYS, type MobileBar, type ProcessExtras, type SiteContent, voiceSettings } from "@/lib/content";
 import { ListEditor, ObjectEditor, uid } from "./fields";
 import InternsManager from "./InternsManager";
 import LeadsManager from "./LeadsManager";
@@ -1313,6 +1313,20 @@ function AdminShell() {
                   <ObjectEditor value={draft.chatbot} onChange={(v) => set("chatbot", v)} fields={[
                     { key: "name", label: "Name" }, { key: "greeting", label: "First message", type: "textarea" },
                   ]} />
+                </Card>
+                <Card title="Voice assistant" note="Visitors can talk to the assistant: a mic in the chat box and a “Talk” button for full voice mode. The browser listens and speaks (free); answers come from the AI key in API keys (Gemini is free). Without a key it answers from the questions below.">
+                  <label className="mb-5 flex items-center gap-3">
+                    <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={voiceSettings(draft).enabled} onChange={(e) => set("chatbot", { ...draft.chatbot, voice: { ...voiceSettings(draft), enabled: e.target.checked } })} data-voice-enabled />
+                    <span className="font-medium">Voice on the website</span>
+                  </label>
+                  <ObjectEditor value={voiceSettings(draft)} onChange={(v) => set("chatbot", { ...draft.chatbot, voice: { ...v, askAfter: Number(v.askAfter) || 0 } })} fields={[
+                    { key: "lang", label: "Starting language", type: "select", options: [{ value: "hinglish", label: "Hinglish" }, { value: "hi", label: "Hindi" }, { value: "en", label: "English" }], hint: "Visitors can switch it in voice mode" },
+                    { key: "voice", label: "Voice", type: "select", options: [{ value: "female", label: "Female" }, { value: "male", label: "Male" }], hint: "Uses the best matching voice on the visitor's phone or computer" },
+                    { key: "greeting", label: "First thing it says", type: "textarea" },
+                    { key: "notes", label: "What the AI should know or follow", type: "textarea", hint: "Besides your services, products and the questions below. E.g. never promise a fixed price; offer a free call" },
+                    { key: "askAfter", label: "Ask for name, phone and email", type: "select", options: [{ value: "1", label: "After 1 question" }, { value: "2", label: "After 2 questions" }, { value: "3", label: "After 3 questions" }, { value: "0", label: "Only when they want a quote" }] },
+                  ]} />
+                  <p className="mt-4 text-sm text-muted">The details it collects are shown to the visitor to check, then saved in Leads as “AI assistant (website chat)”. The same works in the text chat.</p>
                 </Card>
                 <Card title="Questions and answers" note="The chatbot matches visitor messages to these keywords. Add Hindi and Hinglish words too (kitna, kab, banwana).">
                   <ListEditor items={draft.chatbot.faqs} titleKey="q" addLabel="Add question"

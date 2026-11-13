@@ -74,12 +74,14 @@ export const KEY_GROUPS: KeyGroup[] = [
   },
   {
     id: "chat",
-    title: "AI chatbot (Claude)",
-    note: "With a key the chatbot writes its own answers from your site content. Without it, it answers from the FAQ list in Admin → Chatbot.",
+    title: "AI chatbot and voice assistant",
+    note: "With a key the chatbot and the voice assistant write their own answers from your site content. Gemini has a free tier: sign in at aistudio.google.com, click “Get API key” and paste it here. When both keys are set, Gemini is used. Without any key, the chatbot answers from the FAQ list in Admin → Chatbot.",
     test: "chat",
     keys: [
-      { name: "ANTHROPIC_API_KEY", label: "Anthropic API key", secret: true, hint: "from console.anthropic.com" },
-      { name: "CHAT_MODEL", label: "Model", placeholder: "claude-haiku-4-5-20251001", hint: "leave empty for the default" },
+      { name: "GEMINI_API_KEY", label: "Google Gemini API key (free)", secret: true, hint: "from aistudio.google.com" },
+      { name: "GEMINI_MODEL", label: "Gemini model", placeholder: "gemini-2.5-flash", hint: "leave empty for the default" },
+      { name: "ANTHROPIC_API_KEY", label: "Anthropic API key (paid, optional)", secret: true, hint: "from console.anthropic.com" },
+      { name: "CHAT_MODEL", label: "Claude model", placeholder: "claude-haiku-4-5-20251001", hint: "leave empty for the default" },
     ],
   },
   {

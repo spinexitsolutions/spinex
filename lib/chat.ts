@@ -67,6 +67,7 @@ export function knowledgeText(c: SiteContent): string {
   return [
     `Company: ${c.brand.name}, ${c.contact.location}. ${c.about.body}`,
     `Services:\n${c.services.map((s) => `- ${s.title}: ${s.description}`).join("\n")}`,
+    ...(c.products.some((p) => p.name) ? [`Software products:\n${c.products.filter((p) => p.name).map((p) => `- ${p.name}: ${p.tagline || p.description}${p.price ? ` Price: ${p.price}.` : ""}`).join("\n")}`] : []),
     `FAQs:\n${c.chatbot.faqs.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n")}`,
     `Contact: phone/WhatsApp +91 ${c.contact.phone}, email ${c.contact.email}.`,
   ].join("\n\n");

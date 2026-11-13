@@ -16,7 +16,7 @@ export const leadStatusLabel: Record<LeadStatus, string> = {
 // Where an enquiry came in. The website forms set the first ones; the team picks one of MANUAL_SOURCES
 // when adding a lead by hand (a phone call, a WhatsApp message, a walk-in…).
 export const LEAD_SOURCES = {
-  contact: "Contact page", home: "Home page", planner: "Project planner", product: "Product demo request", city: "City page",
+  contact: "Contact page", home: "Home page", planner: "Project planner", product: "Product demo request", city: "City page", assistant: "AI assistant (website chat)",
   meta: "Meta lead ad (Facebook / Instagram)", google: "Google Ads lead form", booking: "Call booking",
   call: "Phone call", whatsapp: "WhatsApp", instagram: "Instagram DM", facebook: "Facebook", referral: "Referral", walkin: "Walk-in", other: "Other",
 } as const;
