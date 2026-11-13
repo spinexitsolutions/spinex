@@ -1,7 +1,7 @@
 import { getSecret } from "./secrets";
 
 export type ChatMsg = { role: "user" | "assistant"; content: string };
-export type AiResult = { ok: true; reply: string; provider: "gemini" | "anthropic"; model: string } | { ok: false; error: "not_configured" | "upstream" | "rejected"; status?: number; provider?: string };
+export type AiResult = { ok: true; reply: string; provider: "gemini" | "anthropic"; model: string } | { ok: false; error: "not_configured" | "upstream" | "rejected"; status?: number; provider?: string; detail?: string };
 
 export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 export const DEFAULT_CLAUDE_MODEL = "claude-haiku-4-5-20251001";
@@ -60,7 +60,7 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
               ...(/^gemini-2\.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
             },
           }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(20000),
         });
       let model = geminiFallback && p.model === DEFAULT_GEMINI_MODEL ? geminiFallback : p.model;
       let res = await call(model);
@@ -71,11 +71,15 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
           res = await call(model);
         }
       }
-      if (res.status === 400 || res.status === 401 || res.status === 403) return { ok: false, error: "rejected", status: res.status, provider: "gemini" };
-      if (!res.ok) return { ok: false, error: "upstream", status: res.status, provider: "gemini" };
+      // What Google said, for the Test button in Admin → API keys (never shown to visitors).
+      const why = async () => `model ${model}: ${String((await res.clone().json().catch(() => ({})))?.error?.message ?? "").slice(0, 200)}`;
+      if (res.status === 400 || res.status === 401 || res.status === 403) return { ok: false, error: "rejected", status: res.status, provider: "gemini", detail: await why() };
+      if (!res.ok) return { ok: false, error: "upstream", status: res.status, provider: "gemini", detail: await why() };
       const data = await res.json().catch(() => ({}));
       const reply = (data.candidates?.[0]?.content?.parts ?? []).filter((x: { thought?: boolean }) => !x.thought).map((x: { text?: string }) => x.text ?? "").join("").trim();
-      return reply ? { ok: true, reply, provider: "gemini", model } : { ok: false, error: "upstream", provider: "gemini" };
+      return reply
+        ? { ok: true, reply, provider: "gemini", model }
+        : { ok: false, error: "upstream", provider: "gemini", detail: `model ${model}: empty answer (${data.candidates?.[0]?.finishReason ?? data.promptFeedback?.blockReason ?? "no reason given"})` };
     }
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -88,7 +92,7 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
     const data = await res.json().catch(() => ({}));
     const reply = (data.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n").trim();
     return reply ? { ok: true, reply, provider: "anthropic", model: p.model } : { ok: false, error: "upstream", provider: "anthropic" };
-  } catch {
-    return { ok: false, error: "upstream", provider: p.provider };
+  } catch (e) {
+    return { ok: false, error: "upstream", provider: p.provider, detail: (e as Error)?.name === "TimeoutError" ? "no answer within 15 seconds" : String((e as Error)?.message ?? e).slice(0, 200) };
   }
 }
