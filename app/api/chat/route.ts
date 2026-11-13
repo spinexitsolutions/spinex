@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { askAi } from "@/lib/ai-chat";
 import { voiceSettings } from "@/lib/content";
+import { checkPhone, isEmail } from "@/lib/phone";
 import { getContent } from "@/lib/content-server";
 import { knowledgeText } from "@/lib/chat";
 import { clientIp, rateLimited } from "@/lib/antispam";
@@ -30,13 +31,27 @@ function readMessages(raw: unknown): Msg[] | null {
 const LANG = { en: "English", hi: "Hindi (Devanagari script)", hinglish: "Hinglish (Hindi words in Roman script, mixed with English)" } as const;
 
 // Reads the details line the assistant adds once it has a visitor's name, phone and email.
+// Emails said out loud come back like "neha at the rate gmail dot com"; this turns them into neha@gmail.com.
+function cleanEmail(v: string) {
+  let e = v.trim().toLowerCase();
+  if (!e.includes("@")) e = e.replace(/\s*(at the rate of|at the rate|at sign|attherate|at)\s+/, "@");
+  return e.replace(/\s*(dot|point)\s*/g, ".").replace(/\s+/g, "").replace(/\.+/g, ".");
+}
+// Numbers said out loud may have spaces or words; keep the digits (and a leading +).
+const cleanPhone = (v: string) => v.trim().replace(/(?!^\+)[^\d]/g, "");
+
+const ASK_AGAIN = {
+  phone: { en: "Sorry, the mobile number should have 10 digits. Could you please say it again?", hi: "माफ़ कीजिए, मोबाइल नंबर 10 अंकों का होना चाहिए। कृपया दोबारा बताइए।", hinglish: "Sorry, mobile number 10 digit ka hona chahiye. Kripya apna number dobara boliye." },
+  email: { en: "Sorry, I didn't get the email correctly. Could you please say it again, like name at gmail dot com?", hi: "माफ़ कीजिए, ईमेल ठीक से समझ नहीं आया। कृपया दोबारा बताइए, जैसे नाम एट जीमेल डॉट कॉम।", hinglish: "Sorry, email theek se samajh nahi aaya. Kripya dobara boliye, jaise naam at the rate gmail dot com." },
+};
+
 function takeLead(text: string) {
   const m = text.match(/^\s*LEAD:\s*(\{.*\})\s*$/m);
   if (!m) return { reply: text.trim(), lead: null };
   let lead: Record<string, string> | null = null;
   try {
     const o = JSON.parse(m[1]);
-    lead = { name: String(o.name ?? "").slice(0, 80), phone: String(o.phone ?? "").slice(0, 25), email: String(o.email ?? "").slice(0, 120), needs: String(o.needs ?? "").slice(0, 300) };
+    lead = { name: String(o.name ?? "").trim().slice(0, 80), phone: cleanPhone(String(o.phone ?? "")).slice(0, 16), email: cleanEmail(String(o.email ?? "")).slice(0, 120), needs: String(o.needs ?? "").trim().slice(0, 300) };
     if (!lead.name || !lead.phone) lead = null;
   } catch {
     lead = null;
@@ -72,6 +87,7 @@ export async function POST(req: Request) {
     body?.leadDone === true ? "The visitor's contact details are already saved. Do not ask for them again and do not add a LEAD line." : v.askAfter > 0
       ? `After the visitor has asked ${v.askAfter} question${v.askAfter > 1 ? "s" : ""} (they have asked ${asked} so far), or sooner if they want a quote, a call or to start, politely ask for their name, mobile number and email so the team can contact them. Ask for what is still missing, one or two things at a time.`
       : "Only when the visitor wants a quote, a call or to start, politely ask for their name, mobile number and email so the team can contact them.",
+    body?.leadDone === true ? "" : "Indian mobile numbers have exactly 10 digits (or +91 and 10 digits). If the number you heard has more or fewer digits, ask them to say it again. Write emails in normal form (name@gmail.com) even when spoken as \"at the rate\" and \"dot\".",
     body?.leadDone === true ? "" : 'When you have their name, mobile number and email, thank them and add one final line exactly like this (it is not shown to the visitor): LEAD: {"name":"...","phone":"...","email":"...","needs":"short summary of what they want"}. Add that line only once in the conversation.',
     v.notes.trim() ? `Instructions from the owner: ${v.notes.trim()}` : "",
     `Facts:\n${knowledge.slice(0, 9000)}`,
@@ -79,6 +95,19 @@ export async function POST(req: Request) {
 
   const ai = await askAi(system, history, spoken ? 350 : 500);
   if (!ai.ok) return NextResponse.json({ error: ai.error }, { status: ai.error === "not_configured" ? 501 : 502 });
-  const { reply, lead } = takeLead(ai.reply);
-  return NextResponse.json({ reply, lead: body?.leadDone === true ? null : lead });
+  const taken = takeLead(ai.reply);
+  let { reply } = taken;
+  let lead = body?.leadDone === true ? null : taken.lead;
+  // Check the details before showing them: a wrong number or email is asked for again instead.
+  if (lead) {
+    const l = lang ?? v.lang;
+    if (!checkPhone(lead.phone).ok) {
+      reply = ASK_AGAIN.phone[l];
+      lead = null;
+    } else if (!isEmail(lead.email)) {
+      reply = ASK_AGAIN.email[l];
+      lead = null;
+    }
+  }
+  return NextResponse.json({ reply, lead });
 }

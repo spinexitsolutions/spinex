@@ -26,6 +26,21 @@ async function findTtsModel(key: string): Promise<string> {
   return ttsModel;
 }
 
+// Soft start and end (and a little silence after), so the clip doesn't end with a click or crackle.
+function smooth(raw: Buffer, rate = 24000) {
+  const n = Math.floor(raw.length / 2);
+  const pcm = Buffer.alloc(n * 2 + Math.floor(rate * 0.2) * 2); // + 200 ms of silence
+  raw.copy(pcm, 0, 0, n * 2);
+  const fadeIn = Math.min(n, Math.floor(rate * 0.01));
+  const fadeOut = Math.min(n, Math.floor(rate * 0.08));
+  for (let i = 0; i < fadeIn; i++) pcm.writeInt16LE(Math.round(pcm.readInt16LE(i * 2) * (i / fadeIn)), i * 2);
+  for (let i = 0; i < fadeOut; i++) {
+    const at = n - fadeOut + i;
+    pcm.writeInt16LE(Math.round(pcm.readInt16LE(at * 2) * (1 - (i + 1) / fadeOut)), at * 2);
+  }
+  return pcm;
+}
+
 function wav(pcm: Buffer, rate = 24000) {
   const h = Buffer.alloc(44);
   h.write("RIFF", 0);
@@ -70,7 +85,7 @@ export async function naturalSpeech(text: string, _lang: "en" | "hi" | "hinglish
     const data = await res.json();
     const b64 = (data.candidates?.[0]?.content?.parts ?? []).find((p: { inlineData?: { data?: string } }) => p.inlineData?.data)?.inlineData?.data;
     if (!b64) return { ok: false, detail: `${model}: no audio` };
-    const audio = wav(Buffer.from(b64, "base64"));
+    const audio = wav(smooth(Buffer.from(b64, "base64")));
     cache.set(`${gender}|${text}`, audio);
     if (cache.size > 80) cache.delete(cache.keys().next().value as string);
     return { ok: true, audio };

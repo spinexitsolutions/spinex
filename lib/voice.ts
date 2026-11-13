@@ -43,15 +43,28 @@ export function listen(lang: VoiceLang, onWords: (text: string) => void): Promis
     rec.continuous = false;
     rec.maxAlternatives = 1;
     let finalText = "";
+    let lastHeard = "";
     let failed = "";
+    // Some phones (Android Chrome) send the same words again as a new result, e.g. "340" and then "7340".
+    // So the text is rebuilt from all results each time, and a result that repeats or extends the one
+    // before it replaces it instead of being added.
     rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript;
-        else interim += r[0].transcript;
+      const pieces: string[] = [];
+      let allFinal = true;
+      for (let i = 0; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript.trim();
+        if (!e.results[i].isFinal) allFinal = false;
+        if (!t) continue;
+        const prev = pieces[pieces.length - 1];
+        const flat = (x: string) => x.replace(/\s+/g, "").toLowerCase();
+        if (prev && flat(t).includes(flat(prev))) pieces[pieces.length - 1] = t;
+        else if (prev && flat(prev).includes(flat(t))) continue;
+        else pieces.push(t);
       }
-      onWords((finalText + " " + interim).trim());
+      const text = pieces.join(" ").replace(/\s+/g, " ").trim();
+      if (allFinal) finalText = text;
+      onWords(text);
+      if (!allFinal) lastHeard = text;
     };
     rec.onerror = (e) => {
       if (e.error === "not-allowed" || e.error === "service-not-allowed") failed = "denied";
@@ -61,7 +74,7 @@ export function listen(lang: VoiceLang, onWords: (text: string) => void): Promis
     rec.onend = () => {
       if (current === rec) current = null;
       if (failed) reject(new Error(failed));
-      else resolve(finalText.trim());
+      else resolve((finalText || lastHeard).trim());
     };
     try {
       rec.start();
@@ -162,20 +175,31 @@ function chunks(text: string): string[] {
   return rest ? [first, rest] : [first];
 }
 
+// Once the natural voice fails (e.g. the free daily limit is used up), the rest of the visit uses the phone's
+// voice, so the voice doesn't keep switching between answers.
+let naturalOff = false;
+
 async function speakNatural(text: string, lang: VoiceLang, id: number, gender: "female" | "male"): Promise<boolean> {
+  if (naturalOff) return false;
   const list = chunks(text);
   if (!list.length) return true;
   const pending = list.map((t) => fetchVoice(t, lang));
   const first = await pending[0];
   if (id !== speakId) return true;
-  if (!first) return false;
+  if (!first) {
+    naturalOff = true;
+    return false;
+  }
   await play(first);
   for (let i = 1; i < list.length; i++) {
     if (id !== speakId) return true;
     const blob = await pending[i];
     if (id !== speakId) return true;
     if (blob) await play(blob);
-    else await speakBrowser(list[i], lang, gender, id);
+    else {
+      naturalOff = true;
+      await speakBrowser(list[i], lang, gender, id);
+    }
   }
   return true;
 }
