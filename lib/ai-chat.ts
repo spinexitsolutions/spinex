@@ -9,6 +9,20 @@ export const DEFAULT_CLAUDE_MODEL = "claude-haiku-4-5-20251001";
 // Gemini model names change often. When the saved or default one is not found, ask Google which models this key
 // can use and pick its newest fast "flash" model (remembered until the server restarts).
 let geminiFallback = "";
+// The model names this key can use for chat (for the Test button and for picking a fallback).
+export async function listGeminiModels(key: string): Promise<string[]> {
+  try {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.models ?? [])
+      .filter((m: { supportedGenerationMethods?: string[] }) => m.supportedGenerationMethods?.includes("generateContent"))
+      .map((m: { name: string }) => String(m.name).replace(/^models\//, ""))
+      .filter((n: string) => /^gemini/.test(n) && !/embedding|image|tts|audio|live|vision|exp/.test(n));
+  } catch {
+    return [];
+  }
+}
 async function findGeminiModel(key: string): Promise<string> {
   if (geminiFallback) return geminiFallback;
   try {
@@ -21,7 +35,7 @@ async function findGeminiModel(key: string): Promise<string> {
       .filter((n: string) => /^gemini/.test(n) && !/embedding|image|tts|audio|live|vision|thinking|exp/.test(n));
     const score = (n: string) => {
       const v = parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) ?? [])[1] ?? "0");
-      return v * 10 + (/flash/.test(n) ? 5 : 0) - (/lite/.test(n) ? 2 : 0) - (/preview/.test(n) ? 1 : 0) + (/latest/.test(n) ? 0.5 : 0);
+      return v * 10 + (/flash/.test(n) ? 30 : 0) - (/pro|ultra/.test(n) ? 30 : 0) - (/lite/.test(n) ? 2 : 0) - (/preview/.test(n) ? 1 : 0) + (/latest/.test(n) ? 0.5 : 0);
     };
     geminiFallback = names.sort((a, b) => score(b) - score(a))[0] ?? "";
   } catch {
@@ -45,7 +59,7 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
   if (!p) return { ok: false, error: "not_configured" };
   try {
     if (p.provider === "gemini") {
-      const call = (model: string) =>
+      const call = (model: string, think = true) =>
         fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
           method: "POST",
           headers: { "content-type": "application/json", "x-goog-api-key": p.key },
@@ -57,7 +71,8 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
               maxOutputTokens: /^gemini-2\.5/.test(model) ? maxTokens : Math.max(maxTokens, 2048),
               temperature: 0.6,
               // 2.5 models "think" before answering by default; a chat reply doesn't need it and it would eat the token budget.
-              ...(/^gemini-2\.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+              // Newer models: think as little as possible, so a chat answer comes in a few seconds.
+              ...(/^gemini-2\.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : think && !/^gemini-(1|2\.0)/.test(model) ? { thinkingConfig: { thinkingLevel: "low" } } : {}),
             },
           }),
           signal: AbortSignal.timeout(20000),
@@ -71,6 +86,8 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
           res = await call(model);
         }
       }
+      // A model that doesn't take the "think less" setting: ask again without it.
+      if (res.status === 400 && !/^gemini-2\.5/.test(model)) res = await call(model, false);
       // What Google said, for the Test button in Admin → API keys (never shown to visitors).
       const why = async () => `model ${model}: ${String((await res.clone().json().catch(() => ({})))?.error?.message ?? "").slice(0, 200)}`;
       if (res.status === 400 || res.status === 401 || res.status === 403) return { ok: false, error: "rejected", status: res.status, provider: "gemini", detail: await why() };
@@ -93,6 +110,6 @@ export async function askAi(system: string, history: ChatMsg[], maxTokens = 500)
     const reply = (data.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n").trim();
     return reply ? { ok: true, reply, provider: "anthropic", model: p.model } : { ok: false, error: "upstream", provider: "anthropic" };
   } catch (e) {
-    return { ok: false, error: "upstream", provider: p.provider, detail: (e as Error)?.name === "TimeoutError" ? "no answer within 15 seconds" : String((e as Error)?.message ?? e).slice(0, 200) };
+    return { ok: false, error: "upstream", provider: p.provider, detail: (e as Error)?.name === "TimeoutError" ? `no answer in time${p.provider === "gemini" ? ` (model ${geminiFallback && p.model === DEFAULT_GEMINI_MODEL ? geminiFallback : p.model})` : ""}` : String((e as Error)?.message ?? e).slice(0, 200) };
   }
 }

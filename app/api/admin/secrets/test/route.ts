@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { guard, jsonBody } from "@/lib/admin-guard";
-import { askAi, chatProvider } from "@/lib/ai-chat";
+import { askAi, chatProvider, listGeminiModels } from "@/lib/ai-chat";
 import { lastEmailError, notifyAdmin, smtpSettings } from "@/lib/notify";
 import { sendLeadWebhook } from "@/lib/webhook";
 import { leadAlertText, sendWhatsAppAlert } from "@/lib/whatsapp-alert";
@@ -24,7 +24,8 @@ export async function POST(req: Request) {
     const r = await askAi("Reply with exactly: Chatbot is working.", [{ role: "user", content: "Test" }], 30);
     const name = p.provider === "gemini" ? "Google Gemini" : "Anthropic";
     if (r.ok) return NextResponse.json({ ok: true, message: `Working: ${name}, model ${r.model}.` });
-    const said = r.detail ? ` Google said: ${r.detail}` : "";
+    const models = p.provider === "gemini" ? await listGeminiModels(p.key) : [];
+    const said = (r.detail ? ` Details: ${r.detail}.` : "") + (models.length ? ` Models this key can use: ${models.slice(0, 15).join(", ")}. Put one of these (a "flash" one is fastest) in "Gemini model" and save.` : "");
     if (r.error === "rejected") return NextResponse.json({ ok: false, message: `${name} rejected the request (${r.status}). Check the API key and the model name, then save again.${said}` });
     return NextResponse.json({ ok: false, message: `${name} didn't answer${r.status ? ` (${r.status})` : ""}. ${r.status === 429 ? "The free daily limit may be used up; try again later." : "Check the model name, or try again in a minute."}${said}` });
   }
