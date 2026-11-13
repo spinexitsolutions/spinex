@@ -3,7 +3,7 @@ import { getSecret } from "./secrets";
 export type ChatMsg = { role: "user" | "assistant"; content: string };
 export type AiResult = { ok: true; reply: string; provider: "gemini" | "anthropic"; model: string } | { ok: false; error: "not_configured" | "upstream" | "rejected"; status?: number; provider?: string; detail?: string };
 
-export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 export const DEFAULT_CLAUDE_MODEL = "claude-haiku-4-5-20251001";
 
 // Gemini model names change often. When the saved or default one is not found, ask Google which models this key
@@ -35,7 +35,7 @@ async function findGeminiModel(key: string): Promise<string> {
       .filter((n: string) => /^gemini/.test(n) && !/embedding|image|tts|audio|live|vision|thinking|exp/.test(n));
     const score = (n: string) => {
       const v = parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) ?? [])[1] ?? "0");
-      return v * 10 + (/flash/.test(n) ? 30 : 0) - (/pro|ultra/.test(n) ? 30 : 0) - (/lite/.test(n) ? 2 : 0) - (/preview/.test(n) ? 1 : 0) + (/latest/.test(n) ? 0.5 : 0);
+      return v * 10 + (/flash/.test(n) ? 30 : 0) - (/pro|ultra/.test(n) ? 30 : 0) - (/lite/.test(n) ? -5 : 0) - (/preview/.test(n) ? 1 : 0) + (/latest/.test(n) ? 0.5 : 0);
     };
     geminiFallback = names.sort((a, b) => score(b) - score(a))[0] ?? "";
   } catch {
