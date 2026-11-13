@@ -1321,7 +1321,8 @@ function AdminShell() {
                   </label>
                   <ObjectEditor value={voiceSettings(draft)} onChange={(v) => set("chatbot", { ...draft.chatbot, voice: { ...v, askAfter: Number(v.askAfter) || 0 } })} fields={[
                     { key: "lang", label: "Starting language", type: "select", options: [{ value: "hinglish", label: "Hinglish" }, { value: "hi", label: "Hindi" }, { value: "en", label: "English" }], hint: "Visitors can switch it in voice mode" },
-                    { key: "voice", label: "Voice", type: "select", options: [{ value: "female", label: "Female" }, { value: "male", label: "Male" }], hint: "Uses the best matching voice on the visitor's phone or computer" },
+                    { key: "engine", label: "Voice quality", type: "select", options: [{ value: "natural", label: "Natural, human-like (Gemini)" }, { value: "browser", label: "Basic (the phone's own voice)" }], hint: "Natural uses your Gemini key (free daily limit). If it's not available, the phone's own voice is used" },
+                    { key: "voice", label: "Voice", type: "select", options: [{ value: "female", label: "Female" }, { value: "male", label: "Male" }] },
                     { key: "greeting", label: "First thing it says", type: "textarea" },
                     { key: "notes", label: "What the AI should know or follow", type: "textarea", hint: "Besides your services, products and the questions below. E.g. never promise a fixed price; offer a free call" },
                     { key: "askAfter", label: "Ask for name, phone and email", type: "select", options: [{ value: "1", label: "After 1 question" }, { value: "2", label: "After 2 questions" }, { value: "3", label: "After 3 questions" }, { value: "0", label: "Only when they want a quote" }] },

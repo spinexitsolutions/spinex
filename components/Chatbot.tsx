@@ -6,7 +6,7 @@ import { AudioLines, Check, MessageSquare, Mic, Pause, Send, Sparkles, Square, X
 import { useContent } from "./ContentProvider";
 import { localAnswer } from "@/lib/chat";
 import { voiceSettings } from "@/lib/content";
-import { listen, speak, stopListening, stopSpeaking, voiceSupported, type VoiceLang } from "@/lib/voice";
+import { listen, speak, stopListening, stopSpeaking, unlockAudio, voiceSupported, type VoiceLang } from "@/lib/voice";
 import { submitLead } from "@/lib/leads";
 import { checkPhone, isEmail } from "@/lib/phone";
 import HumanCheck from "./HumanCheck";
@@ -153,7 +153,7 @@ export default function Chatbot() {
       if (run.current !== id) return;
       setSpoken(reply);
       setPhase("speaking");
-      await speak(reply, vlang, voice.voice);
+      await speak(reply, vlang, voice.voice, voice.engine);
       if (run.current !== id) return;
       // A details card on screen waits for the visitor before listening again.
       if (leadRef.current) {
@@ -166,6 +166,7 @@ export default function Chatbot() {
   leadRef.current = lead;
 
   function startTalk() {
+    unlockAudio();
     setMicNote("");
     setTalking(true);
     const id = ++run.current;
@@ -174,13 +175,14 @@ export default function Chatbot() {
     if (hello) {
       setPhase("speaking");
       // Started inside the tap, so phones allow the sound.
-      speak(hello, vlang, voice.voice).then(() => {
+      speak(hello, vlang, voice.voice, voice.engine).then(() => {
         if (run.current === id) void loop(id);
       });
     } else loop(id);
   }
 
   function listenAgain() {
+    unlockAudio();
     stopSpeaking();
     stopListening();
     setMicNote("");

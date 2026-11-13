@@ -80,6 +80,7 @@ export const KEY_GROUPS: KeyGroup[] = [
     keys: [
       { name: "GEMINI_API_KEY", label: "Google Gemini API key (free)", secret: true, hint: "from aistudio.google.com" },
       { name: "GEMINI_MODEL", label: "Gemini model", placeholder: "gemini-3.5-flash-lite", hint: "leave empty for the default" },
+      { name: "GEMINI_TTS_MODEL", label: "Gemini voice model", placeholder: "found automatically", hint: "for the natural voice; leave empty" },
       { name: "ANTHROPIC_API_KEY", label: "Anthropic API key (paid, optional)", secret: true, hint: "from console.anthropic.com" },
       { name: "CHAT_MODEL", label: "Claude model", placeholder: "claude-haiku-4-5-20251001", hint: "leave empty for the default" },
     ],

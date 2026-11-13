@@ -110,11 +110,56 @@ async function pickVoice(lang: VoiceLang, gender: "female" | "male") {
 
 let speakId = 0;
 
-// Speaks the text sentence by sentence (long single utterances get cut off in Chrome). Resolves when done or stopped.
-export async function speak(text: string, lang: VoiceLang, gender: "female" | "male"): Promise<void> {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+// One audio player for the natural voice. Phones only let a page play sound after a tap, so the first tap
+// "unlocks" this player by playing a silent clip; later answers reuse it.
+let player: HTMLAudioElement | null = null;
+const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+export function unlockAudio() {
+  if (typeof window === "undefined") return;
+  if (!player) player = new Audio();
+  try {
+    player.src = SILENT;
+    void player.play().catch(() => undefined);
+  } catch {
+    /* ignore */
+  }
+}
+
+// Human-like voice from the server (Gemini). Returns false when it isn't available, so the browser voice is used.
+async function speakNatural(text: string, lang: VoiceLang, id: number): Promise<boolean> {
+  try {
+    const res = await fetch("/api/chat/speak", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, lang }) });
+    if (res.status !== 200 || id !== speakId) return id !== speakId;
+    const url = URL.createObjectURL(await res.blob());
+    if (id !== speakId) return true;
+    if (!player) player = new Audio();
+    const p = player;
+    await new Promise<void>((resolve) => {
+      const done = () => {
+        p.onended = p.onerror = p.onpause = null;
+        resolve();
+      };
+      p.src = url;
+      p.onended = done;
+      p.onerror = done;
+      p.onpause = done;
+      p.play().catch(done);
+    });
+    URL.revokeObjectURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Speaks the text: the natural voice when it's set up, otherwise the device's voice sentence by sentence
+// (long single utterances get cut off in Chrome). Resolves when done or stopped.
+export async function speak(text: string, lang: VoiceLang, gender: "female" | "male", engine: "natural" | "browser" = "browser"): Promise<void> {
+  if (typeof window === "undefined") return;
   const id = ++speakId;
-  speechSynthesis.cancel();
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  if (engine === "natural" && (await speakNatural(text, lang, id))) return;
+  if (id !== speakId || !("speechSynthesis" in window)) return;
   const voice = await pickVoice(lang, gender);
   const parts = text.replace(/\s+/g, " ").match(/[^.!?।]+[.!?।]*/g) ?? [text];
   for (const part of parts) {
@@ -138,5 +183,10 @@ export async function speak(text: string, lang: VoiceLang, gender: "female" | "m
 
 export function stopSpeaking() {
   speakId++;
+  try {
+    if (player && !player.paused) player.pause();
+  } catch {
+    /* ignore */
+  }
   if (typeof window !== "undefined" && "speechSynthesis" in window) speechSynthesis.cancel();
 }

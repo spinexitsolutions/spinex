@@ -461,7 +461,8 @@ export type SiteContent = {
 export type VoiceSettings = {
   enabled: boolean;
   lang: "en" | "hi" | "hinglish"; // the language it starts in; the visitor can switch
-  voice: "female" | "male"; // preferred browser voice (best effort: phones offer what they have)
+  voice: "female" | "male";
+  engine: "natural" | "browser"; // natural = Gemini text-to-speech (human-like, free limits); browser = the device's own voice
   greeting: string; // spoken when voice mode opens
   notes: string; // extra things the AI should know or follow
   askAfter: number; // ask for name, phone and email after this many questions (0 = only when the visitor wants a quote)
@@ -470,6 +471,7 @@ export const defaultVoice: VoiceSettings = {
   enabled: true,
   lang: "hinglish",
   voice: "female",
+  engine: "natural",
   greeting: "Namaste! Main Spinex AI hoon. Website, online store, SEO ya ads ke baare me kuch bhi poochiye.",
   notes: "",
   askAfter: 2,
