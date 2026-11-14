@@ -56,6 +56,7 @@
 .hp-float { animation: hp-float 16s ease-in-out infinite alternate; }
 .hp-bob { animation: hp-bob 10s ease-in-out infinite alternate; }
 .hp-spin { animation: hp-spin 40s linear infinite; }
+.hp-spin4 { transform: scale(4); animation: hp-spin4 40s linear infinite; will-change: transform; }
 /* Blurred shapes that only move: kept on their own GPU layer so the blur is drawn once, not every frame. */
 .hp-breathe, .hp-sway, .hp-orbit, .hp-float, .hp-bob, .hp-spin { will-change: transform; }
 @keyframes hp-drift { to { background-position: 300px 150px; } }
@@ -71,6 +72,7 @@
 @keyframes hp-float { 50% { transform: translate(4%, 6%) scale(1.06); } to { transform: translate(-3%, 2%) scale(0.96); } }
 @keyframes hp-bob { to { transform: translateY(-22px); } }
 @keyframes hp-spin { to { transform: rotate(360deg); } }
+@keyframes hp-spin4 { from { transform: scale(4) rotate(0deg); } to { transform: scale(4) rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   [class*="hp-"] { animation: none !important; }

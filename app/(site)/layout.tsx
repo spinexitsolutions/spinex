@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Chatbot from "@/components/Chatbot";
 import SmoothScroll from "@/components/SmoothScroll";
+import OffscreenPause from "@/components/OffscreenPause";
 import ScrollProgress from "@/components/ScrollProgress";
 import { IntroProvider, IntroCover } from "@/components/Intro";
 import { SiteCursor } from "@/components/CustomCursor";
@@ -26,6 +27,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <IntroProvider>
       <IntroCover cfg={content.intro} />
+      <OffscreenPause />
       <SmoothScroll>
         <div className="contents" data-btn-style={btnStyle} data-btn-hover={btnHover}>
         <ScrollProgress />

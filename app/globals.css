@@ -165,3 +165,7 @@ html.custom-cursor :is(input:not([type="checkbox"]):not([type="radio"]):not([typ
   html.spx-admin .lg\:h-screen { height: calc(100vh / 0.9); }
   html.spx-admin [data-live-preview] { height: calc(100vh / 0.9 - 73px); }
 }
+
+/* Endless animations in a part of the page that is off screen are paused (set by OffscreenPause), so the phone
+   only animates what you can see. */
+[data-offscreen] *, [data-offscreen] *::before, [data-offscreen] *::after { animation-play-state: paused !important; }
