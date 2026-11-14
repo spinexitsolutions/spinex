@@ -110,7 +110,7 @@ export default function FooterEditor({ draft, onChange }: { draft: SiteContent; 
         </div>
         <label className="mt-4 flex items-center gap-3">
           <input type="checkbox" className="h-5 w-5 accent-lav-600" checked={ft.animate} onChange={(e) => set({ animate: e.target.checked })} />
-          <span className="font-medium">Animate the big word (letters open up from a soft blur)</span>
+          <span className="font-medium">Animate the big word (letters rise in one after another)</span>
         </label>
       </div>
 

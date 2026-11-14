@@ -118,7 +118,8 @@ export default function Footer() {
   );
 }
 
-// Big spaced-out word (e.g. S P I N E X). Letters open up from a soft blur when it scrolls into view.
+// Big spaced-out word (e.g. S P I N E X). Letters rise in one after another when it scrolls into view
+// (no blur and no width change: both made scrolling stutter).
 function Wordmark({ text, animate }: { text: string; animate: boolean }) {
   const reduce = useReducedMotion();
   const still = !animate || reduce;
@@ -139,10 +140,10 @@ function Wordmark({ text, animate }: { text: string; animate: boolean }) {
             key={i}
             aria-hidden
             className="inline-block text-center"
-            style={still ? { width: "1.05em" } : undefined}
+            style={{ width: "1.05em" }}
             variants={{
-              hidden: { width: "0.62em", opacity: 0.2, filter: "blur(6px)" },
-              show: { width: "1.05em", opacity: 1, filter: "blur(0px)", transition: { duration: 1.4, ease } },
+              hidden: { opacity: 0, y: "0.35em" },
+              show: { opacity: 1, y: 0, transition: { duration: 0.7, delay: i * 0.06, ease } },
             }}
           >
             {ch === " " ? " " : ch}
