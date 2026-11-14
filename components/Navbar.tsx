@@ -100,7 +100,7 @@ export default function Navbar() {
       setOnDark(false);
     };
     // Looking at what is behind the logo is heavy work, so while scrolling it runs at most every 150 ms,
-    // in an animation frame, and once more when scrolling stops (doing it on every scroll event made scrolling stutter).
+    // in an animation frame, and once more when scrolling stops (doing it on every scroll event made the page stutter).
     let frame = 0;
     let last = 0;
     let settle: ReturnType<typeof setTimeout> | undefined;
