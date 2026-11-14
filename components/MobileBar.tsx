@@ -47,7 +47,7 @@ export default function MobileBar() {
     <nav
       aria-label="Quick contact"
       data-mobile-bar
-      className={`fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_30px_-18px_rgba(18,15,27,0.35)] backdrop-blur transition-transform duration-300 md:hidden ${hidden ? "translate-y-full" : ""}`}
+      className={`fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_30px_-18px_rgba(18,15,27,0.35)] transition-transform duration-300 md:hidden ${hidden ? "translate-y-full" : ""}`}
     >
       <ul className="grid h-16" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map(({ key, label, href, Icon, external }) => {

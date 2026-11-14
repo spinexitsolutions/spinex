@@ -99,11 +99,26 @@ export default function Navbar() {
       }
       setOnDark(false);
     };
+    // Looking at what is behind the logo is heavy work, so while scrolling it runs at most every 150 ms,
+    // in an animation frame, and once more when scrolling stops (doing it on every scroll event made scrolling stutter).
+    let frame = 0;
+    let last = 0;
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      clearTimeout(settle);
+      settle = setTimeout(check, 160);
+      if (frame || Date.now() - last < 150) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        last = Date.now();
+        check();
+      });
+    };
     const t = setTimeout(check, 60);
     const t2 = setTimeout(check, 600);
-    window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => { clearTimeout(t); clearTimeout(t2); window.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => { clearTimeout(t); clearTimeout(t2); clearTimeout(settle); cancelAnimationFrame(frame); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
   }, [pathname]);
 
   useMotionValueEvent(scrollY, "change", (y) => {
