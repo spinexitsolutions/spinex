@@ -8,6 +8,10 @@ import Lenis from "lenis";
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Phones and tablets scroll with the finger natively (smooth and handled off the main thread). Lenis only
+    // smooths the mouse wheel, and its touch listeners could make finger scrolling wait for the page's scripts,
+    // so it isn't started on touch screens at all.
+    if (window.matchMedia("(hover: none), (pointer: coarse)").matches) return;
     const lenis = new Lenis({ lerp: 0.14, smoothWheel: true, wheelMultiplier: 1 });
     let id = 0;
     const raf = (t: number) => {
