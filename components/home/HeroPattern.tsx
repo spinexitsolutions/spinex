@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { HeroPattern as Kind } from "@/lib/content";
-import SoftSwirl from "./SoftSwirl";
 
 // Still (or slowly moving) background drawn behind the hero, under the moving effect.
 // Picked in Admin → Homepage hero → Background pattern. Movement keyframes are the hp-* ones in app/hero-scenes.css.
@@ -143,7 +142,8 @@ const PATTERNS: Partial<Record<Kind, (cx: string, cxn: number) => ReactNode>> = 
     {lay({ background: "linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px) 0 0 / 56px 56px, linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px) 0 0 / 56px 56px" })}
   </>,
   waves: () => lay({ backgroundImage: svg([["#ede9fe", 150], ["#ddd6fe", 175], ["#f5d0fe", 200], ["#c4b5fd", 225], ["#bae6fd", 245]].map(([c, y], i) => `<path d='M0 ${y} C 120 ${+y - 40 - i * 4} 260 ${+y + 40} 460 ${+y - 30} L460 270 L0 270Z' fill='${c}' fill-opacity='.85'/>`).join(""), "100%", "100%", "0 0 460 270"), backgroundSize: "100% 100%" }, "hp-sway"),
-  swirl: (cx) => <SoftSwirl key="swirl" cx={cx} />,
+  // The original soft colour swirl, now standing still: no turning, so nothing has to be redrawn while scrolling.
+  swirl: (cx) => lay({ background: `conic-gradient(from 90deg at ${cx} 55%, #ede9fe, #f5d0fe, #e0f2fe, #ddd6fe, #fce7f3, #ede9fe)`, filter: "blur(60px)", inset: "-25%" }),
   sunset: (cx) => <>
     {lay({ background: "linear-gradient(180deg, #fff 0%, #fff 35%, #fde7f3 65%, #fed7aa 85%, #fbcfe8 100%)" })}
     {blob(0, "45%", "55%", "60%", "80%", "#c4b5fd", 110, 0, "hp-float")}
