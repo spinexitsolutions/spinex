@@ -11,7 +11,8 @@ deployed=$(cat .deployed 2>/dev/null || git rev-parse HEAD)
 [ "$deployed" = "$target" ] && exit 0
 # A failed build is tried again on the next runs (up to 3 tries in all): most failures so far were one-off
 # (the server busy at that moment); after 3 failures, wait for a newer version.
-if [ "$(head -1 .deploy-failed 2>/dev/null)" = "$target" ] && [ "$(sed -n 2p .deploy-failed 2>/dev/null || echo 1)" -ge 3 ]; then
+failed_tries=$(sed -n 2p .deploy-failed 2>/dev/null || true)
+if [ "$(head -1 .deploy-failed 2>/dev/null)" = "$target" ] && [ "${failed_tries:-1}" -ge 3 ]; then
   exit 0
 fi
 status=$(git show origin/build-results:status.txt 2>/dev/null || true)
@@ -31,7 +32,7 @@ if bash deploy/release.sh; then
   echo "$(date -Is) live: $(git rev-parse --short "$target")"
 else
   tries=1
-  [ "$(head -1 .deploy-failed 2>/dev/null)" = "$target" ] && tries=$(( $(sed -n 2p .deploy-failed 2>/dev/null || echo 1) + 1 ))
+  [ "$(head -1 .deploy-failed 2>/dev/null)" = "$target" ] && tries=$(( ${failed_tries:-1} + 1 ))
   printf '%s\n%s\n' "$target" "$tries" > .deploy-failed
   echo "$(date -Is) build failed (try $tries of 3)"
 fi
