@@ -1,0 +1,8 @@
+PASS portal redirects to login when logged out
+PASS wrong code is refused (That code isn't right or has expired. Ask for a new one.)
+FAIL run (TimeoutError: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('button:has-text("Log in")')
+  -   locator resolved to <button disabled class="btn-dark mt-4 w-full justify-center py-4 text-base disabled:opacity-50">…</button>
+  - attempting click action
+  -   waiting for elemen)
