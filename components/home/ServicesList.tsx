@@ -83,7 +83,7 @@ export function Stage({ kind, badge }: { kind: string; badge: boolean }) {
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#b9acf5] to-lav-600 text-[10px] font-bold sm:h-11 sm:w-11">AI</span>
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-white text-[9px] font-bold text-ink sm:h-11 sm:w-11">CRM</span>
           </span>
-          <span className="svc-run absolute top-[13px] h-2.5 w-2.5 rounded-full bg-[#f0abfc] shadow-[0_0_12px_#f0abfc] sm:top-[17px]" />
+          <span className="svc-run absolute left-[24px] right-[34px] top-[13px] h-2.5 sm:top-[17px]"><span className="absolute left-0 top-0 h-2.5 w-2.5 rounded-full bg-[#f0abfc] shadow-[0_0_12px_#f0abfc]" /></span>
           <span className="svc-pop absolute -bottom-7 right-0 rounded-full bg-emerald-500 px-2 py-px text-[9px] font-bold text-emerald-950 sm:-bottom-8 sm:text-[10px]" style={d(1.8)}>Lead saved ✓</span>
         </div>
       );
@@ -152,7 +152,7 @@ export function Stage({ kind, badge }: { kind: string; badge: boolean }) {
           <div className="absolute inset-x-3 bottom-3 flex h-7 gap-1 sm:inset-x-4 sm:h-9">
             {[["2", "#6E59D9"], ["1.2", "#b9acf5"], ["1.6", "#f0abfc"], ["1", "#6E59D9"]].map(([f, c], k) => <i key={k} className="rounded" style={{ flex: Number(f), background: c }} />)}
           </div>
-          <span className="svc-play absolute bottom-1.5 top-[48%] w-0.5 bg-white" />
+          <span className="svc-play absolute bottom-1.5 left-[12px] right-[14px] top-[48%]"><span className="absolute inset-y-0 left-0 w-0.5 bg-white" /></span>
         </>
       );
     case "design":

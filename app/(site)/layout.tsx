@@ -28,7 +28,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     <IntroProvider>
       <IntroCover cfg={content.intro} />
       <OffscreenPause />
-      <SmoothScroll>
+      <SmoothScroll enabled={content.cursor?.smoothScroll === true}>
         <div className="contents" data-btn-style={btnStyle} data-btn-hover={btnHover}>
         <ScrollProgress />
         <Navbar />

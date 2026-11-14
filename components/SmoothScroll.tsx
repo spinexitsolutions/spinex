@@ -5,8 +5,10 @@ import Lenis from "lenis";
 
 // Next.js handles scroll position on navigation (top for new pages, restored on back/forward);
 // Lenis follows native scroll events, so it needs no reset here.
-export default function SmoothScroll({ children }: { children: React.ReactNode }) {
+// Off unless switched on in Admin → Site settings → Page transitions ("Extra-smooth scrolling on computers").
+export default function SmoothScroll({ children, enabled = false }: { children: React.ReactNode; enabled?: boolean }) {
   useEffect(() => {
+    if (!enabled) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // Phones and tablets scroll with the finger natively (smooth and handled off the main thread). Lenis only
     // smooths the mouse wheel, and its touch listeners could make finger scrolling wait for the page's scripts,
@@ -23,7 +25,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       cancelAnimationFrame(id);
       lenis.destroy();
     };
-  }, []);
+  }, [enabled]);
 
   return <>{children}</>;
 }

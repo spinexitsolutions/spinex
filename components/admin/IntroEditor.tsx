@@ -193,6 +193,17 @@ export default function IntroEditor({ value, onChange, cursor, onCursor, site, l
         </div>
         </>}
 
+        {/* Scrolling */}
+        {P("transitions") && (
+        <label className="flex items-start gap-3 rounded-3xl border border-line bg-white p-5 sm:p-6" data-smooth-scroll>
+          <input type="checkbox" className="mt-1 h-5 w-5 accent-lav-600" checked={!!cur.smoothScroll} onChange={(e) => setCur({ smoothScroll: e.target.checked })} disabled={readOnly} />
+          <span>
+            <span className="block font-semibold">Extra-smooth scrolling on computers</span>
+            <span className="block text-sm text-muted">Makes mouse-wheel scrolling glide. It runs in the page itself, so on slower laptops it can make scrolling stutter while animations play. Off = the browser&apos;s own scrolling, which never waits for the page. Phones always use their own scrolling.</span>
+          </span>
+        </label>
+        )}
+
         {/* Between pages */}
         {P("transitions") && (
         <div className="rounded-3xl border border-line bg-white p-5 sm:p-6">

@@ -243,8 +243,9 @@ export type NavStyle = (typeof NAV_STYLES)[number];
 export type CursorSettings = {
   enabled: boolean; style: CursorStyle; color: string /* "" = brand colour */; admin: boolean; trail?: CursorTrail;
   btnStyle?: ButtonStyle; btnHover?: ButtonHover; navStyle?: NavStyle;
+  smoothScroll?: boolean; // extra-smooth mouse-wheel scrolling on computers (Lenis); off = the browser's own scrolling
 };
-export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none", btnStyle: "default", btnHover: "default", navStyle: "default" };
+export const defaultCursor: CursorSettings = { enabled: true, style: "ring", color: "", admin: false, trail: "none", btnStyle: "default", btnHover: "default", navStyle: "default", smoothScroll: false };
 
 export type Goal = { id: string; short: string; label: string; steps: string[]; services: string[] };
 export type Heading = { heading: string; intro: string; eyebrow?: string; helpTitle?: string; helpText?: string; helpNote?: string };

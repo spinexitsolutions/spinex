@@ -243,16 +243,22 @@ function In({ at, className = "", style, children }: { at: number; className?: s
   return <div className={`hs-in ${className}`} style={{ ...style, ...d(at) }}>{children}</div>;
 }
 
-// Seconds since the scene appeared, updated every frame (only while the scene is on screen).
+// Seconds since the scene appeared, updated about 20 times a second (only while the scene is on screen).
 function useClock(until = 8) {
   const [t, setT] = useState(0);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setT(until); return; }
     const t0 = performance.now();
     let raf = 0;
+    // About 20 updates a second is plenty for typing and counters, and is a third of the work of updating every frame.
+    let shown = -1;
     const tick = (now: number) => {
       const s = (now - t0) / 1000;
-      setT(s);
+      const step = Math.floor(s * 20);
+      if (step !== shown || s >= until) {
+        shown = step;
+        setT(s);
+      }
       if (s < until) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
