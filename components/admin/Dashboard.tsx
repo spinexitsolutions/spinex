@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Cpu, HardDrive, MemoryStick, Server } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight, BellRing, Hourglass, Minus, Trophy, MessageCircleReply, CalendarClock, LifeBuoy, ReceiptIndianRupee, FileText, GraduationCap, Image as ImageIcon, Inbox, IndianRupee, Loader2, TrendingUp, Award, Briefcase } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { leadStatusLabel, LEAD_SOURCES, type LeadStatus } from "@/lib/leads";
@@ -76,6 +77,8 @@ export default function Dashboard({ go, name, shortcuts = [] }: { go: (s: string
       )}
 
       {leads?.week && <WeekReport w={leads.week} go={go} />}
+
+      <ServerCard />
 
       {shortcuts.length > 0 && (
         <section data-admin-shortcuts>
@@ -152,6 +155,49 @@ export default function Dashboard({ go, name, shortcuts = [] }: { go: (s: string
       )}
 
     </div>
+  );
+}
+
+// Server size and use: processors, memory and disk (only shown to people who can see Integrations).
+type ServerInfo = { cpu: { cores: number; model: string; load: number[] }; memory: { totalGb: number; usedGb: number; freeGb: number }; disk: { totalGb: number; usedGb: number; freeGb: number }; uptimeDays: number; app: { memoryMb: number } };
+function ServerCard() {
+  const [d, setD] = useState<ServerInfo | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const load = () => fetch("/api/admin/server").then((r) => (r.ok ? r.json() : null)).then((x) => alive && x && setD(x)).catch(() => undefined);
+    load();
+    const t = setInterval(load, 30000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, []);
+  if (!d) return null;
+  const cpuPct = Math.min(100, Math.round((d.cpu.load[0] / Math.max(1, d.cpu.cores)) * 100));
+  const rows: { Icon: LucideIcon; label: string; pct: number; text: string }[] = [
+    { Icon: Cpu, label: "Processor", pct: cpuPct, text: `${cpuPct}% busy · ${d.cpu.cores} cores` },
+    { Icon: MemoryStick, label: "Memory (RAM)", pct: d.memory.totalGb ? Math.round((d.memory.usedGb / d.memory.totalGb) * 100) : 0, text: `${d.memory.usedGb} of ${d.memory.totalGb} GB used · ${d.memory.freeGb} GB free` },
+    { Icon: HardDrive, label: "Disk", pct: d.disk.totalGb ? Math.round((d.disk.usedGb / d.disk.totalGb) * 100) : 0, text: `${d.disk.usedGb} of ${d.disk.totalGb} GB used · ${d.disk.freeGb} GB free` },
+  ];
+  return (
+    <section className="rounded-3xl border border-line bg-white p-5 sm:p-6" data-server-card>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><Server size={18} /> Server</h3>
+        <p className="text-sm text-muted">Running {d.uptimeDays} days · website uses {d.app.memoryMb} MB · updates every 30 s</p>
+      </div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        {rows.map((r) => (
+          <div key={r.label} className="rounded-2xl bg-mist p-4">
+            <p className="flex items-center gap-2 text-sm text-muted"><r.Icon size={15} /> {r.label}</p>
+            <p className="mt-1 font-display text-2xl font-semibold tabular-nums">{r.pct}%</p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+              <div className={`h-full rounded-full ${r.pct > 85 ? "bg-red-500" : r.pct > 65 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${r.pct}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-muted">{r.text}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
