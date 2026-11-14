@@ -198,7 +198,7 @@ export default function Navbar() {
               onMouseLeave={() => { setHovered(null); hideMega(); }}
               className={`fixed top-4 z-50 hidden items-center rounded-full border p-1.5 transition-[background,box-shadow,border-color] duration-500 lg:flex ${
                 scrolled || mega
-                  ? "border-line bg-white/90 shadow-[0_12px_40px_-14px_rgba(18,15,27,0.3)] backdrop-blur-xl"
+                  ? "border-line bg-white/[0.97] shadow-[0_12px_40px_-14px_rgba(18,15,27,0.3)]"
                   : "border-line bg-white shadow-[0_12px_30px_-16px_rgba(18,15,27,0.3)]"
               }`}
               data-nav-links
