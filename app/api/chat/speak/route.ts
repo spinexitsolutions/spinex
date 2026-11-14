@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (!v.enabled || v.engine === "browser") return new NextResponse(null, { status: 204 });
   if (await rateLimited(`speak:${clientIp(req)}`, 40, 10 * 60 * 1000).catch(() => false)) return new NextResponse(null, { status: 204 });
   const lang = (["en", "hi", "hinglish"] as const).find((x) => x === body?.lang) ?? v.lang;
-  const r = await naturalSpeech(text, lang, v.voice);
+  const r = await naturalSpeech(text, lang, v.voice, v.voiceName);
   if (!r.ok) return new NextResponse(null, { status: 204, headers: { "x-voice-note": r.detail.replace(/[^\x20-\x7e]/g, "").slice(0, 200) } });
   return new NextResponse(new Uint8Array(r.audio), { headers: { "content-type": "audio/wav", "cache-control": "no-store" } });
 }

@@ -85,10 +85,10 @@ export async function POST(req: Request) {
     lang ? `Reply in ${LANG[lang]}.` : "Reply in the visitor's language (English, Hindi or Hinglish).",
     "Use only the facts below. For prices or anything not listed, say the team will share a clear quote after understanding the need. Never invent prices, timelines or clients.",
     body?.leadDone === true ? "The visitor's contact details are already saved. Do not ask for them again and do not add a LEAD line." : v.askAfter > 0
-      ? `After the visitor has asked ${v.askAfter} question${v.askAfter > 1 ? "s" : ""} (they have asked ${asked} so far), or sooner if they want a quote, a call or to start, politely ask for their name, mobile number and email so the team can contact them. Ask for what is still missing, one or two things at a time.`
-      : "Only when the visitor wants a quote, a call or to start, politely ask for their name, mobile number and email so the team can contact them.",
+      ? `After the visitor has asked ${v.askAfter} question${v.askAfter > 1 ? "s" : ""} (they have asked ${asked} so far), or sooner if they want a quote, a call or to start, politely ask for their name, mobile number and email so the team can contact them. Ask for what is still missing, one or two things at a time.${spoken ? " In this voice chat, ask only for their name and mobile number; for the email, say they can type it in the box that will appear on screen." : ""}`
+      : "Only when the visitor wants a quote, a call or to start, politely ask for their name, mobile number and email so the team can contact them." + (spoken ? " In this voice chat, ask only for their name and mobile number; for the email, say they can type it in the box that will appear on screen." : ""),
     body?.leadDone === true ? "" : "Indian mobile numbers have exactly 10 digits (or +91 and 10 digits). If the number you heard has more or fewer digits, ask them to say it again. Write emails in normal form (name@gmail.com) even when spoken as \"at the rate\" and \"dot\".",
-    body?.leadDone === true ? "" : 'When you have their name, mobile number and email, thank them and add one final line exactly like this (it is not shown to the visitor): LEAD: {"name":"...","phone":"...","email":"...","needs":"short summary of what they want"}. Add that line only once in the conversation.',
+    body?.leadDone === true ? "" : spoken ? 'When you have their name and mobile number, thank them, say a box will appear to check the details and type the email, and add one final line exactly like this (it is not shown to the visitor): LEAD: {"name":"...","phone":"...","email":"(the email if they said one, else empty)","needs":"short summary of what they want"}. Add that line only once in the conversation.' : 'When you have their name, mobile number and email, thank them and add one final line exactly like this (it is not shown to the visitor): LEAD: {"name":"...","phone":"...","email":"...","needs":"short summary of what they want"}. Add that line only once in the conversation.',
     v.notes.trim() ? `Instructions from the owner: ${v.notes.trim()}` : "",
     `Facts:\n${knowledge.slice(0, 9000)}`,
   ].filter(Boolean).join("\n\n");
@@ -104,6 +104,8 @@ export async function POST(req: Request) {
     if (!checkPhone(lead.phone).ok) {
       reply = ASK_AGAIN.phone[l];
       lead = null;
+    } else if (spoken && !isEmail(lead.email)) {
+      lead.email = ""; // typed in the details box instead
     } else if (!isEmail(lead.email)) {
       reply = ASK_AGAIN.email[l];
       lead = null;

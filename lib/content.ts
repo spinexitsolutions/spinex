@@ -462,6 +462,7 @@ export type VoiceSettings = {
   enabled: boolean;
   lang: "en" | "hi" | "hinglish"; // the language it starts in; the visitor can switch
   voice: "female" | "male";
+  voiceName?: string; // Gemini voice, e.g. Kore; empty = default for the chosen gender
   engine: "natural" | "browser"; // natural = Gemini text-to-speech (human-like, free limits); browser = the device's own voice
   greeting: string; // spoken when voice mode opens
   notes: string; // extra things the AI should know or follow
@@ -471,6 +472,7 @@ export const defaultVoice: VoiceSettings = {
   enabled: true,
   lang: "hinglish",
   voice: "female",
+  voiceName: "",
   engine: "natural",
   greeting: "Namaste! Main Spinex AI hoon. Website, online store, SEO ya ads ke baare me kuch bhi poochiye.",
   notes: "",

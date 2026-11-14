@@ -410,6 +410,13 @@ function LeadCard({ lead, msgs, startedAt, done, onChange, onSent, onClose, dark
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [cfToken, setCfToken] = useState("");
+  // Emails are hard to catch by voice, so an empty email box is focused for the visitor to type it.
+  const emailRef = useRef<HTMLInputElement>(null);
+  const needEmail = !lead.email;
+  useEffect(() => {
+    if (needEmail && !done) emailRef.current?.focus({ preventScroll: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const set = (k: keyof Lead) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...lead, [k]: e.target.value });
   // "neha at the rate gmail dot com" → neha@gmail.com, and "98290 12345" → 9829012345, when the field is left.
   const tidy = (k: "email" | "phone") => () => onChange({ ...lead, [k]: k === "email" ? tidyEmail(lead.email) : tidyPhone(lead.phone) });
@@ -442,7 +449,7 @@ function LeadCard({ lead, msgs, startedAt, done, onChange, onSent, onClose, dark
           <div className="mt-2.5 grid gap-2">
             <label className="text-xs text-muted">Name<input className={box} value={lead.name} onChange={set("name")} autoComplete="name" /></label>
             <label className="text-xs text-muted">Mobile number<input className={box} type="tel" value={lead.phone} onChange={set("phone")} onBlur={tidy("phone")} inputMode="tel" autoComplete="tel" maxLength={16} /></label>
-            <label className="text-xs text-muted">Email<input className={box} type="email" value={lead.email} onChange={set("email")} onBlur={tidy("email")} inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} /></label>
+            <label className={`text-xs ${needEmail ? "font-semibold text-lav-700" : "text-muted"}`}>{needEmail ? "Type your email" : "Email"}<input ref={emailRef} placeholder="name@gmail.com" className={`${box} ${needEmail ? "ring-2 ring-lav-300" : ""}`} type="email" value={lead.email} onChange={set("email")} onBlur={tidy("email")} inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} /></label>
             <label className="text-xs text-muted">What you need<input className={box} value={lead.needs} onChange={set("needs")} /></label>
           </div>
           <HumanCheck onToken={setCfToken} />
