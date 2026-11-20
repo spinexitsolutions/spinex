@@ -271,7 +271,7 @@ function LaunchVisual({ play }: { play: boolean }) {
           </linearGradient>
         </defs>
         <motion.path d={`${path} L 340 130 L 0 130 Z`} fill="url(#launch-fill)" initial={{ opacity: 0 }} animate={play ? { opacity: 1 } : undefined} transition={{ delay: 1.2, duration: 0.8 }} />
-        <motion.path d={path} fill="none" className="stroke-lav-400" strokeWidth="3" strokeLinecap="round" initial={{ pathLength: 0 }} animate={play ? { pathLength: 1 } : undefined} transition={{ delay: 0.3, duration: 1.6, ease }} />
+        <motion.path d={path} fill="none" className="stroke-lav-400" strokeWidth="3" strokeLinecap="round" initial={{ pathLength: 0 } as never} animate={play ? ({ pathLength: 1 } as never) : undefined} transition={{ delay: 0.3, duration: 1.6, ease }} />
       </svg>
     </div>
   );
