@@ -36,6 +36,7 @@ import AttendanceManager from "./AttendanceManager";
 import BookingsManager from "./BookingsManager";
 import ReviewsManager from "./ReviewsManager";
 import FeedbackManager from "./FeedbackManager";
+import DemoVideosManager from "./DemoVideosManager";
 import AccountsManager from "./AccountsManager";
 import IntroEditor from "./IntroEditor";
 import LivePreview from "./LivePreview";
@@ -58,6 +59,7 @@ const sections = [
   { id: "clients", label: "Clients and portal", Icon: UsersRound, group: "CRM" , perm: "clients" },
   { id: "feedback", label: "Client feedback", Icon: MessageSquareHeart, group: "CRM" , perm: "reviews" },
   { id: "reviews", label: "Google reviews", Icon: Star, group: "CRM" , perm: "reviews" },
+  { id: "demos", label: "Private demo videos", Icon: Film, group: "CRM" , perm: "demos" },
   { id: "replies", label: "Lead emails and alerts", Icon: MailCheck, group: "CRM" , perm: "content" },
   { id: "billing", label: "Quotes and invoices", Icon: ReceiptIndianRupee, group: "Sales and accounts" , perm: "billing" },
   { id: "accounts", label: "Expenses and profit", Icon: PiggyBank, group: "Sales and accounts" , perm: "accounts" },
@@ -124,7 +126,7 @@ const AREAS: Area[] = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, head: "", about: "", groups: [{ label: "", ids: ["overview"] }] },
   { id: "crm", label: "Leads and clients", Icon: Inbox, head: "Business", about: "Enquiries, calls and the clients you work with.", groups: [
     { label: "Enquiries", ids: ["leads", "bookings", "replies"] },
-    { label: "Clients", ids: ["clients", "feedback", "reviews"] },
+    { label: "Clients", ids: ["clients", "feedback", "reviews", "demos"] },
   ] },
   { id: "sales", label: "Sales and accounts", Icon: ReceiptIndianRupee, head: "Business", about: "Quotes, invoices, expenses and profit.", groups: [{ label: "", ids: ["billing", "accounts"] }] },
   { id: "hr", label: "HR and team", Icon: Users, head: "Business", about: "Interns, attendance, payslips, letters and certificates.", groups: [{ label: "", ids: ["interns", "attendance", "payslips", "letters", "certificates"] }] },
@@ -175,7 +177,7 @@ const areaOf = (id: string) => AREAS.find((a) => a.groups.some((g) => g.ids.incl
 // One line under each card saying what is inside.
 const ABOUT: Record<string, string> = {
   leads: "Every enquiry from the website, WhatsApp and ads", bookings: "Calls people booked with you", replies: "Thank-you email, WhatsApp alert, ready messages",
-  clients: "Client list and their portal logins", feedback: "Feedback clients sent you", reviews: "Rating and reviews pulled from Google",
+  clients: "Client list and their portal logins", feedback: "Feedback clients sent you", reviews: "Rating and reviews pulled from Google", demos: "Sample videos clients can watch but not download",
   billing: "Quotations, invoices and payments", accounts: "Money out, money in, profit",
   interns: "Applications and current interns", attendance: "Attendance and leave requests", payslips: "Monthly payslips", letters: "Offer, experience and other letters", certificates: "Certificate design and signatures",
   home: "Sections, hero, process, showreel, FAQ and more", hero: "Headline, buttons and the box on the right",
@@ -482,7 +484,7 @@ function AdminShell() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/admin/login";
   };
-  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "accounts", "bookings", "reviews", "feedback", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
+  const contentSection = !(["overview", "interns", "leads", "certificates", "letters", "payslips", "attendance", "accounts", "bookings", "reviews", "feedback", "demos", "clients", "media", "blog", "history", "team", "apikeys", "billing", "automation", "account", "activity"] as string[]).includes(section) && (!me || can(me, "content")) && !readOnly;
   const set = <K extends keyof SiteContent>(k: K, v: SiteContent[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const current = sections.find((s) => s.id === section)!;
   const tabIds = PAGE_TABS.find((t) => t.includes(section)) ?? [];
@@ -688,6 +690,7 @@ function AdminShell() {
             {section === "reviews" && <ReviewsManager goApiKeys={() => go("apikeys")} />}
 
             {section === "feedback" && <FeedbackManager />}
+            {section === "demos" && <DemoVideosManager />}
             {section === "accounts" && <AccountsManager readOnly={readOnly || (!!me && !can(me, "accounts", "edit"))} />}
 
             {section === "media" && <MediaLibrary />}

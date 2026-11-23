@@ -13,7 +13,7 @@ export const AI_CRAWLERS = [
 ];
 
 // Private areas: client documents, staff, admin, one-time links. Never crawled.
-export const PRIVATE_PATHS = ["/admin", "/api/", "/portal", "/staff", "/b/", "/d/", "/f/", "/l/", "/p/", "/r/", "/stop-emails/", "/letter-guide", "/letter-samples", "/blog/preview"];
+export const PRIVATE_PATHS = ["/admin", "/api/", "/portal", "/staff", "/b/", "/d/", "/f/", "/l/", "/p/", "/r/", "/v/", "/stop-emails/", "/letter-guide", "/letter-samples", "/blog/preview"];
 
 // "Question" line, "Answer" line(s), blank line between pairs.
 export function parseFaqs(text: string) {
