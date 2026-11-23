@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Check, Clock, Copy, Eye, Film, Link2, Loader2, Lock, Pencil, Play, Plus, Power, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import { AlertTriangle, Check, Clock, Copy, Eye, Film, HardDrive, Link2, Loader2, Lock, Pencil, Play, Plus, Power, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
-import { DEMO_DAYS, DEMO_VIEWS, MAX_DEMO_BYTES, linkState, linkStateLabel, type DemoLink, type DemoVideo } from "@/lib/demos";
+import { DEMO_DAYS, DEMO_VIEWS, KEEP_DAYS, MAX_DEMO_BYTES, keepLabel, linkState, linkStateLabel, type DemoLink, type DemoSettings, type DemoStorage, type DemoVideo } from "@/lib/demos";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -15,12 +15,13 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
   return data as T;
 }
-type Data = { videos: DemoVideo[]; links: DemoLink[]; canEdit: boolean };
+type Data = { videos: DemoVideo[]; links: DemoLink[]; settings: DemoSettings; storage: DemoStorage; canEdit: boolean };
 
 const when = (iso: string) => (iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" }) : "");
 const whenTime = (iso: string) => (iso ? new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }) : "");
 const dur = (s: number) => (s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}` : "");
 const mb = (b: number) => (b ? `${(b / 1048576).toFixed(b > 104857600 ? 0 : 1)} MB` : "");
+const size = (b: number) => (b >= 1024 ** 3 ? `${(b / 1024 ** 3).toFixed(1)} GB` : b ? `${Math.max(0.1, b / 1048576).toFixed(b > 104857600 ? 0 : 1)} MB` : "0 MB");
 const linkUrl = (token: string) => `${window.location.origin}/v/${token}`;
 const waNumber = (p: string) => {
   const d = p.replace(/\D/g, "");
@@ -170,7 +171,7 @@ export default function DemoVideosManager() {
     <div className="space-y-6" data-demo-videos>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="text-[15px] text-muted">Upload a sample video and make a private link for each client. The link is not on your website or Google. Clients can watch but can&apos;t download, and the Spinex watermark is printed into the video.</p>
+          <p className="text-[15px] text-muted">Upload a sample video and make a private link for each client. The link is not on your website or Google. Clients can watch but can&apos;t download, and the Spinex watermark is printed into the video. Videos are removed from the server on their own after the time you choose, so space doesn&apos;t fill up.</p>
         </div>
         {!ro && (
           <>
@@ -188,6 +189,17 @@ export default function DemoVideosManager() {
         </div>
       )}
       {msg && <p role="status" className={`rounded-2xl px-5 py-3 text-sm ${msg.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>{msg.text}</p>}
+
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-3xl border border-line bg-white px-5 py-4 text-sm">
+        <span className="flex items-center gap-2"><HardDrive size={16} className="text-lav-600" /> Saved as files on your server, <b>not in the database</b></span>
+        <span className="text-muted">Used: <b className="text-ink">{size(data.storage.usedBytes)}</b>{data.storage.freeBytes ? <> · Free on server: <b className="text-ink">{size(data.storage.freeBytes)}</b></> : null}</span>
+        <label className="ml-auto flex items-center gap-2">
+          <span className="text-muted">Delete new videos after</span>
+          <select className="input w-auto py-1.5 text-sm" disabled={ro || busy === "keep"} value={data.settings.keepDays} onChange={(e) => void act("keep", () => api("/api/admin/demos", { method: "PUT", body: JSON.stringify({ keepDays: Number(e.target.value) }) }), "Saved. New uploads will use this.")}>
+            {KEEP_DAYS.map((d) => <option key={d} value={d}>{keepLabel(d)}</option>)}
+          </select>
+        </label>
+      </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
@@ -230,13 +242,20 @@ export default function DemoVideosManager() {
                         {v.status === "processing" ? "Adding the watermark…" : v.status === "failed" ? v.error : [dur(v.duration), v.width ? `${v.width}×${v.height}` : "", mb(v.size), `uploaded ${when(v.createdAt)}`].filter(Boolean).join(" · ")}
                       </p>
                       {v.status === "ready" && (
-                        <p className={`mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-semibold ${v.burned ? "text-emerald-700" : "text-amber-700"}`}>
-                          <ShieldCheck size={12} /> {v.burned ? "Watermark printed into the video" : "Watermark shown on top only (the server couldn't print it)"}
+                        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-semibold">
+                          <span className={`inline-flex items-center gap-1 ${v.burned ? "text-emerald-700" : "text-amber-700"}`}><ShieldCheck size={12} /> {v.burned ? "Watermark printed into the video" : "Watermark shown on top only"}</span>
+                          <span className="inline-flex items-center gap-1 text-muted"><Clock size={12} /> {v.deleteAt ? `Deletes on its own on ${when(v.deleteAt)}` : "Kept until you delete it"}</span>
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3">
+                      {!ro && v.status === "ready" && (
+                        <select className="mr-auto rounded-full border border-line bg-white px-3 py-1.5 text-xs font-semibold text-muted" value="" onChange={(e) => { const d = Number(e.target.value); void act(`keepv:${v.id}`, () => api(`/api/admin/demos/videos/${v.id}`, { method: "PATCH", body: JSON.stringify({ keepDays: d }) }), d ? `Will be deleted on its own in ${d} days.` : "Kept until you delete it."); }} aria-label="How long to keep this video">
+                          <option value="" disabled>Keep for…</option>
+                          {KEEP_DAYS.map((d) => <option key={d} value={d}>{d ? `${d} more days` : "Until I delete it"}</option>)}
+                        </select>
+                      )}
                       {v.status === "ready" && <button type="button" onClick={() => setWatch(watch === v.id ? "" : v.id)} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:bg-mist"><Play size={13} /> {watch === v.id ? "Close preview" : "Watch"}</button>}
                       {!ro && v.status === "ready" && <button type="button" onClick={() => newLinkFor(v.id)} className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold hover:border-ink"><Link2 size={13} /> New link</button>}
                       {!ro && (

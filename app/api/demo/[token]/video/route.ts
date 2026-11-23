@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { ObjectId } from "mongodb";
 import { hasDb } from "@/lib/db";
 import { checkPass, demoOid, linksCol, passCookie, streamVideo, videosCol } from "@/lib/demos-db";
 
@@ -21,6 +20,6 @@ export async function GET(req: Request, { params }: { params: { token: string } 
   if (!link || link.revoked) return no();
   const vid = demoOid(String(link.videoId));
   const video = vid ? await (await videosCol()).findOne({ _id: vid }) : null;
-  if (!video?.fileId) return new Response("Not found", { status: 404 });
-  return streamVideo(req, video.fileId as ObjectId);
+  if (video?.status !== "ready") return new Response("Not found", { status: 404 });
+  return streamVideo(req, String(video._id));
 }

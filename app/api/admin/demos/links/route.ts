@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const s = await getSession();
   const col = await linksCol();
   const doc = {
-    videoId: String(vid), token: newDemoToken(), client, phone, expiresAt: new Date(Date.now() + days * 864e5).toISOString(), maxViews, views: 0,
+    videoId: String(vid), title: String(video.title ?? ""), token: newDemoToken(), client, phone, expiresAt: new Date(Date.now() + days * 864e5).toISOString(), maxViews, views: 0,
     pin, showName: b.showName !== false, revoked: false, createdAt: new Date().toISOString(), lastViewedAt: "", pinFails: 0, by: s?.name || s?.email || "",
   };
   const { insertedId } = await col.insertOne(doc);

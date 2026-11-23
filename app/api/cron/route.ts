@@ -57,6 +57,8 @@ export async function GET(req: Request) {
   if (settings.amcRemindersOn && state.lastAmc !== now.date && now.hour >= settings.reminderHour && (await claimState("automation", "gateAmc", now.date))) {
     done.amc = await runAmcReminders(origin, { days: settings.amcRemindDays, emailClient: settings.amcEmailClient, whatsapp: settings.whatsappSummary }).catch((e) => ({ error: String(e) }));
   }
+  // Demo videos past their delete date are removed from the server's disk.
+  done.demos = await import("@/lib/demos-db").then((m) => m.cleanupDemos(true)).catch((e) => ({ error: String(e) }));
   // Call reminders are checked on every run (the scheduler should run every hour).
   done.calls = await runBookingReminders().catch((e) => ({ error: String(e) }));
   done.reviews = await runReviewRequests().catch((e) => ({ error: String(e) }));

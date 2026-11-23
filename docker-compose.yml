@@ -17,6 +17,10 @@ services:
       MONGODB_URI: mongodb://mongo:27017/spinex
       MONGODB_DB: spinex
       NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+      DEMO_DIR: /data/demos
+    # Private demo videos (Admin → Demo videos) are kept here as files, not in the database.
+    volumes:
+      - demo-videos:/data/demos
     depends_on:
       - mongo
     healthcheck:
@@ -44,5 +48,6 @@ services:
 
 volumes:
   mongo-data:
+  demo-videos:
   caddy-data:
   caddy-config:

@@ -11,6 +11,7 @@ export type DemoVideo = {
   height: number;
   size: number; // bytes of the watermarked file
   burned: boolean; // the Spinex watermark is printed into the video itself
+  deleteAt: string; // the file is removed from the server on this date ("" = keep)
   createdAt: string;
   by: string;
 };
@@ -47,6 +48,13 @@ export function maskPhone(p: string) {
   if (d.length < 6) return d;
   return `${d.slice(0, 2)}${"•".repeat(Math.max(3, d.length - 5))}${d.slice(-3)}`;
 }
+
+// Videos are kept as files on the server's disk (not in the database) and removed on their own after a while.
+export type DemoSettings = { keepDays: number }; // 0 = keep until deleted by hand
+export const defaultDemoSettings: DemoSettings = { keepDays: 30 };
+export const KEEP_DAYS = [7, 15, 30, 60, 90, 0];
+export const keepLabel = (d: number) => (d === 0 ? "Keep until I delete it" : `${d} days`);
+export type DemoStorage = { usedBytes: number; freeBytes: number; totalBytes: number };
 
 export const MAX_DEMO_BYTES = 1024 * 1024 * 1024; // 1 GB upload
 export const DEMO_DAYS = [1, 3, 7, 15, 30];

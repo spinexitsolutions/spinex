@@ -1,5 +1,7 @@
-// Server only. Private demo videos: storage (MongoDB GridFS "demo_videos"), the watermark step (ffmpeg),
-// client links and the short viewing pass that lets one browser stream one link's video.
+// Server only. Private demo videos: the watermark step (ffmpeg), storage, client links and the short viewing
+// pass that lets one browser stream one link's video.
+// The video files are kept on the server's disk (DEMO_DIR, a Docker volume), not in the database, so the
+// database and its backups stay small. Each video is removed on its own on its "deleteAt" date.
 import { spawn, type ChildProcessByStdio } from "child_process";
 import { randomBytes } from "crypto";
 import { createReadStream, createWriteStream, promises as fs } from "fs";
@@ -10,10 +12,70 @@ import { Readable } from "stream";
 import { GridFSBucket, ObjectId, type Document, type WithId } from "mongodb";
 import { SignJWT, jwtVerify } from "jose";
 import { getDb } from "./db";
-import type { DemoLink, DemoVideo } from "./demos";
+import { defaultDemoSettings, type DemoLink, type DemoSettings, type DemoStorage, type DemoVideo } from "./demos";
 
 export const demoOid = (id: string) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
-export const demoBucket = async () => new GridFSBucket(await getDb(), { bucketName: "demo_videos" });
+// Only for videos saved by the first version (in the database); new ones are files on disk.
+const legacyBucket = async () => new GridFSBucket(await getDb(), { bucketName: "demo_videos" });
+
+// Where the finished videos are kept. On the server this is a Docker volume, so it survives updates.
+let dirReady = "";
+export async function demoDir() {
+  if (dirReady) return dirReady;
+  for (const d of [process.env.DEMO_DIR, "/data/demos", path.join(os.tmpdir(), "spinex-demo-files")]) {
+    if (!d) continue;
+    try {
+      await fs.mkdir(d, { recursive: true });
+      await fs.access(d, (await import("fs")).constants.W_OK);
+      dirReady = d;
+      return d;
+    } catch {
+      /* try the next place */
+    }
+  }
+  throw new Error("No folder to keep demo videos in.");
+}
+const fileName = (id: string) => `${id.replace(/[^a-f0-9]/gi, "")}.mp4`;
+export async function videoPath(id: string) {
+  return path.join(await demoDir(), fileName(id));
+}
+
+export async function getDemoSettings(): Promise<DemoSettings> {
+  const doc = await (await getDb()).collection<{ _id: string; value?: Partial<DemoSettings> }>("settings").findOne({ _id: "demos" });
+  return cleanDemoSettings({ ...defaultDemoSettings, ...(doc?.value ?? {}) });
+}
+export function cleanDemoSettings(v: Partial<DemoSettings>): DemoSettings {
+  const k = Math.round(Number(v.keepDays));
+  return { keepDays: Number.isFinite(k) ? Math.min(365, Math.max(0, k)) : defaultDemoSettings.keepDays };
+}
+export async function saveDemoSettings(s: DemoSettings) {
+  await (await getDb()).collection<{ _id: string }>("settings").updateOne({ _id: "demos" }, { $set: { value: s, updatedAt: new Date().toISOString() } }, { upsert: true });
+}
+export const deleteAtFor = (days: number) => (days > 0 ? new Date(Date.now() + days * 864e5).toISOString() : "");
+
+export async function demoStorage(): Promise<DemoStorage> {
+  const dir = await demoDir();
+  let used = 0;
+  for (const f of await fs.readdir(dir).catch(() => [] as string[])) used += (await fs.stat(path.join(dir, f)).catch(() => ({ size: 0 }))).size;
+  try {
+    const st = await fs.statfs(dir);
+    return { usedBytes: used, freeBytes: st.bavail * st.bsize, totalBytes: st.blocks * st.bsize };
+  } catch {
+    return { usedBytes: used, freeBytes: 0, totalBytes: 0 };
+  }
+}
+
+// Removes videos whose delete date has passed (with their links). Runs when the admin list opens and
+// from the hourly automation, so nothing is left behind.
+let lastClean = 0;
+export async function cleanupDemos(force = false) {
+  if (!force && Date.now() - lastClean < 10 * 60e3) return 0;
+  lastClean = Date.now();
+  const col = await videosCol();
+  const old = await col.find({ deleteAt: { $gt: "", $lt: new Date().toISOString() } }, { projection: { _id: 1 } }).limit(100).toArray();
+  for (const v of old) await deleteDemoVideo(v._id);
+  return old.length;
+}
 
 let ready = false;
 async function cols() {
@@ -38,7 +100,7 @@ export function toVideo(d: WithId<Document>): DemoVideo {
     id: String(d._id), title: r.title ?? "", status: stuck ? "failed" : r.status === "ready" || r.status === "failed" ? r.status : "processing",
     error: stuck ? "Processing stopped (the server restarted). Delete it and upload again." : r.error ?? "",
     duration: Number(r.duration) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0, size: Number(r.size) || 0,
-    burned: !!r.burned, createdAt: r.createdAt ?? "", by: r.by ?? "",
+    burned: !!r.burned, deleteAt: r.deleteAt ?? "", createdAt: r.createdAt ?? "", by: r.by ?? "",
   };
 }
 export function toLink(d: WithId<Document>): DemoLink {
@@ -125,10 +187,9 @@ async function processOne(videoId: ObjectId, tmpFile: string, brand: string) {
     }
     const meta = (burned && (await probe(out))) || info;
     const size = (await fs.stat(file)).size;
-    const bucket = await demoBucket();
-    const up = bucket.openUploadStream(`demo-${String(videoId)}.mp4`, { metadata: { contentType: "video/mp4", videoId: String(videoId) } });
-    await pipeline(createReadStream(file), up);
-    await col.updateOne({ _id: videoId }, { $set: { status: "ready", fileId: up.id, size, burned, width: meta.width, height: meta.height, duration: Math.round(meta.duration), error: "" } });
+    const dest = await videoPath(String(videoId));
+    await pipeline(createReadStream(file), createWriteStream(dest));
+    await col.updateOne({ _id: videoId }, { $set: { status: "ready", size, burned, width: meta.width, height: meta.height, duration: Math.round(meta.duration), error: "" } });
   } catch (e) {
     await col.updateOne({ _id: videoId }, { $set: { status: "failed", error: e instanceof Error ? e.message : "Processing failed." } });
   } finally {
@@ -166,8 +227,10 @@ export async function deleteDemoVideo(id: ObjectId) {
   const { videos, links } = await cols();
   const doc = await videos.findOne({ _id: id });
   if (!doc) return false;
-  if (doc.fileId) await (await demoBucket()).delete(doc.fileId as ObjectId).catch(() => undefined);
-  await links.deleteMany({ videoId: String(id) });
+  await fs.rm(await videoPath(String(id)), { force: true }).catch(() => undefined);
+  if (doc.fileId) await (await legacyBucket()).delete(doc.fileId as ObjectId).catch(() => undefined);
+  // The links stay (turned off), so a client who opens one later sees "removed" instead of an error page.
+  await links.updateMany({ videoId: String(id) }, { $set: { revoked: true, videoGone: true } });
   await videos.deleteOne({ _id: id });
   return true;
 }
@@ -175,11 +238,11 @@ export async function deleteDemoVideo(id: ObjectId) {
 // ---------- Streaming ----------
 
 // Sends the video (or the part the player asked for), never cached and never offered as a download.
-export async function streamVideo(req: Request, fileId: ObjectId) {
-  const bucket = await demoBucket();
-  const [file] = await bucket.find({ _id: fileId }).limit(1).toArray();
-  if (!file) return new Response("Not found", { status: 404 });
-  const total = file.length;
+export async function streamVideo(req: Request, videoId: string) {
+  const file = await videoPath(videoId);
+  const st = await fs.stat(file).catch(() => null);
+  if (!st) return new Response("Not found", { status: 404 });
+  const total = st.size;
   const headers: Record<string, string> = {
     "Content-Type": "video/mp4",
     "Accept-Ranges": "bytes",
@@ -189,20 +252,20 @@ export async function streamVideo(req: Request, fileId: ObjectId) {
     "X-Robots-Tag": "noindex, nofollow",
     "Cross-Origin-Resource-Policy": "same-origin",
   };
+  const send = (start: number, end: number) =>
+    new Response(Readable.toWeb(createReadStream(file, { start, end })) as unknown as ReadableStream, {
+      status: 206,
+      headers: { ...headers, "Content-Range": `bytes ${start}-${end}/${total}`, "Content-Length": String(end - start + 1) },
+    });
   const range = req.headers.get("range")?.match(/^bytes=(\d*)-(\d*)$/);
-  if (!range) {
-    // Players always ask for a range; a plain request for the whole file gets only the first part.
-    const end = Math.min(total, 1024 * 1024) - 1;
-    const s = bucket.openDownloadStream(fileId, { start: 0, end: end + 1 });
-    return new Response(Readable.toWeb(s) as unknown as ReadableStream, { status: 206, headers: { ...headers, "Content-Range": `bytes 0-${end}/${total}`, "Content-Length": String(end + 1) } });
-  }
+  // Players always ask for a range; a plain request for the whole file gets only the first part.
+  if (!range) return send(0, Math.min(total, 1024 * 1024) - 1);
   let start = range[1] ? Number(range[1]) : NaN, end = range[2] ? Number(range[2]) : NaN;
   if (Number.isNaN(start)) { start = Math.max(0, total - (Number.isNaN(end) ? 0 : end)); end = total - 1; }
   if (Number.isNaN(end) || end >= total) end = total - 1;
   end = Math.min(end, start + 4 * 1024 * 1024 - 1); // at most 4 MB per request
   if (start >= total || start > end) return new Response(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${total}` } });
-  const s = bucket.openDownloadStream(fileId, { start, end: end + 1 });
-  return new Response(Readable.toWeb(s) as unknown as ReadableStream, { status: 206, headers: { ...headers, "Content-Range": `bytes ${start}-${end}/${total}`, "Content-Length": String(end - start + 1) } });
+  return send(start, end);
 }
 
 // ---------- Viewing pass ----------

@@ -18,8 +18,7 @@ export default async function DemoPage({ params }: { params: { token: string } }
   const link = toLink(doc);
   const vid = demoOid(link.videoId);
   const vdoc = vid ? await (await videosCol()).findOne({ _id: vid }) : null;
-  if (!vdoc) notFound();
-  const video = toVideo(vdoc);
+  const video = vdoc ? toVideo(vdoc) : null;
   const content = await getContent();
   const state = link.revoked ? "revoked" : linkState(link);
   return (
@@ -28,15 +27,15 @@ export default async function DemoPage({ params }: { params: { token: string } }
       brand={content.brand.name || "Spinex IT Solutions"}
       logo={content.brand.logo || ""}
       whatsapp={content.contact?.whatsapp || ""}
-      title={video.title}
+      title={video?.title || String(doc.title || "Demo video")}
       client={link.client}
       phone={maskPhone(link.phone)}
       showName={link.showName}
       needsPin={!!link.pin}
       expiresAt={link.expiresAt}
       viewsLeft={link.maxViews ? Math.max(0, link.maxViews - link.views) : null}
-      portrait={video.height > video.width}
-      state={video.status !== "ready" ? "notready" : state}
+      portrait={!!video && video.height > video.width}
+      state={!video ? "removed" : video.status !== "ready" ? "notready" : state}
     />
   );
 }

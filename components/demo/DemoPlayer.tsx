@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Ban, Clock, Eye, Loader2, Lock, Maximize, Minimize, Pause, Play, ShieldCheck, Volume2, VolumeX } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 
-type State = "active" | "expired" | "used" | "revoked" | "notready";
+type State = "active" | "expired" | "used" | "revoked" | "notready" | "removed";
 type Props = {
   token: string; brand: string; logo: string; whatsapp: string; title: string; client: string; phone: string; showName: boolean;
   needsPin: boolean; expiresAt: string; viewsLeft: number | null; portrait: boolean; state: State;
@@ -22,6 +22,7 @@ const CLOSED: Record<Exclude<State, "active">, { title: string; text: string }> 
   expired: { title: "This demo link has expired", text: "Demo links work for a few days only. Message us and we'll send you a fresh one." },
   used: { title: "All views of this link are used", text: "This link could be played only a few times. Message us and we'll send you a fresh one." },
   revoked: { title: "This demo link is turned off", text: "Message us if you'd like to see the demo again." },
+  removed: { title: "This demo has been removed", text: "Message us and we'll share our latest work with you." },
   notready: { title: "This demo is almost ready", text: "We're still preparing the video. Please open the link again in a few minutes." },
 };
 
