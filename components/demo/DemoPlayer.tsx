@@ -181,7 +181,7 @@ export default function DemoPlayer(p: Props) {
             ref={wrap}
             onMouseMove={poke}
             onTouchStart={poke}
-            className={`${full ? "fixed inset-0 z-50 grid place-items-center rounded-none bg-black" : `relative mx-auto mt-8 rounded-[22px] ${p.portrait ? "max-w-[min(100%,calc(78vh*9/16))]" : "max-w-5xl"}`} overflow-hidden bg-black shadow-[0_30px_90px_-25px_rgba(110,89,217,0.55)]`}
+            className={`${full ? "fixed inset-0 z-50 grid place-items-center rounded-none bg-black" : `relative mx-auto mt-8 rounded-[22px] ${p.portrait ? "max-w-[min(100%,calc(78vh*9/16))]" : "max-w-[min(64rem,calc(80vh*16/9))]"}`} overflow-hidden bg-black shadow-[0_30px_90px_-25px_rgba(110,89,217,0.55)]`}
           >
             <div className={`relative w-full ${full ? "h-full" : p.portrait ? "aspect-[9/16]" : "aspect-video"}`}>
               {unlocked && (

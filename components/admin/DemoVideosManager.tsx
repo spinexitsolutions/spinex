@@ -189,7 +189,7 @@ export default function DemoVideosManager() {
       )}
       {msg && <p role="status" className={`rounded-2xl px-5 py-3 text-sm ${msg.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>{msg.text}</p>}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           {data.videos.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center">
@@ -207,7 +207,7 @@ export default function DemoVideosManager() {
                     <button
                       type="button"
                       onClick={() => v.status === "ready" && setWatch(watch === v.id ? "" : v.id)}
-                      className="relative grid aspect-video w-32 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-lav-600 to-ink text-white"
+                      className="relative grid aspect-video w-28 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-lav-600 to-ink text-white"
                       aria-label="Watch"
                     >
                       {v.status === "processing" ? <Loader2 className="animate-spin" size={20} /> : v.status === "failed" ? <AlertTriangle size={20} /> : <Play size={20} fill="currentColor" />}
@@ -221,8 +221,8 @@ export default function DemoVideosManager() {
                           <button type="button" onClick={() => setEdit(null)} className="btn-ghost px-3 py-2 text-sm" aria-label="Cancel"><X size={15} /></button>
                         </form>
                       ) : (
-                        <p className="flex items-center gap-2 font-semibold">
-                          <span className="truncate">{v.title}</span>
+                        <p className="flex items-start gap-2 font-semibold">
+                          <span className="line-clamp-2">{v.title}</span>
                           {!ro && <button type="button" onClick={() => setEdit({ id: v.id, title: v.title })} className="text-muted hover:text-ink" aria-label="Rename"><Pencil size={13} /></button>}
                         </p>
                       )}
@@ -235,14 +235,15 @@ export default function DemoVideosManager() {
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!ro && v.status === "ready" && <button type="button" onClick={() => newLinkFor(v.id)} className="btn-ghost px-3.5 py-2 text-sm"><Link2 size={14} /> New link</button>}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3">
+                      {v.status === "ready" && <button type="button" onClick={() => setWatch(watch === v.id ? "" : v.id)} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:bg-mist"><Play size={13} /> {watch === v.id ? "Close preview" : "Watch"}</button>}
+                      {!ro && v.status === "ready" && <button type="button" onClick={() => newLinkFor(v.id)} className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold hover:border-ink"><Link2 size={13} /> New link</button>}
                       {!ro && (
-                        <button type="button" disabled={!!busy} onClick={() => { if (confirm(`Delete "${v.title}" and all ${links.length} client link(s)? They will stop working.`)) void act(`delv:${v.id}`, () => api(`/api/admin/demos/videos/${v.id}`, { method: "DELETE" }), "Video deleted."); }} className="grid h-9 w-9 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600" aria-label="Delete video">
+                        <button type="button" disabled={!!busy} onClick={() => { if (confirm(`Delete "${v.title}" and all ${links.length} client link(s)? They will stop working.`)) void act(`delv:${v.id}`, () => api(`/api/admin/demos/videos/${v.id}`, { method: "DELETE" }), "Video deleted."); }} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-red-50 hover:text-red-600" aria-label="Delete video">
                           {busy === `delv:${v.id}` ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                         </button>
                       )}
-                    </div>
                   </div>
                   {watch === v.id && (
                     <video src={`/api/admin/demos/videos/${v.id}/stream`} controls autoPlay playsInline className={`mt-4 w-full rounded-2xl bg-black ${v.height > v.width ? "mx-auto max-h-[70vh] w-auto" : ""}`} {...{ controlsList: "nodownload" }} />
