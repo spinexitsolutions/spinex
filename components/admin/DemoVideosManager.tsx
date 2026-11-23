@@ -136,8 +136,8 @@ export default function DemoVideosManager() {
   const LinkRow = ({ l }: { l: DemoLink }) => {
     const st = linkState(l);
     return (
-      <li className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line py-3 first:border-t-0">
-        <div className="min-w-0 flex-1">
+      <li className="border-t border-line py-3.5 first:border-t-0">
+        <div className="min-w-0">
           <p className="flex flex-wrap items-center gap-2 text-[14.5px] font-semibold">
             {l.client}
             <span className={`rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold ${stateTone[st]}`}>{linkStateLabel[st]}</span>
@@ -147,7 +147,7 @@ export default function DemoVideosManager() {
             {l.views} of {l.maxViews || "∞"} views · till {when(l.expiresAt)} · {l.lastViewedAt ? `last watched ${whenTime(l.lastViewedAt)}` : "not opened yet"}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           <button type="button" onClick={() => copy(l)} className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold hover:border-ink">{copied === l.id ? <Check size={13} /> : <Copy size={13} />} {copied === l.id ? "Copied" : "Copy"}</button>
           {l.phone && <a href={wa(l)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"><WhatsAppIcon size={13} /> Send</a>}
           {!ro && (
