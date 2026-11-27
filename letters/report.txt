@@ -1,0 +1,23 @@
+OK   internship_offer pages=1
+OK   job_offer pages=1
+OK   appointment pages=1
+OK   confirmation pages=1
+OK   increment pages=1
+OK   promotion pages=1
+OK   experience pages=1
+OK   relieving pages=1
+OK   internship_completion pages=1
+OK   salary_certificate pages=1
+OK   employment_verification pages=1
+OK   recommendation pages=1
+OK   noc pages=1
+OK   warning pages=1
+OK   termination pages=1
+guide pages=5
+profile pages=5 sheets=5
+types=15 not_one_page=0
+/website-development-jaipur 200 
+/locations/jaipur 308 http://localhost:3100/website-development-jaipur
+/website-development-nowhere 200 
+<title>Website Development Company in Jaipur | Spinex IT Solutions</title>
+website-development-jaipur
